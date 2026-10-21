@@ -1,0 +1,23 @@
+# Render の Blueprint（New + → Blueprint でこのリポジトリを選ぶと、この設定で作られます）
+services:
+  - type: web
+    name: komorebi-mura
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/version
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL        # 例: jdbc:postgresql://ep-xxxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+        sync: false
+      - key: DATABASE_USER
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: ADMIN_PASSWORD      # 管理画面のパスワード（必ず決める）
+        sync: false
+      - key: INVITE_CODE         # 友達に教える合言葉
+        sync: false
+      - key: GAME_VERSION
+        value: 0.9.4
+      - key: THYMELEAF_CACHE
+        value: "true"

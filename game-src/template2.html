@@ -1,0 +1,951 @@
+<title>こもれび村</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@400;700&display=swap">
+<style>
+/* Layout: game window (map + hotbar) on the left, tabbed board (wardrobe / building) on the right; stacked & toggled on phones. Deliberately single-theme dusk forest. */
+:root {
+  --bg: #1d2b25;
+  --bg-2: #263a31;
+  --panel: #f3e6c6;
+  --panel-2: #e7d5ad;
+  --ink: #3b2a21;
+  --ink-soft: #7a6450;
+  --wood: #8b5b3c;
+  --wood-dark: #5a3a28;
+  --lantern: #f0bd4f;
+  --leaf: #86b86e;
+  --bad: #d9564b;
+  --on-dark: #f3e6c6;
+  --f-pixel: "DotGothic16", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  --f-body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Noto Sans JP", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--on-dark); font-family: var(--f-body);
+  display: flex; flex-direction: column; box-sizing: border-box; gap: 10px; overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 12px;
+}
+header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--f-pixel); font-weight: 400; font-size: 1.5rem; margin: 0; letter-spacing: .06em; color: var(--lantern); }
+.sub { font-size: .8rem; color: var(--panel-2); opacity: .8; }
+.spacer { flex: 1; }
+button { font-family: var(--f-pixel); cursor: pointer; }
+.btn { background: var(--lantern); color: var(--ink); border: 0; border-bottom: 3px solid var(--wood); padding: 8px 14px; font-size: .95rem; border-radius: 6px; }
+.btn.ghost { background: var(--bg-2); color: var(--on-dark); border-bottom-color: #13201b; }
+.btn.light { background: #fffaf0; color: var(--ink); border-bottom-color: var(--panel-2); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+main { flex: 1; min-height: 0; display: flex; gap: 14px; }
+
+.stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column;
+  border: 4px solid var(--wood-dark); border-radius: 10px; overflow: hidden; background: #101914; box-shadow: inset 0 0 0 2px var(--wood); }
+.view { position: relative; flex: 1; min-height: 0; }
+canvas#game { display: block; width: 100%; height: 100%; image-rendering: pixelated; touch-action: none; }
+.where, .hint { position: absolute; top: 10px; background: rgba(20, 30, 25, .74); color: var(--on-dark); padding: 4px 10px; border-radius: 4px; }
+.where { left: 10px; font-family: var(--f-pixel); font-size: .85rem; }
+.hint { right: 10px; font-size: .72rem; line-height: 1.5; text-align: right; }
+.toast { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
+  background: var(--panel); color: var(--ink); border: 3px solid var(--wood); border-radius: 8px; padding: 6px 14px 6px 8px;
+  font-family: var(--f-pixel); font-size: 1rem; white-space: nowrap; transition: opacity .3s; z-index: 3; }
+.toast img { width: 48px; height: 48px; image-rendering: pixelated; }
+.toast img.wide { width: 96px; }
+.toast.off { opacity: 0; pointer-events: none; }
+.placebar { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; z-index: 3;
+  background: var(--panel); color: var(--ink); border: 3px solid var(--wood); border-radius: 8px; padding: 6px 8px 6px 12px; font-family: var(--f-pixel); font-size: .85rem; white-space: nowrap; }
+.placebar .btn { padding: 6px 10px; font-size: .85rem; }
+.placebar .state.bad { color: var(--bad); }
+.pad { position: absolute; inset: auto 0 0 0; display: none; justify-content: space-between; align-items: flex-end; padding: 0 12px 12px; pointer-events: none; }
+.dpad { display: grid; grid-template: repeat(3, 44px) / repeat(3, 44px); pointer-events: auto; }
+.dpad button, .abtn { background: rgba(243, 230, 198, .85); color: var(--ink); border: 0; border-bottom: 3px solid var(--wood);
+  font-size: 1.1rem; border-radius: 8px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.dpad [data-d="up"] { grid-area: 1 / 2; } .dpad [data-d="left"] { grid-area: 2 / 1; }
+.dpad [data-d="right"] { grid-area: 2 / 3; } .dpad [data-d="down"] { grid-area: 3 / 2; }
+.abtn { width: 64px; height: 64px; border-radius: 50%; background: var(--lantern); pointer-events: auto; font-size: 1.3rem; }
+@media (hover: none), (pointer: coarse) { .pad { display: flex; } .hint { display: none; } }
+
+.hotbar { flex: none; display: flex; gap: 4px; padding: 6px 8px; overflow-x: auto; background: var(--wood-dark); border-top: 3px solid var(--wood); scrollbar-width: thin; }
+.slot { position: relative; flex: none; width: 46px; height: 46px; padding: 0; border-radius: 6px; border: 2px solid var(--wood); background: var(--panel-2); }
+.slot img { width: 32px; height: 32px; image-rendering: pixelated; display: block; margin: auto; }
+.slot .n { position: absolute; right: 3px; bottom: 1px; font-size: .72rem; color: var(--ink); text-shadow: 0 0 2px #fffaf0, 0 0 2px #fffaf0; }
+.slot .k { position: absolute; left: 3px; top: 0; font-size: .6rem; color: var(--ink-soft); }
+.slot[aria-pressed="true"] { border-color: var(--lantern); background: #fff4d2; box-shadow: 0 0 0 2px var(--lantern); }
+.slot.empty { opacity: .45; }
+.selname { flex: none; align-self: center; margin-left: 6px; font-family: var(--f-pixel); font-size: .85rem; color: var(--on-dark); white-space: nowrap; }
+
+.board { width: 360px; flex: none; background: var(--panel); color: var(--ink); border-radius: 10px;
+  border: 4px solid var(--wood-dark); box-shadow: inset 0 0 0 2px var(--wood); display: flex; flex-direction: column; min-height: 0; }
+.tabs { display: flex; gap: 6px; padding: 10px 12px 0; }
+.tab { flex: 1; padding: 8px; border: 0; border-radius: 6px 6px 0 0; background: var(--panel-2); color: var(--ink-soft); font-size: .95rem; }
+.tab[aria-selected="true"] { background: var(--lantern); color: var(--ink); }
+.pane { display: flex; flex-direction: column; min-height: 0; flex: 1; border-top: 3px solid var(--lantern); }
+.pane .head { display: flex; gap: 14px; align-items: center; padding: 12px 16px 10px; border-bottom: 2px dashed var(--panel-2); }
+#pv { width: 104px; height: 104px; image-rendering: pixelated; background: var(--panel-2); border-radius: 8px; flex: none; }
+.dirs { display: grid; grid-template-columns: repeat(4, 38px); gap: 4px; margin-top: 8px; }
+.dirs canvas { width: 38px; height: 38px; image-rendering: pixelated; background: var(--panel-2); border-radius: 4px; }
+.head .meta { min-width: 0; flex: 1; }
+.lbl { font-family: var(--f-pixel); font-size: .8rem; color: var(--ink-soft); display: block; margin-bottom: 4px; }
+input[type="text"], input[type="number"] { box-sizing: border-box; font-family: var(--f-pixel); font-size: 1rem; padding: 6px 8px;
+  border: 2px solid var(--wood); border-radius: 6px; background: #fffaf0; color: var(--ink); }
+#name { width: 100%; }
+.opts { overflow-y: auto; padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 12px; min-height: 0; flex: 1; }
+.opt h3 { font-family: var(--f-pixel); font-weight: 400; font-size: .85rem; margin: 0 0 6px; color: var(--wood-dark); letter-spacing: .08em; }
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-pixel); font-size: .85rem; padding: 5px 10px; border-radius: 6px; border: 2px solid var(--panel-2); background: #fffaf0; color: var(--ink); }
+.chip[aria-pressed="true"] { border-color: var(--wood); background: var(--lantern); }
+.sw { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fffaf0; box-shadow: 0 0 0 2px var(--panel-2); padding: 0; }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--wood); }
+.chip:disabled, .sw:disabled { opacity: .35; cursor: not-allowed; }
+.foot { display: flex; gap: 8px; padding: 10px 16px 14px; border-top: 2px dashed var(--panel-2); }
+.foot .btn { flex: 1; }
+.note { font-size: .74rem; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+.hprev { background: repeating-conic-gradient(var(--panel-2) 0 25%, #efe0bb 0 50%) 0 0 / 16px 16px; border-radius: 8px; padding: 10px; display: flex; align-items: flex-end; justify-content: center; min-height: 140px; overflow-x: auto; }
+#hcv { image-rendering: pixelated; max-width: 100%; }
+.size { display: grid; grid-template-columns: auto 1fr 76px; gap: 8px 10px; align-items: center; }
+.size input[type="range"] { width: 100%; accent-color: var(--wood); }
+.size input[type="number"] { width: 76px; }
+.dims { font-family: var(--f-pixel); font-size: .95rem; color: var(--wood-dark); text-align: center; font-variant-numeric: tabular-nums; }
+#menuBtn, #goBtn { display: none; }
+
+@media (max-width: 820px) {
+  h1 { font-size: 1.25rem; }
+  .sub { display: none; }
+  #menuBtn, #goBtn { display: inline-block; }
+  .board { width: 100%; }
+  body.menu .stage { display: none; }
+  body:not(.menu) .board { display: none; }
+  .slot { width: 42px; height: 42px; }
+  .slot img { width: 28px; height: 28px; }
+  .selname { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<header>
+  <h1>こもれび村</h1>
+  <span class="sub">着せ替えて、畑を耕して、家を建てよう（試作版）</span>
+  <span class="spacer"></span>
+  <button class="btn ghost" id="menuBtn" type="button">メニュー</button>
+</header>
+<main>
+  <div class="stage">
+    <div class="view">
+      <canvas id="game" aria-label="村のマップ"></canvas>
+      <div class="where" id="where">こもれび村</div>
+      <div class="hint">移動：矢印 / WASD　使う・調べる：Space / Z<br>持ち物：1〜9・0 / Q・E　建築キャンセル：Esc</div>
+      <div class="placebar" id="placebar" hidden>
+        <span class="state" id="placeState">ここに建てられるよ</span>
+        <button class="btn" id="placeOk" type="button">建てる</button>
+        <button class="btn light" id="placeNo" type="button">やめる</button>
+      </div>
+      <div class="toast off" id="toast" role="status"><img id="toastImg" alt=""><span id="toastText"></span></div>
+      <div class="pad">
+        <div class="dpad">
+          <button data-d="up" type="button" aria-label="上">▲</button>
+          <button data-d="left" type="button" aria-label="左">◀</button>
+          <button data-d="right" type="button" aria-label="右">▶</button>
+          <button data-d="down" type="button" aria-label="下">▼</button>
+        </div>
+        <button class="abtn" id="abtn" type="button" aria-label="使う・調べる">A</button>
+      </div>
+    </div>
+    <div class="hotbar" id="hotbar" aria-label="持ち物"></div>
+  </div>
+
+  <section class="board" aria-label="メニュー">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-dress" aria-selected="true" type="button">着せ替え</button>
+      <button class="tab" role="tab" id="tab-build" aria-selected="false" type="button">家を建てる</button>
+    </div>
+    <div class="pane" id="pane-dress">
+      <div class="head">
+        <canvas id="pv" width="16" height="16"></canvas>
+        <div class="meta">
+          <label class="lbl" for="name">なまえ</label>
+          <input id="name" type="text" maxlength="8" value="りこ" autocomplete="off">
+          <div class="dirs" id="dirs"></div>
+        </div>
+      </div>
+      <div class="opts" id="opts"></div>
+      <div class="foot">
+        <button class="btn ghost" id="randBtn" type="button">おまかせ</button>
+        <button class="btn" id="goBtn" type="button">村へ出かける</button>
+      </div>
+    </div>
+    <div class="pane" id="pane-build" hidden>
+      <div class="opts">
+        <div class="hprev"><canvas id="hcv"></canvas></div>
+        <div class="dims" id="dims">72 × 64 ドット</div>
+        <div class="size">
+          <label class="lbl" for="hw">横幅</label><input id="hw" type="range" min="32" max="160" step="1" value="72"><input id="hwn" type="number" min="32" max="160" value="72" aria-label="横幅（ドット）">
+          <label class="lbl" for="hh">高さ</label><input id="hh" type="range" min="32" max="128" step="1" value="64"><input id="hhn" type="number" min="32" max="128" value="64" aria-label="高さ（ドット）">
+        </div>
+        <div class="opt"><h3>屋根の色</h3><div class="row" id="roofRow"></div></div>
+        <div class="opt"><h3>壁の色</h3><div class="row" id="wallRow"></div></div>
+        <p class="note">1マスは16ドット。家はキャラのすぐ上（北）に、ドアがキャラの目の前に来るように建ちます。建てた家のドアから中に入れます。</p>
+      </div>
+      <div class="foot">
+        <button class="btn ghost" id="undoHouse" type="button">最後の家を撤去</button>
+        <button class="btn" id="placeStart" type="button">置く場所を選ぶ</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/*DATA*/
+</script>
+<script>
+(() => {
+const TS = 16;
+const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+const IMG = {};
+for (const k in ASSETS) { const im = new Image(); im.src = ASSETS[k]; IMG[k] = im; }
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+
+// ---------------- extra hair ----------------
+Object.assign(CHAR.HAIR, {
+  "アフロ": ["....AAAAAAAA....", "..AAbbaaaaaaAA..", ".AabbaaaaaaaacA.", "AabaaaaaaaaaaacA", "AaaaacaaaacaaaaA",
+           "Aaca........acaA", "AaaA........AaaA", ".AaA........AaA.", "..AA........AA.."],
+  "モヒカン": ["......AAAA......", "......AbaA......", ".....AbbacA.....", ".....AbaacA.....", "......AacA......"],
+  "ツインテール": ["................", ".....AAAAAA.....", "....AabbaaaA....", "AA.AabbaaaaaA.AA", "AaAAaaaaaaacAaaA",
+              "Aa.Aac....caA.aA", "Aa.A........A.aA", "Aa.A........A.aA", "Aa............aA", "Ac............cA", ".A............A."],
+});
+Object.assign(CHAR.HAIRC, { "青": [[140, 190, 255], [70, 120, 220], [46, 82, 170], [26, 40, 96]], "虹": "rainbow", "ゲーミング": "gaming" });
+const SPECIAL_SWATCH = {
+  "虹": "linear-gradient(180deg,#ff5f6d,#ffc371,#f9f871,#6ee7a8,#5bc0f8,#a78bfa)",
+  "ゲーミング": "conic-gradient(#ff3d7f,#ffb13d,#f8f83d,#3dff8b,#3dc8ff,#9a5bff,#ff3d7f)",
+};
+function hsl(h, s, l) {
+  s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+}
+let gamingShift = 0;
+
+// ---------------- characters ----------------
+const cache = new Map();
+const SHOE = [96, 64, 48];
+function renderChar(cfg, dir, frame) {
+  const hcRaw = CHAR.HAIRC[cfg.hairc];
+  const special = typeof hcRaw === "string";
+  const shift = hcRaw === "gaming" ? gamingShift : 0;
+  const key = JSON.stringify(cfg) + dir + frame + shift;
+  if (cache.has(key)) return cache.get(key);
+  if (cache.size > 1500) cache.clear();
+  const L = [80, 64, 50, 30];
+  const hc = (i, y) => special ? hsl((y * 30 + shift * 30) % 360, i === 3 ? 60 : 88, L[i]) : hcRaw[i];
+  const g = Array.from({ length: 16 }, () => Array(16).fill(null));
+  const put = (x, y, c) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) g[y][x] = c; };
+  const grid = (rows, y0, map) => rows.forEach((row, j) => { for (let i = 0; i < 16; i++) { const c = map[row[i]]; if (c) put(i, y0 + j, c); } });
+  const s = CHAR.SKIN[cfg.skin], t = CHAR.CLOTH[cfg.topc], b = CHAR.CLOTH[cfg.bottomc];
+  const top = CHAR.TOPS[cfg.top];
+  grid(CHAR.BODY, 0, { "1": s[0], "2": s[1], o: s[2], e: [44, 32, 48], r: [246, 150, 140] });
+  if (!top.covers) grid(CHAR.BOTTOMS[cfg.bottom], 13, { p: b[1], q: b[2], P: b[3] });
+  grid([CHAR.SHOES], 15, { Z: SHOE });
+  grid(top.rows, 10, { u: t[0], t: t[1], v: t[2], T: t[3], ...CHAR.WHITE });
+  const hair = CHAR.HAIR[cfg.hair];
+  const HI = { b: 0, a: 1, c: 2, A: 3 };
+  hair.forEach((row, y) => { for (let x = 0; x < 16; x++) if (row[x] in HI) put(x, y, hc(HI[row[x]], y)); });
+  if (dir === "up") {
+    const bald = cfg.hair === "モヒカン";
+    for (let y = 3; y <= 8; y++) for (let x = 0; x < 16; x++) {
+      const ch = CHAR.BODY[y][x];
+      if (ch === "." || (bald && (x < 6 || x > 9))) continue;
+      put(x, y, ch === "o" ? hc(3, y) : y === 8 ? hc(2, y) : hc(1, y));
+    }
+    if (!bald) { put(6, 4, hc(0, 4)); put(7, 4, hc(0, 4)); put(5, 5, hc(0, 5)); }
+    for (let y = 9; y < hair.length; y++) {
+      const row = hair[y]; const l = row.search(/[^.]/); const r = 15 - [...row].reverse().join("").search(/[^.]/);
+      if (l < 0 || r - l > 11) continue;
+      for (let x = l; x <= r; x++) put(x, y, x === l || x === r || y === hair.length - 1 ? hc(3, y) : hc(1, y));
+    }
+  } else if (dir === "left" || dir === "right") {
+    if (cfg.hair !== "モヒカン") for (let y = 4; y <= 8; y++) for (let x = 9; x <= 12; x++) {
+      const ch = CHAR.BODY[y][x];
+      if (ch === "o") put(x, y, hc(3, y)); else if (ch !== ".") put(x, y, y === 8 ? hc(2, y) : hc(1, y));
+    }
+  }
+  if (frame === 1) { put(5, 15, null); put(6, 15, null); put(5, 14, SHOE); put(6, 14, SHOE); }
+  if (frame === 2) { put(9, 15, null); put(10, 15, null); put(9, 14, SHOE); put(10, 14, SHOE); }
+  const c = document.createElement("canvas"); c.width = c.height = 16;
+  const cx = c.getContext("2d"); const id = cx.createImageData(16, 16);
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    const col = g[y][dir === "right" ? 15 - x : x]; if (!col) continue;
+    const i = (y * 16 + x) * 4; id.data[i] = col[0]; id.data[i + 1] = col[1]; id.data[i + 2] = col[2]; id.data[i + 3] = 255;
+  }
+  cx.putImageData(id, 0, 0); cache.set(key, c); return c;
+}
+
+const pick = (o) => { const k = Object.keys(o); return k[Math.floor(Math.random() * k.length)]; };
+const POOLS = { skin: CHAR.SKIN, hair: CHAR.HAIR, hairc: CHAR.HAIRC, top: CHAR.TOPS, topc: CHAR.CLOTH, bottom: CHAR.BOTTOMS, bottomc: CHAR.CLOTH };
+const randomCfg = () => Object.fromEntries(Object.entries(POOLS).map(([k, p]) => [k, pick(p)]));
+const DEFAULT = { skin: "やや明るめ", hair: "ショート", hairc: "ブラウン", top: "Tシャツ", topc: "青", bottom: "パンツ", bottomc: "茶" };
+const hotData = window.claude?.hot?.data;
+const saved = store.get("komorebi-player");
+let cfg = { ...DEFAULT, ...(hotData?.cfg || saved?.cfg || {}) };
+for (const k in DEFAULT) if (!(cfg[k] in POOLS[k])) cfg[k] = DEFAULT[k];
+const nameEl = document.getElementById("name");
+nameEl.value = hotData?.name || saved?.name || "りこ";
+
+// ---------------- items ----------------
+const ITEMS = {
+  hoe: { name: "鍬", icon: "hoe", use: "hoe" }, can: { name: "じょうろ", icon: "can", use: "can" }, rod: { name: "釣り竿", icon: "rod", use: "rod" },
+  seed_tomato: { name: "トマトの種", icon: "seed_tomato", seed: "tomato" }, seed_carrot: { name: "ニンジンの種", icon: "seed_carrot", seed: "carrot" },
+  seed_cabbage: { name: "キャベツの種", icon: "seed_cabbage", seed: "cabbage" },
+  tomato: { name: "トマト", icon: "tomato" }, carrot: { name: "ニンジン", icon: "carrot" }, cabbage: { name: "キャベツ", icon: "cabbage" },
+};
+const FISH = [["アジ", 30], ["サケ", 20], ["タイ", 14], ["マグロ", 10], ["ナマズ", 12], ["ネッタイギョ", 11], ["ヌシ", 3]];
+FISH.forEach(([n]) => ITEMS["fish_" + n] = { name: n, icon: "fish_" + n });
+const SLOTS = 12;
+
+// ---------------- world state ----------------
+const FIELD = []; for (let y = 13; y <= 16; y++) for (let x = 4; x <= 9; x++) FIELD.push(x + "," + y);
+const defaultWorld = () => ({
+  tilled: Object.fromEntries(FIELD.map(k => [k, { wet: false }])),
+  crops: { "4,13": { type: "tomato", stage: 2, t: 0 }, "5,13": { type: "tomato", stage: 2, t: 0 }, "7,13": { type: "cabbage", stage: 2, t: 0 },
+           "8,13": { type: "cabbage", stage: 1, t: 0 }, "4,15": { type: "carrot", stage: 2, t: 0 }, "5,15": { type: "carrot", stage: 1, t: 0 },
+           "7,15": { type: "tomato", stage: 0, t: 0 }, "8,15": { type: "carrot", stage: 0, t: 0 } },
+  houses: [],
+  inv: [{ id: "hoe", n: 1 }, { id: "can", n: 1 }, { id: "rod", n: 1 }, { id: "seed_tomato", n: 5 }, { id: "seed_carrot", n: 5 }, { id: "seed_cabbage", n: 5 },
+        null, null, null, null, null, null],
+  sel: 0,
+});
+let world = hotData?.world || store.get("komorebi-world") || defaultWorld();
+if (!world.inv || world.inv.length !== SLOTS || !world.tilled) world = defaultWorld();
+const saveWorld = () => store.set("komorebi-world", world);
+const GROW = 10; // seconds of watered time per growth stage
+
+// ---------------- maps ----------------
+function blankMap(w, h, name) {
+  return { name, w, h, ground: Array.from({ length: h }, () => Array(w).fill("grass0")),
+           base: Array.from({ length: h }, () => Array(w).fill(false)), solid: null, objs: [], ents: [] };
+}
+function addObj(m, img, x, y, sortY) { m.objs.push({ img, x, y, sortY: sortY ?? y + IMG[img].height }); }
+function solid(m, x0, y0, w, h) { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (m.base[y]) m.base[y][x] = true; }
+
+function makeVillage() {
+  const m = blankMap(32, 24, "こもれび村");
+  for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) m.ground[y][x] = "grass" + ((x * 7 + y * 13) % 4);
+  [[3, 8, "P"], [12, 3, "W"], [17, 8, "Y"], [10, 12, "P"], [27, 4, "W"], [12, 17, "Y"], [18, 21, "P"], [2, 20, "W"], [28, 12, "Y"], [11, 8, "W"]]
+    .forEach(([x, y, c]) => m.ground[y][x] = "flower" + c);
+  const path = (x, y) => m.ground[y][x] = "path" + ((x + y) % 2);
+  for (let x = 2; x <= 29; x++) path(x, 10);
+  for (let y = 10; y <= 23; y++) path(15, y);
+  for (let y = 7; y <= 9; y++) { path(7, y); path(22, y); }
+  for (let x = 3; x <= 10; x++) { addObj(m, "fence", x * TS, 18 * TS - 4); m.base[18][x] = true; }
+  for (let y = 12; y <= 17; y++) { addObj(m, "fence", 3 * TS - 8, y * TS - 4, y * TS + 12); m.base[y][3] = true; }
+  for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) {
+    const dx = (x + .5 - 24) / 5, dy = (y + .5 - 17.5) / 3.4;
+    if (dx * dx + dy * dy <= 1) { m.ground[y][x] = "water"; m.base[y][x] = true; }
+  }
+  addObj(m, "house_small", 5 * TS, 3 * TS); solid(m, 5, 3, 4, 4);
+  addObj(m, "house_big", 19 * TS, 2 * TS); solid(m, 19, 2, 6, 5);
+  m.doors = { "6,6": { to: "room", back: [7, 7] }, "7,6": { to: "room", back: [7, 7] }, "21,6": { friend: true }, "22,6": { friend: true } };
+  const trees = [];
+  for (let x = 0; x < 32; x += 2) trees.push([x, 1]);
+  for (const y of [4, 7, 13, 16, 19]) { trees.push([0, y]); trees.push([30, y]); }
+  for (let x = 0; x < 32; x += 2) if (x !== 14) trees.push([x, 23]);
+  trees.push([11, 5], [12, 14], [27, 8], [12, 20], [18, 13], [26, 22]);
+  m.noBuild = new Set();
+  trees.forEach(([x, y]) => { addObj(m, "tree", x * TS, (y - 1) * TS); solid(m, x, y, 2, 1); m.noBuild.add(x + "," + (y - 1)); m.noBuild.add((x + 1) + "," + (y - 1)); });
+  m.ground[0].fill("grass1");
+  m.grassy = (x, y) => /^(grass|flower)/.test(m.ground[y]?.[x] || "");
+  return m;
+}
+function makeRoom() {
+  const m = blankMap(12, 9, "家");
+  for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) m.ground[y][x] = y < 2 ? "wall" : "floor";
+  solid(m, 0, 0, 12, 2);
+  m.deco = [["window", 5 * TS, 4], ["window", 8 * TS, 4], ["picture", 56, 4], ["rug", 6 * TS, 5 * TS + 8]];
+  [["bed", 16, 24, [1, 2, 1, 2]], ["bookshelf", 48, 6, [3, 2, 1, 1]], ["plant", 66, 24, [4, 2, 1, 1]],
+   ["counter", 144, 24, [9, 2, 1, 1]], ["stove", 160, 24, [10, 2, 1, 1]], ["chest", 176, 24, [11, 2, 1, 1]],
+   ["chair", 96, 50, [6, 3, 1, 1]], ["chair", 112, 50, [7, 3, 1, 1]], ["table", 96, 62, [6, 4, 2, 1]], ["lamp", 16, 78, [1, 5, 1, 1]]]
+    .forEach(([k, x, y, s]) => { addObj(m, k, x, y); solid(m, ...s); });
+  m.ground[8][5] = "doormat";
+  m.exits = { "5,8": true };
+  m.doors = {};
+  return m;
+}
+const village = makeVillage(), room = makeRoom();
+
+// ---------------- pixel houses (any size, in dots) ----------------
+const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+const rampOf = c => [mix(c, [255, 252, 236], .55), mix(c, [255, 252, 236], .22), c, mix(c, [46, 26, 70], .38)];
+const WOODC = [[238, 194, 134], [208, 152, 94], [166, 110, 66], [112, 70, 46]];
+const ROOFS = { "赤": [200, 84, 76], "青": [80, 120, 184], "緑": [96, 160, 100], "黄": [222, 176, 70], "紫": [140, 100, 170], "茶": [140, 96, 64], "灰": [110, 114, 128], "桃": [226, 130, 160] };
+const WALLS = { "生成り": [240, 226, 196], "白": [244, 242, 236], "木": [204, 150, 96], "桃": [246, 206, 206], "水色": [196, 222, 236], "灰": [196, 196, 200], "レンガ": [190, 110, 84] };
+const houseCache = new Map();
+function makeHouse(W, H, roofC, wallC) {
+  const key = [W, H, roofC, wallC].join();
+  if (houseCache.has(key)) return houseCache.get(key);
+  const px = new Array(W * H).fill(null);
+  const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) px[y * W + x] = c; };
+  const rect = (x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
+  const R = rampOf(ROOFS[roofC] || ROOFS["赤"]), Wl = rampOf(WALLS[wallC] || WALLS["生成り"]);
+  const rh = Math.floor(H * 11 / 20);
+  if (W >= 60) { rect(W - 14, 1, 6, 8, [170, 110, 96]); rect(W - 15, 1, 8, 2, [130, 80, 72]); }
+  rect(1, 3, W - 2, rh - 3, R[2]);
+  for (let row = 0, y = 3; y < rh; row++, y += 3) { rect(1, y, W - 2, 1, R[1]); for (let x = 1 + (row % 2) * 3; x < W - 1; x += 6) rect(x, y + 1, 1, 2, R[3]); }
+  rect(1, 3, W - 2, 1, R[0]); rect(1, rh, W - 2, 2, R[3]);
+  const wy = rh + 2;
+  rect(3, wy, W - 6, H - wy - 1, Wl[2]);
+  for (let y = wy + 3; y < H - 1; y += 3) rect(3, y, W - 6, 1, Wl[1]);
+  rect(3, wy, W - 6, 1, Wl[3]); rect(3, wy, 1, H - wy - 1, Wl[3]); rect(W - 4, wy, 1, H - wy - 1, Wl[3]);
+  const dw = Math.min(10, W - 12), dh = Math.max(6, Math.min(14, H - wy - 2)), dx = Math.floor(W / 2 - dw / 2);
+  rect(dx - 1, H - 2 - dh, dw + 2, dh + 1, WOODC[3]); rect(dx, H - 1 - dh, dw, dh, WOODC[2]); rect(dx, H - 1 - dh, dw, 1, WOODC[1]);
+  rect(dx + Math.floor(dw / 2), H - 1 - dh, 1, dh, WOODC[3]);
+  set(dx + dw - 3, H - 1 - Math.floor(dh / 2), [240, 200, 90]); set(dx + 2, H - 1 - Math.floor(dh / 2), [240, 200, 90]);
+  const wallH = H - wy - 1;
+  if (wallH >= 13) {
+    const wy2 = wy + Math.max(3, Math.floor((wallH - 11) / 2));
+    for (const off of [18, 38, 58, 78]) for (const sg of [-1, 1]) {
+      const cx = Math.floor(W / 2) + sg * off; if (cx < 10 || cx > W - 10) continue;
+      rect(cx - 5, wy2 - 1, 10, 9, WOODC[3]); rect(cx - 4, wy2, 8, 7, [150, 206, 236]);
+      set(cx - 3, wy2 + 1, [230, 246, 252]); set(cx - 2, wy2 + 2, [230, 246, 252]);
+      rect(cx, wy2, 1, 7, WOODC[2]); rect(cx - 4, wy2 + 3, 8, 1, WOODC[2]);
+      rect(cx - 5, wy2 + 8, 10, 1, [130, 180, 90]); set(cx - 3, wy2 + 7, [240, 120, 140]); set(cx + 2, wy2 + 7, [250, 220, 100]);
+    }
+  }
+  const out = px.slice();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!px[y * W + x]) {
+    for (const [ax, ay] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) {
+      const nx = x + ax, ny = y + ay;
+      if (nx >= 0 && ny >= 0 && nx < W && ny < H && px[ny * W + nx]) { out[y * W + x] = mix(px[ny * W + nx], [40, 22, 48], .62); break; }
+    }
+  }
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const cx = c.getContext("2d"); const id = cx.createImageData(W, H);
+  out.forEach((col, i) => { if (col) id.data.set([...col, 255], i * 4); });
+  cx.putImageData(id, 0, 0); houseCache.set(key, c); return c;
+}
+function houseRect(h) {
+  const x0 = h.col * TS + 8 - Math.floor(h.W / 2), y0 = (h.row + 1) * TS - h.H;
+  return { x0, y0, tx0: Math.floor(x0 / TS), ty0: Math.floor(y0 / TS), tx1: Math.floor((x0 + h.W - 1) / TS), ty1: h.row };
+}
+function rebuildSolid() {
+  for (const m of [village, room]) m.solid = m.base.map(r => r.slice());
+  village.built = {};
+  world.houses.forEach((h, i) => {
+    const r = houseRect(h);
+    for (let y = r.ty0; y <= r.ty1; y++) for (let x = r.tx0; x <= r.tx1; x++) if (village.solid[y] && x >= 0 && x < village.w) village.solid[y][x] = true;
+    village.built[h.col + "," + h.row] = i;
+  });
+}
+function applyTilled() {
+  for (const k in world.tilled) { const [x, y] = k.split(",").map(Number); if (village.ground[y]) village.ground[y][x] = "tilled"; }
+}
+rebuildSolid(); applyTilled();
+let map = village;
+
+// ---------------- entities ----------------
+function entity(x, y, c, name, npc) { return { x, y, px: x * TS, py: y * TS, dir: "down", moving: false, prog: 0, fx: x, fy: y, step: 0, cfg: c, name, npc, say: null, think: 0 }; }
+const player = entity(7, 8, cfg, nameEl.value, false);
+let lastBack = [7, 7];
+village.ents = [
+  entity(12, 11, { skin: "色白", hair: "ロング", hairc: "ピンク", top: "ワンピース", topc: "生成り", bottom: "パンツ", bottomc: "茶" }, "ゆず", true),
+  entity(17, 12, { skin: "小麦色", hair: "アフロ", hairc: "黒", top: "オーバーオール", topc: "青", bottom: "パンツ", bottomc: "茶" }, "そら", true),
+  entity(20, 9, { skin: "色白", hair: "ツインテール", hairc: "ゲーミング", top: "Tシャツ", topc: "赤", bottom: "スカート", bottomc: "紫" }, "みお", true),
+];
+const LINES = ["今日は釣り日和だね", "あとで一緒にごはん食べよ", "池にヌシがいるらしいよ", "水やり忘れてない？", "その服かわいいね", "討伐の準備しなきゃ", "新しい家、見に行っていい？"];
+
+function blocked(m, x, y, self) {
+  if (x < 0 || y < 0 || x >= m.w || y >= m.h || m.solid[y][x]) return true;
+  const ents = m === map ? [player, ...m.ents] : m.ents;
+  return ents.some(e => e !== self && ((e.x === x && e.y === y) || (e.fx === x && e.fy === y)));
+}
+function enter(m, x, y, dir) {
+  map = m; Object.assign(player, { x, y, fx: x, fy: y, px: x * TS, py: y * TS, dir, moving: false });
+  document.getElementById("where").textContent = m === room ? (nameEl.value || "わたし") + "の家" : m.name;
+}
+function tryMove(e, dir) {
+  e.dir = dir;
+  const [dx, dy] = DIRS[dir]; const nx = e.x + dx, ny = e.y + dy;
+  if (map === village && dir === "up") {
+    const d = village.doors[nx + "," + ny];
+    if (d?.to) { lastBack = d.back; enter(room, 5, 7, "up"); return; }
+    if (d?.friend) { toast(null, "そらの家。いまは留守みたい"); return; }
+    if (village.built[nx + "," + ny] !== undefined) { lastBack = [e.x, e.y]; enter(room, 5, 7, "up"); return; }
+  }
+  if (map === room && room.exits[e.x + "," + e.y] && dir === "down") { enter(village, lastBack[0], lastBack[1], "down"); return; }
+  if (blocked(map, nx, ny, e)) return;
+  e.fx = nx; e.fy = ny; e.moving = true; e.prog = 0;
+}
+
+// ---------------- UI helpers ----------------
+let toastTimer = 0;
+function toast(img, text) {
+  const t = document.getElementById("toast"), im = document.getElementById("toastImg");
+  if (img) { im.src = ASSETS[img]; im.hidden = false; im.className = IMG[img].width > 16 ? "wide" : ""; } else im.hidden = true;
+  document.getElementById("toastText").textContent = text;
+  t.classList.remove("off"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add("off"), 2400);
+}
+const hotbarEl = document.getElementById("hotbar");
+function renderHotbar() {
+  hotbarEl.innerHTML = "";
+  world.inv.forEach((it, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "slot" + (it ? "" : " empty"); b.id = "slot-" + i;
+    b.setAttribute("aria-pressed", String(world.sel === i));
+    b.setAttribute("aria-label", it ? `${ITEMS[it.id].name}${it.n > 1 ? " ×" + it.n : ""}` : "空き");
+    const keyLabel = i < 9 ? String(i + 1) : i === 9 ? "0" : "";
+    b.innerHTML = (keyLabel ? `<span class="k">${keyLabel}</span>` : "") + (it ? `<img src="${ASSETS[ITEMS[it.id].icon]}" alt=""><span class="n">${it.n > 1 ? it.n : ""}</span>` : "");
+    b.addEventListener("click", () => { world.sel = i; renderHotbar(); saveWorld(); });
+    hotbarEl.appendChild(b);
+  });
+  const sel = world.inv[world.sel];
+  const nm = document.createElement("span"); nm.className = "selname"; nm.textContent = sel ? ITEMS[sel.id].name : "手ぶら";
+  hotbarEl.appendChild(nm);
+}
+function addItem(id, n = 1) {
+  const s = world.inv.find(it => it && it.id === id);
+  if (s) s.n += n;
+  else { const i = world.inv.findIndex(it => !it); if (i < 0) { toast(null, "持ち物がいっぱい"); return false; } world.inv[i] = { id, n }; }
+  renderHotbar(); saveWorld(); return true;
+}
+function useOne(i) { const it = world.inv[i]; if (!it) return; if (--it.n <= 0) world.inv[i] = null; renderHotbar(); saveWorld(); }
+
+// ---------------- actions ----------------
+let busy = null;
+let fish = null;
+let placing = false;
+const front = () => { const [dx, dy] = DIRS[player.dir]; return [player.x + dx, player.y + dy]; };
+const particles = [];
+function dust(tx, ty, col, n = 8) {
+  for (let i = 0; i < n; i++) particles.push({ x: tx * TS + 8, y: ty * TS + 10, vx: (Math.random() - .5) * 40, vy: -20 - Math.random() * 30, life: .45, col });
+}
+
+function act() {
+  if (placing) { confirmPlace(); return; }
+  if (fish) { pullFish(); return; }
+  if (player.moving || busy) return;
+  const [tx, ty] = front(); const key = tx + "," + ty;
+  const other = map.ents.find(e => e.x === tx && e.y === ty);
+  if (other) {
+    other.dir = { up: "down", down: "up", left: "right", right: "left" }[player.dir];
+    other.say = { text: LINES[Math.floor(Math.random() * LINES.length)], until: performance.now() + 2600 }; other.think = 2.6; return;
+  }
+  const crop = map === village ? world.crops[key] : null;
+  if (crop && crop.stage === 2) {
+    if (addItem(crop.type)) { delete world.crops[key]; saveWorld(); toast(crop.type, ITEMS[crop.type].name + "を収穫した！"); }
+    return;
+  }
+  const sel = world.inv[world.sel]; const item = sel && ITEMS[sel.id];
+  const ground = map.ground[ty]?.[tx];
+  if (item?.use === "hoe") {
+    busy = { kind: "hoe", t: 0, dur: .32, done: () => {
+      if (map === village && village.grassy(tx, ty) && !village.solid[ty][tx] && !map.ents.some(e => e.x === tx && e.y === ty)) {
+        world.tilled[key] = { wet: false }; village.ground[ty][tx] = "tilled"; saveWorld(); dust(tx, ty, [150, 108, 70]);
+      } else if (ground === "tilled") toast("hoe", "もう耕してあるよ");
+      else toast("hoe", "ここは耕せないみたい");
+    } }; return;
+  }
+  if (item?.use === "can") {
+    busy = { kind: "can", t: 0, dur: .5, done: () => {
+      if (ground === "tilled") { world.tilled[key].wet = true; saveWorld(); }
+      else if (ground === "water") toast("can", "じょうろに水をくんだ");
+      else toast("can", "畑に水をまこう");
+    } }; return;
+  }
+  if (item?.seed) {
+    if (ground !== "tilled") { toast(item.icon, "耕した畑にまこう"); return; }
+    if (crop) { toast(item.icon, "もう何か植わってるよ"); return; }
+    world.crops[key] = { type: item.seed, stage: 0, t: 0 }; useOne(world.sel); saveWorld();
+    busy = { kind: "plant", t: 0, dur: .18, done: () => {} };
+    toast(item.icon, item.name.replace("の種", "") + "を植えた。水をあげよう"); return;
+  }
+  if (item?.use === "rod") {
+    if (ground === "water") { fish = { phase: "cast", t: 0, tx, ty, wait: 1.2 + Math.random() * 2.6 }; return; }
+    toast("rod", "水辺に向かって使おう"); return;
+  }
+  if (crop) { toast(crop.stage === 0 ? "sprout" : "young_" + crop.type, crop.stage === 0 ? "芽が出たばかり。水をあげると育つよ" : "もう少しで収穫できそう"); return; }
+  if (ground === "water") { toast("rod", "釣り竿を選ぶと釣りができるよ"); return; }
+  if (map === room) {
+    const k = { "1,2": "ふかふかのベッド", "1,3": "ふかふかのベッド", "10,2": "かまど。料理はもうすぐ作れるようになる予定",
+                "9,2": "調理台。まな板が置いてある", "11,2": "収納箱。いつか持ち物をしまえるようにしたい", "3,2": "本棚。レシピ本が並んでる" }[key];
+    if (k) toast(null, k);
+  }
+}
+
+// fishing
+function pullFish() {
+  if (fish.phase === "bite") {
+    const total = FISH.reduce((a, f) => a + f[1], 0); let r = Math.random() * total, got = FISH[0][0];
+    for (const [n, w] of FISH) { if ((r -= w) < 0) { got = n; break; } }
+    fish = { ...fish, phase: "reel", t: 0, got }; player.say = null;
+  } else if (fish.phase === "wait") {
+    fish = { ...fish, phase: "miss", t: 0 }; toast(null, "まだ早かった…");
+  }
+}
+function updateFish(dt) {
+  if (!fish) return;
+  fish.t += dt;
+  if (fish.phase === "cast" && fish.t > .5) { fish.phase = "wait"; fish.t = 0; }
+  else if (fish.phase === "wait" && fish.t > fish.wait) { fish.phase = "bite"; fish.t = 0; player.say = { text: "！", until: performance.now() + 900, alert: true }; }
+  else if (fish.phase === "bite" && fish.t > .9) { fish.phase = "miss"; fish.t = 0; player.say = null; toast(null, "逃げられた…"); }
+  else if (fish.phase === "reel" && fish.t > .7) {
+    const got = fish.got; fish = null;
+    if (addItem("fish_" + got)) toast("fish_" + got, got === "ヌシ" ? "ヌシを釣り上げた！！" : got + "が釣れた！");
+  }
+  else if (fish.phase === "miss" && fish.t > .35) fish = null;
+}
+
+// building
+const build = { W: 72, H: 64, roof: "赤", wall: "生成り" };
+Object.assign(build, store.get("komorebi-build") || {});
+function ghostHouse() { return { W: build.W, H: build.H, roof: build.roof, wall: build.wall, col: player.x, row: player.y - 1 }; }
+function canPlace(h) {
+  if (map !== village) return false;
+  const r = houseRect(h);
+  if (r.x0 < 0 || r.y0 < 0 || r.tx1 >= village.w) return false;
+  for (let y = r.ty0; y <= r.ty1; y++) for (let x = r.tx0; x <= r.tx1; x++) {
+    if (village.solid[y]?.[x] || village.noBuild.has(x + "," + y) || village.ground[y][x] === "water" || village.ground[y][x] === "tilled") return false;
+    if (village.ents.some(e => (e.x === x && e.y === y) || (e.fx === x && e.fy === y))) return false;
+  }
+  return true;
+}
+function startPlace() {
+  if (map !== village) { toast(null, "家は村の中で建てよう"); return; }
+  placing = true; document.getElementById("placebar").hidden = false;
+  document.body.classList.remove("menu"); resize();
+}
+function stopPlace() { placing = false; document.getElementById("placebar").hidden = true; }
+function confirmPlace() {
+  const h = ghostHouse();
+  if (!canPlace(h)) { toast(null, "ここには建てられないよ"); return; }
+  world.houses.push(h); rebuildSolid(); saveWorld(); stopPlace(); syncBuild();
+  dust(h.col, h.row, [230, 220, 200], 16); toast(null, `${h.W}×${h.H}ドットの家が建った！`);
+}
+
+// ---------------- input ----------------
+const held = new Set();
+const KEY = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", s: "down", a: "left", d: "right", W: "up", S: "down", A: "left", D: "right" };
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (KEY[e.key]) { held.add(KEY[e.key]); e.preventDefault(); }
+  if (e.key === " " || e.key === "z" || e.key === "Z" || e.key === "Enter") { if (!e.repeat) act(); e.preventDefault(); }
+  if (e.key === "Escape" && placing) stopPlace();
+  const n = "1234567890".indexOf(e.key);
+  if (n >= 0) { world.sel = n; renderHotbar(); }
+  if (e.key === "q" || e.key === "e") { world.sel = (world.sel + (e.key === "e" ? 1 : SLOTS - 1)) % SLOTS; renderHotbar(); }
+});
+addEventListener("keyup", e => { if (KEY[e.key]) held.delete(KEY[e.key]); });
+addEventListener("blur", () => held.clear());
+document.querySelectorAll(".dpad button").forEach(b => {
+  const d = b.dataset.d;
+  b.addEventListener("pointerdown", e => { held.clear(); held.add(d); b.setPointerCapture(e.pointerId); e.preventDefault(); });
+  const up = () => held.delete(d);
+  b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up); b.addEventListener("lostpointercapture", up);
+});
+document.getElementById("abtn").addEventListener("pointerdown", e => { act(); e.preventDefault(); });
+document.getElementById("placeOk").addEventListener("click", confirmPlace);
+document.getElementById("placeNo").addEventListener("click", stopPlace);
+
+// ---------------- loop ----------------
+const cv = document.getElementById("game"), ctx = cv.getContext("2d");
+let scale = 3, dpr = 1, vw = 0, vh = 0;
+function resize() {
+  const r = cv.getBoundingClientRect(); if (!r.width) return;
+  dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+  scale = Math.max(2, Math.min(5, Math.floor(r.width / (TS * 11))));
+  if (r.height / (TS * scale) < 7) scale = Math.max(2, Math.floor(r.height / (TS * 7)));
+  vw = r.width / scale; vh = r.height / scale;
+}
+new ResizeObserver(resize).observe(cv);
+
+const SPEED = 5.5;
+function updateEnt(e, dt) {
+  if (!e.moving) return;
+  e.prog += dt * SPEED; e.step += dt * SPEED * 2;
+  if (e.prog >= 1) { e.x = e.fx; e.y = e.fy; e.prog = 0; e.moving = false; }
+  e.px = (e.x + (e.fx - e.x) * e.prog) * TS; e.py = (e.y + (e.fy - e.y) * e.prog) * TS;
+}
+function updateCrops(dt) {
+  let changed = false;
+  for (const k in world.crops) {
+    const c = world.crops[k], t = world.tilled[k];
+    if (c.stage < 2 && t?.wet) {
+      c.t += dt;
+      if (c.t >= GROW) { c.stage++; c.t = 0; t.wet = false; changed = true; const [x, y] = k.split(",").map(Number); if (map === village) dust(x, y, [140, 210, 110], 6); }
+    }
+  }
+  if (changed) saveWorld();
+}
+let last = performance.now(), saveTick = 0;
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  gamingShift = Math.floor(now / 110) % 12;
+  if (busy) { busy.t += dt; if (busy.t >= busy.dur) { const d = busy.done; busy = null; d(); } }
+  updateFish(dt);
+  updateCrops(dt);
+  if ((saveTick += dt) > 5) { saveTick = 0; saveWorld(); }
+  if (!player.moving && !busy && !fish) { const d = [...held].pop(); if (d) tryMove(player, d); }
+  updateEnt(player, dt);
+  for (const f of village.ents) {
+    if (!f.moving) {
+      f.think -= dt;
+      if (f.think <= 0) {
+        f.think = .6 + Math.random() * 2.2;
+        if (Math.random() < .65) {
+          const d = pick(DIRS); f.dir = d; const [dx, dy] = DIRS[d]; const nx = f.x + dx, ny = f.y + dy;
+          if (!blocked(village, nx, ny, f)) { f.fx = nx; f.fy = ny; f.moving = true; f.prog = 0; }
+        }
+      }
+    }
+    updateEnt(f, dt * .55);
+  }
+  for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 140 * dt; if (p.life <= 0) particles.splice(i, 1); }
+  draw(now);
+  requestAnimationFrame(frame);
+}
+
+function handPos(e) {
+  const o = { down: [3, 11], up: [-3, 9], left: [-5, 10], right: [5, 10] }[e.dir];
+  return [e.px + 8 + o[0], e.py + o[1]];
+}
+function drawTool() {
+  if (!busy) return;
+  const p = Math.min(1, busy.t / busy.dur);
+  const [dx, dy] = DIRS[player.dir];
+  const cx = player.px + 8 + dx * 9, cy = player.py + 9 + dy * 7;
+  const flip = player.dir === "left" ? -1 : 1;
+  if (busy.kind === "hoe") {
+    ctx.save(); ctx.translate(cx, cy - 4); if (flip < 0) ctx.scale(-1, 1); ctx.rotate(-1.6 + p * 2.2); ctx.drawImage(IMG.hoe, -4, -12); ctx.restore();
+  } else if (busy.kind === "can") {
+    ctx.save(); ctx.translate(cx, cy - 6); if (flip < 0) ctx.scale(-1, 1); ctx.rotate(-.6 * Math.min(1, p * 3)); ctx.drawImage(IMG.can, -8, -8); ctx.restore();
+    const [tx, ty] = front();
+    for (let i = 0; i < 6; i++) {
+      const ph = (p * 3 + i / 6) % 1;
+      ctx.fillStyle = "rgba(150,205,245,.9)"; ctx.fillRect(tx * TS + 3 + (i * 37) % 10, ty * TS + 2 + ph * 10, 1, 2);
+    }
+  } else if (busy.kind === "plant") {
+    const [tx, ty] = front(); ctx.fillStyle = "#6b4a30"; ctx.fillRect(tx * TS + 7, ty * TS + 8 - p * 3, 2, 2);
+  }
+}
+function drawFishing(now) {
+  if (!fish) return;
+  const [hx, hy] = handPos(player);
+  const [dx, dy] = DIRS[player.dir];
+  const bx = fish.tx * TS + 8, byBase = fish.ty * TS + 9;
+  let tipX, tipY, lineTo = null;
+  if (fish.phase === "cast") {
+    const p = Math.min(1, fish.t / .5);
+    const back = p < .45;
+    const k = back ? p / .45 : (p - .45) / .55;
+    // rod swings from behind the head to forward
+    const sx = -dx * 7, sy = -10 - dy * 3, fx = dx * 11, fy = -6 + dy * 5;
+    const tt = back ? 0 : k;
+    tipX = hx + (back ? -dx * 3 * k + sx * k : sx + (fx - sx) * tt);
+    tipY = hy + (back ? sy * k : sy + (fy - sy) * tt);
+    if (!back) {
+      const ex = tipX + (bx - tipX) * k, ey = tipY + (byBase - tipY) * k - Math.sin(k * Math.PI) * 14;
+      lineTo = [ex, ey, k > .9];
+    }
+  } else {
+    tipX = hx + dx * 11; tipY = hy - 6 + dy * 5;
+    let by = byBase + Math.sin(now / 260) * .8;
+    if (fish.phase === "bite") by = byBase + 2 + Math.sin(now / 40) * 1.2;
+    if (fish.phase === "reel" || fish.phase === "miss") { tipX = hx - dx * 4; tipY = hy - 11; }
+    lineTo = [bx, by, fish.phase === "wait" || fish.phase === "bite"];
+  }
+  ctx.strokeStyle = "#6e4429"; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(tipX, tipY); ctx.stroke();
+  ctx.strokeStyle = "#d3a66d"; ctx.lineWidth = .5; ctx.beginPath(); ctx.moveTo(hx, hy - .4); ctx.lineTo(tipX, tipY - .4); ctx.stroke();
+  if (lineTo && fish.phase !== "reel" && fish.phase !== "miss") {
+    const [ex, ey, showBob] = lineTo;
+    ctx.strokeStyle = "rgba(240,240,250,.85)"; ctx.lineWidth = .35; ctx.beginPath(); ctx.moveTo(tipX, tipY);
+    ctx.quadraticCurveTo((tipX + ex) / 2, Math.max(tipY, ey) + 3, ex, ey); ctx.stroke();
+    if (showBob) {
+      const r = fish.phase === "bite" ? 3 + (now / 90 % 4) : 2 + (now / 400 % 3);
+      ctx.strokeStyle = "rgba(220,240,255,.7)"; ctx.lineWidth = .5; ctx.beginPath(); ctx.ellipse(bx, byBase + 2, r, r * .45, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.fillStyle = "#e84a4a"; ctx.fillRect(Math.round(ex) - 1, Math.round(ey) - 2, 3, 2);
+    ctx.fillStyle = "#fafafa"; ctx.fillRect(Math.round(ex) - 1, Math.round(ey), 3, 1);
+  }
+  if (fish.phase === "reel") {
+    const p = Math.min(1, fish.t / .7);
+    const fx = bx + (player.px + 8 - bx) * p, fy = byBase + (player.py - 4 - byBase) * p - Math.sin(p * Math.PI) * 26;
+    const img = IMG["fish_" + fish.got];
+    ctx.save(); ctx.translate(fx, fy); ctx.rotate(p * Math.PI * 2 * (dx < 0 ? -1 : 1)); ctx.drawImage(img, -img.width / 2, -8); ctx.restore();
+    if (p < .3) for (let i = 0; i < 6; i++) { ctx.fillStyle = "rgba(200,230,255,.9)"; ctx.fillRect(bx - 6 + i * 2.5, byBase - p * 30 - (i % 2) * 3, 1, 1); }
+  }
+}
+
+function draw(now) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#101914"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.imageSmoothingEnabled = false;
+  const mw = map.w * TS, mh = map.h * TS;
+  let camX = player.px + 8 - vw / 2, camY = player.py + 8 - vh / 2;
+  camX = mw <= vw ? (mw - vw) / 2 : Math.max(0, Math.min(mw - vw, camX));
+  camY = mh <= vh ? (mh - vh) / 2 : Math.max(0, Math.min(mh - vh, camY));
+  camX = Math.round(camX * scale) / scale; camY = Math.round(camY * scale) / scale;
+  const k = scale * dpr;
+  ctx.setTransform(k, 0, 0, k, -camX * k, -camY * k);
+  const x0 = Math.max(0, Math.floor(camX / TS)), y0 = Math.max(0, Math.floor(camY / TS));
+  const x1 = Math.min(map.w - 1, Math.ceil((camX + vw) / TS)), y1 = Math.min(map.h - 1, Math.ceil((camY + vh) / TS));
+  const wf = Math.floor(now / 650) % 2;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    let g = map.ground[y][x];
+    if (g === "water") g = "water" + ((x + y + wf) % 2);
+    if (g === "tilled" && map === village && world.tilled[x + "," + y]?.wet) g = "tilled_wet";
+    if (g === "doormat") ctx.drawImage(IMG.floor, x * TS, y * TS);
+    ctx.drawImage(IMG[g], x * TS, y * TS);
+  }
+  if (map === room) { ctx.fillStyle = "#c4966e"; ctx.fillRect(0, 0, mw, 3); for (const [kk, x, y] of map.deco) ctx.drawImage(IMG[kk], x, y); }
+  const list = map.objs.map(o => ({ s: o.sortY, d: () => ctx.drawImage(IMG[o.img], o.x, o.y) }));
+  if (map === village) {
+    for (const key in world.crops) {
+      const c = world.crops[key]; const [x, y] = key.split(",").map(Number);
+      const img = c.stage === 0 ? "sprout" : c.stage === 1 ? "young_" + c.type : c.type;
+      list.push({ s: y * TS + 8, d: () => ctx.drawImage(IMG[img], x * TS, y * TS - (c.stage === 2 ? 3 : 1)) });
+    }
+    for (const h of world.houses) { const r = houseRect(h); list.push({ s: (h.row + 1) * TS, d: () => ctx.drawImage(makeHouse(h.W, h.H, h.roof, h.wall), r.x0, r.y0) }); }
+  }
+  const ents = map === village ? [player, ...village.ents] : [player];
+  for (const e of ents) list.push({ s: e.py + 15, d: () => {
+    ctx.fillStyle = "rgba(20,30,20,.28)"; ctx.fillRect(e.px + 4, e.py + 15, 8, 1); ctx.fillRect(e.px + 5, e.py + 16, 6, 1);
+    const fr = e.moving ? [0, 1, 0, 2][Math.floor(e.step) % 4] : 0;
+    const bob = e === player && busy?.kind === "hoe" && busy.t / busy.dur > .7 ? 1 : 0;
+    ctx.drawImage(renderChar(e === player ? cfg : e.cfg, e.dir, fr), Math.round(e.px), Math.round(e.py) - (fr ? 1 : 0) + bob);
+  } });
+  list.sort((a, b) => a.s - b.s).forEach(o => o.d());
+  drawTool(); drawFishing(now);
+  for (const p of particles) { ctx.fillStyle = `rgba(${p.col.join(",")},${Math.min(1, p.life * 3)})`; ctx.fillRect(p.x, p.y, 1.5, 1.5); }
+  if (placing) {
+    const h = ghostHouse(); const ok = canPlace(h); const r = houseRect(h);
+    ctx.globalAlpha = .72; ctx.drawImage(makeHouse(h.W, h.H, h.roof, h.wall), r.x0, r.y0); ctx.globalAlpha = 1;
+    ctx.fillStyle = ok ? "rgba(134,184,110,.28)" : "rgba(217,86,75,.38)";
+    ctx.fillRect(r.tx0 * TS, r.ty0 * TS, (r.tx1 - r.tx0 + 1) * TS, (r.ty1 - r.ty0 + 1) * TS);
+    ctx.strokeStyle = ok ? "#86b86e" : "#d9564b"; ctx.lineWidth = .6; ctx.strokeRect(r.x0 + .3, r.y0 + .3, h.W - .6, h.H - .6);
+    const st = document.getElementById("placeState");
+    st.textContent = ok ? `${h.W}×${h.H}ドット・ここに建てられる` : "ここには建てられないよ"; st.classList.toggle("bad", !ok);
+    document.getElementById("placeOk").disabled = !ok;
+  }
+  const sel = world.inv[world.sel];
+  if (!placing && !fish && !busy && sel && (ITEMS[sel.id].use || ITEMS[sel.id].seed) && !player.moving) {
+    const [tx, ty] = front(); ctx.strokeStyle = "rgba(255,244,210,.8)"; ctx.lineWidth = .6; ctx.strokeRect(tx * TS + .5, ty * TS + .5, TS - 1, TS - 1);
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (const e of ents) {
+    const sx = (e.px + 8 - camX) * scale, sy = (e.py - camY) * scale;
+    const nm = e === player ? (nameEl.value || "わたし") : e.name;
+    ctx.font = '12px "DotGothic16", sans-serif';
+    const w = ctx.measureText(nm).width + 10;
+    ctx.fillStyle = e === player ? "rgba(240,189,79,.92)" : "rgba(20,30,25,.7)";
+    ctx.fillRect(sx - w / 2, sy - 16, w, 15);
+    ctx.fillStyle = e === player ? "#3b2a21" : "#f3e6c6"; ctx.fillText(nm, sx, sy - 8);
+    if (e.say && e.say.until > performance.now()) {
+      ctx.font = e.say.alert ? 'bold 20px "DotGothic16", sans-serif' : '13px "DotGothic16", sans-serif';
+      const tw = ctx.measureText(e.say.text).width + 16;
+      ctx.fillStyle = e.say.alert ? "#f0bd4f" : "#f3e6c6"; ctx.strokeStyle = "#8b5b3c"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(sx - tw / 2, sy - 48, tw, 26, 6); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx - 5, sy - 23); ctx.lineTo(sx + 5, sy - 23); ctx.lineTo(sx, sy - 17); ctx.fill();
+      ctx.fillStyle = "#3b2a21"; ctx.fillText(e.say.text, sx, sy - 35);
+    }
+  }
+}
+
+// ---------------- wardrobe ----------------
+const OPTS = [["髪型", "hair", null], ["髪の色", "hairc", 1], ["服", "top", null], ["服の色", "topc", 1],
+              ["ボトムス", "bottom", null], ["ボトムスの色", "bottomc", 1], ["肌の色", "skin", 0]];
+const optsEl = document.getElementById("opts");
+function swatchRow(rowEl, pool, ci, onPick, labelPre, key) {
+  for (const name in pool) {
+    const b = document.createElement("button"); b.type = "button"; b.dataset.v = name; b.id = `opt-${key}-${name}`;
+    if (ci === null) { b.className = "chip"; b.textContent = name; }
+    else {
+      b.className = "sw"; b.title = name; b.setAttribute("aria-label", `${labelPre}：${name}`);
+      const v = pool[name];
+      b.style.background = typeof v === "string" ? SPECIAL_SWATCH[name] : `rgb(${(Array.isArray(v[0]) ? v[ci] : v).join(",")})`;
+    }
+    b.addEventListener("click", () => onPick(name));
+    rowEl.appendChild(b);
+  }
+}
+OPTS.forEach(([label, key, ci]) => {
+  const sec = document.createElement("div"); sec.className = "opt"; sec.innerHTML = `<h3>${label}</h3>`;
+  const row = document.createElement("div"); row.className = "row"; row.dataset.key = key;
+  swatchRow(row, POOLS[key], ci, v => { cfg[key] = v; changed(); }, label, key);
+  sec.appendChild(row); optsEl.appendChild(sec);
+});
+const note = document.createElement("p"); note.className = "note";
+note.textContent = "虹とゲーミングは特別な髪色。ゲーミングは色が流れ続けます。服は形を1つ描いて色の組を差し替える仕組みなので、新しい形や色はあとからデータで足せます。";
+optsEl.appendChild(note);
+const dirsEl = document.getElementById("dirs");
+const dirCanvases = ["down", "left", "right", "up"].map(d => { const c = document.createElement("canvas"); c.width = c.height = 16; dirsEl.appendChild(c); return [d, c]; });
+const pv = document.getElementById("pv");
+function syncUI() {
+  document.querySelectorAll("#opts .row").forEach(row => row.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(cfg[row.dataset.key] === b.dataset.v))));
+  const covers = CHAR.TOPS[cfg.top].covers;
+  document.querySelectorAll('.row[data-key="bottom"] button, .row[data-key="bottomc"] button').forEach(b => b.disabled = covers);
+}
+function changed() { syncUI(); player.cfg = cfg; store.set("komorebi-player", { cfg, name: nameEl.value }); }
+nameEl.addEventListener("input", changed);
+document.getElementById("randBtn").addEventListener("click", () => { cfg = randomCfg(); changed(); });
+document.getElementById("goBtn").addEventListener("click", () => { document.body.classList.remove("menu"); resize(); });
+document.getElementById("menuBtn").addEventListener("click", () => { document.body.classList.toggle("menu"); resize(); });
+if (matchMedia("(max-width: 820px)").matches && !hotData) document.body.classList.add("menu");
+
+const tabs = { dress: document.getElementById("tab-dress"), build: document.getElementById("tab-build") };
+function showTab(t) {
+  for (const k in tabs) { tabs[k].setAttribute("aria-selected", String(k === t)); document.getElementById("pane-" + k).hidden = k !== t; }
+  if (t === "build") drawHousePreview();
+}
+tabs.dress.addEventListener("click", () => showTab("dress")); tabs.build.addEventListener("click", () => showTab("build"));
+
+const hw = document.getElementById("hw"), hwn = document.getElementById("hwn"), hh = document.getElementById("hh"), hhn = document.getElementById("hhn");
+function syncBuild() {
+  hw.value = hwn.value = build.W; hh.value = hhn.value = build.H;
+  document.getElementById("dims").textContent = `${build.W} × ${build.H} ドット（約 ${(build.W / 16).toFixed(1)} × ${(build.H / 16).toFixed(1)} マス）`;
+  document.querySelectorAll("#roofRow button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === build.roof)));
+  document.querySelectorAll("#wallRow button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === build.wall)));
+  document.getElementById("undoHouse").disabled = !world.houses.length;
+  drawHousePreview(); store.set("komorebi-build", build);
+}
+const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(Number(v) || lo)));
+hw.addEventListener("input", () => { build.W = clampN(hw.value, 32, 160); syncBuild(); });
+hh.addEventListener("input", () => { build.H = clampN(hh.value, 32, 128); syncBuild(); });
+hwn.addEventListener("change", () => { build.W = clampN(hwn.value, 32, 160); syncBuild(); });
+hhn.addEventListener("change", () => { build.H = clampN(hhn.value, 32, 128); syncBuild(); });
+swatchRow(document.getElementById("roofRow"), ROOFS, 0, v => { build.roof = v; syncBuild(); }, "屋根", "roof");
+swatchRow(document.getElementById("wallRow"), WALLS, 0, v => { build.wall = v; syncBuild(); }, "壁", "wall");
+function drawHousePreview() {
+  const c = document.getElementById("hcv"); const img = makeHouse(build.W, build.H, build.roof, build.wall);
+  const z = Math.max(1, Math.min(4, Math.floor(300 / Math.max(build.W, build.H * 1.1))));
+  c.width = build.W; c.height = build.H; c.style.width = build.W * z + "px"; c.style.height = build.H * z + "px";
+  const x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0);
+}
+document.getElementById("placeStart").addEventListener("click", startPlace);
+document.getElementById("undoHouse").addEventListener("click", () => {
+  if (!world.houses.length) return;
+  world.houses.pop(); rebuildSolid(); saveWorld(); syncBuild(); toast(null, "家を撤去した");
+});
+
+function animPreview(now) {
+  const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
+  const p = pv.getContext("2d"); p.clearRect(0, 0, 16, 16); p.drawImage(renderChar(cfg, "down", 0), 0, 0);
+  for (const [d, c] of dirCanvases) { const x = c.getContext("2d"); x.clearRect(0, 0, 16, 16); x.drawImage(renderChar(cfg, d, fr), 0, 0); }
+  requestAnimationFrame(animPreview);
+}
+
+window.claude?.hot?.snapshot?.(() => ({ cfg, name: nameEl.value, world, pos: { map: map === room ? "room" : "village", x: player.x, y: player.y, dir: player.dir } }));
+if (hotData?.pos) {
+  const p = hotData.pos; if (p.map === "room") enter(room, p.x, p.y, p.dir);
+  else Object.assign(player, { x: p.x, y: p.y, fx: p.x, fy: p.y, px: p.x * TS, py: p.y * TS, dir: p.dir || "down" });
+}
+syncUI(); syncBuild(); renderHotbar();
+Promise.all(Object.values(IMG).map(im => im.decode().catch(() => {}))).then(() => {
+  resize(); drawHousePreview(); requestAnimationFrame(frame); requestAnimationFrame(animPreview);
+});
+window.__game = { world, player, get fish() { return fish; }, act, village, get map() { return map; } };
+})();
+</script>

@@ -1,0 +1,15 @@
+
+.vol { width: 90px; accent-color: var(--lantern); }
+#bgmBtn[aria-pressed="true"] { background: var(--lantern); color: var(--ink); border-bottom-color: var(--wood); }
+#bgmBtn { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 820px) { .vol { display: none; } #bgmBtn { max-width: 130px; font-size: .8rem; padding: 8px 10px; } }
+/* toast never blocks taps; keep it clear of the touch controls */
+.toast { pointer-events: none; max-width: calc(100% - 24px); box-sizing: border-box; white-space: normal; line-height: 1.4; }
+.toast span { min-width: 0; }
+@media (hover: none), (pointer: coarse) {
+  .toast { bottom: 172px; font-size: .9rem; }
+  .toast img { width: 36px; height: 36px; flex: none; }
+  .toast img.wide { width: 72px; }
+  .placebar, .placebar.decorbar { top: auto; bottom: 172px; flex-wrap: wrap; justify-content: center; white-space: normal; max-width: calc(100% - 24px); box-sizing: border-box; }
+}
+.toast, .placebar { width: max-content; }

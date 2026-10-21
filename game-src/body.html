@@ -1,0 +1,120 @@
+<header>
+  <h1>こもれび村</h1>
+  <span class="sub">のんびり開拓、ときどき一攫千金（試作版）</span>
+  <span class="spacer"></span>
+  <button class="btn ghost" id="bgmBtn" type="button" aria-pressed="false">♪ BGM オフ</button>
+  <input id="bgmVol" class="vol" type="range" min="0" max="1" step="0.05" value="0.5" aria-label="BGMの音量">
+  <button class="btn ghost" id="menuBtn" type="button">メニュー</button>
+</header>
+<main>
+  <div class="stage">
+    <div class="view">
+      <canvas id="game" aria-label="村のマップ"></canvas>
+      <div class="hud">
+        <div class="where" id="where">こもれび村</div>
+        <div id="clock">春 1日目 6:00</div>
+        <div class="money" id="money">500 G</div>
+        <div class="hpwrap" id="hpwrap" hidden><span>HP</span><span class="hpbar"><i id="hpbar"></i></span><b id="hpnum">100</b></div>
+        <div class="evt" id="evt" hidden></div>
+        <div class="debt" id="debt" hidden></div>
+        <div class="rep" id="rep"></div>
+      </div>
+      <div class="hint">移動：矢印 / WASD　使う・調べる：Space / Z<br>持ち物：1〜9・0 / Q・E　閉じる：Esc</div>
+      <div class="placebar" id="placebar" hidden>
+        <span class="state" id="placeState">ここに建てられるよ</span>
+        <button class="btn" id="placeOk" type="button">建てる</button>
+        <button class="btn light" id="placeNo" type="button">やめる</button>
+      </div>
+      <div class="placebar decorbar" id="decorbar" hidden>
+        <span class="state">模様替え中：家具を持って向いた先にⒶ／家具に向かってⒶで片付け</span>
+        <button class="btn light" id="decorEnd" type="button">終わる</button>
+      </div>
+      <div class="tut" id="tut" hidden role="note" aria-live="polite">
+        <div class="tut-h"><span class="tut-n" id="tutN"></span><b id="tutT"></b></div>
+        <p id="tutB"></p>
+        <button class="btn light" id="tutSkip" type="button">スキップ</button>
+      </div>
+      <div class="toast off" id="toast" role="status"><img id="toastImg" alt=""><span id="toastText"></span></div>
+      <div class="modal" id="modal" hidden>
+        <div class="mbox" id="mbox" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+          <div class="mhead"><h2 id="mtitle"></h2><button class="btn light" id="mclose" type="button">閉じる</button></div>
+          <div class="mbody" id="mbody"></div>
+        </div>
+      </div>
+      <div class="pad">
+        <div class="dpad">
+          <button data-d="up" type="button" aria-label="上">▲</button>
+          <button data-d="left" type="button" aria-label="左">◀</button>
+          <button data-d="right" type="button" aria-label="右">▶</button>
+          <button data-d="down" type="button" aria-label="下">▼</button>
+        </div>
+        <button class="abtn" id="abtn" type="button" aria-label="使う・調べる">A</button>
+      </div>
+    </div>
+    <div class="hotbar" id="hotbar" aria-label="持ち物"></div>
+  </div>
+
+  <section class="board" aria-label="メニュー">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-dress" aria-selected="true" type="button">着せ替え</button>
+      <button class="tab" role="tab" id="tab-build" aria-selected="false" type="button">建築</button>
+      <button class="tab" role="tab" id="tab-craft" aria-selected="false" type="button">クラフト</button>
+      <button class="tab" role="tab" id="tab-village" aria-selected="false" type="button">村</button>
+      <button class="tab" role="tab" id="tab-log" aria-selected="false" type="button">記録</button>
+      <button class="tab" role="tab" id="tab-settings" aria-selected="false" type="button">設定</button>
+    </div>
+    <div class="pane" id="pane-dress">
+      <div class="head">
+        <canvas id="pv" width="16" height="16"></canvas>
+        <div class="meta">
+          <label class="lbl" for="name">なまえ</label>
+          <input id="name" type="text" maxlength="8" value="りこ" autocomplete="off">
+          <div class="dirs" id="dirs"></div>
+        </div>
+      </div>
+      <div class="opts" id="opts"></div>
+      <div class="foot">
+        <button class="btn ghost" id="randBtn" type="button">おまかせ</button>
+        <button class="btn" id="goBtn" type="button">村へ出かける</button>
+      </div>
+    </div>
+    <div class="pane" id="pane-build" hidden>
+      <div class="opts" id="roomPanel" hidden>
+        <div class="dims" id="roomTitle"></div>
+        <button class="btn" id="decorToggle" type="button" aria-pressed="false">模様替えモードにする</button>
+        <p class="note">模様替えモード中は、家具を持って向いた先でⒶを押すと置けます。置いてある家具に向かってⒶを押すと持ち物に戻ります。家具はよろず屋で買うか、クラフトで作れます。</p>
+        <div class="opt"><h3>壁紙</h3><div class="row" id="wpRow"></div></div>
+        <div class="opt"><h3>床</h3><div class="row" id="flRow"></div></div>
+      </div>
+      <div class="opts" id="housePanel">
+        <div class="hprev"><canvas id="hcv"></canvas></div>
+        <div class="dims" id="dims">72 × 64 ドット</div>
+        <div class="cost" id="cost"></div>
+        <div class="size">
+          <label class="lbl" for="hw">横幅</label><input id="hw" type="range" min="32" max="160" step="1" value="72"><input id="hwn" type="number" min="32" max="160" value="72" aria-label="横幅（ドット）">
+          <label class="lbl" for="hh">高さ</label><input id="hh" type="range" min="32" max="128" step="1" value="64"><input id="hhn" type="number" min="32" max="128" value="64" aria-label="高さ（ドット）">
+        </div>
+        <div class="opt"><h3>屋根の色</h3><div class="row" id="roofRow"></div></div>
+        <div class="opt"><h3>壁の色</h3><div class="row" id="wallRow"></div></div>
+        <p class="note">1マスは16ドット。家はキャラのすぐ上（北）に、ドアがキャラの目の前に来るように建ちます。木材と石を使います。建てた家には持ち主の名前が付き、ドアから中に入れます。</p>
+      </div>
+      <div class="foot" id="buildFootIn" hidden><p class="note">部屋の広さは家の大きさで決まります。</p></div>
+      <div class="foot" id="buildFootOut">
+        <button class="btn ghost" id="undoHouse" type="button">最後の家を撤去</button>
+        <button class="btn" id="placeStart" type="button">置く場所を選ぶ</button>
+      </div>
+    </div>
+    <div class="pane" id="pane-craft" hidden>
+      <div class="opts" id="craftList"></div>
+    </div>
+    <div class="pane" id="pane-village" hidden>
+      <div class="opts" id="villageBody"></div>
+    </div>
+    <div class="pane" id="pane-log" hidden>
+      <div class="opts" id="logBody"></div>
+    </div>
+    <div class="pane" id="pane-settings" hidden>
+      <div class="opts" id="settingsBody"></div>
+    </div>
+  </section>
+</main>

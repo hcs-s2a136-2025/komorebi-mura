@@ -1,0 +1,38 @@
+
+/* ---- v8 online & feedback ---- */
+#fbBtn { position: relative; }
+.dot8 { position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; border-radius: 50%; background: #e2574b; box-shadow: 0 0 0 2px var(--bg-2, #22332b); }
+.hud .onl8 { font-size: .72rem; color: #3a5f9e; pointer-events: auto; }
+.ebar8 { position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; width: min(380px, calc(100% - 24px)); z-index: 4; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: calc(100% - 24px);
+  background: rgba(243, 230, 198, .97); border: 3px solid var(--wood-dark); border-radius: 10px; padding: 8px; box-sizing: border-box; }
+.ebar8 button { font-family: var(--f-pixel); font-size: .95rem; min-width: 44px; padding: 6px 10px; border: 2px solid var(--panel-2); border-radius: 8px; background: #fffaf0; color: var(--ink); }
+.rpad8 { display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+.ebtn8 { pointer-events: auto; width: 44px; height: 44px; border-radius: 50%; border: 0; border-bottom: 3px solid var(--wood); background: rgba(243, 230, 198, .9); color: var(--ink); font-size: 1.1rem; }
+@media (hover: none), (pointer: coarse) { .ebar8 { bottom: 180px; } body.pad-large .ebar8 { bottom: 222px; } }
+.fbcats { margin: 4px 0 8px; }
+.fbctx { display: flex; gap: 6px; align-items: flex-start; font-size: .78rem; color: var(--ink-soft); line-height: 1.5; margin: 4px 0; }
+.fbctx input { width: auto; margin-top: 3px; }
+#mbody textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: .88rem; border: 2px solid var(--wood); border-radius: 6px; background: #fffaf0; color: var(--ink); padding: 6px 8px; }
+#mbody input[type="text"] { width: 100%; box-sizing: border-box; }
+.fbt8 { border: 2px solid var(--panel-2); border-radius: 8px; background: #fffaf0; margin-bottom: 8px; overflow: hidden; }
+.fbt8.new { border-color: var(--lantern); }
+.fbh8 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; font: inherit; color: var(--ink); cursor: pointer; }
+.fbh8 b { flex: 1; min-width: 120px; font-weight: 700; font-size: .88rem; }
+.fbh8 small { width: 100%; color: var(--ink-soft); font-size: .7rem; }
+.cat8, .st8, .new8 { font-size: .68rem; padding: 1px 7px; border-radius: 999px; background: var(--panel-2); white-space: nowrap; }
+.cat8.BUG { background: #ffd9d3; } .cat8.IDEA { background: #d8ecff; }
+.st8.WIP { background: #d8ecff; } .st8.DONE { background: #dff0d4; } .st8.OPEN { background: #ffe8a8; }
+.new8 { background: #e2574b; color: #fff; }
+.chat8 { display: flex; flex-direction: column; gap: 8px; padding: 4px 10px 10px; border-top: 1px dashed var(--panel-2); }
+.m8 { max-width: 85%; }
+.m8 small { display: block; font-size: .66rem; color: var(--ink-soft); margin-bottom: 2px; }
+.m8 div { white-space: pre-wrap; font-size: .84rem; line-height: 1.6; padding: 6px 10px; border-radius: 10px; background: #f5ecd6; }
+.m8.me { align-self: flex-end; text-align: right; } .m8.me div { text-align: left; background: #fff1c4; }
+.m8.adm div { background: #e5f0fb; }
+@media (max-width: 820px) {
+  header { flex-wrap: nowrap; gap: 6px; }
+  header h1 { font-size: 1.15rem; white-space: nowrap; }
+  header .sub { display: none; }
+  header .btn { padding: 7px 9px; font-size: .78rem; white-space: nowrap; flex: none; }
+  #bgmBtn { max-width: 92px; }
+}

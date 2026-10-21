@@ -1,0 +1,6 @@
+
+.hpwrap { display: flex; align-items: center; gap: 6px; }
+.hpbar { flex: 1; height: 8px; min-width: 80px; background: #5a3a28; border-radius: 4px; overflow: hidden; display: inline-block; }
+.hpbar i { display: block; height: 100%; background: linear-gradient(#ff8a7a, #d9564b); width: 100%; }
+.hud .evt { color: #b03a6e; font-size: .78rem; }
+.dex small { display: block; font-size: .6rem; color: var(--ink-soft); line-height: 1.3; margin-top: 2px; }

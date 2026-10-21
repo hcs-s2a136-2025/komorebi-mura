@@ -1,0 +1,63 @@
+package jp.komorebi.casino;
+
+import java.security.SecureRandom;
+import java.util.Map;
+
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import jp.komorebi.ws.GameSocketHandler;
+import jp.komorebi.ws.PlayerSession;
+
+/** みんなのどんぐりBJの卓を1つ持っていて、WebSocket とつなぐ係。ルールは {@link BjGame} */
+@Service
+public class BjTableService {
+
+    private final ObjectProvider<GameSocketHandler> hub;
+    private final ObjectMapper om;
+    private final BjGame game;
+
+    public BjTableService(ObjectProvider<GameSocketHandler> hub, ObjectMapper om) {
+        this.hub = hub;
+        this.om = om;
+        this.game = new BjGame(new SecureRandom(), new BjGame.Out() {
+            @Override
+            public void toAll(Map<String, Object> msg) {
+                GameSocketHandler h = hub.getIfAvailable();
+                if (h != null) h.broadcast(toNode(msg), null);
+            }
+
+            @Override
+            public void toPlayer(long playerId, Map<String, Object> msg) {
+                GameSocketHandler h = hub.getIfAvailable();
+                if (h != null) h.sendToPlayer(playerId, toNode(msg));
+            }
+        });
+    }
+
+    private ObjectNode toNode(Map<String, Object> msg) {
+        return om.valueToTree(msg);
+    }
+
+    public void command(PlayerSession from, JsonNode msg) {
+        game.command(from.playerId(), from.name(), msg.path("act").asText(""), msg.path("amount").asLong(0), System.currentTimeMillis());
+    }
+
+    @Scheduled(fixedDelay = 500)
+    public void tick() {
+        final GameSocketHandler h = hub.getIfAvailable();
+        if (h == null) return;
+        game.tick(System.currentTimeMillis(), id -> h.isOnline(id));
+    }
+
+    /** 管理人室用：いま座っている人数 */
+    public int seated() {
+        Object seats = game.state(System.currentTimeMillis()).get("seats");
+        return seats instanceof java.util.List<?> l ? l.size() : 0;
+    }
+}

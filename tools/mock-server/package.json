@@ -1,0 +1,6 @@
+{
+  "name": "komorebi-mock-server",
+  "private": true,
+  "description": "ゲーム側の動作確認用。node mock.js ../../src/main/resources/static/index.html 8099 で起動（招待コード komorebi）",
+  "dependencies": { "ws": "8.18.0" }
+}

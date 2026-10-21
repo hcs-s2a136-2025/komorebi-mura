@@ -1,0 +1,15 @@
+
+/* ---- v9 playtest feedback ---- */
+.selpop9 { position: absolute; bottom: 8px; transform: translateX(-50%); z-index: 5; pointer-events: none; white-space: nowrap;
+  background: rgba(59, 42, 33, .9); color: #fff4d2; font-family: var(--f-pixel); font-size: .82rem; padding: 3px 10px; border-radius: 6px; transition: opacity .35s; }
+.selpop9::after { content: ""; position: absolute; left: 50%; bottom: -5px; margin-left: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: rgba(59, 42, 33, .9); }
+.selpop9.off { opacity: 0; }
+.tut { background: rgba(255, 250, 240, .86); backdrop-filter: blur(2px); pointer-events: none; }
+.tut .btn { pointer-events: auto; margin-left: 6px; }
+.tut.low { top: auto !important; bottom: 12px; }
+@media (hover: none), (pointer: coarse) { .tut.low { bottom: 184px; } body.pad-large .tut.low { bottom: 226px; } }
+.tutpill9 { position: absolute; right: 10px; top: 10px; z-index: 3; max-width: calc(100% - 200px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: rgba(255, 250, 240, .9); color: var(--ink); border: 2px solid var(--wood-dark); border-radius: 999px; padding: 4px 12px; font-family: var(--f-pixel); font-size: .78rem; }
+@media (max-width: 820px) { .tutpill9 { top: auto; bottom: 184px; right: 10px; max-width: calc(100% - 20px); } }
+.need .own9 { font-size: .68rem; color: var(--ink-soft); margin-left: 2px; }
+.bjsum { display: block; font-size: .76rem; line-height: 1.6; margin-top: 4px; opacity: .92; }

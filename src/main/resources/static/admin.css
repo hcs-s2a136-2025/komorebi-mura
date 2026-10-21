@@ -1,0 +1,52 @@
+:root { --ink: #3b2a21; --soft: #7a6450; --panel: #f3e6c6; --panel2: #e2cfa4; --wood: #8b5b3c; --lantern: #f0bd4f; --bg: #1c2b24; --bad: #d9564b; --leaf: #5c9f60; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif; }
+body.center { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--lantern); flex-wrap: wrap; }
+.bar h1 { font-size: 1.2rem; margin: 0; }
+.bar .sub { color: #cfd8c8; font-size: .8rem; }
+.grow { flex: 1; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 16px 40px; display: grid; gap: 14px; }
+.card { background: var(--panel); border: 3px solid var(--wood); border-radius: 10px; padding: 14px 16px; }
+.card h2 { font-size: 1rem; margin: 0 0 10px; }
+.login { width: min(360px, 100%); display: grid; gap: 10px; }
+.login h1 { font-size: 1.1rem; margin: 0 0 4px; }
+label { display: grid; gap: 4px; font-size: .85rem; color: var(--soft); }
+input, select, textarea { font: inherit; padding: 8px 10px; border: 2px solid var(--wood); border-radius: 6px; background: #fffaf0; color: var(--ink); width: 100%; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.row input { flex: 1; min-width: 200px; }
+.row select { width: auto; }
+.btn { background: var(--lantern); color: var(--ink); border: 0; border-bottom: 3px solid var(--wood); padding: 8px 14px; border-radius: 6px; font: inherit; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.btn.ghost { background: #fffaf0; border-bottom-color: var(--panel2); }
+.muted { color: var(--soft); font-size: .85rem; }
+.err { color: var(--bad); margin: 0; } .ok { color: var(--leaf); margin: 0; }
+.flash { background: #eef7e6; border: 2px solid var(--leaf); border-radius: 8px; padding: 8px 12px; margin: 0; }
+.badge { background: var(--bad); color: #fff; border-radius: 999px; padding: 2px 8px; font-size: .75rem; margin-left: 6px; }
+.online { margin: 0; padding-left: 18px; }
+.thread { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 10px; align-items: center; padding: 10px 12px; margin-top: 8px; background: #fffaf0; border: 2px solid var(--panel2); border-radius: 8px; color: inherit; text-decoration: none; }
+.thread.unread { border-color: var(--lantern); box-shadow: 0 0 0 2px var(--lantern) inset; }
+.thread .ttl { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread .who { grid-column: 2; font-size: .78rem; color: var(--soft); }
+.thread .st { grid-row: 1 / span 2; grid-column: 3; }
+.cat, .st { font-size: .72rem; padding: 2px 8px; border-radius: 999px; background: var(--panel2); white-space: nowrap; }
+.cat.BUG { background: #ffd9d3; } .cat.IDEA { background: #d8ecff; }
+.st.OPEN { background: #ffe8a8; } .st.WIP { background: #d8ecff; } .st.DONE { background: #dff0d4; } .st.CLOSED { background: #e4e0d8; }
+.meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; }
+pre { white-space: pre-wrap; background: #fffaf0; border-radius: 6px; padding: 8px; font-size: .8rem; margin: 6px 0 0; }
+.chat { display: grid; gap: 10px; }
+.msg { max-width: 80%; }
+.msg.them { justify-self: start; } .msg.me { justify-self: end; text-align: right; }
+.msg .who { font-size: .72rem; color: var(--soft); margin-bottom: 2px; }
+.msg .body { white-space: pre-wrap; text-align: left; padding: 8px 12px; border-radius: 10px; background: #fffaf0; border: 2px solid var(--panel2); line-height: 1.6; }
+.msg.me .body { background: #fff1c4; border-color: var(--lantern); }
+.reply { display: grid; gap: 8px; margin-top: 4px; }
+.reply .btn { justify-self: end; }
+.post { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 8px 10px; margin-top: 6px; background: #fffaf0; border: 2px solid var(--panel2); border-radius: 8px; }
+.post .pbody { grid-column: 1; white-space: pre-wrap; line-height: 1.6; }
+.post form { grid-column: 2; grid-row: 1 / span 2; }
+
+/* v0.9.3 プレイヤー一覧 */
+table.players { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.players th, table.players td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(0, 0, 0, .08); vertical-align: middle; }
+table.players td.acts { display: flex; gap: 6px; flex-wrap: wrap; }
+table.players td.acts form { display: flex; gap: 4px; align-items: center; margin: 0; }

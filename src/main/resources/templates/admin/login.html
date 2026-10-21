@@ -10,6 +10,7 @@
     <h1>こもれび村 管理人室</h1>
     <p class="err" th:if="${param.error}">ユーザー名かパスワードがちがいます</p>
     <p class="ok" th:if="${param.logout}">ログアウトしました</p>
+    <p class="err" th:if="${param.expired}">ページの有効期限が切れたみたい。もう一度ログインしてね</p>
     <label>ユーザー名<input name="username" autocomplete="username" required autofocus></label>
     <label>パスワード<input name="password" type="password" autocomplete="current-password" required></label>
     <button class="btn" type="submit">ログイン</button>

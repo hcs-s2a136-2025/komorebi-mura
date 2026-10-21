@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CsrfException;
 
 /**
  * 管理画面 /admin/** だけログインが必要。
@@ -39,6 +40,14 @@ public class SecurityConfig {
                 .logoutUrl("/admin/logout")
                 .logoutSuccessUrl("/admin/login?logout"))
             .csrf(c -> c.ignoringRequestMatchers("/api/**", "/ws/**", "/ws"))
+            // 画面を長く開いたままにしてCSRFの合い言葉が切れたときは、白いエラー画面ではなくログイン画面に戻す
+            .exceptionHandling(e -> e.accessDeniedHandler((req, res, ex) -> {
+                if (ex instanceof CsrfException) {
+                    res.sendRedirect(req.getContextPath() + "/admin/login?expired");
+                } else {
+                    res.sendError(403);
+                }
+            }))
             .headers(h -> h.frameOptions(fo -> fo.sameOrigin()));
         return http.build();
     }

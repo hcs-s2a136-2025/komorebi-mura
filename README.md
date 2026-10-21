@@ -54,7 +54,6 @@ VS Code なら、`KomorebiApplication.java` を開いて「Run」でもOKです�
 | `INVITE_CODE` | 友達に教える合言葉 | `komorebi` |
 | `ADMIN_USER` / `ADMIN_PASSWORD` | 管理人室のログイン | `admin` / 起動のたびにランダム |
 | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | データベース | H2（`./data` のファイル） |
-| `GAME_VERSION` | ゲームの版。上げると、つないでいる人に「読み込み直してね」が出る | `0.9.6` |
 | `TIME_RATE` | 現実の1秒で進むゲーム内の分数。1.0で1日が約18分、2.0で約9分 | `1.0` |
 | `ALLOWED_ORIGINS` | WebSocketを受け付けるページ | `*` |
 | `PORT` | ポート | `8080` |
@@ -133,7 +132,7 @@ python game-src/build.py      # → src/main/resources/static/index.html を作�
 ```
 
 - ドット絵を足すときは `export.py` を直して `python game-src/export.py game-src` で `data.js` を作り直します（Pillow が必要）
-- 公開したら `GAME_VERSION` と `game.js` の `CLIENT_VERSION` を同じ値に上げると、つないでいる人に更新のお知らせが出ます
+- 公開したら `application.properties` の `komorebi.version` と `game.js` の `CLIENT_VERSION` を同じ値に上げると、つないでいる人に更新のお知らせが出ます
 
 ---
 

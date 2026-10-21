@@ -15,6 +15,7 @@ import jp.komorebi.ws.PlayerSession;
 /**
  * {"type":"house","act":"get","key":"48,21"} … 家の中身をもらう
  * {"type":"house","act":"put","key":"48,21","layout":{...},"seed":{"storage":{...},"priv":{...}}} … 持ち主が家具の並びを送る
+ * {"type":"house","act":"returns"} … 共有の村のリセットで消えた家の箱の中身を受け取る → {"type":"houseReturn","items":[{id,n}]}
  * 返事と、同じ家の中にいる人へのお知らせは {"type":"house","key":...,"layout":...,"storage":[...]}（持ち主には "priv" も）
  */
 @Component
@@ -33,9 +34,18 @@ public class HouseHandler implements MessageHandler {
 
     @Override
     public void handle(PlayerSession from, JsonNode msg, GameSocketHandler hub) throws Exception {
+        long me = from.playerId();
+        if ("returns".equals(msg.path("act").asText(""))) {
+            Map<String, Long> items = houses.takeReturns(me);
+            if (items.isEmpty()) return;
+            ObjectNode r = hub.json().createObjectNode().put("type", "houseReturn");
+            var list = r.putArray("items");
+            items.forEach((id, n) -> list.addObject().put("id", id).put("n", n));
+            hub.send(from, r);
+            return;
+        }
         String key = msg.path("key").asText("");
         if (!HouseBook.validKey(key)) return;
-        long me = from.playerId();
         if (!houses.exists(key)) { hub.send(from, hub.json().createObjectNode().put("type", "house").put("key", key).put("missing", true)); return; }
         boolean owner = houses.isOwner(key, me);
         switch (msg.path("act").asText("")) {

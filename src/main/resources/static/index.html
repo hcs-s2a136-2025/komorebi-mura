@@ -4463,7 +4463,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.9.6";
+const CLIENT_VERSION = "0.9.7";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5000,10 +5000,52 @@ function refreshShared(ground) {
   if (shLostCrops) { F7.notify(`共有の村に合わせて、畑だった場所の作物が${shLostCrops}つ片付けられた`, "wither"); shLostCrops = 0; }
   saveWorld(); if (!$("pane-build").hidden) syncBuild();
 }
-function onWelcomeWorld(snap) {
+// v18: 共有の村を最初からにする（キャラクター・持ち物・お金・自分の家はそのまま）
+function homeStore18(id, n) {
+  if (!ITEMS[id] || !(n > 0)) return 0;
+  const R = roomFor("home"); R.storage = R.storage || [];
+  const s = R.storage.find(x => x && x.id === id); if (s) s.n += n; else R.storage.push({ id, n });
+  return n;
+}
+function freshShared18(why) {
+  pushBackup(why);
+  // 建てた家の家具・箱・水槽の魚は、自分の家の収納箱へ（最初からある家の家具は除く）
+  let back = 0;
+  for (const key of Object.keys(world.rooms || {})) {
+    if (key === "home") continue;
+    const R = world.rooms[key];
+    const left = { bed: 1, window: 1 };
+    for (const f of R.furn || []) { if (left[f.id] > 0) { left[f.id]--; continue; } if (ITEMS["f_" + f.id]) back += homeStore18("f_" + f.id, 1); }
+    for (const s of [...(R.storage || []), ...(R.priv || [])]) if (s) back += homeStore18(s.id, s.n);
+    for (const tank of Object.values(R.aqua || {})) for (const id of tank || []) back += homeStore18(id, 1);
+    delete world.rooms[key];
+  }
+  if (map === room && roomKey !== "home") { roomKey = "home"; const b = lastBack || [44, 30]; enter(village, b[0], b[1], "down"); }
+  world.terrain = {}; world.bridges = {}; world.saplings = {}; world.fences = {}; world.paths = {}; world.stakes = {}; world.houses = []; world.sharedMeta = {};
+  world.trees = Object.fromEntries([...CHOP_TREES, ...NEW_TREES].map(([x, y]) => [x + "," + y, { hp: 3, cut: 0 }]));
+  world.rocks = {}; ROCK_SPOTS.forEach(([x, y]) => world.rocks[x + "," + y] = { type: Math.random() < .3 ? "ore" : "rock", hp: 3 });
+  const oldT = world.tilled; world.tilled = Object.fromEntries(FIELD.map(k => [k, { wet: !!oldT[k]?.wet }]));
+  for (const k in world.crops) if (!world.tilled[k]) delete world.crops[k];
+  world.quarry = { level: 1, m: { 1: 0, 2: 0, 3: 0 } };
+  if (back) F7.notify(`建てた家にあった家具や箱の中身（${back}個）は、自分の家の収納箱に戻しておいたよ`, null);
+  saveWorld();
+}
+function returnItems18(items) {
+  let n = 0;
+  for (const it of Array.isArray(items) ? items.slice(0, 200) : []) if (it && typeof it.id === "string" && Number.isFinite(it.n)) n += homeStore18(it.id, Math.min(99999, Math.floor(it.n)));
+  if (n) { saveWorld(); F7.notify(`村が最初からになる前に箱へ入れていた物（${n}個）が、自分の家の収納箱に届いたよ`, null); }
+}
+function onWelcomeWorld(snap, epoch) {
+  if (Number.isFinite(epoch) && (world.sharedEpoch || 0) !== epoch) {
+    if (world.sharedJoined || epoch > 0) {
+      freshShared18("共有の村が最初からになる前");
+      F7.notify("共有の村が最初からになっていたよ。持ち物やお金、自分の家はそのままだから安心してね", null);
+    }
+    world.sharedEpoch = epoch; saveWorld();
+  }
   const pending = F11.synced ? diffShared() : [];
   F11.synced = false;
-  if (!snap || !Object.keys(snap).some(L => Object.keys(snap[L] || {}).length)) {
+  if (!snap || !SH_LAYERS.some(L => Object.keys(snap[L] || {}).length)) {
     shLast = {}; F11.synced = true; sendEdits(diffShared());
     F7.notify("この村がみんなの共有の村になったよ。地形や木・家の変化はみんなに届きます", null);
     return;
@@ -5125,7 +5167,8 @@ const _handle8 = handle8;
 handle8 = m => {
   _handle8(m);
   if (m.type === "welcome") {
-    onWelcomeWorld(m.world);
+    onWelcomeWorld(m.world, m.worldEpoch);
+    send8({ type: "house", act: "returns" });
     chatLog.length = 0; (m.chat || []).forEach(c => chatLog.push({ name: c.name, text: c.text, at: 0 })); renderChat();
   }
   else if (m.type === "edits") onEdits(m);
@@ -5139,16 +5182,11 @@ handle8 = m => {
     const memo = document.querySelector("#memo11"); if (memo && modalOpen) F11.wireMemo($("mbody"));
   }
   else if (m.type === "worldReset") {
-    pushBackup("共有の村がリセットされる前");
-    world.terrain = {}; world.bridges = {}; world.saplings = {}; world.fences = {}; world.paths = {}; world.stakes = {}; world.houses = []; world.sharedMeta = {};
-    world.trees = Object.fromEntries([...CHOP_TREES, ...NEW_TREES].map(([x, y]) => [x + "," + y, { hp: 3, cut: 0 }]));
-    world.rocks = {}; ROCK_SPOTS.forEach(([x, y]) => world.rocks[x + "," + y] = { type: Math.random() < .3 ? "ore" : "rock", hp: 3 });
-    const oldT = world.tilled; world.tilled = Object.fromEntries(FIELD.map(k => [k, { wet: !!oldT[k]?.wet }]));
-    for (const k in world.crops) if (!world.tilled[k]) delete world.crops[k];
-    world.quarry = { level: 1, m: { 1: 0, 2: 0, 3: 0 } };
+    freshShared18("共有の村がリセットされる前");
     F11.synced = false; shLast = {}; refreshShared(true);
-    toast(null, "管理人が共有の村をリセットしました。つなぎ直します"); if (ws8) ws8.close();
+    toast(null, "管理人が共有の村を最初からにしました。つなぎ直します"); if (ws8) ws8.close();
   }
+  else if (m.type === "houseReturn") returnItems18(m.items);
 };
 F11.ready = true;
 
@@ -6047,7 +6085,7 @@ async function cloudPush14(force) {
   cloudBusy14 = false;
 }
 F14.push = cloudPush14; F14.load = cloudLoad14;
-const SHARED_KEYS14 = ["terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths", "stakes", "tilled", "houses", "quarry", "sharedMeta", "sharedJoined"];
+const SHARED_KEYS14 = ["terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths", "stakes", "tilled", "houses", "quarry", "sharedMeta", "sharedJoined", "sharedEpoch"];
 F14.keepShared = (from, to) => { for (const k of SHARED_KEYS14) if (from[k] !== undefined) to[k] = from[k]; if (to.tilled) for (const k in to.tilled) to.tilled[k] = { wet: false }; };
 setInterval(() => cloudPush14(false), 15000);
 document.addEventListener("visibilitychange", () => { if (document.hidden) cloudPush14(false); });
@@ -6149,7 +6187,7 @@ F7.renderSettings = () => {
     if (!armed) { armed = true; q("#clDel").textContent = "もう一度押すと消す"; q("#clNote").textContent = "サーバーとこの端末の、持ち物・お金・畑・着せ替えがすべて最初に戻ります（共有の村と家の場所はそのまま）。"; return; }
     try { await api("/api/save", { method: "DELETE" }); } catch (e) { q("#clNote").textContent = "消せなかった…つながっているか確かめてね"; return; }
     pushBackup("データを消す前");
-    const keep = { terrain: world.terrain, bridges: world.bridges, trees: world.trees, saplings: world.saplings, rocks: world.rocks, fences: world.fences, paths: world.paths, stakes: world.stakes, houses: world.houses, quarry: world.quarry, sharedMeta: world.sharedMeta, sharedJoined: world.sharedJoined };
+    const keep = { terrain: world.terrain, bridges: world.bridges, trees: world.trees, saplings: world.saplings, rocks: world.rocks, fences: world.fences, paths: world.paths, stakes: world.stakes, houses: world.houses, quarry: world.quarry, sharedMeta: world.sharedMeta, sharedJoined: world.sharedJoined, sharedEpoch: world.sharedEpoch };
     const fresh = defaultWorld(); Object.assign(fresh, keep); fresh.day = world.day; fresh.time = world.time; fresh.weather = world.weather;
     loadSave({ world: fresh }, "データを消す前");
     cloud14 = { id: onl.id, rev: 0 }; store.set(CL_KEY, cloud14); cloudLast14 = ""; cloudPush14(true);

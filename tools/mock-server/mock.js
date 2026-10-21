@@ -31,7 +31,7 @@ const RATE = +process.argv[5] || 1;
 const clock = { day: 1, start: Date.now(), weather: "sun" };
 const ctime = () => 360 + (Date.now() - clock.start) / 1000 * RATE;
 const cstate = () => ({ day: clock.day, time: Math.min(1439.9, ctime()), rate: RATE, weather: clock.weather });
-const sessions = new Set(); let shared = {}; const chat = []; const board = []; let bid = 1;
+const sessions = new Set(); let shared = {}; let epoch = 0; const returns = new Map(); const chat = []; const board = []; let bid = 1;
 const json = (res, code, obj) => { res.writeHead(code, { "Content-Type": "application/json" }); res.end(obj === undefined ? "" : JSON.stringify(obj)); };
 const body = req => new Promise(r => { let d = ""; req.on("data", c => d += c); req.on("end", () => { try { r(JSON.parse(d || "{}")); } catch (e) { r({}); } }); });
 const who = req => players.get(req.headers["x-player-token"]);
@@ -55,7 +55,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
   if (p === "/mock/world") return json(res, 200, shared);
   if (p === "/mock/rooms") return json(res, 200, Object.fromEntries([...rooms].map(([k, r]) => [k, r])));
-  if (p === "/mock/reset") { shared = {}; rooms.clear(); for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
+  if (p === "/mock/reset") { for (const [k, r] of rooms) { const o = (houseOf(k) || {}).ownerId; if (!(o > 0)) continue; const to = returns.get(o) || {}; for (const [id, n] of [...Object.entries(r.shared), ...Object.entries(r.priv)]) to[id] = (to[id] || 0) + n; returns.set(o, to); } shared = {}; rooms.clear(); epoch++; for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
   if (p === "/mock/notice") { for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "notice", text: u.searchParams.get("t") })); return json(res, 200, {}); }
   const pl = who(req); if (p.startsWith("/api/") && !pl) return json(res, 401, { message: "もう一度参加してください" });
   if (p === "/api/session") return json(res, 200, { id: pl.id, name: pl.name, version: VERSION, unread: threads.filter(t => t.player === pl && t.playerUnread).length, hasPass: !!pl.pass });
@@ -87,7 +87,7 @@ wss.on("connection", s => {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, chat: chat.slice(-30), clock: cstate(), jackpot }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, chat: chat.slice(-30), clock: cstate(), jackpot }));
       return bc({ type: "join", player: desc(s) }, s);
     }
     if (m.type === "move") { Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }
@@ -103,6 +103,7 @@ wss.on("connection", s => {
       else if (!t) s.send(JSON.stringify({ type: "giftNg", rid, text: "相手がいまつないでいないみたい" }));
       else { t.send(JSON.stringify({ type: "gift", from: s.pl.id, name: s.pl.name, amount: amt })); s.send(JSON.stringify({ type: "giftOk", rid, to, amount: amt })); } }
     if (m.type === "bj" && bj) bj.stdin.write(["C", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.act || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n");
+    if (m.type === "house" && m.act === "returns") { const it = returns.get(s.pl.id); returns.delete(s.pl.id); if (it && Object.keys(it).length) s.send(JSON.stringify({ type: "houseReturn", items: Object.entries(it).map(([id, n]) => ({ id, n })) })); return; }
     if (m.type === "house") { const k = String(m.key || ""); if (!KEYRE.test(k)) return; const me = s.pl.id;
       if (!houseOf(k)) return s.send(JSON.stringify({ type: "house", key: k, missing: true }));
       const owner = isOwner(k, me), rep = o => ({ type: "house", key: k, owner: o, open: !!houseOf(k).open, ...hview(k, o) });

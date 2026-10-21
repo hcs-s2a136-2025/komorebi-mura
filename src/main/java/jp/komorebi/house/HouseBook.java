@@ -121,6 +121,11 @@ public final class HouseBook {
         return c;
     }
 
+    /** いまある家の場所の一覧（コピー） */
+    public synchronized java.util.List<String> keys() {
+        return new java.util.ArrayList<>(rooms.keySet());
+    }
+
     public synchronized void clear() {
         rooms.clear();
     }

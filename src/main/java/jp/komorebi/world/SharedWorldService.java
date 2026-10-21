@@ -117,15 +117,36 @@ public class SharedWorldService implements WelcomeContributor {
         return m;
     }
 
+    /**
+     * 共有の村を最初からにする。村の時計とジャックポットは残す。
+     * 「村の代」（_epoch）を1つ進めるので、リセットのときにつないでいなかった人の端末に残っている古い村も、次につないだときに片付けられる。
+     */
     public void reset() {
         synchronized (this) {
             JsonNode clock = layers.get("_clock"), jackpot = layers.get("_jackpot");
+            long next = epoch() + 1;
             layers = om.createObjectNode();
             if (clock != null) layers.set("_clock", clock);
             if (jackpot != null) layers.set("_jackpot", jackpot);
+            layers.put("_epoch", next);
             dirty = true;
         }
         persist();
+    }
+
+    /** 共有の村が何回リセットされたか（村の代）。0 から始まる */
+    public synchronized long epoch() {
+        return layers.path("_epoch").asLong(0);
+    }
+
+    /** プレイヤーに配る分だけ（サーバーだけが使う "_" で始まる情報は入れない） */
+    public synchronized ObjectNode clientSnapshot() {
+        ObjectNode out = om.createObjectNode();
+        for (String l : LAYERS) {
+            JsonNode n = layers.get(l);
+            if (n instanceof ObjectNode o) out.set(l, o.deepCopy());
+        }
+        return out;
     }
 
     @Scheduled(fixedDelay = 10_000)
@@ -152,6 +173,7 @@ public class SharedWorldService implements WelcomeContributor {
 
     @Override
     public void contribute(PlayerSession session, ObjectNode welcome) {
-        welcome.set("world", snapshot());
+        welcome.set("world", clientSnapshot());
+        welcome.put("worldEpoch", epoch());
     }
 }

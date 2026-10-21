@@ -32,6 +32,9 @@ public class HouseService {
     private final ObjectMapper om;
     private final SharedWorldService world;
     private final HouseBook book = new HouseBook();
+    /** リセットで消えた家の箱の中身。持ち主（プレイヤーID）→ 品物 → 個数。次につないだときに本人へ返す */
+    private final Map<Long, Map<String, Long>> returns = new LinkedHashMap<>();
+    private static final String RET = "ret:";
 
     public HouseService(JdbcTemplate jdbc, ObjectMapper om, SharedWorldService world) {
         this.jdbc = jdbc;
@@ -44,6 +47,11 @@ public class HouseService {
         jdbc.query("SELECT house_key, doc FROM house_room", rs -> {
             try {
                 JsonNode d = om.readTree(rs.getString(2));
+                if (rs.getString(1).startsWith(RET)) {
+                    Map<String, Long> items = d.has("items") ? om.convertValue(d.get("items"), COUNTS) : null;
+                    if (items != null) synchronized (returns) { returns.put(Long.parseLong(rs.getString(1).substring(RET.length())), items); }
+                    return;
+                }
                 Map<String, Long> shared = d.has("storage") ? om.convertValue(d.get("storage"), COUNTS) : null;
                 Map<String, Long> priv = d.has("priv") ? om.convertValue(d.get("priv"), COUNTS) : null;
                 book.restore(rs.getString(1), d.path("layout").isTextual() ? d.path("layout").asText() : null, shared, priv);
@@ -105,9 +113,47 @@ public class HouseService {
         if (up == 0) jdbc.update("INSERT INTO house_room (house_key, doc, updated_at) VALUES (?, ?, ?)", key, json, now);
     }
 
-    /** 共有の村をリセットしたとき、家の中身も消す */
+    /**
+     * 共有の村をリセットしたとき、家の中身も消す。共有の村のリセットより先に呼ぶこと（持ち主を houses レイヤーで調べるため）。
+     * 箱（みんなの収納箱・鍵つきの箱）に入っていた物は、持ち主ごとにまとめて取っておき、次につないだときに返す。
+     */
     public void resetAll() {
+        Map<Long, Map<String, Long>> add = new LinkedHashMap<>();
+        for (String key : book.keys()) {
+            JsonNode h = world.layerValue("houses", key);
+            long owner = h == null ? -1 : h.path("ownerId").asLong(-1);
+            HouseBook.Room r = book.copy(key);
+            if (owner <= 0 || r == null) continue;
+            Map<String, Long> to = add.computeIfAbsent(owner, k -> new LinkedHashMap<>());
+            r.shared().forEach((id, n) -> to.merge(id, n, Long::sum));
+            r.priv().forEach((id, n) -> to.merge(id, n, Long::sum));
+        }
         book.clear();
-        jdbc.update("DELETE FROM house_room");
+        jdbc.update("DELETE FROM house_room WHERE house_key NOT LIKE 'ret:%'");
+        synchronized (returns) {
+            add.forEach((owner, items) -> {
+                if (items.isEmpty()) return;
+                Map<String, Long> to = returns.computeIfAbsent(owner, k -> new LinkedHashMap<>());
+                items.forEach((id, n) -> to.merge(id, n, (a, b) -> Math.min(HouseBook.MAX_COUNT, a + b)));
+                saveReturns(owner, to);
+            });
+        }
+    }
+
+    /** リセットで返す物があれば受け取る（受け取ったら消える）。無ければ空 */
+    public Map<String, Long> takeReturns(long owner) {
+        Map<String, Long> items;
+        synchronized (returns) { items = returns.remove(owner); }
+        if (items == null) return Map.of();
+        jdbc.update("DELETE FROM house_room WHERE house_key = ?", RET + owner);
+        return items;
+    }
+
+    private void saveReturns(long owner, Map<String, Long> items) {
+        String json;
+        try { json = om.writeValueAsString(Map.of("items", items)); } catch (Exception e) { return; }
+        Timestamp now = Timestamp.from(Instant.now());
+        int up = jdbc.update("UPDATE house_room SET doc = ?, updated_at = ? WHERE house_key = ?", json, now, RET + owner);
+        if (up == 0) jdbc.update("INSERT INTO house_room (house_key, doc, updated_at) VALUES (?, ?, ?)", RET + owner, json, now);
     }
 }

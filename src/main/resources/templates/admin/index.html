@@ -58,9 +58,10 @@
     <ul class="online" th:unless="${#maps.isEmpty(worldStats)}">
       <li th:each="e : ${worldStats}"><span th:text="${e.key}">trees</span>：<b th:text="${e.value}">0</b> 件</li>
     </ul>
+    <p class="muted">村（地形・木・岩・柵・道・建てた家・みんなのプロジェクト）を最初からにします。キャラクター（持ち物・お金・見た目・図鑑・自分の家）はそのまま。建てた家の家具と箱の中身は、持ち主が次につないだときに自分の家の収納箱へ戻ります。</p>
     <form class="row" method="post" th:action="@{/admin/world/reset}">
-      <input name="confirm" placeholder="荒らされたときなどに：「リセット」と入力" autocomplete="off">
-      <button class="btn ghost" type="submit">共有の村をリセット</button>
+      <input name="confirm" placeholder="確認のため「リセット」と入力" autocomplete="off">
+      <button class="btn ghost" type="submit">共有の村を最初からにする</button>
     </form>
   </section>
 

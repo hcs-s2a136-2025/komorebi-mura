@@ -1,4 +1,4 @@
-# こもれび村 オンライン試作（v0.9.4）
+# こもれび村 オンライン試作（v0.9.5）
 
 Spring Boot で動く、こもれび村のオンライン試作サーバーです。
 
@@ -54,7 +54,7 @@ VS Code なら、`KomorebiApplication.java` を開いて「Run」でもOKです�
 | `INVITE_CODE` | 友達に教える合言葉 | `komorebi` |
 | `ADMIN_USER` / `ADMIN_PASSWORD` | 管理人室のログイン | `admin` / 起動のたびにランダム |
 | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | データベース | H2（`./data` のファイル） |
-| `GAME_VERSION` | ゲームの版。上げると、つないでいる人に「読み込み直してね」が出る | `0.9.4` |
+| `GAME_VERSION` | ゲームの版。上げると、つないでいる人に「読み込み直してね」が出る | `0.9.5` |
 | `TIME_RATE` | 現実の1秒で進むゲーム内の分数。1.0で1日が約18分、2.0で約9分 | `1.0` |
 | `ALLOWED_ORIGINS` | WebSocketを受け付けるページ | `*` |
 | `PORT` | ポート | `8080` |

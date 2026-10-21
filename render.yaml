@@ -18,6 +18,6 @@ services:
       - key: INVITE_CODE         # 友達に教える合言葉
         sync: false
       - key: GAME_VERSION
-        value: 0.9.4
+        value: 0.9.5
       - key: THYMELEAF_CACHE
         value: "true"

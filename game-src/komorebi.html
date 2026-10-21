@@ -1541,7 +1541,7 @@ function makeRoomMap(key) {
 }
 function furnAt(R, x, y, layer) {
   return R.furn.find(f => {
-    const F = FURN[f.id];
+    const F = FURN[f.id]; if (!F) return false;
     if (layer === "wall" ? !F.wall : layer === "floor" ? !F.floor : (F.wall || F.floor)) return false;
     return x >= f.x && x < f.x + F.w && y >= f.y && y < f.y + F.h;
   });
@@ -1622,7 +1622,7 @@ function rebuildSolid() {
   for (const k of laborRocks) { const [x, y] = k.split(",").map(Number); labor.solid[y][x] = true; }
   if (F7?.ready) F7.solids();
   if (F6?.ready) { solids6(village.solid); if (dg) { dg.map.solid = dg.map.base.map(r => r.slice()); for (const k of dg.rocks) { const [x, y] = k.split(",").map(Number); dg.map.solid[y][x] = true; } } if (port) port.solid = port.base.map(r => r.slice()); }
-  for (const f of room.data.furn) { const F = FURN[f.id]; if (F.wall || F.floor) continue; for (let y = f.y; y < f.y + F.h; y++) for (let x = f.x; x < f.x + F.w; x++) if (room.solid[y] && x < room.w) room.solid[y][x] = true; }
+  for (const f of room.data.furn) { const F = FURN[f.id]; if (!F || F.wall || F.floor) continue; for (let y = f.y; y < f.y + F.h; y++) for (let x = f.x; x < f.x + F.w; x++) if (room.solid[y] && x < room.w) room.solid[y][x] = true; }
 }
 function applyGround() {
   for (const k in world.tilled) { const [x, y] = k.split(",").map(Number); if (village.ground[y]) village.ground[y][x] = "tilled"; }
@@ -2508,10 +2508,10 @@ function draw(now) {
   }
   if (map === room) {
     ctx.fillStyle = "#8b6a4e"; ctx.fillRect(0, 0, mw, 3);
-    for (const f of room.data.furn) { const F = FURN[f.id]; if (F.wall) ctx.drawImage(IMG[F.img], f.x * TS, 4); else if (F.floor) ctx.drawImage(IMG[F.img], f.x * TS, f.y * TS); }
+    for (const f of room.data.furn) { const F = FURN[f.id]; if (!F) continue; if (F.wall) ctx.drawImage(IMG[F.img], f.x * TS, 4); else if (F.floor) ctx.drawImage(IMG[F.img], f.x * TS, f.y * TS); }
   }
   const list = map.objs.map(o => ({ s: o.sortY, d: () => ctx.drawImage(o.cv || IMG[o.img], o.x, o.y) }));
-  if (map === room) for (const f of room.data.furn) { const F = FURN[f.id]; if (F.wall || F.floor) continue; list.push({ s: (f.y + F.h) * TS - 1, d: () => ctx.drawImage(IMG[F.img], f.x * TS, f.y * TS + F.oy) }); }
+  if (map === room) for (const f of room.data.furn) { const F = FURN[f.id]; if (!F || F.wall || F.floor) continue; list.push({ s: (f.y + F.h) * TS - 1, d: () => ctx.drawImage(IMG[F.img], f.x * TS, f.y * TS + F.oy) }); }
   if (map === village) {
     for (const key in world.crops) {
       const c = world.crops[key]; const [x, y] = key.split(",").map(Number);

@@ -19,6 +19,7 @@ import jp.komorebi.config.KomorebiProperties;
 import jp.komorebi.feedback.FeedbackService;
 import jp.komorebi.feedback.FeedbackThread.Status;
 import jp.komorebi.casino.JackpotService;
+import jp.komorebi.house.HouseService;
 import jp.komorebi.player.PlayerService;
 import jp.komorebi.save.SaveService;
 import jp.komorebi.world.SharedWorldService;
@@ -40,6 +41,7 @@ public class AdminController {
     private final PlayerService players;
     private final SaveService saves;
     private final JackpotService jackpot;
+    private final HouseService houses;
 
     /** 管理人室の「プレイヤー」一覧の1行 */
     public record PlayerRow(Long id, String name, boolean hasPass, Instant lastSeen, int saveSize) {
@@ -47,7 +49,8 @@ public class AdminController {
 
     public AdminController(FeedbackService feedback, GameSocketHandler socket, KomorebiProperties props,
                            SharedWorldService world, ChatHandler chat, BoardService board, ClockService clock,
-                           PlayerService players, SaveService saves, JackpotService jackpot) {
+                           PlayerService players, SaveService saves, JackpotService jackpot, HouseService houses) {
+        this.houses = houses;
         this.clock = clock;
         this.players = players;
         this.saves = saves;
@@ -118,6 +121,7 @@ public class AdminController {
             return "redirect:/admin";
         }
         world.reset();
+        houses.resetAll();
         socket.broadcast(socket.json().createObjectNode().put("type", "worldReset"), null);
         ra.addFlashAttribute("msg", "共有の村をリセットしました。最初につないだ人の村が新しい共有の村になります");
         return "redirect:/admin";

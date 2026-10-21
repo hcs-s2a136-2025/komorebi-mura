@@ -149,6 +149,12 @@ public class GameSocketHandler extends TextWebSocketHandler {
         sendRaw(s, msg.toString());
     }
 
+    /** 同じ場所（map）にいる人にだけ送る。例：同じ家の中にいる人 */
+    public void sendToMap(String map, ObjectNode msg, PlayerSession except) {
+        String text = msg.toString();
+        for (PlayerSession o : sessions.values()) if (o != except && o.isAuthed() && map.equals(o.map())) sendRaw(o, text);
+    }
+
     public void sendToPlayer(Long playerId, ObjectNode msg) {
         String text = msg.toString();
         for (PlayerSession o : sessions.values()) if (playerId.equals(o.playerId)) sendRaw(o, text);

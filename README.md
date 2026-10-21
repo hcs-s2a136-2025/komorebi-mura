@@ -1,4 +1,4 @@
-# こもれび村 オンライン試作（v0.9.5）
+# こもれび村 オンライン試作（v0.9.6）
 
 Spring Boot で動く、こもれび村のオンライン試作サーバーです。
 
@@ -54,7 +54,7 @@ VS Code なら、`KomorebiApplication.java` を開いて「Run」でもOKです�
 | `INVITE_CODE` | 友達に教える合言葉 | `komorebi` |
 | `ADMIN_USER` / `ADMIN_PASSWORD` | 管理人室のログイン | `admin` / 起動のたびにランダム |
 | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | データベース | H2（`./data` のファイル） |
-| `GAME_VERSION` | ゲームの版。上げると、つないでいる人に「読み込み直してね」が出る | `0.9.5` |
+| `GAME_VERSION` | ゲームの版。上げると、つないでいる人に「読み込み直してね」が出る | `0.9.6` |
 | `TIME_RATE` | 現実の1秒で進むゲーム内の分数。1.0で1日が約18分、2.0で約9分 | `1.0` |
 | `ALLOWED_ORIGINS` | WebSocketを受け付けるページ | `*` |
 | `PORT` | ポート | `8080` |
@@ -122,7 +122,7 @@ public class BragHandler implements MessageHandler {
 
 ### テーブルや列をふやす
 
-`src/main/resources/db/migration/` に次の番号の `V4__add_xxx.sql` を足すと、起動時に Flyway が自動で反映します。**すでにある V1〜V3 のファイルは書きかえない**のがルールです。
+`src/main/resources/db/migration/` に次の番号の `V5__add_xxx.sql` を足すと、起動時に Flyway が自動で反映します。**すでにある V1〜V4 のファイルは書きかえない**のがルールです。
 
 ### ゲーム本体を直す
 
@@ -147,6 +147,7 @@ src/main/java/jp/komorebi/
   ws/        リアルタイム通信（hello / move / cfg / emote / edits / chat / ping）
   world/     共有の村（メモリで受けて10秒ごとにDBへ保存）
   save/      プレイヤーごとのセーブデータ
+  house/     家の中（模様・家具）とみんなの収納箱・鍵つきの箱（中身の計算は Spring なしの HouseBook.java）
   casino/    みんなのジャックポット・お小遣い・みんなのBJ（ルールは Spring なしの BjGame.java）
   clock/     村の時計（日付・時刻・天気、眠ると朝）
   board/     伝言板
@@ -186,6 +187,8 @@ tools/mock-server/  Javaなしでゲーム側を試せる、同じ約束の模�
 | `jp` / `jpWin` | 送る → `jp` を受け取る | スロットの積み立て・当たり。`jp` は新しい額（当たったときは `winner` と `won` も） |
 | `bj` → `bjState` / `bjCharge` / `bjSettle` / `bjNg` | 送る `{act: sit\|leave\|bet\|hit\|stand\|double\|split\|look, amount}` | みんなのBJ。`bjState` は卓のようす（全員へ）、`bjCharge` は賭け金を引く（マイナスなら戻す）、`bjSettle` は精算（本人へ） |
 | `gift` → `giftOk` / `giftNg` | 送る `{to, amount, rid}` | お小遣い。相手には `gift` が届く |
+| `house` → `house` | 送る `{act: get\|put, key, layout, seed}` | 建てた家の中。`get` で中のようす `{layout, storage, priv}`（`priv` は持ち主にだけ）。`put` は持ち主だけ、同じ家にいる人へ届く。入れないときは `locked`、まだ無いときは `missing` |
+| `box` → `boxOk` / `boxNg` / `houseBox` | 送る `{act: put\|take, key, which: shared\|priv, id, n, rid}` | 箱の出し入れ。みんなの収納箱は入れる人ならだれでも、鍵つきの箱は持ち主だけ。中身が変わると `houseBox` がその家にいる人へ届く |
 | `sleep` → `clock` | 送る → 受け取る | 眠ると全員が次の朝に。`clock` は日付・時刻・速さ・天気（30秒ごとと、朝になったときに届く） |
 | `board` / `notice` / `feedbackReply` / `worldReset` | 受け取る | 伝言板の新着・お知らせ・お便りの返事・共有の村のリセット |
 

@@ -100,6 +100,13 @@ public class SharedWorldService implements WelcomeContributor {
         return layers.get(name);
     }
 
+    /** レイヤーの中の1つだけ（コピー）。無ければ null */
+    public synchronized JsonNode layerValue(String layer, String key) {
+        JsonNode l = layers.get(layer);
+        JsonNode v = l == null ? null : l.get(key);
+        return v == null || v.isNull() ? null : v.deepCopy();
+    }
+
     public synchronized ObjectNode snapshot() {
         return layers.deepCopy();
     }

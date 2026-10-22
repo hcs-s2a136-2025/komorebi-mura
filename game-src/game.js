@@ -1588,7 +1588,7 @@ function rollWeather() {
   const s = season(), r = Math.random();
   if (s === "冬") return r < .5 ? "snow" : "sun";
   if (s === "夏") return r < .6 ? "sun" : r < .85 ? "rain" : "storm";
-  return r < .68 ? "sun" : "rain";
+  return r < .62 ? "sun" : r < .9 ? "rain" : "storm";
 }
 const CROP_INFO = {
   tomato: { seasons: ["春", "夏"], days: 2 }, carrot: { seasons: ["春", "秋"], days: 1 }, cabbage: { seasons: ["秋", "冬"], days: 2 },
@@ -3557,7 +3557,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.19.0";
+const CLIENT_VERSION = "0.20.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5582,6 +5582,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.20.0", date: "2026/10/22", title: "雷の電気", items: [
+    "雷雨（⚡）が夏だけでなく、春と秋にもときどき来るように",
+    "避雷針：雷雨の日、雷が落ちると電気が2つたまる。見ていなかった雷雨の日も、次の朝に少したまっている",
+    "蓄電池：電気を40ためておける（避雷針だけだと10まで）",
+    "スプリンクラー：電気を1つ使って、毎朝まわり2マス（5×5）の畑に水をまく",
+    "自動販売機：入れた物を、電気を1つ使って毎朝売ってくれる（相場の1.2倍・1台で1日8個まで）。売上は自動販売機を向いてAで受け取る",
+    "どれも、よろず屋の「建物」で買える",
+  ] },
   { v: "0.19.0", date: "2026/10/22", title: "家以外の建物", items: [
     "よろず屋に「建物」のたなができた。キットを買って、持ったまま村の草地や道を向いてAボタンで建てる。建物を向いてAボタンで中を見たり、キットに戻したりできる",
     "ペット小屋（2×2マス）：ペットが毎朝なついて、ときどきおみやげ（どんぐり・花の種・鉱石・小銭など）を持ってくる",
@@ -7275,11 +7283,13 @@ const B32 = {
       for (let y = 16; y < 42; y += 3) rect(10, y, 3, 1, C13["#6a747c"]); rect(10, 16, 1, 26, C13["#6a747c"]); rect(12, 16, 1, 26, C13["#6a747c"]);
       rect(1, 42, 14, 2, C13["#8a8a90"]); } },
 };
-for (const [id, b] of Object.entries(B32)) {
-  IMG["b32_" + id] = pix13(b.w * 16, { pethouse32: 30, coop32: 34, barn32: 44, silo32: 44 }[id], b.spr); ASSETS["b32_" + id] = IMG["b32_" + id].toDataURL();
+function reg32(id, b) {
+  B32[id] = b;
+  IMG["b32_" + id] = pix13(b.w * 16, b.ih || { pethouse32: 30, coop32: 34, barn32: 44, silo32: 44 }[id], b.spr); ASSETS["b32_" + id] = IMG["b32_" + id].toDataURL();
   DECOR27[id] = { name: b.name, price: Math.round(b.money / 2), solid: true, img: "b32_" + id, event: "b32", b32: true };
   ITEMS["deco_" + id] = { name: b.name + "のキット", icon: "b32_" + id, price: Math.round(b.money / 2), place: "build32", decor: id };
 }
+for (const [id, b] of Object.entries(B32)) reg32(id, b);
 const foot32 = (k, d) => { const [x, y] = k.split(",").map(Number), b = B32[d.id]; return { x0: x, y0: y - b.h + 1, x1: x + b.w - 1, y1: y }; };
 const builds32 = () => Object.entries(world.decor || {}).filter(([, d]) => B32[d.id]);
 const mine32 = id => builds32().filter(([, d]) => d.id === id && myDecor27(d)).map(([k]) => k);
@@ -7370,8 +7380,10 @@ function openBuild32(k) {
     }
     if (mine && d.id === "pethouse32") html += `<p class="mtext">${world.pets.length ? `ペット ${world.pets.length}匹が、毎朝ここで休んで、なつき度が1つ上がります。` : "まだペットがいません。よろず屋で迎えられます。"}${world.stats.presents32 ? `これまでのおみやげ ${world.stats.presents32}回` : ""}</p>`;
     if (mine && d.id === "coop32") { const n = world.animals.filter(a => a.type === "chicken" || a.type === "duck").length; html += `<p class="mtext">${n ? `ニワトリとアヒル ${n}羽。エサをあげた日の次の朝、半分くらいの確率でもう1個、小屋のそばに卵を置いてくれます。` : "ニワトリかアヒルを飼うと、卵がふえます。"}</p>`; }
+    if (F32.extra) html += F32.extra(d, k, mine);
     if (mine) html += `<p class="mtext small">場所を変えたいときは、キットに戻して置きなおせます${d.id === "silo32" && world.silo32 ? "（サイロの飼料は持ち物に戻ります）" : ""}。</p><button class="btn light" type="button" id="b32back">キットに戻す</button>`;
     body.innerHTML = html;
+    if (F32.wire) F32.wire(body, d, k, mine);
     body.querySelector("#b32feed")?.addEventListener("click", () => {
       let n = 0; for (const a of world.animals) { if (a.fed || !count("feed")) continue; removeItem("feed", 1); a.fed = true; a.hearts = Math.min(10, a.hearts + 1); n++; }
       saveWorld(); closeModal(); toast("feed", `${n}頭にエサをあげた`);
@@ -7440,6 +7452,122 @@ ACH.push(["小さな牧場主", "家以外の建物を3つ建てる", () => (wor
 ACH_REWARD["小さな牧場主"] = ["item", "feed", 20];
 F32.ready = true;
 
+// =================== v33: 雷の電気（避雷針・蓄電池）と、電気で動く物（スプリンクラー・自動販売機） ===================
+// 雷雨の日（春・夏・秋）に、避雷針に雷が落ちると電気がたまる。電気は、スプリンクラーと自動販売機が毎朝1つずつ使う。
+var F33 = {};
+reg32("rod33", { name: "避雷針", w: 1, h: 1, ih: 44, money: 4000, mat: { ore: 5, stone: 5 }, desc: "雷雨の日に雷が落ちると、電気がたまる（たまる量は蓄電池でふえる）",
+  spr: (set, rect) => { rect(7, 2, 2, 36, C13["#9aa4ae"]); rect(7, 2, 1, 36, C13["#c8d0d8"]); rect(6, 0, 4, 3, C13["#e8c860"]); set(7, 0, C13["#fff6c8"]); for (let y = 10; y < 38; y += 7) rect(5, y, 6, 1, C13["#7a848e"]); rect(3, 38, 10, 4, C13["#8a8a90"]); rect(3, 38, 10, 1, C13["#aaaab0"]); rect(5, 42, 6, 2, C13["#6a6a70"]); } });
+reg32("battery33", { name: "蓄電池", w: 1, h: 1, ih: 24, money: 5000, mat: { ore: 8, stone: 4 }, desc: "電気を40ためておける（いくつでも置ける）",
+  spr: (set, rect) => { rect(2, 4, 12, 18, C13["#3a4a5a"]); rect(2, 4, 12, 2, C13["#5a6a7a"]); rect(5, 1, 2, 3, C13["#c8c8d0"]); rect(9, 1, 2, 3, C13["#c8c8d0"]); rect(4, 8, 8, 11, C13["#1e262e"]); for (let i = 0; i < 4; i++) rect(5, 16 - i * 2.5 | 0, 6, 2, C13["#7ae07a"]); rect(7, 6, 2, 1, C13["#f2d03a"]); rect(1, 22, 14, 2, C13["#6a6a70"]); } });
+reg32("sprinkler33", { name: "スプリンクラー", w: 1, h: 1, ih: 18, money: 2500, mat: { ore: 3 }, desc: "電気を1つ使って、毎朝まわり2マス（5×5）の畑に水をまく",
+  spr: (set, rect) => { rect(7, 6, 2, 9, C13["#9aa4ae"]); ell13(set, 8, 5, 4, 2, C13["#c8d0d8"]); rect(4, 4, 8, 1, C13["#7a848e"]); set(3, 4, C13["#7ac8e8"]); set(12, 4, C13["#7ac8e8"]); set(2, 3, C13["#a8e0f6"]); set(13, 3, C13["#a8e0f6"]); rect(5, 15, 6, 2, C13["#6a6a70"]); rect(6, 1, 1, 2, C13["#a8e0f6"]); rect(9, 0, 1, 2, C13["#a8e0f6"]); } });
+reg32("vending33", { name: "自動販売機", w: 1, h: 1, ih: 30, money: 8000, mat: { ore: 6, stone: 6 }, desc: "入れた物を、電気を1つ使って毎朝売ってくれる（相場の1.2倍・1台で1日8個まで）",
+  spr: (set, rect) => { rect(1, 2, 14, 26, C13["#e2404e"]); rect(1, 2, 14, 2, C13["#f06a74"]); rect(3, 5, 10, 12, C13["#e8f4fa"]); for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) rect(4 + i * 3, 6 + j * 4, 2, 3, [C13["#f2c84a"], C13["#7ac8e8"], C13["#8ad07a"]][(i + j) % 3]); rect(3, 19, 6, 2, C13["#2a2a30"]); rect(10, 19, 3, 4, C13["#c8c8d0"]); rect(3, 23, 6, 3, C13["#2a2a30"]); rect(1, 28, 14, 2, C13["#6a6a70"]); } });
+world.elec33 = world.elec33 || 0;
+const vend33 = () => world.vend33 || (world.vend33 = { goods: [], earned: 0, sold: 0 });
+const elecCap33 = () => 10 + 40 * mine32("battery33").length;
+const addElec33 = n => { world.elec33 = Math.max(0, Math.min(elecCap33(), (world.elec33 || 0) + n)); };
+F33.cap = elecCap33;
+// ---- 雷が落ちる ----
+const bolts33 = [];
+const _f6update33 = F6.update;
+let flash33 = 0;
+F6.update = dt => {
+  _f6update33(dt);
+  const f = F6.flash || 0;
+  if (f > flash33 + .1 && world.weather === "storm") strike33();
+  flash33 = f;
+};
+function strike33(force) {
+  const rods = mine32("rod33"); if (!rods.length) return false;
+  if (!force && Math.random() > .4) return false;
+  const k = rods[rnd(rods.length)], [x, y] = k.split(",").map(Number);
+  const before = world.elec33 || 0; addElec33(2); const got = (world.elec33 || 0) - before;
+  world.stats.strikes33 = (world.stats.strikes33 || 0) + 1; saveWorld();
+  if (map === village) { bolts33.push({ x, y, until: performance.now() + 380, seed: Math.random() }); F6.flash = Math.max(F6.flash || 0, .3); flash33 = F6.flash; if (typeof SFX !== "undefined" && SFX.small) SFX.small(); }
+  if (got > 0 && (world.stats.strikes33 === 1 || (world.elec33 >= elecCap33()))) toast("b32_rod33", world.elec33 >= elecCap33() ? `避雷針に雷が落ちた。電気がいっぱい（${world.elec33}/${elecCap33()}）` : `避雷針に雷が落ちて、電気がたまった（${world.elec33}/${elecCap33()}）`);
+  return true;
+}
+F33.strike = strike33;
+const _addToList33 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList33(list, now);
+  if (map !== village) return;
+  for (let i = bolts33.length - 1; i >= 0; i--) { if (bolts33[i].until < now) bolts33.splice(i, 1); }
+  for (const b of bolts33) list.push({ s: 1e9 - 1, d: () => {
+    const tx = b.x * TS + 8, ty = (b.y + 1) * TS - 44, x0 = tx + (b.seed - .5) * 60, y0 = ty - 180;
+    ctx.strokeStyle = "rgba(255,250,200,.95)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, y0);
+    for (let s = 1; s <= 8; s++) { const t = s / 8; ctx.lineTo(x0 + (tx - x0) * t + (s < 8 ? Math.sin(b.seed * 40 + s * 2.3) * 9 : 0), y0 + (ty - y0) * t); }
+    ctx.stroke(); ctx.lineWidth = 1; ctx.strokeStyle = "rgba(180,220,255,.9)"; ctx.stroke();
+  } });
+  // 朝のスプリンクラーの水しぶき
+  if (world.spr33 === world.day && world.time < 480) for (const k of mine32("sprinkler33")) {
+    const [x, y] = k.split(",").map(Number);
+    list.push({ s: (y + 1) * TS + 1, d: () => { ctx.fillStyle = "rgba(160,220,250,.75)"; for (let i = 0; i < 10; i++) { const a = now / 300 + i * .63, r = 6 + ((now / 40 + i * 7) % 26); ctx.fillRect(x * TS + 8 + Math.cos(a) * r, y * TS + 4 + Math.sin(a) * r * .5, 1.5, 1.5); } } });
+  }
+};
+// ---- 建物の中 ----
+F32.extra = (d, k, mine) => {
+  if (!mine) return "";
+  const bar = `<p class="mtext">ためてある電気 <b>${world.elec33 || 0}</b> / ${elecCap33()}　（避雷針 ${mine32("rod33").length}・蓄電池 ${mine32("battery33").length}・スプリンクラー ${mine32("sprinkler33").length}・自動販売機 ${mine32("vending33").length}）</p>`;
+  if (d.id === "rod33") return bar + `<p class="mtext small">雷雨（⚡）の日に村の上で雷が鳴ると、ときどきこの避雷針に落ちて電気が2つたまります。家にいたりして見ていなかった雷雨の日も、次の朝に少したまっています。${world.stats.strikes33 ? `これまでに${world.stats.strikes33}回落ちた。` : ""}</p>`;
+  if (d.id === "battery33") return bar;
+  if (d.id === "sprinkler33") { const [x, y] = k.split(",").map(Number); let n = 0; for (let yy = y - 2; yy <= y + 2; yy++) for (let xx = x - 2; xx <= x + 2; xx++) if (world.tilled[xx + "," + yy]) n++; return bar + `<p class="mtext">まわり2マスの畑：${n}マス。${world.spr33 === world.day ? "今朝は水をまいた。" : (world.elec33 ? "明日の朝から水をまきます。" : "電気がないので動いていません。")}</p>`; }
+  if (d.id === "vending33") {
+    const v = vend33(), inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => !ITEMS[id].tool && !ITEMS[id].place && sellPrice(id) > 0 && id !== "feed");
+    return bar + `<p class="mtext">売上 <b>${fmt(v.earned)}</b> <button class="btn" type="button" id="v33get" ${v.earned ? "" : "disabled"}>受け取る</button>　これまでに売れた数 ${v.sold || 0}個</p>
+      <h3 class="lbl">中に入っている物（${v.goods.length}/6）</h3><div class="list">${v.goods.length ? v.goods.map((g, i) => itemLi(g.id, `${g.n}個・1個 ${fmt(vendPrice33(g.id))}`, `<button class="btn light" type="button" data-v33back="${i}">出す</button>`)).join("") : `<p class="mtext">まだ空っぽ。</p>`}</div>
+      <h3 class="lbl">持ち物から入れる</h3><div class="list">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個・売る値段 ${fmt(vendPrice33(id))}`, `<button class="btn light" type="button" data-v33put="${id}" data-n="1">1個</button><button class="btn" type="button" data-v33put="${id}" data-n="all">全部</button>`)).join("") : `<p class="mtext">入れられる物がありません。</p>`}</div>`;
+  }
+  return "";
+};
+const vendPrice33 = id => Math.round(sellPrice(id) * 1.2);
+F32.wire = (body, d, k, mine) => {
+  if (!mine || d.id !== "vending33") return;
+  const v = vend33(), again = () => { closeModal(); openBuild32(k); };
+  body.querySelector("#v33get")?.addEventListener("click", () => { addMoney(v.earned); toast("b32_vending33", `自動販売機の売上 ${fmt(v.earned)} を受け取った`); v.earned = 0; saveWorld(); again(); });
+  body.querySelectorAll("[data-v33back]").forEach(b => b.onclick = () => { const g = v.goods[+b.dataset.v33back]; if (!g || !addItem(g.id, g.n)) return; v.goods.splice(+b.dataset.v33back, 1); saveWorld(); again(); });
+  body.querySelectorAll("[data-v33put]").forEach(b => b.onclick = () => {
+    const id = b.dataset.v33put, n = b.dataset.n === "all" ? count(id) : 1; if (!n) return;
+    const g = v.goods.find(x => x.id === id); if (!g && v.goods.length >= 6) { toast(null, "自動販売機に入るのは6種類まで"); return; }
+    removeItem(id, n); if (g) g.n += n; else v.goods.push({ id, n }); saveWorld(); again();
+  });
+};
+// ---- 朝：雷の残り・スプリンクラー・自動販売機 ----
+const _f6newday33 = F6.onNewDay;
+F6.onNewDay = () => {
+  const was = world.weather;
+  _f6newday33();
+  const notes = [];
+  const rods = mine32("rod33").length;
+  if (was === "storm" && rods) { const b = world.elec33 || 0; addElec33(4 * rods); if (world.elec33 > b) notes.push(`ゆうべの雷で、避雷針に電気がたまっていた（+${world.elec33 - b}）`); }
+  let sprays = 0, wet = 0;
+  for (const k of mine32("sprinkler33")) {
+    if (!(world.elec33 > 0)) break;
+    const [x, y] = k.split(",").map(Number); let n = 0;
+    for (let yy = y - 2; yy <= y + 2; yy++) for (let xx = x - 2; xx <= x + 2; xx++) { const t = world.tilled[xx + "," + yy]; if (t) { t.wet = true; n++; } }
+    if (n) { world.elec33--; sprays++; wet += n; }
+  }
+  if (sprays) { world.spr33 = world.day; notes.push(`スプリンクラーが畑${wet}マスに水をまいた`); }
+  const vm = mine32("vending33").length, v = vend33();
+  if (vm && v.goods.length && world.elec33 > 0) {
+    world.elec33--; let left = 8 * vm, money = 0, n = 0;
+    while (left > 0 && v.goods.length) { const g = v.goods[rnd(v.goods.length)]; g.n--; money += vendPrice33(g.id); n++; left--; if (g.n <= 0) v.goods.splice(v.goods.indexOf(g), 1); }
+    v.earned += money; v.sold = (v.sold || 0) + n; notes.push(`自動販売機で${n}個売れた（売上 ${fmt(money)}）`);
+  }
+  if ((sprays || vm || rods) && !(world.elec33 > 0) && (mine32("sprinkler33").length || vm)) notes.push("電気がなくなった。雷雨の日を待とう");
+  if (notes.length) setTimeout(() => F7.notify(notes.join("。"), null), 900);
+};
+// 蓄電池を片付けて、ためておける量をこえたら、こぼれる
+const _rebuildSolid33 = rebuildSolid;
+rebuildSolid = function () { _rebuildSolid33(); if (world.elec33 > elecCap33()) world.elec33 = elecCap33(); };
+// 共有の村をリセットするとき：自動販売機の中身は持ち物（いっぱいなら家の収納箱）にもどす
+const _fresh33 = freshShared18;
+freshShared18 = function (why) { for (const g of vend33().goods) homeStore18(g.id, g.n); vend33().goods = []; _fresh33(why); };
+ACH.push(["かみなり発電所", "避雷針に雷を10回落とす", () => (world.stats.strikes33 || 0) >= 10]);
+ACH_REWARD["かみなり発電所"] = ["money", 3000];
+F33.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -7463,5 +7591,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

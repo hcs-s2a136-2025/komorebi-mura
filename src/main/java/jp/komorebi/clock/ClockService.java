@@ -116,7 +116,7 @@ public class ClockService implements WelcomeContributor {
         double r = random.nextDouble();
         if (s.equals("冬")) return r < .5 ? "snow" : "sun";
         if (s.equals("夏")) return r < .6 ? "sun" : r < .85 ? "rain" : "storm";
-        return r < .68 ? "sun" : "rain";
+        return r < .62 ? "sun" : r < .9 ? "rain" : "storm";
     }
 
     private void save() {

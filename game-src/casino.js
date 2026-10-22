@@ -579,6 +579,7 @@ function tileHtml(t, cls = "", attrs = "") {
 }
 function setupMahjongLobby(cb, body) {
   if (mj && mj.alive) { renderMJ(); return; }
+  if (K.net && K.net.connected() && S.mjMode !== "solo") { if (S.mjMode === "multi") setupMJMulti(cb, body); else mjChoice(cb, body); return; }
   S.mjRate = S.mjRate || 50;
   cb.innerHTML = `<p class="mtext">常連の3人（${CPU.join("・")}）と東風戦。門前限定（ポン・チー・カンなし）、立直・ツモ・ロンあり、ウマ10-20。最終の点数とウマに応じてお金をやり取りします。払いきれない負け分は、十日屋の貸せる上限までが借金になります。途中で卓を離れるとラス扱いで精算します。</p>
     <div class="mtabs" id="rates">${RATES.map(([r, l]) => `<button class="chip" type="button" data-rate="${r}" aria-pressed="${S.mjRate === r}">${l}</button>`).join("")}</div>
@@ -596,6 +597,169 @@ function setupMahjongLobby(cb, body) {
     mj = { alive: true, rate, cb, body, scores: [25000, 25000, 25000, 25000], kyoku: 0, sticks: 0, log: [], timers: [] };
     S.busy = true; startKyoku();
   }
+}
+// ---------- みんなの麻雀（オンライン。ルールと進行はサーバー） ----------
+const MJ_RATES = [[0, "ノーレート"], [10, "点1"], [50, "点5"], [100, "テンピン"], [500, "デカピン"]];
+const mjM = { cb: null, body: null, lobby: null, st: null, err: "", deadline: 0, timer: 0, sel: false, leaveArmed: false, len: 0, rate: 0 };
+const REDS = new Set([16, 52, 88]);
+const tid = (id, cls = "", attrs = "") => tileHtml(id >> 2, cls + (REDS.has(id) ? " aka" : ""), attrs);
+const WIND = ["東", "南", "西", "北"];
+function mjChoice(cb, body) {
+  cb.innerHTML = `<p class="mtext">オンラインの友達と同じ卓で、正式なルールの麻雀が打てます（ポン・チー・カン、赤ドラあり）。4人そろわないときはCPUが入ります。ひとりでCPUと気軽に打つこともできるよ。</p>
+    <div class="row2"><button class="btn" type="button" id="mjMulti">みんなの卓に行く</button><button class="btn light" type="button" id="mjSolo">ひとりで打つ（門前のみ）</button></div>`;
+  cb.querySelector("#mjMulti").onclick = () => { S.mjMode = "multi"; setupMJMulti(cb, body); };
+  cb.querySelector("#mjSolo").onclick = () => { S.mjMode = "solo"; setupMahjongLobby(cb, body); };
+}
+function setupMJMulti(cb, body) {
+  Object.assign(mjM, { cb, body, err: "", sel: false, leaveArmed: false });
+  K.net.onMj = m => {
+    if (m.type === "mjLobby") mjM.lobby = m;
+    else if (m.type === "mjTable") { if (!mjM.st || mjM.st.sub !== m.sub || mjM.st.turn !== m.turn) mjM.sel = false; mjM.st = m; mjM.deadline = performance.now() + (m.ms || 0); }
+    else if (m.type === "mjNg") mjM.err = String(m.text || "").slice(0, 60);
+    else if (m.type === "mjPay") { refreshMoney(body); return; }
+    renderMJM();
+  };
+  mjM.st = null;
+  K.net.send({ type: "mj", act: "list" });
+  cb.innerHTML = `<p class="mtext">雀荘につないでいます…</p>`;
+  clearInterval(mjM.timer);
+  mjM.timer = setInterval(() => {
+    if (!cb.isConnected) {
+      clearInterval(mjM.timer);
+      // 始まる前の卓なら席を立つ。対局中は閉じても続く（CPUがおまかせで打つ）
+      if (mjM.st && mjM.st.phase === "wait" && K.net.connected()) K.net.send({ type: "mj", act: "leave" });
+      K.net.onMj = null; mjM.st = null; return;
+    }
+    const t = cb.querySelector("#mjLeft"); if (t) t.textContent = Math.max(0, Math.ceil((mjM.deadline - performance.now()) / 1000));
+  }, 250);
+}
+function mjCanAfford(rateG) {
+  if (!rateG) return true;
+  const need = rateG * 45, room = K.loanRoom ? K.loanRoom("yami") : 0;
+  if (K.world.money + room < need) { mjM.err = `このレートだと、ラスのとき ${fmt(need)} くらい払うことがあるよ。所持金と十日屋の借入枠（あと ${fmt(room)}）を合わせても足りないので、レートを下げてね`; return false; }
+  if (K.betAllowed && !K.betAllowed(need)) { mjM.err = K.betMsg() + "（このレートだと負けが大きくなるかも）"; return false; }
+  return true;
+}
+const mjRules = `<details class="paytable"><summary>みんなの卓のルール</summary><p class="mtext small">25000点持ちの30000点返し、ウマ10-20（トップにオカ+20）。赤ドラ各1枚、喰いタン・後付けあり、ダブロンなし（頭ハネ）。途中流局は九種九牌・四風連打・四家立直。オーラスは親がトップなら和了りやめ、だれかの点数がマイナスになったら終了。<br>持ち時間は自分の番20秒・鳴き9秒。時間切れはツモ切り・見送りになり、2回続くか切断するとCPUがおまかせで打ちます（何か操作すると戻ります）。対局中に卓を離れると、ラス扱い（素点のプラスは無し）で精算して、CPUが代わりに打ちます。<br>役：立直・一発・門前清自摸和・断么九・平和・一盃口・役牌・嶺上開花・槍槓・海底・河底・ダブル立直・七対子・三色同順・一気通貫・混全帯么九・対々和・三暗刻・三色同刻・三槓子・小三元・混老頭・二盃口・純全帯么九・混一色・清一色。役満：天和・地和・国士無双・四暗刻・大三元・字一色・小四喜・大四喜・緑一色・清老頭・九蓮宝燈・四槓子。</p></details>`;
+function renderMJM() {
+  const cb = mjM.cb, body = mjM.body, st = mjM.st; if (!cb || !cb.isConnected) return;
+  refreshMoney(body);
+  const err = mjM.err ? `<div class="warn">${esc(mjM.err)}</div>` : "";
+  if (!st || st.me < 0) { renderMJLobby(cb, err); return; }
+  if (st.phase === "wait") {
+    cb.innerHTML = `<div class="mjlobby"><h3 class="lbl">卓${st.id}　${st.south ? "半荘戦" : "東風戦"}・${esc(st.rateName)}</h3>
+      <div class="list">${st.seats.map((s, i) => `<div class="li"><span class="nm">${s ? esc(s.name) + (i === st.me ? "（あなた）" : "") : "空席"}</span></div>`).join("")}</div>
+      <p class="mtext small">4人そろうと始まります。${st.owner ? "そろう前でも、空いた席にCPUを入れて始められるよ。" : "卓を立てた人が、CPUを入れて始めることもできます。"}</p>
+      ${err}<div class="row2">${st.owner ? `<button class="btn" type="button" id="mjStart">CPUを入れて始める</button>` : ""}<button class="btn light" type="button" id="mjLeaveW">卓を離れる</button></div>${mjRules}</div>`;
+    const q = s => cb.querySelector(s);
+    if (q("#mjStart")) q("#mjStart").onclick = () => K.net.send({ type: "mj", act: "start" });
+    q("#mjLeaveW").onclick = () => { mjM.st = null; K.net.send({ type: "mj", act: "leave" }); };
+    return;
+  }
+  const me = st.me, my = st.seats[me], ac = st.actions || {};
+  const left = `<b id="mjLeft">${Math.max(0, Math.ceil((mjM.deadline - performance.now()) / 1000))}</b>秒`;
+  const meldHtml = s => (s.melds || []).map(m => `<span class="mjmeld">${m.tiles.map((t, j) => m.type === "ankan" && (j === 0 || j === 3) ? `<span class="tl sm back"></span>` : tid(t, "sm" + (t === m.called ? " called" : ""))).join("")}</span>`).join("");
+  const riverHtml = s => (s.river || []).map(([t, f]) => tid(t, "sm" + (f & 1 ? " rot" : "") + (f & 2 ? " taken" : "") + (st.last === t && st.sub === "claim" ? " mjhi" : ""))).join("");
+  const nameLine = (s, i, pos) => `<div class="mj-name"><span class="wind">${WIND[s.wind]}</span>${pos ? `<span class="pos">${pos}</span>` : ""}${esc(s.name)}${i === me ? "（あなた）" : ""}　<b>${s.score}</b>${s.riichi ? `<span class="rb">リーチ</span>` : ""}${s.auto ? `<span class="rb auto">おまかせ中</span>` : ""}${i === st.dealer ? `<span class="rb oya">親</span>` : ""}${st.turn === i && st.phase === "play" && st.sub === "turn" ? `<span class="thinking">◀ 番</span>` : ""}${i === me && my.furiten ? `<span class="rb">フリテン</span>` : ""}</div>`;
+  const opp = (i, pos) => { const s = st.seats[i]; return `<div class="mj-opp${st.turn === i && st.sub === "turn" ? " turn" : ""}">${nameLine(s, i, pos)}<div class="mjrow"><span class="backs">${"<i></i>".repeat(Math.min(14, s.count))}</span>${meldHtml(s)}</div><div class="mj-river">${riverHtml(s)}</div></div>`; };
+  // 手牌
+  const canDiscard = !!ac.discard;
+  const banned = new Set(ac.banned || []);
+  const rset = mjM.sel && ac.riichi ? new Set(ac.riichi.map(t => t >> 2)) : null;
+  const okTile = t => canDiscard && !banned.has(t >> 2) && (ac.riichiOnly === undefined || t === ac.riichiOnly) && (!rset || rset.has(t >> 2));
+  const handTiles = (my.hand || []).map(t => tid(t, okTile(t) ? "can" + (rset ? " mjhi" : "") : "", okTile(t) ? `data-t="${t}" role="button" tabindex="0"` : "")).join("")
+    + (my.drawn >= 0 ? tid(my.drawn, "drawn" + (okTile(my.drawn) ? " can" + (rset ? " mjhi" : "") : ""), okTile(my.drawn) ? `data-t="${my.drawn}" role="button" tabindex="0"` : "") : "");
+  let ctl = "", info = "";
+  if (st.phase === "play") {
+    if (ac.pass) {
+      const t = ac.tile;
+      info = `${esc(st.seats[st.lastFrom]?.name || "")}が ${tid(t, "sm")} を${st.sub === "claim" && st.seats[st.lastFrom] && (st.seats[st.lastFrom].melds || []).some(m => m.type === "kakan" && m.tiles.includes(t)) ? "加槓" : "捨てた"}（残り ${left}）`;
+      if (ac.ron) ctl += `<button class="btn" type="button" data-mj="ron">ロン</button>`;
+      if (ac.pon) ctl += `<button class="btn" type="button" data-mj="pon">ポン</button>`;
+      if (ac.minkan) ctl += `<button class="btn" type="button" data-mj="minkan">カン</button>`;
+      (ac.chi || []).forEach((o, i) => { ctl += `<button class="btn" type="button" data-mj="chi" data-a="${i}">チー ${[...o, t].sort((a, b) => a - b).map(x => tid(x, "sm")).join("")}</button>`; });
+      ctl += `<button class="btn light" type="button" data-mj="pass">パス</button>`;
+    } else if (canDiscard) {
+      info = mjM.sel ? `リーチ：捨てる牌をえらんでね（残り ${left}）` : ac.riichiOnly !== undefined ? `ツモ切りか、ツモ・カンをえらんでね（残り ${left}）` : `あなたの番。切る牌をえらんでね（残り ${left}）`;
+      if (ac.tsumo) ctl += `<button class="btn" type="button" data-mj="tsumo">ツモ</button>`;
+      if (ac.riichi) ctl += `<button class="btn ${mjM.sel ? "" : "light"}" type="button" id="mjRiichi">${mjM.sel ? "リーチをやめる" : "リーチ"}</button>`;
+      (ac.kan || []).forEach(k => { ctl += `<button class="btn light" type="button" data-mj="kan" data-a="${k}">カン ${tileHtml(k, "sm")}</button>`; });
+      if (ac.kyuushu) ctl += `<button class="btn light" type="button" data-mj="kyuushu">九種九牌で流す</button>`;
+      if (ac.riichiOnly !== undefined) ctl += `<button class="btn light" type="button" data-mj="discard" data-a="${ac.riichiOnly}">ツモ切り</button>`;
+    } else {
+      const cur = st.seats[st.turn];
+      info = st.sub === "claim" ? `鳴きを待っています（残り ${left}）` : `${esc(cur?.name || "")}の番`;
+    }
+  }
+  let overlay = "";
+  const r = st.result;
+  if ((st.phase === "result" || st.phase === "end") && r) {
+    const names = st.seats.map(s => s.name);
+    const ready = `<p class="mtext small">${st.phase === "end" ? "" : `次の局まで ${left}`}${my.ready ? "　ほかの人を待っています…" : ""}</p>`;
+    if (r.kind === "agari") {
+      overlay = `<div class="mj-res"><h3>${esc(names[r.winner])}の${r.tsumo ? "ツモ" : "ロン"}${r.tsumo ? "" : `（${esc(names[r.from])}から）`}</h3>
+        <div class="mj-hand small">${r.hand.slice().sort((a, b) => a - b).map(t => tid(t, "sm" + (t === r.tile ? " mjhi" : ""))).join("")}${(r.melds || []).map(m => `<span class="mjmeld">${m.tiles.map(t => tid(t, "sm")).join("")}</span>`).join("")}</div>
+        <div class="yakulist">${r.yaku.map(([n, h]) => `<span>${esc(n)}<b>${esc(h)}</b></span>`).join("")}</div>
+        <p class="mtext">${r.label === "役満" || /役満/.test(r.label) ? "" : `${r.han}飜${r.fu}符 `}${r.label ? `<b>${esc(r.label)}</b> ` : ""}${r.value ?? r.points}点${r.value !== undefined && r.points !== r.value ? `<span class="mtext small">（本場・供託こみで +${r.points}）</span>` : ""}</p>
+        ${r.ura ? `<p class="mtext small">裏ドラ表示 ${r.ura.map(t => tid(t, "sm")).join("")}</p>` : ""}
+        <div class="mj-delta">${r.delta.map((d, i) => `<span>${esc(names[i])}<b class="${d > 0 ? "up" : d < 0 ? "down" : ""}">${d > 0 ? "+" : ""}${d}</b></span>`).join("")}</div>
+        ${ready}<button class="btn" type="button" data-mj="next" ${my.ready ? "disabled" : ""}>次へ</button></div>`;
+    } else if (r.kind === "draw") {
+      const tp = r.tenpai ? r.tenpai.map((v, i) => v ? names[i] : null).filter(Boolean) : null;
+      overlay = `<div class="mj-res"><h3>${esc(r.name)}</h3>${tp ? `<p class="mtext">テンパイ：${tp.map(esc).join("・") || "なし"}</p>` : ""}
+        ${r.hands ? r.hands.map((h, i) => h ? `<div class="mj-hand small"><span class="mtext small">${esc(names[i])}</span>${h.slice().sort((a, b) => a - b).map(t => tid(t, "sm")).join("")}</div>` : "").join("") : ""}
+        <div class="mj-delta">${r.delta.map((d, i) => `<span>${esc(names[i])}<b class="${d > 0 ? "up" : d < 0 ? "down" : ""}">${d > 0 ? "+" : ""}${d}</b></span>`).join("")}</div>
+        ${ready}<button class="btn" type="button" data-mj="next" ${my.ready ? "disabled" : ""}>次へ</button></div>`;
+    } else if (r.kind === "end") {
+      const mine = r.rank.find(x => x.seat === me);
+      overlay = `<div class="mj-res"><h3>対局終了　${r.rank.indexOf(mine) + 1}位</h3>
+        <div class="mjrank">${r.rank.map((x, i) => `<div class="${x.seat === me ? "me" : ""}"><span>${i + 1}位</span><span>${esc(x.name)}</span><b>${x.score}</b><b class="${x.pt > 0 ? "up" : x.pt < 0 ? "down" : ""}">${x.pt > 0 ? "+" : ""}${x.pt.toFixed(1)}</b></div>`).join("")}</div>
+        <div class="result ${mine.money > 0 ? "win" : ""}">${st.rate ? `${mine.money >= 0 ? "+" : ""}${fmt(mine.money)}` : "ノーレート（お金のやりとりなし）"}</div>
+        <p class="mtext small">素点（30000点返し）＋ウマ10-20、トップはオカ+20。${st.rate ? "払いきれない負けは、十日屋が上限まで立て替えます。" : ""}</p>
+        <div class="row2"><button class="btn" type="button" data-mj="next" ${my.ready ? "disabled" : ""}>${my.ready ? "ほかの人を待っています…" : "卓に戻る"}</button><button class="btn light" type="button" id="mjOut">卓を離れる</button></div></div>`;
+    }
+  }
+  const pos = { 1: "下家", 2: "対面", 3: "上家" };
+  cb.innerHTML = `<div class="mj">
+    ${[3, 2, 1].map(d => opp((me + d) % 4, pos[d])).join("")}
+    <div class="mj-center"><span>${st.kyoku < 4 ? "東" : "南"}${st.kyoku % 4 + 1}局 ${st.honba}本場</span><span>残り ${st.left}</span><span>ドラ表示 ${(st.dora || []).map(t => tid(t, "sm")).join("")}</span><span>供託 ${st.sticks}本</span><span>${st.south ? "半荘戦" : "東風戦"}・${esc(MJ_RATES[st.rate]?.[1] || "")}</span></div>
+    <div class="mj-me${st.turn === me && st.sub === "turn" ? " turn" : ""}">${nameLine(my, me, "")}
+      <div class="mj-river">${riverHtml(my)}</div>
+      <div class="mj-hand">${handTiles}${my.melds && my.melds.length ? `<span class="mjmelds">${meldHtml(my)}</span>` : ""}</div>
+      <div class="mj-msg">${info}</div><div class="row2 mjctl">${ctl}</div></div>
+    ${err}${overlay}
+    <div class="row2"><button class="btn ghost" type="button" id="mjLeave">${mjM.leaveArmed ? "もう一度押すと離れる（ラス扱いで精算）" : "卓を離れる"}</button></div>${mjRules}</div>`;
+  const send = (act, a = 0, b = 0) => { mjM.err = ""; K.net.send({ type: "mj", act, a, b }); };
+  cb.querySelectorAll("[data-mj]").forEach(el => el.onclick = () => { el.disabled = true; send(el.dataset.mj, +(el.dataset.a || 0)); });
+  cb.querySelectorAll(".tl[data-t]").forEach(el => {
+    const go = () => { const t = +el.dataset.t, rr = mjM.sel; mjM.sel = false; send("discard", t, rr ? 1 : 0); };
+    el.onclick = go; el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } };
+  });
+  const q = s => cb.querySelector(s);
+  if (q("#mjRiichi")) q("#mjRiichi").onclick = () => { mjM.sel = !mjM.sel; renderMJM(); };
+  if (q("#mjOut")) q("#mjOut").onclick = () => { mjM.st = null; send("leave"); };
+  q("#mjLeave").onclick = () => {
+    if (st.phase !== "play" && st.phase !== "result") { mjM.st = null; send("leave"); return; }
+    if (!mjM.leaveArmed) { mjM.leaveArmed = true; renderMJM(); setTimeout(() => { mjM.leaveArmed = false; renderMJM(); }, 4000); return; }
+    mjM.leaveArmed = false; mjM.st = null; send("leave");
+  };
+}
+function renderMJLobby(cb, err) {
+  const L = mjM.lobby, tables = L ? L.tables : [];
+  cb.innerHTML = `<div class="mjlobby">
+    <h3 class="lbl">卓の一覧</h3>
+    <div class="list">${tables.length ? tables.map(t => { const free = t.seats.some(s => !s); return `<div class="li"><span class="nm">卓${t.id}　${t.south ? "半荘戦" : "東風戦"}・${esc(MJ_RATES[t.rate]?.[1] || "")}
+        <span class="sub2">${t.seats.map(s => s ? esc(s) : "空席").join("・")}　${t.phase === "wait" ? "メンバー待ち" : "対局中"}</span></span>
+        <span class="acts">${t.phase === "wait" && free ? `<button class="btn" type="button" data-sit="${t.id}" data-rate="${t.rate}">座る</button>` : ""}</span></div>`; }).join("") : `<p class="mtext">いまは卓がありません。卓を立ててみよう。</p>`}</div>
+    <h3 class="lbl">卓を立てる</h3>
+    <div class="mtabs">${["東風戦", "半荘戦"].map((l, i) => `<button class="chip" type="button" data-len="${i}" aria-pressed="${mjM.len === i}">${l}</button>`).join("")}</div>
+    <div class="mtabs">${MJ_RATES.map(([g, l], i) => `<button class="chip" type="button" data-rt="${i}" aria-pressed="${mjM.rate === i}">${l}${g ? `（1000点=${g}G）` : ""}</button>`).join("")}</div>
+    ${err}<div class="row2"><button class="btn" type="button" id="mjCreate">卓を立てる</button><button class="btn light" type="button" id="mjSoloGo">ひとりで打つ</button></div>${mjRules}</div>`;
+  cb.querySelectorAll("[data-len]").forEach(b => b.onclick = () => { mjM.len = +b.dataset.len; renderMJM(); });
+  cb.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { mjM.rate = +b.dataset.rt; renderMJM(); });
+  cb.querySelectorAll("[data-sit]").forEach(b => b.onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[+b.dataset.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "sit", a: +b.dataset.sit }); });
+  cb.querySelector("#mjCreate").onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[mjM.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "create", a: mjM.len, b: mjM.rate }); };
+  cb.querySelector("#mjSoloGo").onclick = () => { S.mjMode = "solo"; clearInterval(mjM.timer); K.net.onMj = null; setupMahjongLobby(cb, mjM.body); };
 }
 function later(fn, ms) { const id = setTimeout(() => { if (mj && mj.alive) fn(); }, window.__mjFast ? 3 : ms); mj.timers.push(id); }
 const seatName = p => p === 0 ? K.myName() : CPU[p - 1];
@@ -758,7 +922,7 @@ function renderMJ() {
   const handTiles = hand.map((t, i) => {
     const isDrawn = isMine && i === hand.length - 1 && mj.drawn !== null;
     const can = isMine && !mj.riichi[0] && (!rset || rset.has(i));
-    return tileHtml(t, (isDrawn ? "drawn " : "") + (can ? "can" : "") + (rset && rset.has(i) ? " hint" : ""), can ? `data-i="${i}" role="button" tabindex="0"` : "");
+    return tileHtml(t, (isDrawn ? "drawn " : "") + (can ? "can" : "") + (rset && rset.has(i) ? " mjhi" : ""), can ? `data-i="${i}" role="button" tabindex="0"` : "");
   }).join("");
   let ctl = "";
   if (isMine) {
@@ -771,7 +935,7 @@ function renderMJ() {
   if (mj.phase === "result" && mj.result) {
     const r = mj.result;
     overlay = `<div class="mj-res"><h3>${esc(r.title)}</h3>${r.ryu ? `<p class="mtext">テンパイ：${[0, 1, 2, 3].filter(p => r.tenpai[p]).map(seatName).map(esc).join("・") || "なし"}</p>` :
-      `<div class="mj-hand small">${r.hand.map(t => tileHtml(t, "sm" + (t === r.win ? " hint" : ""))).join("")}</div>
+      `<div class="mj-hand small">${r.hand.map(t => tileHtml(t, "sm" + (t === r.win ? " mjhi" : ""))).join("")}</div>
        <div class="yakulist">${r.yaku.map(([n, h]) => `<span>${esc(n)}<b>${h === "役満" ? "役満" : h + "翻"}</b></span>`).join("")}</div>
        <p class="mtext">${r.yakuman ? "" : `${r.han}翻${r.fu}符 `}${r.label ? `<b>${r.label}</b> ` : ""}${r.total}点</p>`}
       <div class="mj-delta">${[0, 1, 2, 3].map(p => `<span>${esc(seatName(p))}<b class="${r.delta[p] > 0 ? "up" : r.delta[p] < 0 ? "down" : ""}">${r.delta[p] > 0 ? "+" : ""}${r.delta[p]}</b></span>`).join("")}</div>

@@ -80,7 +80,7 @@ details.paytable summary { cursor: pointer; font-family: var(--f-pixel); color: 
 .tl.rot { transform: rotate(90deg); margin: 0 4px; }
 .tl.can { cursor: pointer; } .tl.can:hover, .tl.can:focus-visible { transform: translateY(-5px); outline: none; box-shadow: inset 0 -4px 0 #d6c39b, 0 0 0 2px #f0bd4f; }
 .tl.drawn { margin-left: 10px; }
-.tl.hint { box-shadow: inset 0 -4px 0 #d6c39b, 0 0 0 2px #ff7aa8; }
+.tl.mjhi, .tl.hint { box-shadow: inset 0 -4px 0 #d6c39b, 0 0 0 2px #ff7aa8; }
 .mj-res { position: absolute; inset: 0; background: rgba(18, 11, 24, .94); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; overflow-y: auto; z-index: 2; }
 .mj-res h3 { font-family: var(--f-pixel); font-weight: 400; margin: 0; color: #f0bd4f; font-size: 1.1rem; }
 .yakulist { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .85rem; }

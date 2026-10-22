@@ -3420,7 +3420,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.9.12";
+const CLIENT_VERSION = "0.10.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5180,7 +5180,7 @@ F14.ready = true;
 
 // =================== v15: the shared どんぐりBJ table (money side) ===================
 var F15 = {};
-K.net = { connected: () => !!F8.connected, send: m => send8(m), myId: () => onl.id, onBj: null };
+K.net = { connected: () => !!F8.connected, send: m => send8(m), myId: () => onl.id, onBj: null, onMj: null };
 const _handle15 = handle8;
 handle8 = m => {
   _handle15(m);
@@ -5435,6 +5435,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.10.0", date: "2026/10/22", title: "みんなの麻雀（正式ルール）", items: [
+    "オンラインでは、雀卓で友達と同じ卓に座って打てるように。4人そろわないときはCPUが入る",
+    "ポン・チー・カン（暗槓・明槓・加槓）、立直・一発・ダブル立直、海底・河底・嶺上開花・槍槓、フリテン、喰い替えなし",
+    "役をぜんぶ（二盃口・純全帯么九・三色同刻・小三元・混老頭など）と役満12種、ちゃんとした符の計算、赤ドラ各1枚",
+    "流局のテンパイ料、本場・供託、連荘、途中流局（九種九牌・四風連打・四家立直）",
+    "卓を立てる人が、東風戦か半荘戦と、レート（ノーレート・点1・点5・テンピン・デカピン）をえらべる。精算は30000点返しのウマ10-20",
+    "手牌は自分にしか見えない（ゲームの進行はサーバーがしている）。切断しても、CPUがおまかせで打ってくれる",
+    "ひとりでCPUと打つ、これまでの卓も残してある"] },
   { v: "0.9.12", date: "2026/10/22", title: "一発逆転の魚", items: [
     "借金しているときだけ、ごくまれに釣れる魚を追加。村の池の「コバンゴイ」（30,000G）と、みなと町の海の「ギャクテンダイ」（50,000G）",
     "返済が遅れているときは、少しだけ釣れやすい",
@@ -5841,6 +5849,31 @@ F6.fishCaught = got => {
 { const a = ACH.find(x => x[0] === "魚博士"); if (a) a[2] = () => FISH6.filter(f => !f.debt).every(f => world.dex[f.n]); }
 ACH.push(["起死回生", "借金しているときにしか釣れない魚を釣る", () => (world.stats.debtFish || 0) >= 1]);
 ACH_REWARD["起死回生"] = ["medal", 10];
+
+// =================== v24: みんなの麻雀（オンライン）の精算 ===================
+function applyMjPay24(money, text) {
+  money = Math.max(-10000000, Math.min(10000000, Math.floor(+money || 0)));
+  let note = "";
+  if (money > 0) addMoney(money);
+  else if (money < 0) {
+    const loss = -money, pay = Math.min(loss, world.money); addMoney(-pay);
+    const short = loss - pay, room = K.loanRoom("yami"), lend = Math.min(short, room);
+    if (lend > 0) { takeLoan("yami", lend); note = `。払いきれない ${fmt(lend)} は十日屋が立て替えた（10日で5割）`; }
+    if (short > lend) note += `。十日屋の貸せる上限をこえた ${fmt(short - lend)} は、雀荘のマスターが「次はほどほどにな」とまけてくれた`;
+  }
+  if (money) { world.stats.gambleNet += money; if (K.gambleTrack) K.gambleTrack(money); world.stats.lastGamble = world.day; if (money > world.stats.bigWin) world.stats.bigWin = money; }
+  world.stats.mjGames = (world.stats.mjGames || 0) + 1; if (/ 1位/.test(text)) world.stats.mjTop = (world.stats.mjTop || 0) + 1;
+  saveWorld(); updateHud(true);
+  F7.notify(`${text}${money ? `：${money > 0 ? "+" : ""}${fmt(money)}` : "（ノーレート）"}${note}`, "coin");
+}
+const _handle24 = handle8;
+handle8 = m => {
+  _handle24(m);
+  if (m.type === "welcome" && Number.isFinite(m.mjPay) && m.mjPay) applyMjPay24(m.mjPay, "留守のあいだに終わった麻雀の精算");
+  if (typeof m.type !== "string" || !m.type.startsWith("mj")) return;
+  if (m.type === "mjPay") applyMjPay24(m.money, String(m.text || "麻雀の精算").slice(0, 60));
+  if (K.net.onMj) K.net.onMj(m);
+};
 
 // =================== start ===================
 function animPreview(now) {

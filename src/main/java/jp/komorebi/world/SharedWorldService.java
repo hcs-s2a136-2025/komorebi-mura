@@ -123,11 +123,12 @@ public class SharedWorldService implements WelcomeContributor {
      */
     public void reset() {
         synchronized (this) {
-            JsonNode clock = layers.get("_clock"), jackpot = layers.get("_jackpot");
+            JsonNode clock = layers.get("_clock"), jackpot = layers.get("_jackpot"), mjpay = layers.get("_mjpay");
             long next = epoch() + 1;
             layers = om.createObjectNode();
             if (clock != null) layers.set("_clock", clock);
             if (jackpot != null) layers.set("_jackpot", jackpot);
+            if (mjpay != null) layers.set("_mjpay", mjpay);
             layers.put("_epoch", next);
             dirty = true;
         }

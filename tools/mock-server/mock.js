@@ -1,7 +1,7 @@
 // Spring Boot サーバーと同じ約束（API・WebSocket）で動く、テスト用の模擬サーバー
 // 使い方: npm install && node mock.js ../../src/main/resources/static/index.html 8099 [版] [時間の速さ]
 // /mock/threads お便り一覧、/mock/reply?id=1&body=... 管理人の返事のまね、/mock/world 共有の村、/mock/reset 共有の村のリセット、/mock/saves セーブ一覧、/mock/jackpot ジャックポット、/mock/rooms 家の中と箱
-// みんなのBJを試すとき: javac -d bj/out ../../src/main/java/jp/komorebi/casino/BjGame.java bj/BjBridge.java（Javaが要ります。なければBJの卓だけ動きません）
+// みんなのBJと麻雀を試すとき: javac -d bj/out ../../src/main/java/jp/komorebi/casino/BjGame.java ../../src/main/java/jp/komorebi/casino/mj/MjRules.java ../../src/main/java/jp/komorebi/casino/mj/MjAi.java ../../src/main/java/jp/komorebi/casino/mj/MjGame.java bj/BjBridge.java bj/MjBridge.java（Javaが要ります。なければBJと麻雀の卓だけ動きません）
 const http = require("http"), fs = require("fs"), crypto = require("crypto"), { WebSocketServer } = require("ws");
 const INDEX = process.argv[2], PORT = +process.argv[3] || 8099, VERSION = process.argv[4] || "0.8.0";
 const players = new Map(), threads = []; let pid = 1, tid = 1;
@@ -26,6 +26,17 @@ if (fs.existsSync(BJ_CP)) {
     if (f[0] === "A") { for (const o of sessions) if (o.pl) o.send(f[1]); } else if (f[0] === "P") { for (const o of sessions) if (o.pl && o.pl.id === +f[1]) o.send(f[2]); } } });
   setInterval(() => bj.stdin.write("T\t" + [...sessions].filter(o => o.pl).map(o => o.pl.id).join(",") + "\n"), 500);
   process.on("exit", () => bj.kill()); process.on("SIGTERM", () => { bj.kill(); process.exit(0); }); process.on("SIGINT", () => { bj.kill(); process.exit(0); });
+}
+// みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
+let mj = null; const mjPending = new Map();
+if (fs.existsSync(path.join(BJ_CP, "MjBridge.class"))) {
+  mj = spawn("java", ["-cp", BJ_CP, "MjBridge"], { stdio: ["pipe", "pipe", "ignore"] });
+  let buf = "";
+  mj.stdout.on("data", d => { buf += d.toString("utf8"); let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); const f = line.split("\t");
+    if (f[0] === "A") { for (const o of sessions) if (o.pl) o.send(f[1]); } else if (f[0] === "P") { for (const o of sessions) if (o.pl && o.pl.id === +f[1]) o.send(f[2]); }
+    else if (f[0] === "Y") { const id = +f[1], money = +f[2], on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "mjPay", money, text: f[3] }))); else if (money) mjPending.set(id, (mjPending.get(id) || 0) + money); } } });
+  setInterval(() => mj.stdin.write("T\t" + [...sessions].filter(o => o.pl).map(o => o.pl.id).join(",") + "\n"), 400);
+  process.on("exit", () => mj.kill());
 }
 const RATE = +process.argv[5] || 1;
 const clock = { day: 1, start: Date.now(), weather: "sun" };
@@ -87,7 +98,8 @@ wss.on("connection", s => {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, chat: chat.slice(-30), clock: cstate(), jackpot }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), chat: chat.slice(-30), clock: cstate(), jackpot }));
+      mjPending.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
     if (m.type === "move") { Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }
@@ -102,6 +114,7 @@ wss.on("connection", s => {
       if (!(amt > 0 && amt <= 100000) || to === s.pl.id) s.send(JSON.stringify({ type: "giftNg", rid, text: "渡せる額は1〜100,000Gだよ" }));
       else if (!t) s.send(JSON.stringify({ type: "giftNg", rid, text: "相手がいまつないでいないみたい" }));
       else { t.send(JSON.stringify({ type: "gift", from: s.pl.id, name: s.pl.name, amount: amt })); s.send(JSON.stringify({ type: "giftOk", rid, to, amount: amt })); } }
+    if (m.type === "mj" && mj) mj.stdin.write(["C", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.act || "").replace(/\W/g, ""), Math.floor(+m.a || 0), Math.floor(+m.b || 0)].join("\t") + "\n");
     if (m.type === "bj" && bj) bj.stdin.write(["C", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.act || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n");
     if (m.type === "house" && m.act === "returns") { const it = returns.get(s.pl.id); returns.delete(s.pl.id); if (it && Object.keys(it).length) s.send(JSON.stringify({ type: "houseReturn", items: Object.entries(it).map(([id, n]) => ({ id, n })) })); return; }
     if (m.type === "house") { const k = String(m.key || ""); if (!KEYRE.test(k)) return; const me = s.pl.id;

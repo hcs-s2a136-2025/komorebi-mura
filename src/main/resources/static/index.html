@@ -635,6 +635,9 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 #opts .chip.ic34 span { font-size: .72rem; text-align: center; max-width: 76px; word-break: keep-all; overflow-wrap: anywhere; }
 #opts .chip.ic34 small { display: block; font-size: .62rem; opacity: .7; }
 #opts .chip.ic34[disabled] canvas { opacity: .45; filter: grayscale(.6); }
+.kuji35 { margin-top: 10px; padding: 14px; text-align: center; background: #fbf6ec; border: 2px solid #d8403a; border-radius: 10px; color: #3a2a24; }
+.kuji35 b { display: block; font-size: 1.6rem; color: #c8302a; letter-spacing: .2em; }
+.kuji35 p { margin: 6px 0 2px; }
 </style>
 
 <header>
@@ -3031,7 +3034,7 @@ function openBoard(tab = "quest") {
     } else if (tab === "project") {
       html += `<p class="mtext">みんなで材料を出し合って村を育てよう。村の人たちも毎日少しずつ寄付してくれます。</p><div class="list">${Object.entries(world.projects).map(([k, p]) => {
         const need = Object.entries(p.need).map(([id, n]) => `<span class="need${(p.have[id] || 0) >= n ? "" : " lack"}"><img src="${ASSETS[ITEMS[id].icon]}" alt="">${ITEMS[id].name} ${Math.min(p.have[id] || 0, n)}/${n}<small class="own9">（持ち物 ${count(id)}${F8.storeCount(id) ? `・収納箱 ${F8.storeCount(id)}` : ""}）</small></span>`).join("");
-        return `<div class="li"><img src="${ASSETS[{ fountain: "fountain", lamps: "streetlamp", beds: "flowerbed", clock: "clocktower" }[k]]}" alt=""><span class="nm">${PROJECTS[k][0]}<span class="sub2">${PROJECTS[k][1]}<br>${need}</span></span>
+        return `<div class="li"><img src="${ASSETS[{ fountain: "fountain", lamps: "streetlamp", beds: "flowerbed", clock: "clocktower" }[k] || "p35_" + k]}" alt=""><span class="nm">${PROJECTS[k][0]}<span class="sub2">${PROJECTS[k][1]}<br>${need}</span></span>
           <span class="acts">${p.done ? "完成！" : `<button class="btn" type="button" data-pj="${k}">持っている分を寄付</button>`}</span></div>`;
       }).join("")}</div>`;
     } else if (tab === "memo") {
@@ -4917,7 +4920,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.21.0";
+const CLIENT_VERSION = "0.22.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -6942,6 +6945,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.22.0", date: "2026/10/22", title: "ペットと、共同プロジェクトの続き", items: [
+    "道具や種を持ってAを押したとき、前にいるペットがよけてくれるように（なでるのは手ぶらのとき）。立ち止まっていると、目の前のマスのペットは横によける",
+    "設定タブで、ペットごとに「ついてくる／ここで待つ／ペット小屋で待つ」を選べるように",
+    "共同プロジェクトの続き：温泉 → 風車 → 神社 → 野外ステージ → 観覧車。ひとつ完成すると、次が掲示板に出る",
+    "温泉は1日1回HP全回復、風車は作物と料理が1割高く売れる、神社はおみくじ、ステージはライブでおひねり、観覧車は村を見わたせる",
+    "オンラインでは、できた場所もみんなで同じになる",
+  ] },
   { v: "0.21.0", date: "2026/10/22", title: "着せ替えが大きくなった", items: [
     "前髪と後ろ髪（髪型）を、べつべつに選べるように。前髪は11種類（ぱっつん・流し前髪・センター分け・シースルー・姫カット・触角ヘア・目隠れ など）",
     "後ろ髪がふえた：ベリーショート・ぼうず・サイドテール・三つ編み・ウルフカット・縦ロール・ハーフアップ・おだんごツイン・ロングウェーブ・アシメ",
@@ -8975,6 +8985,218 @@ F34.icons = iconChips34; F34.render = (c, d) => renderChar({ ...DEFAULT, ...c },
 syncUI();
 F34.ready = true;
 
+// =================== v35: ペットがじゃまにならないように・共同プロジェクトの続き ===================
+var F35 = {};
+// ---------- ペット ----------
+// ・道具や種を持って畑などに向かってAを押したときは、前にいるペットがよけてから使う（なでるのは手ぶらのときだけ）
+// ・止まっているとき、目の前のマスにいるペットは横によける
+// ・設定で「ついてくる／ここで待つ／ペット小屋で待つ」を選べる
+const petStay35 = () => world.petStay35 || (world.petStay35 = {});
+const PET_MODE35 = { follow: "ついてくる", here: "ここで待つ", house: "ペット小屋で待つ" };
+function staySpot35(t) {
+  const st = petStay35()[t]; if (!st) return null;
+  if (st.mode === "house") { const ph = mine32("pethouse32")[0]; if (ph) { const [x, y] = ph.split(",").map(Number); return [x, y + 1]; } }
+  return [st.x, st.y];
+}
+function setPetMode35(t, mode) {
+  const e = petEnts.find(p => p.ptype === t);
+  if (mode === "follow") delete petStay35()[t];
+  else petStay35()[t] = { mode, x: e ? e.x : player.x, y: e ? e.y : player.y };
+  if (e && mode === "house") { const s = staySpot35(t); if (s) { const f = blocked(village, s[0], s[1], e) ? freeNear(village, s[0], s[1]) : s; placeAt(e, f[0], f[1], "down"); } }
+  saveWorld();
+}
+F35.setPetMode = setPetMode35;
+const _updatePets35 = updatePets;
+updatePets = function (dt) {
+  const all = petEnts, stay = petStay35();
+  petEnts = all.filter(p => !stay[p.ptype]);
+  try { _updatePets35(dt); } finally { petEnts = all; }
+  if (map !== village) return;
+  for (const p of all) {
+    if (!stay[p.ptype]) continue;
+    const s = staySpot35(p.ptype) || [p.x, p.y];
+    if (!p.moving && (p.think35 = (p.think35 || 0) - dt) <= 0) {
+      p.think35 = 1.5 + Math.random() * 3;
+      const far = Math.abs(p.x - s[0]) + Math.abs(p.y - s[1]);
+      if (far > 3) { const dx = s[0] - p.x, dy = s[1] - p.y; stepTo(p, Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up")); }
+      else if (Math.random() < .5) { const d = pick(DIRS); const [dx, dy] = DIRS[d]; if (Math.abs(p.x + dx - s[0]) + Math.abs(p.y + dy - s[1]) <= 3) stepTo(p, d); else p.dir = d; }
+    }
+    updateEnt(p, dt);
+  }
+  // 目の前のマスにいるペットは、よける
+  if (!player.moving && !modalOpen) {
+    const [fx, fy] = front();
+    for (const p of all) if (!p.moving && p.x === fx && p.y === fy) {
+      const side = player.dir === "up" || player.dir === "down" ? ["left", "right"] : ["up", "down"];
+      if (!stepTo(p, side[rnd(2)]) && !stepTo(p, side[0]) && !stepTo(p, side[1])) { const s = freeNear(village, player.x, player.y); if (s[0] !== fx || s[1] !== fy) placeAt(p, s[0], s[1]); }
+    }
+  }
+};
+const _enter35 = enter;
+enter = function (m, x, y, dir) {
+  _enter35(m, x, y, dir);
+  if (m === village) for (const p of petEnts) { const s = staySpot35(p.ptype); if (s) { const f = blocked(village, s[0], s[1], p) ? freeNear(village, s[0], s[1]) : s; placeAt(p, f[0], f[1]); } }
+};
+const _act35 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+    const [tx, ty] = front(), k = tx + "," + ty, sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+    const p = petEnts.find(e => e.x === tx && e.y === ty);
+    const useful = it && (it.use || it.seed || it.place || it.plant || it.weapon || it.bait);
+    if (p && (useful || world.crops[k] || world.tilled[k] || world.drops.some(d => d.x === tx && d.y === ty))) {
+      const s = freeNear(village, player.x, player.y); if (s[0] !== tx || s[1] !== ty) placeAt(p, s[0], s[1]); else placeAt(p, player.x, player.y);
+    }
+  }
+  _act35();
+};
+const _renderSettings35 = F7.renderSettings;
+F7.renderSettings = () => {
+  _renderSettings35();
+  const B = $("settingsBody"); if (!B || !world.pets.length) return;
+  const hasHouse = mine32("pethouse32").length > 0;
+  B.insertAdjacentHTML("afterbegin", `<div class="opt"><h3>ペット</h3>${world.pets.map(t => { const e = petEnts.find(p => p.ptype === t), cur = petStay35()[t]?.mode || "follow";
+    return `<p class="mtext" style="margin:6px 0 2px">${esc(e?.name || PETS[t].name)}（${PETS[t].name}）</p><div class="row">${Object.entries(PET_MODE35).filter(([m]) => m !== "house" || hasHouse).map(([m, l]) => `<button class="chip" type="button" data-pm35="${t}:${m}" aria-pressed="${cur === m}">${l}</button>`).join("")}</div>`; }).join("")}
+    <p class="note">「ここで待つ」は、いまいる場所のまわりで待っています。${hasHouse ? "" : "ペット小屋を建てると「ペット小屋で待つ」も選べます。"}道具や種を持ってAを押したときは、前にいるペットがよけてくれます（なでるのは手ぶらのとき）。</p></div>`);
+  B.querySelectorAll("[data-pm35]").forEach(b => b.onclick = () => { const [t, m] = b.dataset.pm35.split(":"); setPetMode35(t, m); F7.renderSettings(); toast(null, `${petEnts.find(p => p.ptype === t)?.name || PETS[t].name}：${PET_MODE35[m]}`); });
+};
+
+// ---------- 共同プロジェクトの続き（ひとつ完成すると、次が掲示板に出る） ----------
+const PROJ35 = {
+  onsen35: { name: "温泉", desc: "湯けむりの温泉ができる。1日1回入ると、HPが全回復して村の評判が少し上がる", need: { stone: 80, wood: 30, ore: 10 }, w: 3, h: 2, ih: 36, pref: [41, 20],
+    spr: (set, rect) => { ell13(set, 24, 22, 23, 13, C13["#8a8a90"]); ell13(set, 24, 22, 20, 10, C13["#a8a8ae"]); ell13(set, 24, 23, 17, 8, C13["#6ac0c8"]); ell13(set, 20, 21, 7, 3, C13["#a8e4e8"]);
+      for (const [x, y] of [[4, 22], [9, 31], [20, 34], [34, 33], [43, 26], [40, 15], [10, 13], [26, 11]]) ell13(set, x, y, 3, 2.4, C13["#7a7a80"]);
+      rect(2, 2, 2, 14, WD[3]); rect(1, 2, 12, 8, WD[1]); rect(1, 2, 12, 1, WD[0]); ell13(set, 7, 7, 2, 1.4, C13["#e2404e"]); rect(5, 3, 1, 3, C13["#e2404e"]); rect(7, 3, 1, 3, C13["#e2404e"]); rect(9, 3, 1, 3, C13["#e2404e"]); } },
+  windmill35: { name: "風車", desc: "丘に風車が建つ。作物と料理が、1割高く売れるようになる", need: { wood: 80, stone: 40, ore: 15 }, w: 2, h: 2, ih: 64, pref: [53, 15],
+    spr: (set, rect) => { for (let y = 22; y < 62; y++) { const hw = 7 + (y - 22) * 5 / 40; rect(Math.round(16 - hw), y, Math.round(hw * 2), 1, y % 8 < 1 ? C13["#d8ccb8"] : C13["#f4ecdc"]); }
+      for (let y = 10; y < 23; y++) { const hw = (y - 10) * 9 / 12 + 1; rect(Math.round(16 - hw), y, Math.round(hw * 2), 1, y < 13 ? C13["#c86a58"] : C13["#a8403a"]); }
+      rect(12, 48, 8, 14, WD[2]); ell13(set, 16, 48, 4, 2, WD[2]); rect(15, 30, 3, 4, C13["#a8d4ec"]); rect(2, 62, 28, 2, C13["#6a8a4a"]); } },
+  shrine35: { name: "神社", desc: "小さな神社が建つ。1日1回、おみくじが引ける（お賽銭50G）", need: { wood: 60, stone: 60, gem: 3 }, w: 3, h: 2, ih: 44, pref: [55, 26],
+    spr: (set, rect) => { rect(14, 18, 30, 22, WD[1]); for (let x = 16; x < 44; x += 5) rect(x, 18, 1, 22, WD[3]); rect(14, 39, 30, 2, WD[3]);
+      for (let y = 6; y < 20; y++) { const hw = 6 + (y - 6) * 11 / 13; rect(Math.round(29 - hw), y, Math.round(hw * 2), 1, y < 9 ? C13["#5a6a6a"] : C13["#3a4a4c"]); } rect(10, 18, 38, 2, C13["#2a3436"]);
+      rect(25, 26, 8, 13, C13["#3a2418"]); rect(26, 23, 6, 3, C13["#f2d070"]); rect(28, 20, 2, 3, C13["#c8a048"]);
+      rect(2, 12, 2, 30, C13["#d8403a"]); rect(10, 12, 2, 30, C13["#d8403a"]); rect(0, 10, 14, 2, C13["#d8403a"]); rect(0, 9, 14, 1, C13["#2a2a2a"]); rect(1, 16, 12, 2, C13["#d8403a"]); rect(0, 42, 48, 2, C13["#9a968e"]); } },
+  stage35: { name: "野外ステージ", desc: "広場にステージができる。1日1回ライブができて、村の人がおひねりをくれる", need: { wood: 100, stone: 30, ore: 20 }, w: 4, h: 2, ih: 40, pref: [42, 27],
+    spr: (set, rect) => { rect(2, 4, 60, 22, C13["#3a2a3a"]); rect(2, 4, 60, 3, C13["#c8a048"]); for (let x = 2; x < 20; x += 3) rect(x, 7, 2, 19, C13["#c83a4a"]); for (let x = 44; x < 62; x += 3) rect(x, 7, 2, 19, C13["#c83a4a"]);
+      for (const x of [10, 22, 34, 46, 56]) { rect(x, 2, 3, 3, C13["#fff0a0"]); } rect(0, 26, 64, 10, WD[1]); rect(0, 26, 64, 2, WD[0]); for (let x = 4; x < 64; x += 10) rect(x, 28, 1, 8, WD[3]); rect(0, 36, 64, 4, WD[3]); rect(28, 14, 2, 12, C13["#9aa4ae"]); ell13(set, 29, 13, 2, 2, C13["#4a4a52"]); } },
+  ferris35: { name: "観覧車", desc: "大きな観覧車ができる。100Gで乗ると、村をぐるっと見わたせる", need: { ore: 60, stone: 60, wood: 40, gem: 5 }, w: 4, h: 3, ih: 80, pref: [20, 31],
+    spr: (set, rect) => { for (let i = 0; i < 46; i++) { const t = i / 45; rect(Math.round(32 - t * 22), Math.round(30 + t * 44), 2, 1, C13["#c8ccd8"]); rect(Math.round(31 + t * 22), Math.round(30 + t * 44), 2, 1, C13["#c8ccd8"]); }
+      rect(4, 74, 56, 6, C13["#8a8a96"]); rect(4, 74, 56, 1, C13["#aaaab4"]); rect(26, 66, 12, 8, C13["#e2404e"]); rect(28, 68, 8, 4, C13["#fff0d0"]); } },
+};
+for (const [id, P] of Object.entries(PROJ35)) { PROJECTS[id] = [P.name, P.desc]; IMG["p35_" + id] = pix13(P.w * 16, P.ih, P.spr); ASSETS["p35_" + id] = IMG["p35_" + id].toDataURL(); }
+const ORDER35 = Object.keys(PROJ35);
+function ensureChain35() {
+  if (!world.projects) return;
+  for (const id of ORDER35) {
+    if (world.projects[id]) { if (!world.projects[id].done) return; continue; }
+    if (!Object.values(world.projects).every(p => p.done)) return;
+    world.projects[id] = { need: { ...PROJ35[id].need }, have: {}, done: false };
+    F7.notify(`掲示板に、新しい共同プロジェクト「${PROJ35[id].name}」が貼り出された`, "board"); saveWorld(); return;
+  }
+}
+F35.ensure = ensureChain35;
+const okTile35 = (x, y) => x >= 0 && y >= 0 && x < village.w && y < village.h && /^(grass|flower)/.test(village.ground[y][x]) && !village.solid[y][x] && !village.noBuild.has(x + "," + y) && !world.tilled[x + "," + y] && !world.crops[x + "," + y] && !(world.decor || {})[x + "," + y];
+function chooseAt35(id) {
+  const P = PROJ35[id], fits = (ax, ay) => { for (let y = ay - P.h + 1; y <= ay; y++) for (let x = ax; x < ax + P.w; x++) if (!okTile35(x, y)) return false; return y35ok(ax, ay, P); };
+  const [px, py] = P.pref;
+  for (let r = 0; r <= 14; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; if (fits(px + dx, py + dy)) return [px + dx, py + dy]; }
+  return [px, py];
+}
+const y35ok = (ax, ay, P) => ay - P.h + 1 >= 2 && ay <= village.h - 3;
+const foot35 = (id, at) => ({ x0: at[0], y0: at[1] - PROJ35[id].h + 1, x1: at[0] + PROJ35[id].w - 1, y1: at[1] });
+const doneProj35 = () => ORDER35.filter(id => world.projects?.[id]?.done && Array.isArray(world.projects[id].at));
+const _rebuildSolid35 = rebuildSolid;
+rebuildSolid = function () {
+  _rebuildSolid35();
+  if (!world.projects) return;
+  ensureChain35();
+  let placed = false; const S = village.solid;
+  const mark = id => { const f = foot35(id, world.projects[id].at); for (let y = f.y0; y <= f.y1; y++) for (let x = f.x0; x <= f.x1; x++) if (S[y] && x >= 0 && x < village.w) S[y][x] = true; };
+  for (const id of doneProj35()) mark(id);
+  for (const id of ORDER35) { const p = world.projects[id]; if (p?.done && !Array.isArray(p.at)) { p.at = chooseAt35(id); placed = true; mark(id); } }
+  if (placed) { for (const pe of petEnts) if (village.solid[pe.y]?.[pe.x]) { const s = freeNear(village, player.x, player.y); placeAt(pe, s[0], s[1]); } saveWorld(); }
+};
+// オンライン：場所（at）も一緒に共有する
+const _projToMeta35 = projToMeta14;
+projToMeta14 = function () { _projToMeta35(); if (!world.sharedMeta) return; for (const id of ORDER35) { const p = world.projects?.[id]; if (p && world.sharedMeta["proj:" + id] && Array.isArray(p.at)) world.sharedMeta["proj:" + id].at = p.at; } };
+const _metaToProj35 = metaToProj14;
+metaToProj14 = function (k, v) {
+  _metaToProj35(k, v);
+  if (!k.startsWith("proj:") || !v) return; const id = k.slice(5), p = world.projects?.[id];
+  if (p && PROJ35[id] && Array.isArray(v.at) && v.at.length === 2 && v.at.every(n => Number.isInteger(n) && n >= 0 && n < 100) && (p.at?.[0] !== v.at[0] || p.at?.[1] !== v.at[1])) { p.at = v.at; rebuildSolid(); }
+};
+// 描く
+const _addToList35 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList35(list, now);
+  if (map !== village) return;
+  for (const id of doneProj35()) {
+    const [ax, ay] = world.projects[id].at, im = IMG["p35_" + id], P = PROJ35[id], bx = ax * TS, by = (ay + 1) * TS - im.height;
+    list.push({ s: (ay + 1) * TS - 1, d: () => {
+      ctx.drawImage(im, bx, by);
+      if (id === "onsen35") for (let i = 0; i < 5; i++) { const t = (now / 1400 + i / 5) % 1; ctx.fillStyle = `rgba(255,255,255,${.5 * (1 - t)})`; ctx.beginPath(); ctx.arc(bx + 12 + i * 7 + Math.sin(now / 500 + i) * 2, by + 20 - t * 22, 2 + t * 3, 0, 7); ctx.fill(); }
+      if (id === "windmill35") { const a = now / 900; ctx.save(); ctx.translate(bx + 16, by + 18); ctx.rotate(a); for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); ctx.fillStyle = "#6a4a34"; ctx.fillRect(-1, 0, 2, 16); ctx.fillStyle = "#f4ecdc"; ctx.fillRect(1, 3, 4, 12); ctx.strokeStyle = "#a8988a"; ctx.lineWidth = .6; ctx.strokeRect(1, 3, 4, 12); } ctx.restore(); ctx.fillStyle = "#4a3426"; ctx.fillRect(bx + 15, by + 17, 3, 3); }
+      if (id === "ferris35") { const cx = bx + 32, cy = by + 31, R = 26, a = now / 4000; ctx.strokeStyle = "#e8ecf4"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke(); ctx.lineWidth = .8; ctx.beginPath(); ctx.arc(cx, cy, R * .55, 0, 7); ctx.stroke();
+        const cols = ["#e2404e", "#f0c840", "#4a8ae0", "#7ad07a", "#f27aa0", "#b07af2", "#f2a03a", "#5ac0c8"];
+        for (let i = 0; i < 8; i++) { const t = a + i * Math.PI / 4, x = cx + Math.cos(t) * R, y = cy + Math.sin(t) * R; ctx.strokeStyle = "rgba(232,236,244,.8)"; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = cols[i]; ctx.fillRect(x - 3, y, 6, 6); ctx.fillStyle = "#fff6e0"; ctx.fillRect(x - 2, y + 1, 4, 2); }
+        ctx.fillStyle = "#8a8a96"; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 7); ctx.fill(); }
+      if (id === "stage35" && (world.time >= 1080 || world.time < 400)) { ctx.globalAlpha = .25 + Math.sin(now / 300) * .05; ctx.fillStyle = "#fff0a0"; ctx.beginPath(); ctx.moveTo(bx + 24, by + 4); ctx.lineTo(bx + 14, by + 30); ctx.lineTo(bx + 40, by + 30); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; }
+    } });
+  }
+};
+// Aボタン
+const projAt35 = (x, y) => doneProj35().find(id => { const f = foot35(id, world.projects[id].at); return x >= f.x0 && x <= f.x1 && y >= f.y0 && y <= f.y1; });
+const _act35b = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) { const [tx, ty] = front(), id = projAt35(tx, ty); if (id) { useProj35(id); return; } }
+  _act35b();
+};
+const OMIKUJI35 = [["大吉", .1, "願いごとがかなうかも。いいことが起きる予感", 1500], ["中吉", .2, "まわりの人を大切にすると、運が開けます", 500], ["小吉", .3, "小さな幸せが、足もとに落ちています", "item"], ["吉", .3, "いつもどおりが、いちばんの幸運", 0], ["凶", .1, "今日は無理をしないで。のんびりが吉", 0]];
+function useProj35(id) {
+  const d = world.daily35 || (world.daily35 = {}), today = d[id] === world.day;
+  if (id === "onsen35") {
+    if (today) { toast("p35_onsen35", "今日はもう温泉に入った。また明日ね"); return; }
+    d[id] = world.day; world.hp = 100; updateHp(); addRep(1); world.stats.onsen35 = (world.stats.onsen35 || 0) + 1; saveWorld();
+    toast("p35_onsen35", ["ふう…いいお湯。体の芯までぽかぽか（HP全回復）", "湯けむりの向こうに、村の景色がにじんで見える（HP全回復）", "肩までつかって、100数えた（HP全回復）"][rnd(3)]); return;
+  }
+  if (id === "windmill35") { toast("p35_windmill35", "風車がゆっくり回っている。村の作物と料理が、1割高く売れるよ"); return; }
+  if (id === "shrine35") {
+    openModal("神社", "", body => {
+      body.innerHTML = `<p class="mtext">鈴を鳴らして、手を合わせよう。${today ? "今日はもうおみくじを引いたよ。" : "お賽銭50Gで、おみくじが1回引けます。"}所持金 <b>${fmt(world.money)}</b></p><div class="row2"><button class="btn" type="button" id="kuji35" ${today || world.money < 50 ? "disabled" : ""}>おみくじを引く</button></div><div id="kujiRes35"></div>`;
+      body.querySelector("#kuji35").onclick = () => {
+        if (d[id] === world.day || world.money < 50) return; addMoney(-50); d[id] = world.day;
+        let r = Math.random(), res = OMIKUJI35[3]; for (const o of OMIKUJI35) { if ((r -= o[1]) < 0) { res = o; break; } }
+        let gift = ""; if (typeof res[3] === "number" && res[3]) { addMoney(res[3]); gift = `（ご縁がありますように：+${fmt(res[3])}）`; } else if (res[3] === "item") { const it = ["seed_flower", "acorn_shiny", "gem"][rnd(3)]; if (ITEMS[it] && addItem(it, 1, true)) gift = `（${ITEMS[it].name}をひろった）`; }
+        world.stats.kuji35 = (world.stats.kuji35 || 0) + 1; saveWorld();
+        body.querySelector("#kuji35").disabled = true;
+        body.querySelector("#kujiRes35").innerHTML = `<div class="kuji35"><b>${res[0]}</b><p>${res[2]}</p><small>${gift}</small></div>`;
+      };
+    });
+    return;
+  }
+  if (id === "stage35") {
+    if (today) { toast("p35_stage35", "今日のライブは終わった。また明日ね"); return; }
+    if (world.time < 540 || world.time >= 1320) { toast("p35_stage35", "ライブは9:00〜22:00のあいだにできるよ"); return; }
+    d[id] = world.day; const tip = 150 + Math.min(600, repLv() * 110) + rnd(20) * 10; addMoney(tip); addRep(2); world.stats.live35 = (world.stats.live35 || 0) + 1; saveWorld();
+    const fans = friends.filter(f => !f.hidden && f.x >= 0).slice(0, 4); fans.forEach((f, i) => setTimeout(() => { f.say = { text: ["♪", "アンコール！", "すてき！", "ブラボー"][i % 4], until: performance.now() + 2200 }; }, 300 + i * 350));
+    toast("p35_stage35", `ステージでライブをした。村の人たちからおひねり ${fmt(tip)}`); return;
+  }
+  if (id === "ferris35") {
+    if (world.money < 100) { toast("p35_ferris35", "観覧車は1回100G"); return; }
+    addMoney(-100); if (!today) { d[id] = world.day; addRep(1); } world.stats.ferris35 = (world.stats.ferris35 || 0) + 1; saveWorld();
+    toast("p35_ferris35", "ゴンドラがゆっくりのぼっていく…");
+    setTimeout(() => { if (modalOpen) return; openMap13(); $("mtitle").textContent = "観覧車からのながめ"; }, 1100); return;
+  }
+}
+F35.use = useProj35;
+const _sellMul35 = F7.sellMul;
+F7.sellMul = id => { let m = _sellMul35(id); if (world.projects?.windmill35?.done && (CROPS7.includes(id) || id.startsWith("dish_"))) m += .1; return m; };
+const _f6newday35 = F6.onNewDay;
+F6.onNewDay = () => { _f6newday35(); ensureChain35(); };
+ensureChain35(); rebuildSolid();
+ACH.push(["村おこしの立役者", "温泉から観覧車まで、共同プロジェクトをぜんぶ完成させる", () => ORDER35.every(id => world.projects?.[id]?.done)]);
+ACH_REWARD["村おこしの立役者"] = ["money", 10000];
+F35.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -8998,7 +9220,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F34, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

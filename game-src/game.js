@@ -2479,7 +2479,7 @@ syncUI = function () {
       const covered = (key === "bottom") && CHAR.TOPS[cfg.top]?.covers;
       b.disabled = !ok || covered;
       if (b.classList.contains("chip")) b.textContent = ok ? b.dataset.v : b.dataset.v + "（未入手）";
-      b.title = ok ? "" : info.salon ? "村の美容室で手に入る" : info.event ? "イベントやガチャ（イベント中）で手に入る" : "美容室のきせかえガチャで手に入る";
+      b.title = ok ? "" : info.shop ? "表参道のお店で買える" : info.salon ? "村の美容室で手に入る" : info.event ? "イベントやガチャ（イベント中）で手に入る" : "美容室のきせかえガチャで手に入る";
     });
   }
 };
@@ -2488,6 +2488,31 @@ function sanitizeCfg26(c) {
   for (const key of Object.keys(WEAR26)) if (WEAR26[key][c[key]] && !wearOwned26(key, c[key])) c[key] = DEFAULT[key];
   return c;
 }
+
+// =================== v30: 表参道のお店で買える服・帽子・アクセサリー（高い・おしゃれ） ===================
+Object.assign(CHAR.TOPS, {
+  "トレンチコート": { rows: [".....TvuuvT.....", "....TuKttKvT....", "...TuttKKttvT...", "....TKKKKKKT....", "...TutttttvvT..."], covers: true },
+  "ツイードジャケット": { rows: [".....TWuuWT.....", "....TtYtvtvT....", "...TtvtYtvtvT..."], covers: false },
+  "シルクのブラウス": { rows: [".....TWWWWT.....", "....TuWuuWvT....", "...TuuuWWuuvT..."], covers: false },
+});
+Object.assign(CHAR.BOTTOMS, { "ワイドパンツ": ["....PppPPqqP....", "....PpP..PqP...."] });
+Object.assign(HATS, {
+  "つば広ハット": { rows: ["................", "................", ".....AAAAAA.....", ".....AaaaaA.....", ".....ArrrrA.....", ".AAAAaaaaaaAAAA."], pal: { A: [150, 120, 84], a: [222, 196, 150], r: [40, 34, 40] } },
+  "バケットハット": { rows: ["................", "................", ".....AAAAAA.....", "....AabaaaaA....", "...AaaaaaaaaA...", "..AAAAAAAAAAAA.."], pal: { A: [40, 40, 48], a: [80, 80, 92], b: [130, 130, 146] } },
+});
+Object.assign(ACC_ART26, {
+  "パールのネックレス": (put, dir) => { if (dir === "up") return; const W = [250, 248, 240], S = [214, 210, 206]; if (dir === "down") { put(5, 10, W); put(6, 11, S); put(7, 11, W); put(8, 11, W); put(9, 11, S); put(10, 10, W); } else { put(5, 10, W); put(5, 11, S); put(6, 11, W); } },
+  "ゴールドのピアス": (put, dir) => { if (dir === "up") return; const G = [252, 214, 80], D = [196, 150, 40]; if (dir === "down") { put(3, 8, G); put(3, 9, D); put(12, 8, G); put(12, 9, D); } else { put(11, 8, G); put(11, 9, D); } },
+  "ハンドバッグ": (put, dir) => { const B = [150, 40, 52], L = [200, 80, 90], G = [240, 200, 90]; const x0 = dir === "left" ? 10 : dir === "up" ? 1 : 12; for (let y = 12; y <= 14; y++) for (let x = x0; x <= x0 + 2; x++) put(x, y, B); put(x0, 11, L); put(x0 + 2, 11, L); put(x0 + 1, 10, L); put(x0 + 1, 13, G); },
+});
+Object.assign(ACCS, { "パールのネックレス": 1, "ゴールドのピアス": 1, "ハンドバッグ": 1 });
+const OMOTE_WEAR30 = {
+  top: { "トレンチコート": 18000, "ツイードジャケット": 15000, "シルクのブラウス": 9000 },
+  bottom: { "ワイドパンツ": 7000 },
+  hat: { "つば広ハット": 8000, "バケットハット": 5000 },
+  acc: { "パールのネックレス": 25000, "ゴールドのピアス": 12000, "ハンドバッグ": 30000 },
+};
+for (const [key, o] of Object.entries(OMOTE_WEAR30)) for (const [v, price] of Object.entries(o)) WEAR26[key][v] = { shop: "omote", price };
 
 const OPTS = [["髪型", "hair", null], ["髪の色", "hairc", 1], ["服", "top", null], ["服の色", "topc", 1],
               ["ボトムス", "bottom", null], ["ボトムスの色", "bottomc", 1], ["肌の色", "skin", 0], ["帽子", "hat", null], ["アクセサリー", "acc", null], ["靴の色", "shoesc", 0]];
@@ -3531,7 +3556,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.16.0";
+const CLIENT_VERSION = "0.17.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -4479,6 +4504,10 @@ function facade13(kind, wt) {
     anime: { wall: "#f4f6ff", trim: "#5a7ae0", sign: "#2a3a8a", awn: null },
     maid: { wall: "#ffd8e6", trim: "#e86a9a", sign: "#fff4f8", awn: ["#ffffff", "#f8a8c4"] },
     arcade: { wall: "#1e2a5a", trim: "#f2d03a", sign: "#101634", awn: null },
+    maison: { wall: "#f4f1ea", trim: "#1e1c22", sign: "#1e1c22", awn: null },
+    select: { wall: "#b8b4ae", trim: "#5a4636", sign: "#f4efe6", awn: ["#2e4a3a", "#2e4a3a"] },
+    atelier: { wall: "#2a2a30", trim: "#d8c8a8", sign: "#f4f2ee", awn: null },
+    terrace: { wall: "#fbf8f2", trim: "#2a3a5a", sign: "#2a3a5a", awn: ["#2a3a5a", "#fbf8f2"] },
   }[kind];
   const cv = pix13(W, H, (set, rect) => {
     const wall = C13[TH.wall], trim = C13[TH.trim], dark = mix(wall, [30, 20, 40], .35), lite = mix(wall, [255, 255, 250], .35);
@@ -4493,6 +4522,10 @@ function facade13(kind, wt) {
       rect(wx - 1, 25, 24, 30, trim); rect(wx, 26, 22, 28, glass); rect(wx, 26, 22, 1, mix(glass, [255, 255, 255], .4)); set(wx + 2, 28, [255, 255, 255]); set(wx + 3, 29, [255, 255, 255]);
       rect(wx - 2, 55, 26, 2, mix(trim, [0, 0, 0], .2));
       const c = (i) => [C13["#e86a8a"], C13["#6aa8e8"], C13["#f2c84a"], C13["#8ad07a"], C13["#b07af2"]][(i + wx) % 5];
+      if (kind === "maison") { rect(wx, 26, 22, 28, C13["#fbfaf6"]); rect(wx, 52, 22, 2, C13["#d8d2c6"]); for (let i = 0; i < 2; i++) { const mx = wx + 5 + i * 10, col = i ? C13["#c8a878"] : C13["#2a2830"]; ell13(set, mx + 1.5, 31, 1.8, 1.8, C13["#e8e2da"]); rect(mx - 1, 33, 6, 3, col); rect(mx - 2, 36, 8, 12, col); rect(mx + 1, 36, 1, 10, mix(col, [0, 0, 0], .3)); rect(mx + 1, 48, 1, 3, C13["#5a4a44"]); rect(mx - 1, 51, 5, 1, C13["#c8a048"]); } }
+      if (kind === "select") { rect(wx, 26, 22, 28, C13["#efe8dc"]); rect(wx + 1, 37, 20, 1, WD[2]); rect(wx + 1, 47, 20, 1, WD[2]); ell13(set, wx + 5, 34, 3, 2, C13["#c8a878"]); rect(wx + 1, 35, 8, 1, C13["#a8885a"]); rect(wx + 12, 31, 7, 6, C13["#8a2a3a"]); rect(wx + 14, 29, 3, 2, C13["#c86a7a"]); rect(wx + 4, 42, 6, 5, C13["#2a2830"]); rect(wx + 13, 43, 5, 4, C13["#e8d8b8"]); set(wx + 15, 44, C13["#c8a048"]); }
+      if (kind === "atelier") { rect(wx, 26, 22, 28, C13["#3a3a42"]); rect(wx + 4, 40, 7, 2, C13["#e8a83a"]); rect(wx + 4, 42, 2, 9, C13["#e8a83a"]); rect(wx + 4, 33, 2, 8, C13["#e8a83a"]); rect(wx + 9, 42, 2, 9, C13["#e8a83a"]); rect(wx + 15, 31, 1, 20, C13["#d8d8d8"]); ell13(set, wx + 15.5, 30, 3, 2, C13["#fff0c0"]); rect(wx + 12, 50, 8, 1, C13["#d8d8d8"]); }
+      if (kind === "terrace") { rect(wx, 26, 22, 28, C13["#fdf4e2"]); rect(wx + 1, 38, 20, 1, C13["#c8b898"]); for (let i = 0; i < 3; i++) { ell13(set, wx + 5 + i * 6, 35, 2, 1.6, [C13["#f2a8c0"], C13["#b8e0a8"], C13["#f6d88a"]][i]); } rect(wx + 4, 45, 14, 2, C13["#f2e8d8"]); rect(wx + 6, 42, 3, 3, C13["#f8f4ee"]); rect(wx + 12, 41, 4, 4, C13["#f2c8d8"]); }
       if (kind === "boutique") for (let i = 0; i < 2; i++) { const mx = wx + 5 + i * 10; ell13(set, mx + 1.5, 32, 1.8, 1.8, C13["#f2e2d6"]); rect(mx - 1, 34, 6, 3, c(i)); rect(mx - 2, 37, 8, 9, c(i)); rect(mx + 1, 46, 1, 6, C13["#5a4a44"]); rect(mx - 1, 52, 5, 1, C13["#5a4a44"]); }
       if (kind === "furniture") { rect(wx + 2, 44, 14, 6, C13["#c85a5a"]); rect(wx + 2, 41, 14, 3, C13["#9a3c46"]); rect(wx + 17, 34, 1, 16, C13["#5a4a44"]); rect(wx + 15, 31, 5, 4, C13["#f6dc96"]); rect(wx + 4, 30, 6, 6, C13["#fff6e0"]); rect(wx + 5, 31, 4, 4, C13["#8ac0e0"]); }
       if (kind === "cafe") { rect(wx, 26, 22, 28, C13["#f6d89a"]); rect(wx + 1, 38, 20, 1, WD[2]); for (let i = 0; i < 3; i++) { rect(wx + 3 + i * 6, 34, 3, 4, C13["#fbfbf6"]); } rect(wx + 4, 46, 6, 4, C13["#f2e2c8"]); rect(wx + 4, 45, 6, 1, C13["#e85a6a"]); rect(wx + 13, 46, 6, 4, C13["#7a4a30"]); }
@@ -4527,6 +4560,7 @@ function skyline13(style, W) {
   return pix13(W, 64, (set, rect) => {
     const pal = style === "night" ? { bg: C13["#1a1630"], b: [C13["#2a2444"], C13["#322a50"], C13["#241e3a"]], win: [C13["#ffe68a"], C13["#ff7ac0"], C13["#7ae8ff"]], p: .45 }
       : style === "akiba" ? { bg: C13["#9ac8e8"], b: [C13["#8a90a8"], C13["#a0a4b8"], C13["#7a7e94"]], win: [C13["#e8f4ff"], C13["#c8dcf0"]], p: .3 }
+      : style === "omote" ? { bg: C13["#b8dcf2"], b: [C13["#e8e4dc"], C13["#cfd6de"], C13["#d8cbb8"]], win: [C13["#f4f8fc"], C13["#a8c4dc"]], p: .35 }
       : { bg: C13["#a8d4f0"], b: [C13["#8e98aa"], C13["#a6aebe"], C13["#7c8698"]], win: [C13["#e8f4ff"], C13["#cfe0f0"]], p: .25 };
     rect(0, 0, W, 64, pal.bg);
     let x = 0, i = 0;
@@ -4535,6 +4569,7 @@ function skyline13(style, W) {
       for (let wy = top + 4; wy < 60; wy += 6) for (let wx = x + 3; wx < x + bw - 3; wx += 5) { const h = (wx * 31 + wy * 17 + i) % 100; rect(wx, wy, 3, 3, h < pal.p * 100 ? pal.win[h % pal.win.length] : mix(col, [0, 0, 0], .25)); }
       x += bw + 1; i++; }
     if (style === "night") for (let k = 0; k < W; k += 70) { rect(k + 10, 6, 18, 26, C13["#ff5fb0"]); rect(k + 12, 8, 14, 22, C13["#3a1e46"]); rect(k + 14, 11, 10, 2, C13["#7af2ff"]); rect(k + 14, 17, 10, 2, C13["#ffe86a"]); rect(k + 14, 23, 10, 2, C13["#ff9a5a"]); }
+    if (style === "omote") for (let k = 0; k < W; k += 48) { ell13(set, k + 12, 50, 13, 10, C13["#5a9a5a"]); ell13(set, k + 8, 46, 7, 6, C13["#7ab86a"]); ell13(set, k + 18, 47, 5, 4, C13["#9ad07a"]); rect(k + 11, 56, 2, 8, C13["#6a4a34"]); }
     if (style === "akiba") for (let k = 6; k < W; k += 64) { rect(k, 6, 30, 20, C13["#ffffff"]); rect(k + 1, 7, 28, 18, [C13["#ff8ac0"], C13["#7ab0ff"], C13["#ffd86a"]][(k / 64 | 0) % 3]); ell13(set, k + 10, 14, 5, 4.6, C13["#fff0e0"]); rect(k + 18, 10, 9, 2, C13["#ffffff"]); rect(k + 18, 14, 7, 2, C13["#ffffff"]); rect(k + 18, 18, 8, 2, C13["#ffffff"]); }
   }, false);
 }
@@ -5546,6 +5581,15 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.17.0", date: "2026/10/22", title: "表参道", items: [
+    "バスで「表参道」に行けるように（1,000G）。けやき並木の、ファッションの街",
+    "MAISON SOIRÉE：トレンチコート・ツイードジャケット・シルクのブラウス・ワイドパンツ（9,000〜18,000G）",
+    "セレクトショップ ULU：つば広ハット・バケットハット・ゴールドのピアス・パールのネックレス・ハンドバッグ（5,000〜30,000G）",
+    "アトリエ・ノア：デザイナーズチェア・大理石のテーブル・現代アート・ネオンアート・ヴィンテージの蓄音機（12,000〜35,000G）",
+    "テラスカフェ AOYAMA：カフェラテ・マカロン・季節のパフェ。テラス席で休むとHP全回復",
+    "おしゃれスナップ：並木のカメラマンに1日1回撮ってもらえる。表参道の服や小物を身につけているほど、モデル料が高くなる",
+    "直したこと：お店やガチャで手に入れた服を着ていても、読み込みなおすと元の服にもどっていたのを直した",
+  ] },
   { v: "0.16.0", date: "2026/10/22", title: "スマホの横画面", items: [
     "スマホを横にしたとき専用の画面に。上のバーを1行にまとめて、ゲーム画面を横いっぱいに広げた",
     "横画面では「メニュー」を押すと、右からメニューが出てくる。ゲームを見ながら着せ替えやクラフトができる",
@@ -6381,7 +6425,7 @@ function gachaPool26() {
   const s = season(), ev = F26.event();
   const out = [];
   for (const key of ["top", "bottom", "hat", "acc"]) for (const [v, inf] of Object.entries(WEAR26[key])) {
-    if (inf.salon) continue;
+    if (inf.salon || inf.shop) continue;
     if (inf.season && inf.season !== s) continue;
     if (inf.event && inf.event !== ev) continue;
     out.push({ key, v, rare: inf.rare, season: inf.season, event: inf.event });
@@ -6902,6 +6946,168 @@ SHOP_STOCK.push("bait_shrimp"); SHOP_BASE.push("bait_shrimp");
 F29.pets = () => petEnts;
 F29.ready = true;
 
+// =================== v30: 表参道（ファッションの街）・おしゃれスナップ ===================
+var F30 = {};
+SHOP_WEAR.top.push(...Object.keys(OMOTE_WEAR30.top));
+// ---- 地面と、けやき並木 ----
+tile13("t_omote", R => { R("#e6ded0", 0, 0, 16, 16); R("#d2c8b6", 0, 0, 16, 1); R("#d2c8b6", 0, 0, 1, 16); R("#d2c8b6", 8, 0, 1, 8); R("#d2c8b6", 0, 8, 16, 1); R("#f2ece0", 2, 2, 4, 1); R("#f2ece0", 10, 10, 4, 1); R("#dcd2c0", 12, 3, 1, 1); });
+const SPR30 = {
+  keyaki: [32, 44, (s, r) => { const g = [C13["#3e7a44"], C13["#5a9a56"], C13["#7cba6a"], C13["#a2d488"]];
+    r(14, 26, 4, 18, C13["#6a4a34"]); r(14, 26, 1, 18, C13["#8a6a50"]); r(11, 30, 4, 2, C13["#6a4a34"]); r(17, 33, 4, 2, C13["#6a4a34"]);
+    ell13(s, 16, 16, 15, 13, g[0]); ell13(s, 10, 18, 8, 8, g[1]); ell13(s, 22, 17, 8, 8, g[1]); ell13(s, 16, 10, 9, 7, g[2]); ell13(s, 11, 9, 4, 3, g[3]); ell13(s, 21, 12, 3, 3, g[3]);
+    r(10, 42, 12, 2, C13["#8a7e6e"]); r(10, 42, 12, 1, C13["#aaa090"]); }],
+  // デザイナー家具
+  dchair30: [16, 22, (s, r) => { const c = C13["#e8a83a"], d = C13["#b87a20"];
+    r(3, 0, 10, 11, c); r(3, 0, 10, 1, C13["#f6cc70"]); r(3, 10, 10, 1, d); r(2, 11, 12, 4, c); r(2, 14, 12, 1, d);
+    r(3, 15, 1, 7, C13["#2a2a30"]); r(12, 15, 1, 7, C13["#2a2a30"]); r(5, 15, 1, 6, C13["#4a4a52"]); r(10, 15, 1, 6, C13["#4a4a52"]); }],
+  mtable30: [32, 22, (s, r) => { const w = C13["#f2f0ec"], v = C13["#c8c4cc"];
+    r(0, 2, 32, 6, w); r(0, 2, 32, 1, C13["#ffffff"]); r(0, 7, 32, 1, C13["#b8b4ae"]); for (const [x, y, l] of [[3, 3, 6], [12, 4, 8], [22, 3, 5], [7, 5, 4], [26, 5, 3]]) r(x, y, l, 1, v);
+    r(6, 8, 2, 13, C13["#c8a048"]); r(24, 8, 2, 13, C13["#c8a048"]); r(4, 20, 6, 2, C13["#a8802a"]); r(22, 20, 6, 2, C13["#a8802a"]);
+    ell13(s, 16, 1, 3, 1.5, C13["#c86a8a"]); r(15, 0, 2, 2, C13["#5a9a56"]); }],
+  canvas30: [16, 16, (s, r) => { r(1, 1, 14, 14, C13["#c8a048"]); r(2, 2, 12, 12, C13["#fbfaf4"]); ell13(s, 6, 6, 3, 3, C13["#e8503a"]); r(8, 3, 5, 9, C13["#2a4a8a"]); r(3, 10, 6, 3, C13["#f2c83a"]); r(2, 9, 12, 1, C13["#2a2830"]); r(7, 2, 1, 12, C13["#2a2830"]); }],
+  neon30: [16, 16, (s, r) => { r(0, 1, 16, 14, C13["#1e1a26"]); const P = C13["#ff6ab8"], L = C13["#ffd0ea"];
+    for (const [x, y] of [[4, 4], [5, 3], [6, 3], [7, 4], [8, 4], [9, 3], [10, 3], [11, 4], [11, 5], [10, 7], [9, 8], [8, 9], [7, 9], [6, 8], [5, 7], [4, 5], [4, 6], [11, 6]]) s(x, y, P);
+    s(5, 4, L); s(10, 4, L); r(3, 12, 10, 1, C13["#7af2ff"]); }],
+  gramo30: [16, 24, (s, r) => { r(2, 14, 12, 8, WD[2]); r(2, 14, 12, 1, WD[1]); r(2, 21, 12, 1, WD[3]); r(3, 22, 2, 2, WD[3]); r(11, 22, 2, 2, WD[3]);
+    ell13(s, 8, 13, 5, 1.4, C13["#2a2830"]); r(10, 9, 1, 4, C13["#c8a048"]); for (let i = 0; i < 6; i++) r(9 - i, 8 - i, 2 + i * 2 > 12 ? 12 : 2 + i, 1, C13["#d8b048"]); ell13(s, 6, 3, 5, 3, C13["#e8c860"]); ell13(s, 6, 3, 3, 1.6, C13["#7a5a20"]); }],
+  // テラスカフェ
+  latte30: [16, 16, (s, r) => { ell13(s, 8, 12, 6, 2, C13["#f2ece4"]); r(4, 5, 8, 8, C13["#fbfaf6"]); r(12, 7, 2, 3, C13["#fbfaf6"]); ell13(s, 8, 5, 4, 1.4, C13["#c89a6a"]); s(7, 5, C13["#fbf2e6"]); s(8, 4, C13["#fbf2e6"]); s(9, 5, C13["#fbf2e6"]); s(8, 6, C13["#fbf2e6"]); }],
+  macaron30: [16, 16, (s, r) => { for (const [x, y, c] of [[5, 6, "#f2a8c0"], [11, 6, "#b8e0a8"], [8, 11, "#f6d88a"]]) { ell13(s, x, y, 3.4, 1.6, C13[c]); r(x - 3, y + 1, 7, 1, C13["#fbf6ee"]); ell13(s, x, y + 2.4, 3.4, 1.4, C13[c]); } }],
+  parfait30: [16, 16, (s, r) => { r(5, 6, 6, 7, C13["#e8f4fa"]); r(6, 9, 4, 3, C13["#f2a8c0"]); r(6, 7, 4, 2, C13["#fbf6ee"]); r(7, 13, 2, 1, C13["#e8f4fa"]); r(5, 14, 6, 1, C13["#d0e4ee"]); ell13(s, 8, 5, 3.4, 2.4, C13["#fbf6ee"]); ell13(s, 8, 2.6, 1.6, 1.6, C13["#e8303a"]); s(10, 3, C13["#5a3a2a"]); r(10, 0, 1, 4, C13["#5a3a2a"]); }],
+};
+for (const [k, [w, h, fn]] of Object.entries(SPR30)) { IMG["s13_" + k] = pix13(w, h, fn); ASSETS["s13_" + k] = IMG["s13_" + k].toDataURL(); }
+const FURN30 = {
+  dchair30: { name: "デザイナーズチェア", w: 1, h: 1, oy: -6, price: 16000 },
+  mtable30: { name: "大理石のテーブル", w: 2, h: 1, oy: -6, price: 28000 },
+  canvas30: { name: "現代アートのキャンバス", w: 1, h: 1, oy: 0, wall: true, price: 22000 },
+  neon30: { name: "ネオンアート", w: 1, h: 1, oy: 0, wall: true, price: 12000 },
+  gramo30: { name: "ヴィンテージの蓄音機", w: 1, h: 1, oy: -8, price: 35000 },
+};
+for (const [k, f] of Object.entries(FURN30)) { FURN[k] = { ...f, img: "s13_" + k }; ITEMS["f_" + k] = { name: f.name, icon: "s13_" + k, furn: k, price: f.price }; }
+const _hideFurn30 = F7.hideFurn;
+F7.hideFurn = k => k in FURN30 || _hideFurn30(k);
+Object.assign(ITEMS, {
+  latte30: { name: "表参道のカフェラテ", icon: "s13_latte30", food: 35, price: 400 },
+  macaron30: { name: "マカロン", icon: "s13_macaron30", food: 45, price: 600 },
+  parfait30: { name: "季節のパフェ", icon: "s13_parfait30", food: 100, price: 1000 },
+});
+// ---- 街 ----
+TOWNS13.omote = { name: "表参道", fare: 1000, desc: "ハイブランド・セレクトショップ・デザイナー家具・テラスカフェ", sky: "omote", tiles: ["t_omote", "t_road", "t_lane", "t_cross", "t_omote"],
+  shops: [[1, 8, "maison", "MAISON SOIRÉE", () => openMaison30()], [10, 6, "select", "セレクトショップ ULU", () => openSelect30()], [17, 6, "atelier", "アトリエ・ノア 家具", () => openAtelier30()], [24, 6, "terrace", "テラスカフェ AOYAMA", () => openTerrace30()]],
+  props: [["keyaki", 3, 10], ["keyaki", 9, 10], ["keyaki", 15, 10], ["keyaki", 23, 10], ["bench", 6, 12], ["bench", 26, 12], ["vending", 28, 9]],
+  people: [["モデル", ["今日の撮影、けやき並木がきれいだった", "トレンチコートは、秋の表参道にいちばん似合うと思うの"]], ["スタイリスト", ["小物ひとつで、服の印象ってがらっと変わるんだよ", "ULUのバッグ、入荷するとすぐ売り切れちゃう"]], ["マダム", ["MAISONのお洋服は、一生ものよ", "テラスカフェのパフェ、少しお高いけど、それだけの価値はあるわ"]], ["大学生", ["見るだけ、見るだけ…（ショーウィンドウを見つめている）", "いつか大理石のテーブルがある部屋に住みたいなあ"]]] };
+DEST13.push(["omote", "表参道", 1000, TOWNS13.omote.desc]);
+// カメラマン（おしゃれスナップ）
+const _makeTown30 = makeTown13;
+makeTown13 = function (id) {
+  const m = _makeTown30(id);
+  if (id === "omote") {
+    const c = { ...DEFAULT, skin: "やや明るめ", hair: "マッシュ" in CHAR.HAIR ? "マッシュ" : "ショート", hairc: "黒", top: "ジャケット", topc: "黒" in CHAR.CLOTH ? "黒" : "茶", bottom: "パンツ", bottomc: "茶", hat: "バケットハット", acc: "メガネ" };
+    const e = entity(20, 11, c, "カメラマン", "staff"); e.home = m; e.speed = .45; e.wander = false; e.dir = "down";
+    e.talk = () => { e.dir = { up: "down", down: "up", left: "right", right: "left" }[player.dir]; openSnap30(); };
+    m.statics.push(e); m.base[11][20] = true; m.solid = m.base.map(r => r.slice());
+    m.labels.push({ x: 20 * TS + 8, y: 10 * TS + 2, text: "おしゃれスナップ" });
+  }
+  return m;
+};
+// ---- お店 ----
+const STAFF30 = {
+  maison: { skin: "色白", hair: "ロング", hairc: "黒", top: "ドレス", topc: "黒" in CHAR.CLOTH ? "黒" : "紫", hat: "なし", acc: "パールのネックレス" },
+  select: { skin: "やや明るめ", hair: "ボブ", hairc: "アッシュ" in CHAR.HAIRC ? "アッシュ" : "銀", top: "シルクのブラウス", topc: "生成り", bottom: "ワイドパンツ", bottomc: "茶", hat: "なし", acc: "ゴールドのピアス" },
+  atelier: { skin: "小麦色", hair: "ショート", hairc: "黒", top: "ツイードジャケット", topc: "茶", bottom: "パンツ", bottomc: "黒" in CHAR.CLOTH ? "黒" : "茶", hat: "なし", acc: "メガネ" },
+  terrace: { skin: "やや明るめ", hair: "おだんご", hairc: "ブラウン", top: "シルクのブラウス", topc: "白" in CHAR.CLOTH ? "白" : "生成り", bottom: "ロングスカート", bottomc: "茶", hat: "なし" },
+};
+function wearRow30(key, v, p) {
+  const have = wearOwned26(key, v), on = cfg[key] === v;
+  const pv = { ...cfg, [key]: v }; if (key === "bottom" && CHAR.TOPS[pv.top]?.covers) pv.top = "Tシャツ";
+  return `<div class="li"><img src="${renderChar(pv, "down", 0).toDataURL()}" alt=""><span class="nm">${esc(v)}<span class="sub2">${WEAR_LABEL26[key]}・${fmt(p)}${have ? "・持っている" : ""}</span></span><span class="acts">${have
+    ? `<button class="btn light" type="button" data-w30="${key}:${esc(v)}" ${on ? "disabled" : ""}>${on ? "着ている" : "着てみる"}</button>`
+    : `<button class="btn" type="button" data-b30="${key}:${esc(v)}" data-p="${p}" ${world.money < p ? "disabled" : ""}>買う</button>`}</span></div>`;
+}
+function wireWear30(body, reopen) {
+  body.querySelectorAll("[data-b30]").forEach(b => b.onclick = () => {
+    const [k, v] = b.dataset.b30.split(":"), p = +b.dataset.p;
+    if (world.money < p || wearOwned26(k, v)) return;
+    addMoney(-p); grantWear26(k, v, true); world.stats.omote30 = (world.stats.omote30 || 0) + p; saveWorld();
+    toast(null, `「${v}」を手に入れた。すてきな紙袋に入れてもらった`); closeModal(); reopen();
+  });
+  body.querySelectorAll("[data-w30]").forEach(b => b.onclick = () => { const [k, v] = b.dataset.w30.split(":"); cfg[k] = v; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); closeModal(); reopen(); toast(null, `${v}を身につけた`); });
+}
+function openMaison30() {
+  openModal("MAISON SOIRÉE", "shop", body => {
+    const rich = world.money >= 30000;
+    body.innerHTML = staffSay13(charIcon13(STAFF30.maison), rich ? "ようこそ、MAISON SOIRÉEへ。今季のコレクションを、どうぞごゆっくり" : "いらっしゃいませ。見ていくだけでも、もちろん歓迎ですよ") +
+      `<p class="mtext">一着ずつ職人が仕立てた、表参道でしか買えない服。所持金 <b>${fmt(world.money)}</b></p><div class="list">${[["top", "トレンチコート"], ["top", "ツイードジャケット"], ["top", "シルクのブラウス"], ["bottom", "ワイドパンツ"]].map(([k, v]) => wearRow30(k, v, OMOTE_WEAR30[k][v])).join("")}</div>`;
+    wireWear30(body, openMaison30);
+  });
+}
+function openSelect30() {
+  openModal("セレクトショップ ULU", "shop", body => {
+    body.innerHTML = staffSay13(charIcon13(STAFF30.select), "帽子とアクセサリーは、いつもの服に足すだけで雰囲気が変わるよ。着せ替えのアクセサリー欄で選べます") +
+      `<p class="mtext">所持金 <b>${fmt(world.money)}</b></p><div class="list">${[["hat", "つば広ハット"], ["hat", "バケットハット"], ["acc", "ゴールドのピアス"], ["acc", "パールのネックレス"], ["acc", "ハンドバッグ"]].map(([k, v]) => wearRow30(k, v, OMOTE_WEAR30[k][v])).join("")}</div>`;
+    wireWear30(body, openSelect30);
+  });
+}
+function openAtelier30() {
+  openModal("アトリエ・ノア 家具", "shop", body => {
+    body.innerHTML = staffSay13(charIcon13(STAFF30.atelier), "うちの家具は、デザイナーの一点もの。部屋に置くと、それだけで空気が変わりますよ") +
+      `<p class="mtext">買った家具は家の模様替えで置ける。所持金 <b>${fmt(world.money)}</b></p><div class="list">${Object.keys(FURN30).map(k => buyRow13("f_" + k, FURN30[k].price, FURN30[k].wall ? "・壁にかける" : `・${FURN30[k].w}×${FURN30[k].h}マス`)).join("")}</div>`;
+    wireBuy13(body, openAtelier30);
+  });
+}
+function openTerrace30() {
+  openModal("テラスカフェ AOYAMA", "shop", body => {
+    const lines = ["けやき並木を見ながら、ゆっくりしていってね", "お買いものの帰り？ 紙袋、いっぱいだね", world.hp < 50 ? "歩きつかれた顔してる。甘いもの、どうかな" : "今日のパフェは、季節のフルーツだよ"];
+    body.innerHTML = staffSay13(charIcon13(STAFF30.terrace), lines[rnd(lines.length)]) +
+      `<p class="mtext">持ち帰りOK。食べるとHPが回復します。所持金 <b>${fmt(world.money)}</b></p><div class="list">${buyRow13("latte30", 800, "・HP+35")}${buyRow13("macaron30", 1200, "・HP+45")}${buyRow13("parfait30", 2000, "・HP全回復")}
+      <div class="li"><img src="${ASSETS.s13_latte30}" alt=""><span class="nm">テラス席でひと休み<span class="sub2">1,000G・HP全回復。今日のおしゃれスナップのモデル料が2割増し</span></span><span class="acts"><button class="btn" type="button" id="terraceRest" ${world.money < 1000 ? "disabled" : ""}>休む</button></span></div></div>`;
+    wireBuy13(body, openTerrace30);
+    body.querySelector("#terraceRest").onclick = () => { if (world.money < 1000) return; addMoney(-1000); world.hp = 100; updateHp(); world.luck30 = world.day; saveWorld(); closeModal(); toast("s13_latte30", "けやき並木を眺めて、心がふわっと軽くなった（HP全回復）"); };
+  });
+}
+// ---- おしゃれスナップ：表参道の服を着ていると、1日1回モデル料がもらえる ----
+function styleScore30(c = cfg) {
+  const parts = []; let sc = 0;
+  for (const key of ["top", "bottom", "hat", "acc"]) {
+    const v = c[key]; if (key === "bottom" && CHAR.TOPS[c.top]?.covers) continue;
+    if (OMOTE_WEAR30[key]?.[v]) { sc += 1; parts.push(v); }
+    else if (WEAR26[key]?.[v]?.rare === "SSR" || WEAR26[key]?.[v]?.rare === "SR") { sc += .5; parts.push(v); }
+    else if (["スーツ", "ドレス", "中折れ帽", "ベレー帽"].includes(v)) { sc += .3; parts.push(v); }
+  }
+  if (WEAR26.hair[c.hair]) sc += .25; if (WEAR26.hairc[c.hairc]) sc += .25;
+  return { sc: Math.round(sc * 100) / 100, parts };
+}
+F30.styleScore = styleScore30;
+function openSnap30() {
+  const photog = { ...DEFAULT, hair: "マッシュ" in CHAR.HAIR ? "マッシュ" : "ショート", hairc: "黒", top: "ジャケット", hat: "バケットハット", acc: "メガネ" };
+  openModal("おしゃれスナップ", "", body => {
+    const done = world.snap30 === world.day, { sc, parts } = styleScore30();
+    const pay = Math.round(sc * 1500 * (world.luck30 === world.day ? 1.2 : 1) / 10) * 10;
+    let msg, btn = "";
+    if (done) msg = "今日はもう撮らせてもらったよ。ありがとう。また明日、ちがうコーデも見せてね";
+    else if (sc <= 0) msg = "こんにちは。表参道でストリートスナップを撮ってるんだ。うーん、今日はふだん着だね。この街のお店の服や小物を身につけてきたら、ぜひ撮らせて。モデル料もはずむよ";
+    else { msg = sc >= 3 ? "うわ、今日いちばんのコーデかも。ぜひ一枚、撮らせてください" : sc >= 1.5 ? "いいね、そのコーデ。雑誌に載せてもいいかな？" : "お、さりげなくおしゃれだね。一枚どう？";
+      btn = `<button class="btn" type="button" id="snapGo">撮ってもらう（モデル料 ${fmt(pay)}）</button>`; }
+    body.innerHTML = staffSay13(charIcon13(photog), msg) +
+      `<div class="snap30"><img src="${renderChar(cfg, "down", 0).toDataURL()}" alt=""><div><b>今日のコーデ</b><br>${parts.length ? parts.map(esc).join("・") : "（表参道らしいアイテムなし）"}<br><small>おしゃれ度 ${sc}　表参道のお店の服・帽子・アクセサリーほど高くなる</small></div></div>${btn}`;
+    const go = body.querySelector("#snapGo");
+    if (go) go.onclick = () => {
+      if (world.snap30 === world.day) return;
+      world.snap30 = world.day; addMoney(pay); world.stats.snaps30 = (world.stats.snaps30 || 0) + 1; saveWorld(); closeModal();
+      toast(null, `パシャッ。モデル料 ${fmt(pay)} をもらった`);
+      if (world.stats.snaps30 === 10) setTimeout(() => toast(null, "表参道で「よく見かけるおしゃれな人」と噂になっているらしい"), 1500);
+    };
+  });
+}
+F30.openSnap = openSnap30;
+// ---- 前からの不具合：買った服を着ていても、読み込みなおすと元の服にもどっていたのを直す ----
+(() => {
+  const sv = hotData?.cfg || saved?.cfg; if (!sv) return; let ch = false;
+  for (const k in DEFAULT) { const v = sv[k]; if (typeof v === "string" && v !== cfg[k] && Object.prototype.hasOwnProperty.call(POOLS[k], v)) { cfg[k] = v; ch = true; } }
+  if (ch) { player.cfg = cfg; syncUI(); }
+})();
+F30.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -6925,5 +7131,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

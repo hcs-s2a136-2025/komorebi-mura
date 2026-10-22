@@ -1748,6 +1748,7 @@ RECIPES.push(
   { out: "sword_wood", n: 1, need: { wood: 6 } }, { out: "sword_iron", n: 1, need: { ore: 5, wood: 2 } }, { out: "armor", n: 1, need: { ore: 6, jelly: 3 } },
   { out: "stallkit", n: 1, need: { wood: 15 } }, { out: "feed", n: 3, need: { cabbage: 1 } }, { out: "dish_cake", n: 1, need: { egg: 2, milk: 1 }, cook: true },
 );
+const ANIMAL_NAMES = { chicken: ["ピヨ", "コッコ", "タマ"], cow: ["ミルク", "ハナ", "モモ"], sheep: ["モコ", "ワタ", "フワ"] };
 const ANIMALS = { chicken: { name: "ニワトリ", price: 800, prod: "egg", say: "コケッ" }, cow: { name: "ウシ", price: 2500, prod: "milk", say: "モー" }, sheep: { name: "ヒツジ", price: 1800, prod: "wool", say: "メェ", every: 2 } };
 const PETS = { cat: { name: "ネコ", price: 0, say: "にゃー" }, dog: { name: "イヌ", price: 1500, say: "ワン！" }, bird: { name: "インコ", price: 900, say: "ピィ♪" } };
 const hatUnlocked = h => HAT_FREE.includes(h) || (world.unlock || []).includes(h);
@@ -2330,7 +2331,7 @@ syncPets(); syncAnimals();
 function openAnimalShop() {
   openModal("よろず屋　動物とペット", "shop", body => {
     const rows = [
-      ...Object.entries(ANIMALS).map(([k, a]) => [`animal:${k}`, a.name, a.price, `牧場で飼う。毎日エサをあげると${ITEMS[a.prod].name}をくれる`, k]),
+      ...Object.entries(ANIMALS).map(([k, a]) => [`animal:${k}`, a.name, a.price, a.desc || `牧場で飼う。エサをあげると${a.every ? a.every + "日に1回" : "毎日"}${ITEMS[a.prod].name}をくれる`, k]),
       ...Object.entries(PETS).filter(([k]) => k !== "cat").map(([k, p]) => [`pet:${k}`, p.name, p.price, "ペットとしていっしょに歩く", k]),
       ["item:feed", "飼料×5", 100, "家畜のエサ", "feed"],
     ];
@@ -2341,7 +2342,7 @@ function openAnimalShop() {
     body.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { closeModal(); openShop(b.dataset.t); });
     body.querySelectorAll("[data-ab]").forEach(b => b.onclick = () => {
       const [kind, k] = b.dataset.ab.split(":"), p = +b.dataset.p; if (world.money < p) return;
-      if (kind === "animal") { if (world.animals.length >= 8) { toast(null, "牧場がいっぱい"); return; } const names = { chicken: ["ピヨ", "コッコ", "タマ"], cow: ["ミルク", "ハナ", "モモ"], sheep: ["モコ", "ワタ", "フワ"] }[k]; world.animals.push({ id: Date.now(), type: k, name: names[world.animals.length % 3], hearts: 0, fed: false }); syncAnimals(); }
+      if (kind === "animal") { if (world.animals.length >= 8) { toast(null, "牧場がいっぱい"); return; } const names = ANIMAL_NAMES[k] || ["ナナ", "ポポ", "ルル"]; world.animals.push({ id: Date.now(), type: k, name: names[world.animals.length % 3], hearts: 0, fed: false }); syncAnimals(); }
       else if (kind === "pet") { world.pets.push(k); world.petHearts[k] = 0; syncPets(); }
       else addItem("feed", 5);
       addMoney(-p); saveWorld(); closeModal(); openAnimalShop();
@@ -3556,7 +3557,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.17.0";
+const CLIENT_VERSION = "0.18.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5581,6 +5582,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.18.0", date: "2026/10/22", title: "動物がふえた・トリュフさがし", items: [
+    "よろず屋で、ヤギ（ヤギミルク）・アヒル（アヒルの卵）・アルパカ（3日に1回、高く売れるアルパカの毛）が飼えるように",
+    "ブタ：エサをあげた日に、ブタの前でAを押すと牧場から連れ出せる。草地や花の上を一緒に歩くと、においをかぎつけてトリュフを掘り出してくれる",
+    "黒トリュフ（800G）と、たまに白トリュフ（3,000G・秋は見つかりやすい）。1日に見つかる数は、なつき度で1〜3個。もう一度Aで牧場に帰る",
+    "ペットに、ウサギ（しろたま）とハムスター（ひまわり）が仲間入り",
+  ] },
   { v: "0.17.0", date: "2026/10/22", title: "表参道", items: [
     "バスで「表参道」に行けるように（1,000G）。けやき並木の、ファッションの街",
     "MAISON SOIRÉE：トレンチコート・ツイードジャケット・シルクのブラウス・ワイドパンツ（9,000〜18,000G）",
@@ -7108,6 +7115,125 @@ F30.openSnap = openSnap30;
 })();
 F30.ready = true;
 
+// =================== v31: 動物をふやす（ヤギ・アヒル・アルパカ・ブタ／ウサギ・ハムスター）・トリュフさがし ===================
+var F31 = {};
+const SPR31 = {
+  // 家畜は左向き（右へ歩くと反転）
+  pig: (s, r, e) => { const P = C17("#f4b0bc"), D = C17("#e07c92"), L = C17("#fcd2da");
+    e(9.5, 10, 5.5, 3.6, P); e(9, 8.6, 3.5, 1.4, L); e(4.6, 9, 3.2, 3, P); r(1, 8, 2, 3, D); s(1, 9, C17("#a04860")); s(2, 9, C17("#a04860")); s(4, 8, C17("#2a2228"));
+    r(5, 5, 2, 2, D); s(6, 6, P); for (const x of [6, 8, 11, 13]) r(x, 13, 1, 2, D); s(15, 8, D); s(14, 7, D); },
+  goat: (s, r, e) => { const W = C17("#f2eee6"), G = C17("#c8c2b6"), H = C17("#9a8a6a");
+    e(9.5, 9.5, 5, 3.2, W); e(10, 8.4, 3, 1, C17("#ffffff")); r(3, 5, 4, 5, W); r(2, 7, 2, 2, W); s(2, 8, C17("#d8a8a0")); s(4, 6, C17("#2a2228")); r(4, 3, 1, 2, H); r(6, 3, 1, 2, H); s(3, 2, H); s(7, 2, H);
+    r(3, 10, 1, 2, G); r(7, 4, 2, 1, G); for (const x of [6, 8, 11, 13]) r(x, 12, 1, 3, G); r(14, 8, 2, 1, W); },
+  duck: (s, r, e) => { const W = C17("#fbfaf4"), G = C17("#d8d4c8"), O = C17("#f2a03a");
+    e(9.5, 10.5, 5, 3, W); e(11, 9.4, 3, 1.4, G); e(5.5, 6.5, 2.6, 2.6, W); r(1, 6, 3, 2, O); s(1, 7, C17("#d0802a")); s(5, 5, C17("#2a2228")); r(4, 8, 2, 3, W); r(14, 8, 2, 2, W); r(8, 13, 1, 2, O); r(11, 13, 1, 2, O); r(7, 15, 2, 1, O); r(10, 15, 2, 1, O); },
+  alpaca: (s, r, e) => { const C = C17("#f2e2c4"), D = C17("#d8c49c"), L = C17("#fff6e2");
+    e(10, 10, 5, 3.4, C); e(9, 8.6, 3, 1.4, L); for (const [x, y] of [[7, 9], [10, 11], [13, 9], [9, 12]]) s(x, y, D); r(3, 3, 4, 8, C); e(4.5, 3, 2.6, 2, L); s(3, 3, C17("#2a2228")); r(2, 4, 2, 1, D); r(4, 0, 1, 2, D); r(6, 0, 1, 2, D);
+    for (const x of [6, 9, 12, 14]) r(x, 13, 1, 3, D); },
+  // ペットは右向き（左へ歩くと反転）
+  rabbit: (s, r, e) => { const W = C17("#fbf8f2"), P = C17("#f4b8c8"), G = C17("#d8d0c4");
+    e(7, 11, 4.4, 3.2, W); e(10.5, 8.5, 2.8, 2.6, W); r(9, 2, 2, 5, W); r(11, 3, 2, 4, W); s(10, 3, P); s(10, 4, P); s(12, 4, P); s(11, 8, C17("#c8304a")); s(13, 9, P); e(2.6, 10.5, 1.6, 1.6, W); r(5, 14, 2, 1, G); r(9, 14, 2, 1, G); },
+  hamster: (s, r, e) => { const O = C17("#f2b86a"), L = C17("#fff0d6"), D = C17("#c8883a");
+    e(8, 10.5, 5, 3.8, O); e(8.6, 12, 3.6, 2.2, L); e(11, 9.6, 1.8, 1.4, L); s(11, 8, C17("#2a2228")); s(13, 10, C17("#e07c92")); r(5, 6, 2, 2, D); r(10, 6, 2, 2, D); s(5, 7, C17("#f4b0bc")); r(6, 14, 2, 1, D); r(10, 14, 2, 1, D); },
+  // とれる物
+  goatmilk: (s, r, e) => { r(5, 4, 6, 10, C17("#fbfaf6")); r(6, 2, 4, 2, C17("#e8e4dc")); r(6, 1, 4, 1, C17("#7ab0d8")); r(5, 8, 6, 3, C17("#a8d0a0")); s(7, 9, C17("#5a8a52")); s(8, 9, C17("#5a8a52")); r(5, 13, 6, 1, C17("#d8d4cc")); },
+  duckegg: (s, r, e) => { e(8, 9, 4.2, 5.2, C17("#d8eee2")); e(6.6, 7, 1.4, 1.8, C17("#f4fbf6")); s(10, 11, C17("#b8d4c4")); s(9, 12, C17("#b8d4c4")); },
+  alpacawool: (s, r, e) => { for (const [x, y, rx] of [[6, 9, 4], [10, 8, 4], [8, 11, 4.4], [11, 11, 3]]) e(x, y, rx, 3.2, C17("#f6ead2")); e(7, 7.6, 2, 1.2, C17("#fffaf0")); s(9, 11, C17("#d8c49c")); s(5, 10, C17("#d8c49c")); },
+  truffle_black: (s, r, e) => { e(8, 9.5, 5, 4.2, C17("#3a2a24")); e(6.5, 8, 2, 1.6, C17("#5a4438")); for (const [x, y] of [[5, 10], [9, 7], [11, 11], [7, 12], [10, 9]]) s(x, y, C17("#22181a")); s(6, 7, C17("#7a6050")); },
+  truffle_white: (s, r, e) => { e(8, 9.5, 5, 4.2, C17("#e8dcc0")); e(6.5, 8, 2, 1.6, C17("#f8f0dc")); for (const [x, y] of [[5, 10], [9, 7], [11, 11], [7, 12], [10, 9]]) s(x, y, C17("#c8b890")); },
+  leash31: (s, r, e) => { for (let i = 0; i < 9; i++) s(3 + i, 12 - Math.round(Math.sin(i / 2) * 3) - i / 2 | 0, C17("#c8503a")); e(12.5, 4, 2.2, 2.2, C17("#c8a048")); e(12.5, 4, 1, 1, C17("#fbf6ee")); },
+};
+for (const [k, fn] of Object.entries(SPR31)) addSpr17(k, fn);
+Object.assign(ANIMALS, {
+  goat: { name: "ヤギ", price: 2200, prod: "goatmilk", say: "メェ〜" },
+  duck: { name: "アヒル", price: 1200, prod: "duckegg", say: "グワッ" },
+  alpaca: { name: "アルパカ", price: 7000, prod: "alpacawool", say: "フェ〜", every: 3 },
+  pig: { name: "ブタ", price: 3500, say: "ブヒッ", every: Infinity, desc: "牧場で飼う。エサをあげた日に、Aで連れ出すとトリュフを探してくれる" },
+});
+Object.assign(ANIMAL_NAMES, { goat: ["ユキ", "メイ", "チーズ"], duck: ["ガー", "アオ", "ペタ"], alpaca: ["モフ", "パカ", "ルル"], pig: ["トン", "ブーコ", "マロン"] });
+Object.assign(PETS, { rabbit: { name: "ウサギ", price: 1200, say: "ぷぅ" }, hamster: { name: "ハムスター", price: 800, say: "きゅっ" } });
+const PET_NAMES31 = { rabbit: "しろたま", hamster: "ひまわり" };
+Object.assign(ITEMS, {
+  goatmilk: { name: "ヤギミルク", icon: "goatmilk", price: 120, food: 16 },
+  duckegg: { name: "アヒルの卵", icon: "duckegg", price: 80, food: 12 },
+  alpacawool: { name: "アルパカの毛", icon: "alpacawool", price: 600 },
+  truffle_black: { name: "黒トリュフ", icon: "truffle_black", price: 800, food: 20 },
+  truffle_white: { name: "白トリュフ", icon: "truffle_white", price: 3000, food: 30 },
+});
+ANIMAL_GOODS.push("goatmilk", "duckegg", "alpacawool", "truffle_black", "truffle_white");
+const _syncPets31 = syncPets;
+syncPets = function () { _syncPets31(); for (const e of petEnts) if (PET_NAMES31[e.ptype]) e.name = PET_NAMES31[e.ptype]; };
+syncPets();
+// ---- ブタのトリュフさがし ----
+// エサをあげた日に、ブタの前でAを押すと牧場から連れ出せる（もう一度Aで牧場に帰す）。
+// 草地や花の上を一緒に歩いていると、ブタがにおいをかぎつけて、そばにトリュフを掘り出す。1日に見つかる数は、なつき度で1〜3個。
+const walk31 = { e: null, steps: 0, need: 0, lx: -1, ly: -1 };
+const pigFinds31 = a => 1 + (a.hearts >= 4 ? 1 : 0) + (a.hearts >= 8 ? 1 : 0);
+function stopWalk31(msg) {
+  const e = walk31.e; if (!e) return; walk31.e = null; e.walk31 = false; e.think = 1;
+  const i = animalEnts.indexOf(e); placeAt(e, PADDOCK.x0 + (i % 6), PADDOCK.y0 + Math.floor(i / 6) % 4, "left");
+  if (msg) toast("pig", msg);
+}
+F31.stopWalk = stopWalk31;
+const _f6act31 = F6.act;
+F6.act = (tx, ty, key, sel, item, other) => {
+  if (other && other.kind === "animal" && sel?.id !== "feed") {
+    const a = world.animals.find(a => a.id === other.aid);
+    if (a && a.type === "pig") {
+      if (a.petted !== world.day) { a.petted = world.day; a.hearts = Math.min(10, a.hearts + 1); saveWorld(); }
+      if (other.walk31) { stopWalk31(`${a.name}を牧場に帰した`); return true; }
+      if (!a.fed) { other.say = { text: "ブヒ…（おなかすいた）", until: performance.now() + 1800 }; toast("feed", "エサをあげた日だけ、トリュフを探しに行ける"); return true; }
+      const left = pigFinds31(a) - (a.truffleDay === world.day ? a.truffleN : 0);
+      if (left <= 0) { other.say = { text: "ブヒ〜（今日はもう満足）", until: performance.now() + 1800 }; return true; }
+      if (walk31.e) stopWalk31();
+      const s = freeNear(village, player.x, player.y); placeAt(other, s[0], s[1], player.dir);
+      other.walk31 = true; other.think = 999; walk31.e = other; walk31.steps = 0; walk31.need = 10 + rnd(14); walk31.lx = player.x; walk31.ly = player.y;
+      other.say = { text: "ブヒッ！（くんくん）", until: performance.now() + 1800 };
+      toast("pig", `${a.name}と、トリュフを探しに出かけた。草地や花の上を歩いてみよう（今日はあと${left}個）`); return true;
+    }
+  }
+  return _f6act31(tx, ty, key, sel, item, other);
+};
+function findTruffle31() {
+  const e = walk31.e, a = world.animals.find(x => x.id === e.aid); if (!a) return stopWalk31();
+  if (a.truffleDay !== world.day) { a.truffleDay = world.day; a.truffleN = 0; }
+  const spots = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [e.x + dx, e.y + dy]).filter(([x, y]) => !(x === player.x && y === player.y) && !blocked(village, x, y, null) && !world.drops.some(d => d.x === x && d.y === y));
+  if (!spots.length) { walk31.need = 3; return; }
+  const [x, y] = spots[rnd(spots.length)];
+  const white = Math.random() < (season() === "秋" ? .22 : .1) + (a.hearts >= 10 ? .05 : 0);
+  world.drops.push({ x, y, id: white ? "truffle_white" : "truffle_black", n: 1 });
+  a.truffleN++; world.stats.truffles31 = (world.stats.truffles31 || 0) + 1; saveWorld();
+  e.say = { text: white ? "ブヒブヒッ！！（すごいの見つけた）" : "ブヒッ！（ここ掘れ）", until: performance.now() + 2600 };
+  toast(white ? "truffle_white" : "truffle_black", `${a.name}が${white ? "白トリュフ" : "黒トリュフ"}を掘り出した。Aで拾おう`);
+  walk31.steps = 0; walk31.need = 12 + rnd(16);
+  if (a.truffleN >= pigFinds31(a)) setTimeout(() => { if (walk31.e === e) e.say = { text: "ブヒ〜（今日はおしまい）", until: performance.now() + 2200 }; }, 2800);
+}
+const _updateAnimals31 = updateAnimals;
+updateAnimals = function (dt) {
+  const e = walk31.e;
+  if (e) {
+    e.think = 999;
+    if (map === village && !e.moving) {
+      const dist = Math.abs(e.x - player.x) + Math.abs(e.y - player.y);
+      if (dist > 8) { const s = freeNear(village, player.x, player.y); placeAt(e, s[0], s[1]); }
+      else if (dist > 1) { const dx = player.x - e.x, dy = player.y - e.y;
+        const o = Math.abs(dx) > Math.abs(dy) ? [dx > 0 ? "right" : "left", dy > 0 ? "down" : "up"] : [dy > 0 ? "down" : "up", dx > 0 ? "right" : "left"];
+        if (!stepTo(e, o[0])) stepTo(e, o[1]); }
+    }
+    if (map === village && (player.x !== walk31.lx || player.y !== walk31.ly)) {
+      walk31.lx = player.x; walk31.ly = player.y;
+      const g = village.ground[player.y]?.[player.x] || "";
+      const a = world.animals.find(x => x.id === e.aid);
+      if (/^(grass|flower)/.test(g) && a && (a.truffleDay !== world.day || a.truffleN < pigFinds31(a)) && ++walk31.steps >= walk31.need) findTruffle31();
+    }
+  }
+  _updateAnimals31(dt);
+};
+const _animalsNewDay31 = animalsNewDay;
+animalsNewDay = function () { if (walk31.e) stopWalk31(); _animalsNewDay31(); };
+F31.walk = walk31;
+F31.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -7131,5 +7257,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

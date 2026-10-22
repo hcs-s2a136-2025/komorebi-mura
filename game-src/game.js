@@ -3420,7 +3420,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.9.9";
+const CLIENT_VERSION = "0.9.10";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5403,6 +5403,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.9.10", date: "2026/10/22", title: "持ち物の並べ替え", items: [
+    "持ち物（下の段）の中身を、好きな場所に動かせるようにした",
+    "PCはドラッグ、スマホは長押ししてから指を動かす。動かした先にある物とは入れかわる",
+    "手に持っている物は、動かしても持ったまま"] },
   { v: "0.9.9", date: "2026/10/22", title: "信用金庫で預金", items: [
     "村の信用金庫で、お金を預けられるようにした（「預金」タブ）",
     "普通預金：いつでも出し入れできて、毎朝0.2%の利息（1日200Gまで）",
@@ -5618,6 +5622,81 @@ ACH.push(
 );
 ACH_REWARD["コツコツ貯金"] = ["money", 500];
 ACH_REWARD["利息のちから"] = ["item", "f_lamp", 1];
+
+// =================== v21: move items in the hotbar (PCはドラッグ、スマホは長押ししてから動かす) ===================
+let dnd21 = null, noClick21 = false;
+function moveSlot21(a, b) {
+  if (a === b || a < 0 || b < 0 || a >= world.inv.length || b >= world.inv.length) return;
+  const inv = world.inv; [inv[a], inv[b]] = [inv[b], inv[a]];
+  if (world.sel === a) world.sel = b; else if (world.sel === b) world.sel = a;
+  renderHotbar(); saveWorld();
+}
+F7.moveSlot = moveSlot21;
+function slotAt21(x, y) {
+  const el = document.elementFromPoint(x, y); const s = el && el.closest && el.closest("#hotbar .slot");
+  return s ? +s.id.slice(5) : -1;
+}
+function mark21(i) { hotbarEl.querySelectorAll(".slot").forEach(s => s.classList.toggle("drop21", +s.id.slice(5) === i && i !== dnd21?.from)); }
+function startDrag21(x, y) {
+  const d = dnd21; if (!d || d.started) return;
+  const it = world.inv[d.from]; if (!it) { dnd21 = null; return; }
+  d.started = true; clearTimeout(d.timer);
+  const g = d.ghost = document.createElement("div"); g.className = "ghost21";
+  g.innerHTML = `<img src="${ASSETS[ITEMS[it.id].icon]}" alt="">${it.n > 1 ? `<span>${it.n}</span>` : ""}`;
+  document.body.appendChild(g); hotbarEl.classList.add("drag21");
+  $("slot-" + d.from)?.classList.add("from21");
+  if (navigator.vibrate && d.touch) try { navigator.vibrate(15); } catch (e) {}
+  moveGhost21(x, y);
+}
+function moveGhost21(x, y) {
+  const d = dnd21; if (!d?.ghost) return;
+  d.ghost.style.left = x + "px"; d.ghost.style.top = y + "px";
+  mark21(slotAt21(x, y));
+  const r = hotbarEl.getBoundingClientRect();
+  if (x < r.left + 36) hotbarEl.scrollLeft -= 10; else if (x > r.right - 36) hotbarEl.scrollLeft += 10;
+}
+function endDrag21(x, y, drop) {
+  const d = dnd21; dnd21 = null; if (!d) return;
+  clearTimeout(d.timer);
+  if (!d.started) return;
+  d.ghost?.remove(); hotbarEl.classList.remove("drag21");
+  hotbarEl.querySelectorAll(".from21,.drop21").forEach(s => s.classList.remove("from21", "drop21"));
+  noClick21 = true; setTimeout(() => noClick21 = false, 0);
+  const to = drop ? slotAt21(x, y) : -1;
+  if (to >= 0 && to !== d.from) { moveSlot21(d.from, to); SFX.small(); }
+  if (!world.tips21) { world.tips21 = true; saveWorld(); }
+}
+hotbarEl.addEventListener("pointerdown", e => {
+  const s = e.target.closest(".slot"); if (!s || (e.pointerType === "mouse" && e.button !== 0)) return;
+  const i = +s.id.slice(5); if (!world.inv[i]) return;
+  if (dnd21) endDrag21(0, 0, false);
+  const x = e.clientX, y = e.clientY;
+  dnd21 = { from: i, x0: x, y0: y, x, y, pid: e.pointerId, touch: e.pointerType !== "mouse", started: false };
+  if (dnd21.touch) dnd21.timer = setTimeout(() => dnd21 && startDrag21(dnd21.x, dnd21.y), 350);
+});
+addEventListener("pointermove", e => {
+  const d = dnd21; if (!d || e.pointerId !== d.pid) return;
+  d.x = e.clientX; d.y = e.clientY;
+  if (!d.started) {
+    const far = Math.hypot(d.x - d.x0, d.y - d.y0);
+    if (d.touch) { if (far > 10) { clearTimeout(d.timer); dnd21 = null; } return; }
+    if (far < 6) return;
+    startDrag21(d.x, d.y);
+  }
+  moveGhost21(d.x, d.y);
+});
+addEventListener("pointerup", e => { if (dnd21 && e.pointerId === dnd21.pid) endDrag21(e.clientX, e.clientY, true); });
+addEventListener("pointercancel", e => { if (dnd21 && e.pointerId === dnd21.pid) endDrag21(0, 0, false); });
+// 動かしている間は、指でスクロールしたり長押しメニューが出たりしないように
+hotbarEl.addEventListener("touchmove", e => { if (dnd21?.started) e.preventDefault(); }, { passive: false });
+hotbarEl.addEventListener("contextmenu", e => { if (e.target.closest(".slot")) e.preventDefault(); });
+hotbarEl.addEventListener("click", e => { if (noClick21) { e.stopPropagation(); e.preventDefault(); } }, true);
+hotbarEl.addEventListener("dragstart", e => e.preventDefault());
+// 持ち物の名前が出たときに、一度だけ並べ替えのやり方を教える
+{
+  const tip = () => { if (world.tips21 || !world.tut?.done) return; world.tips21 = true; saveWorld(); F7.notify(matchMedia("(pointer: coarse)").matches ? "持ち物は、長押ししてから指を動かすと並べ替えられるよ" : "持ち物は、ドラッグして並べ替えられるよ", null); };
+  setTimeout(tip, 8000);
+}
 
 // =================== start ===================
 function animPreview(now) {

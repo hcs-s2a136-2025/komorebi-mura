@@ -779,7 +779,7 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.25.1";
+  const VER = "0.25.2";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -3231,10 +3231,17 @@ function addToList6(list, now) {
 }
 function drawTank(f, now) {
   const fishes = (room.data.aqua || {})[f.x + "," + f.y] || [];
+  // 水の中（水槽の絵の 2〜29, 3〜13 ドット）だけに描く。大きな魚（ヌシなど）も、絵ぜんぶを半分の大きさで
+  const top = f.y * TS - 8, wx0 = f.x * TS + 2, wx1 = f.x * TS + 30, wy0 = top + 3, wy1 = top + 14;
+  ctx.save(); ctx.beginPath(); ctx.rect(wx0, wy0, wx1 - wx0, wy1 - wy0); ctx.clip();
   fishes.forEach((id, i) => {
-    const t = now / 900 + i * 1.7; const x = f.x * TS + 6 + (Math.sin(t) * .5 + .5) * 16, y = f.y * TS - 6 + i * 2.5 + Math.sin(t * 2) * 1;
-    ctx.save(); ctx.translate(x + 4, y); if (Math.cos(t) < 0) ctx.scale(-1, 1); ctx.drawImage(IMG[ITEMS[id].icon], 0, 0, 16, 16, -4, -4, 8, 8); ctx.restore();
+    const im = IMG[ITEMS[id]?.icon]; if (!im || !im.width) return;
+    const w = im.width / 2, h = im.height / 2, t = now / 900 + i * 1.7;
+    const x = wx0 + 1 + (Math.sin(t) * .5 + .5) * Math.max(0, wx1 - wx0 - 2 - w);
+    const y = wy0 + Math.min(wy1 - wy0 - h, (i * 3) % Math.max(1, wy1 - wy0 - h + 1)) + Math.sin(t * 2) * .8;
+    ctx.save(); ctx.translate(x + w / 2, y + h / 2); if (Math.cos(t) < 0) ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, im.width, im.height, -w / 2, -h / 2, w, h); ctx.restore();
   });
+  ctx.restore();
 }
 
 // ---- pets & animals as entities ----
@@ -5055,7 +5062,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.25.1";
+const CLIENT_VERSION = "0.25.2";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7083,6 +7090,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.25.2", date: "2026/10/23", title: "水槽の魚の見た目を直した", items: [
+    "水槽にヌシのような大きな魚を入れると、半分だけ切れて、水槽の上にはみ出して見えていたのを直した。魚はぜんぶ水の中を泳ぐようになった",
+  ] },
   { v: "0.25.1", date: "2026/10/23", title: "スマホの表示を直した", items: [
     "スマホで、掲示板のイベントの欄などの「名前｜内容」の表が、名前が1文字ずつ縦にならんでしまっていたのを直した",
   ] },

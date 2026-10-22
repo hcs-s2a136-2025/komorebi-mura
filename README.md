@@ -1,4 +1,4 @@
-# こもれび村 オンライン試作（v0.9.7）
+# こもれび村 オンライン試作（v0.9.8）
 
 Spring Boot で動く、こもれび村のオンライン試作サーバーです。
 
@@ -132,7 +132,7 @@ python game-src/build.py      # → src/main/resources/static/index.html を作�
 ```
 
 - ドット絵を足すときは `export.py` を直して `python game-src/export.py game-src` で `data.js` を作り直します（Pillow が必要）
-- 公開したら `application.properties` の `komorebi.version` と `game.js` の `CLIENT_VERSION` を同じ値に上げると、つないでいる人に更新のお知らせが出ます
+- 公開したら `game.js` の `CHANGES19`（アップデート履歴）のいちばん上に新しい版を足して、`application.properties` の `komorebi.version` と `game.js` の `CLIENT_VERSION` を同じ値に上げると、つないでいる人に更新のお知らせが出ます
 
 ---
 

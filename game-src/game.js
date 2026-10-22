@@ -3420,7 +3420,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.9.7";
+const CLIENT_VERSION = "0.9.8";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5399,6 +5399,114 @@ handle8 = m => {
   }
 };
 F17.ready = true;
+
+// =================== v19: update history (アップデート履歴) ===================
+// 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
+const CHANGES19 = [
+  { v: "0.9.8", date: "2026/10/22", title: "アップデート履歴", items: [
+    "設定タブから、これまでのアップデートを見られるようにした",
+    "新しい版を初めて開いたときに、新しくなったことを表示するようにした"] },
+  { v: "0.9.7", date: "2026/10/22", title: "村だけ最初からにできるように", items: [
+    "管理人が、キャラクターはそのままで村だけを最初からにできるようにした（持ち物・お金・見た目・図鑑・自分の家は残る）",
+    "そのとき建てた家にあった家具・水槽の魚・箱の中身は、持ち主の家の収納箱に戻る",
+    "リセットのときにつないでいなかった人の端末から、古い村がよみがえらないようにした",
+    "リセットのあと、木や岩が全部消えてしまうことがある不具合を直した",
+    "「新しいバージョンがあります」が出続けることがある不具合を直した"] },
+  { v: "0.9.6", date: "2026/10/22", title: "家に遊びに行ける・作物と魚と料理がふえた", items: [
+    "建てた家の中（壁紙・床・家具・水槽）が、オンラインでみんなに同じように見えるようにした",
+    "家の持ち主が「この家に入れる人：自分だけ／だれでも」を選べるようにした（建築タブ）",
+    "収納箱が「みんなの収納箱」に。家に入れる人ならだれでも出し入れできる",
+    "持ち主だけが開けられる「鍵つきの箱」（600G）を追加",
+    "作物：いちご・じゃがいも・とうもろこし・なす・かぼちゃ・ほうれん草・カブ",
+    "魚：ヤマメ・ドジョウ・ザリガニ・ニジマス・サバ・イカ・タコ・ヒラメ",
+    "料理：たこ焼き・イカ焼き・マグロの刺身・かぼちゃスープ・いちごジャム・オムレツ・ポテトサラダ・焼きとうもろこし・焼きなす・ほうれん草のおひたし・カブのスープ"] },
+  { v: "0.9.5", date: "2026/10/22", title: "不具合の修正", items: [
+    "カジノの所持金が古いまま表示される不具合を直した",
+    "都会の家具などを部屋に置くと、読み込み直したときに画面が真っ黒になる不具合を直した"] },
+  { v: "0.9.4", date: "2026/10/21", title: "みんなのどんぐりBJ・オンライン版の公開", items: [
+    "どんぐりBJを最大5人で同じ卓で遊べるようにした（ディーラーはクルミさん）",
+    "オンライン版をインターネット上に公開した"] },
+  { v: "0.9.3", date: "2026/10/21", title: "どの端末でも続きから", items: [
+    "セーブをサーバーにも保存。なまえと合言葉で、ほかの端末でも続きから遊べる",
+    "みんなのプロジェクトとスロットのジャックポットを、みんなで共有するようにした",
+    "ほかの人にお小遣いを渡せるようにした",
+    "マウスのホイールとクリックで操作できるようにした",
+    "スマホでは、スロットのスピンボタンをリールの横に置いた",
+    "麻雀：借金が貸してくれる上限を超えないように。途中で抜けるとラス扱いに"] },
+  { v: "0.9.2", date: "2026/10/21", title: "バスで町へ", items: [
+    "バス停から、都会・ひかり通り、すすきの、秋葉原、みなと町へ行けるようにした",
+    "町のお店：ブティック、家具の店、珈琲店、ラーメン屋、カラオケ、ゲームセンター、メイド喫茶、アニメのお店、占いの館、宝くじ、ラウンジ、ガチャガチャ など",
+    "町で服や家具を買えるようにした",
+    "村の地図を追加",
+    "柵がつながって見えるように。背の高い家には各階に窓",
+    "一部のアプリ内ブラウザで、ゲームが始まらないことがある不具合を直した"] },
+  { v: "0.9.1", date: "2026/10/21", title: "村の時計をみんなで", items: [
+    "オンラインでは、日付・時刻・天気がみんな同じに。だれかが眠ると全員が次の朝になる",
+    "チャットの最新の行が、いつも入力欄の上に見えるようにした"] },
+  { v: "0.9.0", date: "2026/10/21", title: "みんなの村", items: [
+    "村を広くして、木の植え直しと採石場を追加",
+    "共有の村：地形・木・岩・柵・道・家の変化が、つないでいるみんなに届く",
+    "吹き出しチャットと伝言板を追加"] },
+  { v: "0.8.2", date: "2026/10/21", title: "効果音の設定", items: [
+    "効果音の音量を設定できるようにした"] },
+  { v: "0.8.1", date: "2026/10/21", title: "遊んでもらった声から", items: [
+    "持ち物を選ぶと名前が出るようにした",
+    "チュートリアルをやさしくした",
+    "寄付のとき、収納箱の中身も使えるようにした",
+    "虹色・ゲーミングの服を追加。モヒカンの後ろ姿を直した",
+    "どんぐりBJを分かりやすくした"] },
+  { v: "0.8.0", date: "2026/10/21", title: "オンライン", items: [
+    "ほかの人の姿が見えて、スタンプであいさつできるようにした",
+    "お便り：管理人に不具合や「こうしてほしい」を送れるようにした"] },
+  { v: "0.7", date: "オンライン前", title: "村での暮らしが深く", items: [
+    "評判レベル、住人との仲良し度とイベント",
+    "スキル・職業・称号、景品と生活再建プラン",
+    "チュートリアル、地形づくり、セーブデータの保護（バックアップ）、帽子"] },
+  { v: "0.6", date: "オンライン前", title: "季節めぐる村", items: [
+    "季節と天気、牧場の動物、ペット",
+    "洞くつ（ダンジョン）、依頼、村のイベント、みんなのプロジェクト",
+    "屋台、港町"] },
+  { v: "0.3〜0.5", date: "オンライン前", title: "こもれび村のはじまり", items: [
+    "着せ替え、畑、釣り、家づくり、クラフト",
+    "自分の家の中に入って、家具を置いて模様替え",
+    "お店やカジノの建物に入れる。BGM",
+    "カジノ：スロット・丁半・チンチロ・どんぐりBJ・麻雀。借金と取り立て、強制労働"] },
+];
+const SEEN19 = "komorebi-seen-version";
+const vnum19 = v => String(v).split(/[^0-9]+/).filter(Boolean).map(Number);
+function vcmp19(a, b) { const x = vnum19(a), y = vnum19(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; }
+function changeHtml19(c) {
+  return `<div class="chg19"><div class="chgh19"><b>v${esc(c.v)}</b><span>${esc(c.title)}</span><em>${esc(c.date)}</em></div><ul>${c.items.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>`;
+}
+F7.openChanges = since => {
+  const fresh = since ? CHANGES19.filter(c => vcmp19(c.v, since) > 0) : [];
+  openModal(fresh.length ? `v${CLIENT_VERSION} で新しくなったこと` : "アップデート履歴", "shop", body => {
+    const draw = all => {
+      const list = all || !fresh.length ? CHANGES19 : fresh;
+      body.innerHTML = `${!all && fresh.length ? `<p class="mtext">こもれび村が新しくなったよ。データはそのまま残っています。</p>` : `<p class="mtext">いまの版は v${esc(CLIENT_VERSION)}。新しいものから順に並んでいます。</p>`}
+        <div class="chglist19">${list.map(changeHtml19).join("")}</div>
+        <div class="row2">${!all && fresh.length ? `<button class="btn light" type="button" id="chgAll">これまでの履歴も見る</button>` : ""}<button class="btn" type="button" id="chgOk">閉じる</button></div>`;
+      body.querySelector("#chgOk").onclick = closeModal;
+      const a = body.querySelector("#chgAll"); if (a) a.onclick = () => { $("mtitle").textContent = "アップデート履歴"; draw(true); body.scrollTop = 0; };
+    };
+    draw(false);
+  });
+};
+{
+  const seen = store.get(SEEN19);
+  const played = !!(world.tut && world.tut.done);
+  if (seen && vcmp19(CLIENT_VERSION, seen) > 0) F7.pending.push({ kind: "custom", show: () => F7.openChanges(seen) });
+  else if (!seen && played) F7.pending.push({ kind: "custom", show: () => F7.openChanges("0.9.7") });
+  store.set(SEEN19, CLIENT_VERSION);
+}
+const _renderSettings19 = F7.renderSettings;
+F7.renderSettings = () => {
+  _renderSettings19();
+  const B = $("settingsBody"); if (!B || B.querySelector("#chg19btn")) return;
+  const d = document.createElement("div"); d.className = "opt";
+  d.innerHTML = `<h3>アップデート履歴</h3><div class="row"><button class="btn light" type="button" id="chg19btn">これまでのアップデートを見る</button></div><p class="note">いまの版：v${esc(CLIENT_VERSION)}（${esc(CHANGES19[0].date)}）</p>`;
+  B.prepend(d); d.querySelector("#chg19btn").onclick = () => { document.body.classList.remove("menu"); resize(); F7.openChanges(); };
+};
 
 // =================== start ===================
 function animPreview(now) {

@@ -1948,7 +1948,7 @@ function drawTank(f, now) {
 // ---- pets & animals as entities ----
 let petEnts = [], animalEnts = [];
 function syncPets() {
-  petEnts = world.pets.map((t, i) => { const old = petEnts.find(p => p.ptype === t); if (old) return old; const e = entity(player.x, player.y + 1 + i, null, PETS[t].name === "ネコ" ? "こむぎ" : t === "dog" ? "ポチ" : "ピーコ", "pet"); e.ptype = t; e.sprite = t; e.speed = 1.1; e.home = village; return e; });
+  petEnts = world.pets.map((t, i) => { const old = petEnts.find(p => p.ptype === t); if (old) return old; const e = entity(player.x, player.y + 1 + i, null, t === "cat" ? "こむぎ" : t === "dog" ? "ポチ" : t === "bird" ? "ピーコ" : ({ rabbit: "しろたま", hamster: "ひまわり" }[t] || "ペット"), "pet"); e.ptype = t; e.sprite = t; e.speed = 1.1; e.home = village; return e; });
 }
 function syncAnimals() {
   animalEnts = world.animals.map((a, i) => { const old = animalEnts.find(e => e.aid === a.id); if (old) return old; const e = entity(PADDOCK.x0 + (i % 6), PADDOCK.y0 + Math.floor(i / 6) % 4, null, a.name, "animal"); e.aid = a.id; e.sprite = a.type; e.home = village; e.speed = .6; return e; });
@@ -3760,7 +3760,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.24.2";
+const CLIENT_VERSION = "0.24.3";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5787,6 +5787,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.24.3", date: "2026/10/22", title: "ウサギやハムスターがいると起動しない不具合を直した", items: [
+    "ペットにウサギかハムスターがいると、ゲームが起動しないで真っ暗な画面のまま止まっていたのを直した",
+  ] },
   { v: "0.24.2", date: "2026/10/22", title: "真っ暗な画面のまま止まらないように", items: [
     "うまく起動できなかったり、読み込みがとちゅうで止まったりしたときは、真っ暗なままにしないで、理由と「もう一度読み込む」「管理人に送る」のボタンを出すようにした",
     "サーバーからゲームのページを圧縮して送るようにした（約0.9MB → 約0.3MB）。電波が弱いときも読み込みが止まりにくくなる",

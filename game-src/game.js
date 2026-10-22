@@ -2658,9 +2658,12 @@ Object.assign(ACC_ART26, {
   "ネクタイ": (put, dir) => { if (dir !== "down") return; const R = [200, 40, 60], D = [140, 24, 40]; put(7, 10, R); put(8, 10, R); put(7, 11, R); put(8, 11, D); put(7, 12, R); put(8, 12, D); },
   "天使の羽": (put, dir) => { const W = W34, G = [214, 220, 236]; if (dir === "up") { for (let y = 9; y <= 12; y++) { for (let x = 1; x <= 4; x++) put(x, y, y === 12 && x < 3 ? G : W); for (let x = 11; x <= 14; x++) put(x, y, y === 12 && x > 12 ? G : W); } } else if (dir === "down") { for (let y = 9; y <= 12; y++) { put(1, y, W); put(2, y, G); put(13, y, G); put(14, y, W); } } else for (let y = 9; y <= 12; y++) { put(12, y, G); put(13, y, W); put(14, y - 1, W); } },
   "悪魔のしっぽ": (put, dir) => { const R = [120, 30, 50]; if (dir === "down") { put(12, 13, R); put(13, 12, R); put(13, 11, R); put(14, 10, R); put(14, 9, R); put(13, 9, R); } else if (dir === "up") { put(8, 13, R); put(8, 14, R); put(9, 15, R); put(10, 15, R); put(11, 14, R); } else { put(13, 13, R); put(14, 12, R); put(14, 11, R); put(15, 10, R); } },
+  "うさぎのしっぽ": (put, dir) => { const W = [252, 252, 255], G = [214, 218, 230];
+    if (dir === "up") { for (const [x, y] of [[7, 12], [8, 12], [6, 13], [7, 13], [8, 13], [9, 13]]) put(x, y, W); put(7, 14, G); put(8, 14, G); put(9, 13, G); }
+    else if (dir !== "down") { put(12, 12, W); put(13, 12, W); put(12, 13, W); put(13, 13, G); } },
   "小さなリュック": (put, dir) => { const B = [200, 90, 70], D = [150, 60, 50]; if (dir === "up") { for (let y = 10; y <= 13; y++) for (let x = 5; x <= 10; x++) put(x, y, y === 10 ? D : B); put(7, 12, [240, 200, 80]); } else if (dir === "down") { put(4, 11, D); put(11, 11, D); } else for (let y = 10; y <= 13; y++) for (let x = 11; x <= 13; x++) put(x, y, B); },
 });
-Object.assign(ACCS, Object.fromEntries(["眼帯", "マスク", "ばんそうこう", "ひげ", "ハートのサングラス", "モノクル", "チョーカー", "ネクタイ", "天使の羽", "悪魔のしっぽ", "小さなリュック"].map(k => [k, 1])));
+Object.assign(ACCS, Object.fromEntries(["うさぎのしっぽ", "眼帯", "マスク", "ばんそうこう", "ひげ", "ハートのサングラス", "モノクル", "チョーカー", "ネクタイ", "天使の羽", "悪魔のしっぽ", "小さなリュック"].map(k => [k, 1])));
 Object.assign(POOLS, { bangs: BANGS34, eyes: EYES34, eyec: EYEC34, mouth: MOUTH34, cheek: CHEEK34 });
 Object.assign(DEFAULT, { bangs: "髪型のまま", eyes: "ふつう", eyec: "こげ茶", mouth: "なし", cheek: "ふつう" });
 for (const k of ["bangs", "eyes", "eyec", "mouth", "cheek"]) if (!(cfg[k] in POOLS[k])) cfg[k] = (saved?.cfg && saved.cfg[k] in POOLS[k]) ? saved.cfg[k] : DEFAULT[k];
@@ -2727,7 +2730,7 @@ const SHOP34 = {
          "ロリータドレス": 12000, "ジャンパースカート": 6000, "くまの着ぐるみ": 9000, "ピエロ服": 7000, "宇宙服": 15000, "白衣": 5000 },
   bottom: { "フリルスカート": 3000, "チュチュ": 4000, "ジーンズ": 3500, "ハーフパンツ": 2000, "サルエル": 3000, "キュロット": 2500 },
   hat: { "くま耳": 3000, "天使の輪": 6000, "悪魔のツノ": 5000, "アホ毛": 1500, "大きなリボン": 3500, "ヘアピン": 1200, "シェフ帽": 3000, "パーティー帽": 2000, "ナイトキャップ": 2500, "ハチマキ": 1000, "ちょんまげ": 4000 },
-  acc: { "眼帯": 2000, "マスク": 800, "ばんそうこう": 300, "ひげ": 1500, "ハートのサングラス": 4000, "モノクル": 6000, "チョーカー": 3000, "ネクタイ": 2500, "天使の羽": 12000, "悪魔のしっぽ": 8000, "小さなリュック": 5000 },
+  acc: { "眼帯": 2000, "マスク": 800, "ばんそうこう": 300, "ひげ": 1500, "ハートのサングラス": 4000, "モノクル": 6000, "チョーカー": 3000, "ネクタイ": 2500, "天使の羽": 12000, "悪魔のしっぽ": 8000, "うさぎのしっぽ": 2500, "小さなリュック": 5000 },
 };
 for (const [key, o] of Object.entries(SHOP34)) for (const [v, price] of Object.entries(o)) WEAR26[key][v] = { shop: "omote", price, ulu: true };
 SHOP_WEAR.top.push(...Object.keys(SHOP34.top));
@@ -3782,7 +3785,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.24.4";
+const CLIENT_VERSION = "0.24.5";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5809,6 +5812,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.24.5", date: "2026/10/22", title: "うさぎのしっぽ", items: [
+    "アクセサリーに「うさぎのしっぽ」を追加。表参道のセレクト ULU で 2,500G。後ろや横から見ると、まんまるのしっぽが見える",
+    "しっぽや羽、リュックみたいに背中につける物は、着せ替えやお店の絵を後ろ姿で見せるようにした",
+  ] },
   { v: "0.24.4", date: "2026/10/22", title: "エラーで止まりにくくした", items: [
     "起動のいちばん最初に、こわれたデータ（空っぽの持ち物や、形のちがう記録など）を取りのぞくようにした",
     "このページが知らない物（新しいバージョンの物など）が持ち物や収納、お店、牧場にあっても止まらないように。知らない物はいったん「あずかり」に移して、わかるようになったら自分の家の収納箱に戻す",
@@ -7327,7 +7334,7 @@ const STAFF30 = {
 function wearRow30(key, v, p) {
   const have = wearOwned26(key, v), on = cfg[key] === v;
   const pv = { ...cfg, [key]: v }; if (key === "bottom" && CHAR.TOPS[pv.top]?.covers) pv.top = "Tシャツ";
-  return `<div class="li"><img src="${renderChar(pv, "down", 0).toDataURL()}" alt=""><span class="nm">${esc(v)}<span class="sub2">${WEAR_LABEL26[key]}・${fmt(p)}${have ? "・持っている" : ""}</span></span><span class="acts">${have
+  return `<div class="li"><img src="${renderChar(pv, key === "acc" && BACK34.has(v) ? "up" : "down", 0).toDataURL()}" alt=""><span class="nm">${esc(v)}<span class="sub2">${WEAR_LABEL26[key]}・${fmt(p)}${have ? "・持っている" : ""}</span></span><span class="acts">${have
     ? `<button class="btn light" type="button" data-w30="${key}:${esc(v)}" ${on ? "disabled" : ""}>${on ? "着ている" : "着てみる"}</button>`
     : `<button class="btn" type="button" data-b30="${key}:${esc(v)}" data-p="${p}" ${world.money < p ? "disabled" : ""}>買う</button>`}</span></div>`;
 }
@@ -7879,6 +7886,7 @@ F33.ready = true;
 var F34 = {};
 const CAT34 = { "髪": ["hair", "bangs", "hairc"], "顔": ["eyes", "eyec", "mouth", "cheek", "skin"], "服": ["top", "topc", "bottom", "bottomc", "shoesc"], "小物": ["hat", "acc"] };
 const HEAD34 = new Set(["hair", "bangs", "eyes", "mouth", "cheek", "hat"]);
+const BACK34 = new Set(["うさぎのしっぽ", "悪魔のしっぽ", "天使の羽", "小さなリュック"]);
 let cat34 = (() => { try { return localStorage.getItem("komorebi-wcat") || "髪"; } catch { return "髪"; } })();
 (() => {
   const opts = $("opts"); if (!opts) return;
@@ -7904,7 +7912,7 @@ function iconChips34() {
       b.classList.add("ic34");
       b.innerHTML = `<canvas width="32" height="32"></canvas><span>${esc(v)}${locked ? "<small>未入手</small>" : ""}</span>`;
       const x = b.firstChild.getContext("2d"); x.imageSmoothingEnabled = false;
-      try { const im = renderChar(pv, "down", 0); if (HEAD34.has(key)) x.drawImage(im, 2, 0, 12, 12, 4, 4, 24, 24); else x.drawImage(im, 0, 0, 16, 16, 0, 0, 32, 32); } catch {}
+      try { const im = renderChar(pv, key === "acc" && BACK34.has(v) ? "up" : "down", 0); if (HEAD34.has(key)) x.drawImage(im, 2, 0, 12, 12, 4, 4, 24, 24); else x.drawImage(im, 0, 0, 16, 16, 0, 0, 32, 32); } catch {}
     });
   }
 }

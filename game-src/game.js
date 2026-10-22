@@ -2551,7 +2551,7 @@ const ACH = [
 function renderLog() {
   const s = world.stats;
   $("logBody").innerHTML = `
-    <div class="opt"><h3>お金</h3><div class="stat"><span>所持金</span><b>${fmt(world.money)}</b><span>借金</span><b>${fmt(totalDebt())}</b>
+    <div class="opt"><h3>お金</h3><div class="stat"><span>所持金</span><b>${fmt(world.money)}</b><span>借金</span><b>${fmt(totalDebt())}</b><span>預金</span><b>${fmt(bankTotal20())}</b>
       <span>ギャンブル収支</span><b>${s.gambleNet >= 0 ? "+" : ""}${fmt(s.gambleNet)}</b><span>返済した額</span><b>${fmt(s.repaid)}</b></div></div>
     <div class="opt"><h3>魚図鑑（${FISH6.filter(f => world.dex[f.n]).length} / ${FISH6.length}）</h3><div class="dex">${FISH6.map(f => `<div class="${world.dex[f.n] ? "" : "no"}" title="${fishHint(f)}"><img src="${ASSETS["fish_" + f.n]}" alt="" class="${f.n === "ヌシ" ? "wide" : ""}">${world.dex[f.n] ? f.n + "<br>×" + world.dex[f.n] : "？？？"}<br><small>${fishHint(f)}</small></div>`).join("")}</div></div>
     <div class="opt"><h3>牧場とペット</h3><div class="stat">${world.animals.map(a => `<span>${esc(a.name)}（${ANIMALS[a.type].name}）</span><b>${"♥".repeat(a.hearts)}${"♡".repeat(10 - a.hearts)}</b>`).join("") || "<span>まだ動物がいません</span><b></b>"}${world.pets.map(t => `<span>${PETS[t].name}</span><b>${"♥".repeat(world.petHearts[t] || 0)}${"♡".repeat(10 - (world.petHearts[t] || 0))}</b>`).join("")}</div></div>
@@ -3420,7 +3420,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.9.8";
+const CLIENT_VERSION = "0.9.9";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5403,6 +5403,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.9.9", date: "2026/10/22", title: "信用金庫で預金", items: [
+    "村の信用金庫で、お金を預けられるようにした（「預金」タブ）",
+    "普通預金：いつでも出し入れできて、毎朝0.2%の利息（1日200Gまで）",
+    "定期預金：7日で3%、28日で12%。1口100G〜50,000Gで3口まで。途中で解約すると利息はつかない",
+    "通帳で、預け入れ・引き出し・利息の記録を見られる",
+    "預けたお金はカジノでは使えない。借金の返済が遅れていると、毎朝、普通預金から自動で返済される",
+    "記録タブに預金の合計を表示。実績「コツコツ貯金」「利息のちから」を追加"] },
   { v: "0.9.8", date: "2026/10/22", title: "アップデート履歴", items: [
     "設定タブから、これまでのアップデートを見られるようにした",
     "新しい版を初めて開いたときに、新しくなったことを表示するようにした"] },
@@ -5508,6 +5515,110 @@ F7.renderSettings = () => {
   B.prepend(d); d.querySelector("#chg19btn").onclick = () => { document.body.classList.remove("menu"); resize(); F7.openChanges(); };
 };
 
+// =================== v20: deposits at the 信用金庫 (普通預金・定期預金・通帳) ===================
+const BANK20 = { rate: .002, dayCap: 200, plans: { 7: .03, 28: .12 }, fixMin: 100, fixMax: 50000, fixN: 3 };
+function bank20() {
+  const b = world.bank = world.bank || {};
+  if (!Number.isFinite(b.save) || b.save < 0) b.save = 0;
+  if (!Array.isArray(b.fixed)) b.fixed = [];
+  if (!Array.isArray(b.log)) b.log = [];
+  if (!Number.isFinite(b.interest)) b.interest = 0;
+  return b;
+}
+function bankTotal20() { const b = bank20(); return b.save + b.fixed.reduce((a, f) => a + f.amt, 0); }
+function bankLog20(text, amt, nt) { const b = bank20(); b.log.unshift({ d: world.day, t: text, a: Math.round(amt), s: b.save, ...(nt ? { n: 1 } : {}) }); b.log.length = Math.min(b.log.length, 40); }
+function bankDay20() {
+  const b = bank20(); if (b.day === world.day) return; b.day = world.day;
+  const msgs = [];
+  const it = Math.min(BANK20.dayCap, Math.floor(b.save * BANK20.rate));
+  if (it > 0) { b.save += it; b.interest += it; bankLog20("普通預金の利息", it); }
+  for (const f of b.fixed.slice()) if (world.day >= f.end) {
+    const gain = Math.floor(f.amt * f.rate); b.save += f.amt + gain; b.interest += gain;
+    b.fixed.splice(b.fixed.indexOf(f), 1); bankLog20(`定期預金（${f.days}日）が満期`, f.amt + gain);
+    msgs.push(`定期預金が満期になって、利息 ${fmt(gain)} がついた。普通預金に入れておいたよ`);
+  }
+  const od = overdueLoans().reduce((a, l) => a + l.owed, 0);
+  if (od > 0 && b.save > 0) {
+    let left = Math.min(od, b.save); const paid = left;
+    for (const l of overdueLoans().sort((x, y) => x.due - y.due)) { if (left <= 0) break; const v = Math.min(l.owed, left); l.owed -= v; left -= v; world.stats.repaid += v; }
+    world.loans = world.loans.filter(l => l.owed > 0); b.save -= paid; bankLog20("延滞中の借金に自動で返済", -paid);
+    msgs.push(`延滞していた借金に、普通預金から ${fmt(paid)} を自動で返済した`);
+  }
+  for (const m of msgs) F7.notify(m, null);
+}
+const _onNewDay20 = F7.onNewDay;
+F7.onNewDay = () => { _onNewDay20(); bankDay20(); };
+let bankTab20 = "save";
+function bankSaveHtml20() {
+  const b = bank20(); const full = b.fixed.length >= BANK20.fixN;
+  const fixed = b.fixed.length ? `<div class="list">${b.fixed.map((f, i) => `<div class="li"><img src="${ASSETS.coin}" alt=""><span class="nm">${fmt(f.amt)}（${f.days}日・${Math.round(f.rate * 100)}%）<span class="sub2">満期まであと${Math.max(0, f.end - world.day)}日・満期で ${fmt(f.amt + Math.floor(f.amt * f.rate))}</span></span>
+      <span class="acts"><button class="btn ghost" type="button" data-fx="${i}">解約</button></span></div>`).join("")}</div>` : `<p class="mtext small">いまは定期預金はありません。</p>`;
+  const log = b.log.length ? `<div class="pass20">${b.log.slice(0, 15).map(l => `<div><span>${l.d}日目</span><span>${esc(l.t)}</span><b class="${l.n ? "nt" : l.a < 0 ? "minus" : ""}">${l.n ? "" : l.a >= 0 ? "+" : ""}${fmt(l.a)}</b><em>${fmt(l.s)}</em></div>`).join("")}</div>` : `<p class="mtext small">まだ記帳はありません。</p>`;
+  return `<p class="mtext">「預けたお金はカジノでは使えないので、使いすぎ防止にもなりますよ。毎朝、少しずつ利息もつきます」</p>
+    <p class="mtext">所持金 <b>${fmt(world.money)}</b>　普通預金 <b>${fmt(b.save)}</b>　定期預金 <b>${fmt(bankTotal20() - b.save)}</b></p>
+    <h3 class="lbl">普通預金（いつでも出し入れ）</h3>
+    <div class="li"><img src="${ASSETS.coin}" alt=""><span class="nm">毎朝 ${BANK20.rate * 100}% の利息<span class="sub2">1日の利息は ${fmt(BANK20.dayCap)} まで。これまでの利息 ${fmt(b.interest)}</span></span></div>
+    <div class="row bank20"><input type="number" min="1" step="100" id="bkAmt" value="${Math.min(1000, Math.max(world.money, b.save)) || 100}" aria-label="金額">
+      <button class="btn" type="button" id="bkIn">預ける</button><button class="btn light" type="button" id="bkInAll">全部預ける</button>
+      <button class="btn" type="button" id="bkOut">引き出す</button><button class="btn light" type="button" id="bkOutAll">全部引き出す</button></div>
+    <p class="note" id="bkMsg"></p>
+    <h3 class="lbl">定期預金（満期まで預けると利息が多い）</h3>
+    <div class="row bank20"><input type="number" min="${BANK20.fixMin}" max="${BANK20.fixMax}" step="100" id="fxAmt" value="${Math.max(BANK20.fixMin, Math.min(BANK20.fixMax, Math.floor(world.money / 100) * 100 || 1000))}" aria-label="定期にする額">
+      ${Object.entries(BANK20.plans).map(([d, r]) => `<button class="btn light" type="button" data-fd="${d}" ${full ? "disabled" : ""}>${d}日で${Math.round(r * 100)}%</button>`).join("")}</div>
+    <p class="note">所持金から預けます。1口 ${fmt(BANK20.fixMin)}〜${fmt(BANK20.fixMax)}、${BANK20.fixN}口まで。途中で解約すると利息はつきません。${full ? "<b>いまは口数がいっぱいです。</b>" : ""}</p>
+    ${fixed}
+    <h3 class="lbl">通帳</h3>${log}
+    <p class="note">借金の返済が遅れていると、毎朝、普通預金から延滞分を自動で返済します。</p>`;
+}
+function wireBank20(P) {
+  const b = bank20(); const msg = t => { const m = P.querySelector("#bkMsg"); if (m) m.textContent = t; };
+  const amt = () => Math.floor(Number(P.querySelector("#bkAmt").value) || 0);
+  const redraw = t => { P.innerHTML = bankSaveHtml20(); wireBank20(P); if (t) P.querySelector("#bkMsg").textContent = t; updateHud(true); saveWorld(); };
+  const dep = v => { v = Math.min(v, world.money); if (v <= 0) return msg("所持金が足りないよ"); addMoney(-v); b.save += v; bankLog20("預け入れ", v); SFX.small(); redraw(`${fmt(v)} を預けた`); };
+  const wd = v => { v = Math.min(v, b.save); if (v <= 0) return msg("普通預金が足りないよ"); b.save -= v; addMoney(v); bankLog20("引き出し", -v); SFX.small(); redraw(`${fmt(v)} を引き出した`); };
+  P.querySelector("#bkIn").onclick = () => dep(amt());
+  P.querySelector("#bkInAll").onclick = () => dep(world.money);
+  P.querySelector("#bkOut").onclick = () => wd(amt());
+  P.querySelector("#bkOutAll").onclick = () => wd(b.save);
+  P.querySelectorAll("[data-fd]").forEach(btn => btn.onclick = () => {
+    const days = +btn.dataset.fd, v = Math.floor(Number(P.querySelector("#fxAmt").value) || 0);
+    if (b.fixed.length >= BANK20.fixN) return msg("定期預金は3口までだよ");
+    if (v < BANK20.fixMin || v > BANK20.fixMax) return msg(`1口 ${fmt(BANK20.fixMin)}〜${fmt(BANK20.fixMax)} で預けてね`);
+    if (v > world.money) return msg("所持金が足りないよ");
+    addMoney(-v); b.fixed.push({ amt: v, days, rate: BANK20.plans[days], start: world.day, end: world.day + days });
+    bankLog20(`所持金から定期預金へ（${days}日）`, v, true); redraw(`${fmt(v)} を${days}日の定期預金にした。${world.day + days}日目に満期だよ`);
+  });
+  P.querySelectorAll("[data-fx]").forEach(btn => btn.onclick = () => {
+    const f = b.fixed[+btn.dataset.fx]; if (!f) return;
+    if (btn.dataset.armed !== "1") { btn.dataset.armed = "1"; btn.textContent = "もう一度で解約"; return msg("途中で解約すると利息はつかないよ。もう一度押すと解約します"); }
+    b.fixed.splice(b.fixed.indexOf(f), 1); b.save += f.amt; bankLog20(`定期預金を解約（${f.days}日）`, f.amt); redraw(`定期預金を解約して、${fmt(f.amt)} を普通預金に入れた`);
+  });
+}
+const _openLender20 = openLender;
+openLender = function (kind) {
+  _openLender20(kind);
+  if (kind !== "bank") return;
+  const body = $("mbody");
+  const loan = document.createElement("div"); while (body.firstChild) loan.appendChild(body.firstChild);
+  const save = document.createElement("div");
+  const tabs = document.createElement("div"); tabs.className = "mtabs";
+  const show = t => {
+    bankTab20 = t; loan.hidden = t !== "loan"; save.hidden = t !== "save";
+    tabs.querySelectorAll("[data-bk]").forEach(c => c.setAttribute("aria-pressed", c.dataset.bk === t));
+    if (t === "save") { save.innerHTML = bankSaveHtml20(); wireBank20(save); }
+  };
+  if (overdueLoans().some(l => l.lender === "bank")) bankTab20 = "loan";
+  tabs.innerHTML = [["save", "預金"], ["loan", "借入・返済・相談"]].map(([k, l]) => `<button class="chip" type="button" data-bk="${k}">${l}</button>`).join("");
+  tabs.querySelectorAll("[data-bk]").forEach(c => c.onclick = () => show(c.dataset.bk));
+  body.append(tabs, save, loan); show(bankTab20);
+};
+ACH.push(
+  ["コツコツ貯金", "預金を合わせて10,000G以上にする", () => bankTotal20() >= 10000],
+  ["利息のちから", "利息を合わせて1,000G受け取る", () => (world.bank?.interest || 0) >= 1000],
+);
+ACH_REWARD["コツコツ貯金"] = ["money", 500];
+ACH_REWARD["利息のちから"] = ["item", "f_lamp", 1];
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -5531,5 +5642,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

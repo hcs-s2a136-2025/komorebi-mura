@@ -57,3 +57,12 @@
 .chgh19 span { font-weight: bold; font-size: .92rem; }
 .chgh19 em { font-style: normal; font-size: .75rem; opacity: .7; margin-left: auto; }
 .chg19 ul { margin: 6px 0 0; padding-left: 1.2em; font-size: .86rem; line-height: 1.65; }
+.bank20 { flex-wrap: wrap; gap: 6px; }
+.bank20 input { width: 110px; }
+.pass20 { display: grid; gap: 2px; font-size: .8rem; background: rgba(255, 250, 240, .7); border: 2px solid var(--panel-2); border-radius: 8px; padding: 6px 8px; max-height: 220px; overflow-y: auto; }
+.pass20 div { display: grid; grid-template-columns: 3.6em 1fr auto 5.5em; gap: 6px; align-items: baseline; border-bottom: 1px dashed rgba(90, 58, 40, .2); padding: 2px 0; }
+.pass20 div:last-child { border-bottom: 0; }
+.pass20 span:first-child { opacity: .7; }
+.pass20 b { color: #2a7a3a; } .pass20 b.minus { color: var(--bad, #c0443a); }
+.pass20 em { font-style: normal; text-align: right; opacity: .75; }
+.pass20 b.nt { color: inherit; opacity: .75; }

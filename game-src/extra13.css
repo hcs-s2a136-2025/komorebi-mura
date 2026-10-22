@@ -103,3 +103,32 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .ac25 img { width: 18px; height: 18px; image-rendering: pixelated; }
 .ac25.lack { opacity: .4; }
 .acrow25 { line-height: 1.9; }
+.mbox.salon26 { background: #faf8f4; color: #1d1b1a; border-color: #1d1b1a; }
+.mbox.salon26 #mtitle { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; letter-spacing: .12em; color: #1d1b1a; }
+.mbox.salon26 .mtext { color: #2a2826; }
+.salonhead26 { display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #d8d2c8; padding-bottom: 10px; margin-bottom: 10px; }
+.salonhead26 img { width: 56px; height: 56px; image-rendering: pixelated; background: #efe9df; border-radius: 50%; }
+.salonhead26 p { margin: 0; font-size: .9rem; line-height: 1.6; }
+.salonname26 { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; letter-spacing: .2em; font-size: .72rem !important; color: #a8884a; }
+.mbox.salon26 .chip { background: #fff; border-color: #1d1b1a; color: #1d1b1a; }
+.mbox.salon26 .chip[aria-pressed="true"] { background: #1d1b1a; color: #faf8f4; }
+.salonprev26 { display: flex; gap: 10px; justify-content: center; background: linear-gradient(#f2eee6, #e8e2d6); border: 1px solid #d8d2c8; border-radius: 6px; padding: 10px; margin: 10px 0 4px; }
+.salonprev26 img { width: 64px; height: 64px; image-rendering: pixelated; }
+.salonnow26 { text-align: center; }
+.salongrid26 { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin: 8px 0 10px; }
+.salonopt26 { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; background: #fff; border: 1px solid #d8d2c8; border-radius: 6px; cursor: pointer; font: inherit; color: #1d1b1a; }
+.salonopt26 img { width: 40px; height: 40px; image-rendering: pixelated; }
+.salonopt26 i { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #00000022; margin: 6px 0; }
+.salonopt26 span { font-size: .8rem; } .salonopt26 small { font-size: .62rem; color: #8a8278; text-align: center; }
+.salonopt26.ex small { color: #a8884a; } .salonopt26.on { border: 2px solid #1d1b1a; background: #f6f1e8; }
+.mbox.salon26 .btn { background: #1d1b1a; color: #faf8f4; border-color: #1d1b1a; } .mbox.salon26 .btn.light { background: #fff; color: #1d1b1a; }
+.mbox.salon26 .btn:disabled { opacity: .45; }
+.gres26 { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; margin: 8px 0; }
+.gcard26 { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; background: #fff; border: 2px solid var(--rc); border-radius: 8px; }
+.gcard26 b { font-size: .7rem; color: #fff; background: var(--rc); border-radius: 3px; padding: 0 5px; }
+.gcard26 img { width: 44px; height: 44px; image-rendering: pixelated; }
+.gcard26 span { font-size: .78rem; } .gcard26 small { font-size: .62rem; color: #8a8278; }
+.gcard26 em { position: absolute; top: 3px; right: 4px; font-style: normal; font-size: .62rem; color: #e8507a; font-weight: bold; }
+.gcard26 i { font-style: normal; font-size: .62rem; color: #8a8278; } .gcard26 .btn { padding: 2px 8px; font-size: .7rem; }
+.gtable26 div { margin: 4px 0; font-size: .78rem; line-height: 1.8; } .gtable26 b { margin-right: 6px; }
+.gtable26 span { display: inline-block; margin-right: 8px; color: #8a8278; } .gtable26 span.own { color: #1d1b1a; font-weight: bold; }

@@ -410,6 +410,7 @@ const BUILDINGS = [
   { kind: "casino", label: "こもれびパレス", labelIn: 12, W: 96, H: 80, col: 24, row: 6, roof: "紫", wall: "桃" },
   { kind: "bank", label: "村の信用金庫", W: 64, H: 56, col: 31, row: 6, roof: "青", wall: "白" },
   { kind: "yami", label: "十日屋", W: 64, H: 56, col: 36, row: 6, roof: "灰", wall: "灰" },
+  { kind: "salon", label: "Salon こもれび", W: 64, H: 56, col: 49, row: 6, roof: "黒", wall: "白" },
 ];
 
 function blankMap(w, h, name) {
@@ -2378,6 +2379,111 @@ syncUI = function () {
   document.querySelectorAll('.row[data-key="hat"] button').forEach(b => { if (SHOP_WEAR.hat.includes(b.dataset.v) && b.disabled) b.title = "都会や秋葉原のお店で買える"; });
 };
 
+// =================== v26: 服・アクセサリー・髪型・髪色をふやす（入手したものだけ着られる） ===================
+// rare: N / R / SR / SSR（ガチャの排出のめやす）、src: どこで手に入るか、season: その季節だけガチャに出る、event: イベント限定
+Object.assign(CHAR.HAIR, {
+  "ポニーテール": ["................", ".....AAAAAA.....", "....AabbaaaAAA..", "...AabbaaaaaAaA.", "...AaaaaaaacAaA.", "...Aac....caAaA.", "...A........AcA.", "...A........AA.."],
+  "マッシュ": ["................", "....AAAAAAAA....", "...AabbaaaaaA...", "..AabbaaaaaaaA..", "..AaaaaaaaaaaA..", "..AAaccccccaAA..", "..AA........AA..", "...A........A..."],
+  "ゆるふわロング": ["................", ".....AAAAAA.....", "....AabbaaaA....", "...AabbaaaaaA...", "...AaaaaaaacA...", "..AAac....caAA..", ".Aaa........aaA.", ".Aac........caA.", "..Aa........aA..", ".Aac........caA.", ".Aca........acA.", "..AA........AA.."],
+});
+Object.assign(CHAR.HAIRC, {
+  "ラベンダー": [[226, 206, 250], [186, 160, 232], [140, 112, 196], [84, 64, 128]],
+  "アッシュ": [[214, 214, 206], [170, 172, 168], [126, 130, 130], [72, 76, 80]],
+  "オレンジ": [[255, 200, 130], [246, 150, 70], [204, 104, 48], [120, 58, 30]],
+  "ネイビー": [[110, 130, 190], [64, 84, 150], [40, 56, 110], [24, 30, 64]],
+  "チェリー": [[255, 150, 170], [226, 80, 110], [170, 40, 74], [96, 22, 44]],
+});
+Object.assign(CHAR.TOPS, {
+  "セーラー服": { rows: [".....TWuuWT.....", "....TWWRRWWT....", "...TuttRRttvT..."], covers: false },
+  "ボーダー": { rows: [".....TuuuvT.....", "....TWWWWWWT....", "...TuttttttvT..."], covers: false },
+  "ニットベスト": { rows: [".....TWuuWT.....", "....TWtvtvWT....", "...TttvtvtvtT..."], covers: false },
+  "着物": { rows: [".....TWuuvT.....", "....TuWttvvT....", "...TuttRRRtvT...", ".....TttWvT.....", "....TuttWtvT...."], covers: true },
+  "浴衣": { rows: [".....TWuuvT.....", "....TuWttvvT....", "...TuttYYYtvT...", ".....TttWvT.....", "....TuttWtvT...."], covers: true },
+  "サンタ服": { rows: [".....TWWWWT.....", "....TuttttvT....", "...TuKKYKKtvT...", ".....TtttvT.....", "....TWWWWWWT...."], covers: true },
+  "魔女のローブ": { rows: [".....TKuuKT.....", "....TuttttvT....", "...TuttttttvT...", "....TuttttvT....", "..TuttttttttvT.."], covers: true },
+  "うさぎパーカー": { rows: [".....TvWWvT.....", "....TuWPPWvT....", "...TuttttttvT..."], covers: false },
+});
+Object.assign(CHAR.BOTTOMS, {
+  "プリーツスカート": ["....PpqpqpqP....", "................"],
+  "ロングスカート": ["....PpppppqP....", "....PpppppqP...."],
+});
+Object.assign(HATS, {
+  "カチューシャ": { rows: ["................", "................", "....RRRRRRRR...."], pal: { R: [220, 60, 90] } },
+  "ヘッドホン": { rows: ["....AAAAAAAA....", "...A........A...", "..AA........AA..", "..AA........AA.."], pal: { A: [40, 40, 52] } },
+  "ティアラ": { rows: ["................", "......W.W.W.....", ".....WPWWWPW...."], pal: { W: [236, 238, 250], P: [250, 140, 190] } },
+  "王冠": { rows: ["....Y.Y..Y.Y....", "....YYYYYYYY....", "....YRYYYYRY...."], pal: { Y: [250, 210, 60], R: [220, 40, 60] } },
+  "うさ耳": { rows: ["....AA....AA....", "....AbA..AbA....", "....AbA..AbA....", "....AaA..AaA...."], pal: { A: [190, 190, 204], a: [250, 250, 252], b: [255, 190, 210] } },
+  "魔女の帽子": { rows: ["........AA......", ".......AaaA.....", "......AaaaA.....", ".....AaabaaA....", "..AAAAAAAAAAAA.."], pal: { A: [30, 20, 40], a: [80, 50, 110], b: [240, 180, 60] } },
+  "トナカイのツノ": { rows: ["..A..A....A..A..", "..AA.A....A.AA..", "...AAA....AAA...", ".....A....A....."], pal: { A: [130, 90, 50] } },
+});
+// アクセサリーは、描いたキャラクターの上に点を足す（right のときは左右反転）
+const ACC_ART26 = {
+  "マフラー": (put, dir) => { const R = [206, 52, 64], D = [150, 34, 48]; for (let x = 5; x <= 10; x++) put(x, 9, R); if (dir !== "up") { put(9, 10, D); put(9, 11, R); put(10, 10, R); } else for (let x = 6; x <= 9; x++) put(x, 10, D); },
+  "スカーフ": (put, dir) => { if (dir === "up") return; const Y = [240, 200, 80]; for (let x = 6; x <= 9; x++) put(x, 10, Y); put(7, 11, Y); put(8, 11, [210, 160, 50]); },
+  "蝶ネクタイ": (put, dir) => { if (dir === "up" || dir === "left" || dir === "right") return; const R = [200, 40, 60]; put(6, 10, R); put(9, 10, R); put(7, 10, [130, 20, 40]); put(8, 10, [130, 20, 40]); },
+  "ネックレス": (put, dir) => { if (dir === "up") return; const G = [252, 220, 90]; if (dir === "down") { put(6, 11, G); put(9, 11, G); put(7, 12, G); put(8, 12, [255, 120, 160]); } else { put(5, 11, G); put(6, 12, G); } },
+  "ハートのほっぺ": (put, dir) => { if (dir === "up") return; const P = [255, 110, 150]; if (dir === "down") { put(4, 8, P); put(11, 8, P); } else put(4, 8, P); },
+};
+Object.assign(ACCS, Object.fromEntries(Object.keys(ACC_ART26).map(k => [k, 1])));
+const acc26Cache = new Map();
+const _renderChar26 = renderChar;
+renderChar = function (c, dir, frame) {
+  const art = ACC_ART26[c.acc];
+  if (!art) return _renderChar26(c, dir, frame);
+  const key = JSON.stringify(c) + dir + frame + gamingShift;
+  if (acc26Cache.has(key)) return acc26Cache.get(key);
+  const base = _renderChar26({ ...c, acc: "なし" }, dir, frame);
+  const cv = document.createElement("canvas"); cv.width = cv.height = 16;
+  const x = cv.getContext("2d"); x.drawImage(base, 0, 0);
+  art((px, py, col) => { x.fillStyle = `rgb(${col.join(",")})`; x.fillRect(dir === "right" ? 15 - px : px, py, 1, 1); }, dir, frame);
+  if (acc26Cache.size > 3000) acc26Cache.clear();
+  acc26Cache.set(key, cv); return cv;
+};
+const WEAR26 = {
+  top: { "ボーダー": { rare: "N" }, "ニットベスト": { rare: "R" }, "セーラー服": { rare: "R" }, "着物": { rare: "SR" }, "浴衣": { rare: "R", season: "夏" },
+         "サンタ服": { rare: "SR", event: "christmas" }, "魔女のローブ": { rare: "SR", event: "halloween" }, "うさぎパーカー": { rare: "SR", event: "easter" } },
+  bottom: { "プリーツスカート": { rare: "N" }, "ロングスカート": { rare: "R" } },
+  hat: { "カチューシャ": { rare: "N" }, "ヘッドホン": { rare: "R" }, "ティアラ": { rare: "SR" }, "王冠": { rare: "SSR" },
+         "うさ耳": { rare: "R", event: "easter" }, "魔女の帽子": { rare: "R", event: "halloween" }, "トナカイのツノ": { rare: "R", event: "christmas" } },
+  acc: { "スカーフ": { rare: "N" }, "蝶ネクタイ": { rare: "N" }, "ネックレス": { rare: "R" }, "ハートのほっぺ": { rare: "SR" }, "マフラー": { rare: "R", season: "冬" } },
+  hair: { "ポニーテール": { salon: 1500 }, "マッシュ": { salon: 1500 }, "ゆるふわロング": { salon: 2000 } },
+  hairc: { "ラベンダー": { salon: 2000 }, "アッシュ": { salon: 2000 }, "オレンジ": { salon: 1500 }, "ネイビー": { salon: 1500 }, "チェリー": { salon: 2000 } },
+};
+SHOP_WEAR.top.push(...Object.keys(WEAR26.top));
+const WEAR_LABEL26 = { top: "服", bottom: "ボトムス", hat: "帽子", acc: "アクセサリー", hair: "髪型", hairc: "髪の色" };
+const wearToken26 = (key, v) => key === "hat" ? v : key + ":" + v;
+function wearOwned26(key, v) {
+  if (!WEAR26[key] || !WEAR26[key][v]) return key === "top" ? topUnlocked(v) : key === "hat" ? hatUnlocked(v) : true;
+  return (world.unlock || []).includes(wearToken26(key, v));
+}
+function grantWear26(key, v, quiet) {
+  world.unlock = world.unlock || [];
+  const t = wearToken26(key, v);
+  if (world.unlock.includes(t)) return false;
+  world.unlock.push(t); saveWorld(); syncUI();
+  if (!quiet) toast(null, `「${v}」（${WEAR_LABEL26[key]}）を手に入れた！ 着せ替えで選べるよ`);
+  return true;
+}
+const _syncUI26 = syncUI;
+syncUI = function () {
+  _syncUI26();
+  for (const key of Object.keys(WEAR26)) {
+    document.querySelectorAll(`.row[data-key="${key}"] button`).forEach(b => {
+      const info = WEAR26[key][b.dataset.v]; if (!info) return;
+      const ok = wearOwned26(key, b.dataset.v);
+      const covered = (key === "bottom") && CHAR.TOPS[cfg.top]?.covers;
+      b.disabled = !ok || covered;
+      if (b.classList.contains("chip")) b.textContent = ok ? b.dataset.v : b.dataset.v + "（未入手）";
+      b.title = ok ? "" : info.salon ? "村の美容室で手に入る" : info.event ? "イベントやガチャ（イベント中）で手に入る" : "美容室のきせかえガチャで手に入る";
+    });
+  }
+};
+// おまかせで、まだ持っていない物を選ばないように
+function sanitizeCfg26(c) {
+  for (const key of Object.keys(WEAR26)) if (WEAR26[key][c[key]] && !wearOwned26(key, c[key])) c[key] = DEFAULT[key];
+  return c;
+}
+
 const OPTS = [["髪型", "hair", null], ["髪の色", "hairc", 1], ["服", "top", null], ["服の色", "topc", 1],
               ["ボトムス", "bottom", null], ["ボトムスの色", "bottomc", 1], ["肌の色", "skin", 0], ["帽子", "hat", null], ["アクセサリー", "acc", null], ["靴の色", "shoesc", 0]];
 function swatchRow(rowEl, pool, ci, onPick, labelPre, key) {
@@ -3420,7 +3526,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.11.0";
+const CLIENT_VERSION = "0.12.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5435,6 +5541,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.12.0", date: "2026/10/22", title: "美容室ときせかえガチャ", items: [
+    "村の東に美容室「Salon こもれび」（表参道ふう）ができた。スタイリストのミナトさんに、髪型と髪色を変えてもらえる",
+    "美容室では、変える前に4方向のプレビューで確かめられる。サロン限定の髪型3つ（ポニーテール・マッシュ・ゆるふわロング）と髪色5つは、一度してもらうと着せ替えでも選べる",
+    "美容室の中に「きせかえガチャ」。1回300Gか、ふつうのどんぐり10個。N・R・SR・SSRで、確率は画面で見られる。同じ物が出たら100G戻る",
+    "服・ボトムス・帽子・アクセサリーを追加：セーラー服・ボーダー・ニットベスト・着物、プリーツスカート・ロングスカート、カチューシャ・ヘッドホン・ティアラ・王冠、スカーフ・蝶ネクタイ・ネックレス・ハートのほっぺ",
+    "季節限定（夏の浴衣・冬のマフラー）と、イベント限定（うさぎ・魔女・サンタの衣装）も用意。イベント限定はイベント中だけガチャに出る",
+    "まだ持っていない物は着せ替えで「未入手」と出て、おまかせでも選ばれない"] },
   { v: "0.11.0", date: "2026/10/22", title: "どんぐりと村の子どもたち", items: [
     "村の木の下や道ばたに、どんぐりが落ちるように。毎朝新しく落ちて、15時ごろにも少し落ちる（歩くと拾える）",
     "どんぐりは6種類：ふつう・小さな・虫食い・大きな・つやつや・金色（とてもめずらしい）。雨の日・池のそば・木の多いところ・秋で出やすい種類が変わる",
@@ -6137,6 +6250,172 @@ ACH_REWARD["金色のしるし"] = ["medal", 5];
 ACH_REWARD["子どもたちの人気者"] = ["money", 1000];
 F25.ready = true;
 
+// =================== v26: 村の美容室「Salon こもれび」（表参道ふう）と、きせかえガチャ ===================
+var F26 = { event: () => null }; // イベント中かどうか（イベント機能が F26.event を差しかえる）
+INT_NPC.stylist = { name: "スタイリスト ミナト", cfg: { skin: "色白", hair: "マッシュ", hairc: "アッシュ", top: "スーツ", topc: "白", bottom: "パンツ", bottomc: "茶", hat: "なし", acc: "ネックレス", shoesc: "黒" } };
+addSpr17("s26_mirror", (s, r, e) => { r(3, 1, 10, 18, C17("#c8a860")); r(4, 2, 8, 16, C17("#dfe8ee")); r(5, 3, 2, 6, C17("#ffffff")); r(4, 19, 8, 2, C17("#2a2a2a")); r(2, 21, 12, 2, C17("#3a3a3a")); }, 16, 24);
+addSpr17("s26_chair", (s, r, e) => { r(4, 2, 8, 6, C17("#2a2a30")); r(3, 8, 10, 3, C17("#3a3a44")); r(7, 11, 2, 3, C17("#b0b0b8")); r(4, 14, 8, 1, C17("#808088")); });
+addSpr17("s26_gacha", (s, r, e) => { r(2, 1, 12, 11, C17("#f4f0ea")); e(8, 6, 5, 4.6, C17("#d8eef8")); for (const [x, y, c] of [[6, 5, "#f07ab0"], [9, 4, "#f0c040"], [10, 7, "#7ac0f0"], [7, 8, "#90d070"], [5, 7, "#c090f0"]]) e(x, y, 1.2, 1.2, C17(c)); r(2, 12, 12, 10, C17("#e8507a")); r(4, 14, 8, 3, C17("#fff6ea")); e(8, 19, 2, 2, C17("#c8c8d0")); r(7, 18, 2, 2, C17("#8a8a94")); r(3, 22, 10, 2, C17("#a8304e")); }, 16, 24);
+addSpr17("s26_plant", (s, r, e) => { e(8, 6, 5, 5, C17("#3f8a46")); e(6, 4, 2.4, 2.4, C17("#5aa95a")); e(10, 7, 2.4, 2, C17("#5aa95a")); r(5, 11, 6, 4, C17("#f4f0ea")); r(5, 11, 6, 1, C17("#d8d0c4")); });
+
+// ---------- 建物の見た目（白い外壁・大きなガラス・黒いひさし・金の看板） ----------
+const _buildingImg26 = buildingImg;
+buildingImg = function (b) {
+  if (b.kind !== "salon") return _buildingImg26(b);
+  if (bCache.has("salon")) return bCache.get("salon");
+  const { W, H } = b; const P = pixBuf(W, H); const { set, rect } = P;
+  const WH = [[252, 251, 248], [238, 236, 230], [214, 210, 202], [160, 156, 150]], BK = [[60, 58, 62], [36, 34, 38], [22, 20, 24]], GD = [[240, 214, 140], [214, 178, 92]];
+  rect(2, 4, W - 4, 4, BK[1]); rect(2, 4, W - 4, 1, BK[0]);                    // 屋根（フラットな黒）
+  rect(3, 8, W - 6, H - 10, WH[1]); rect(3, 8, W - 6, 1, WH[0]);              // 白い外壁
+  for (let y = 12; y < H - 4; y += 6) rect(4, y, W - 8, 1, WH[2]);
+  rect(14, 10, 36, 6, BK[2]); rect(15, 11, 34, 4, BK[1]);                      // 看板
+  for (let x = 18; x < 46; x += 3) { set(x, 12, GD[0]); set(x + 1, 13, GD[1]); }
+  rect(6, 19, 30, H - 25, [176, 206, 220]); rect(6, 19, 30, 1, BK[1]);          // ガラス
+  for (let x = 8; x < 34; x += 7) rect(x, 21, 2, H - 29, [214, 236, 246]);
+  rect(6, 18, 30, 2, BK[0]);
+  rect(40, 22, 14, H - 26, [70, 54, 44]); rect(41, 23, 12, H - 28, [96, 74, 58]); set(51, H - 12, GD[0]); // 木の扉
+  rect(38, 19, 18, 2, BK[1]);                                                  // ひさし
+  rect(3, H - 4, W - 6, 2, WH[3]); rect(4, H - 2, W - 8, 1, [120, 116, 110]);
+  for (const x of [2, W - 8]) { rect(x, H - 12, 6, 6, [244, 240, 234]); rect(x + 1, H - 18, 4, 6, [70, 140, 80]); set(x + 2, H - 19, [100, 170, 100]); } // 植木鉢
+  const cv = P.finish(); bCache.set("salon", cv); return cv;
+};
+
+// ---------- 中のようす ----------
+const _makeInterior26 = makeInterior;
+makeInterior = function (kind) {
+  if (kind !== "salon") return _makeInterior26(kind);
+  const w = 12, h = 9;
+  const m = blankMap(w, h, "Salon こもれび");
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m.ground[y][x] = y < 2 ? "@mwall" : "@marble";
+  solidRect(m, 0, 0, w, 2);
+  m.isInterior = true; m.kind = "salon"; m.floorT = "@marble"; m.statics = []; m.interact = {}; m.labels = [];
+  const ex = Math.floor(w / 2); m.exit = [ex, h - 1]; m.exits = { [ex + "," + (h - 1)]: true }; m.ground[h - 1][ex] = "@exit";
+  const img = (k, x, y, sortY) => m.objs.push({ img: k, x, y, sortY: sortY ?? y + IMG[k].height });
+  const on = (tiles, fn) => tiles.forEach(([a, b]) => m.interact[a + "," + b] = fn);
+  for (const x of [1, 3, 5]) { img("s26_mirror", x * TS, 0, 2 * TS); img("s26_chair", x * TS, 2 * TS, 3 * TS - 1); m.base[2][x] = true; on([[x, 2]], () => toast(null, "ぴかぴかの鏡と、ふかふかの椅子")); }
+  const st = entity(8, 3, { ...DEFAULT, ...INT_NPC.stylist.cfg }, INT_NPC.stylist.name, "staff"); st.dir = "down"; st.home = m; m.statics.push(st);
+  img("counter", 7 * TS, 4 * TS - 6, 5 * TS - 1); for (const x of [7, 8, 9]) m.base[4][x] = true;
+  on([[7, 4], [8, 4], [9, 4], [8, 3]], () => openSalon26());
+  img("s26_gacha", 11 * TS, 5 * TS - 8, 6 * TS); m.base[5][11] = true; on([[11, 5]], () => openWGacha26());
+  for (const [x, y] of [[0, 2], [11, 2], [0, 7], [11, 7]]) { img("s26_plant", x * TS, y * TS, (y + 1) * TS); m.base[y][x] = true; }
+  img("rug", 4 * TS, 6 * TS, 6 * TS);
+  m.labels.push({ x: 8 * TS + 8, y: 3 * TS - 18, text: "カット・カラー" }, { x: 11 * TS + 8, y: 5 * TS - 14, text: "きせかえガチャ" });
+  m.music = "village";
+  return m;
+};
+
+// ---------- 美容室 ----------
+const SALON_FREE26 = ["ショート", "ロング", "ボブ", "おだんご", "アフロ", "モヒカン", "ツインテール"];
+let salon26 = null;
+function openSalon26() {
+  salon26 = { tab: salon26?.tab || "hair", pick: null };
+  openModal("Salon こもれび　─ OMOTESANDO ─", "salon26", body => {
+    const draw = msg => {
+      const key = salon26.tab, pool = key === "hair" ? CHAR.HAIR : CHAR.HAIRC;
+      const cur = cfg[key], pickV = salon26.pick ?? cur;
+      const prev = { ...cfg, [key]: pickV };
+      const info = WEAR26[key][pickV], own = wearOwned26(key, pickV);
+      const price = !info || own ? 0 : info.salon;
+      const line = msg || (key === "hair" ? "今日はどんな感じにしましょう？ 新しいスタイルも、似合うと思いますよ" : "カラーで印象ってぜんぜん変わるんです。季節に合わせるのも素敵ですね");
+      body.innerHTML = `<div class="salonhead26"><img src="${charIcon13(INT_NPC.stylist.cfg)}" alt=""><div><p class="salonname26">Stylist  MINATO</p><p>「${esc(line)}」</p></div></div>
+        <div class="mtabs"><button class="chip" type="button" data-st="hair" aria-pressed="${key === "hair"}">カット（髪型）</button><button class="chip" type="button" data-st="hairc" aria-pressed="${key === "hairc"}">カラー（髪色）</button></div>
+        <div class="salonprev26">${["down", "left", "right", "up"].map(d => `<img src="${renderChar(prev, d, 0).toDataURL()}" alt="">`).join("")}</div>
+        <p class="mtext small salonnow26">いま：${esc(cur)}　→　えらんだもの：<b>${esc(pickV)}</b></p>
+        <div class="salongrid26">${Object.keys(pool).map(v => {
+          const inf = WEAR26[key][v], o = wearOwned26(key, v);
+          const tag = !inf ? "着せ替えでも選べる" : o ? "お持ちのスタイル" : `${fmt(inf.salon)}・サロン限定`;
+          const ic = key === "hair" ? renderChar({ ...cfg, hair: v, hat: "なし" }, "down", 0).toDataURL() : null;
+          const sw = key === "hairc" ? (typeof pool[v] === "string" ? SPECIAL_SWATCH[v] : `rgb(${pool[v][1].join(",")})`) : "";
+          return `<button type="button" class="salonopt26${v === pickV ? " on" : ""}${inf && !o ? " ex" : ""}" data-sv="${esc(v)}">${ic ? `<img src="${ic}" alt="">` : `<i style="background:${sw}"></i>`}<span>${esc(v)}</span><small>${tag}</small></button>`;
+        }).join("")}</div>
+        <div class="row2"><button class="btn" type="button" id="salonGo" ${pickV === cur ? "disabled" : ""}>${pickV === cur ? "いまのスタイルです" : price ? `この${key === "hair" ? "髪型" : "色"}にする（${fmt(price)}）` : `この${key === "hair" ? "髪型" : "色"}にする（無料）`}</button></div>
+        <p class="mtext small">サロン限定のスタイルは、一度してもらうと着せ替えでもいつでも選べるようになります。所持金 ${fmt(world.money)}</p>`;
+      body.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { salon26.tab = b.dataset.st; salon26.pick = null; draw(); });
+      body.querySelectorAll("[data-sv]").forEach(b => b.onclick = () => { salon26.pick = b.dataset.sv; draw(); });
+      body.querySelector("#salonGo").onclick = () => {
+        if (price && world.money < price) { draw("ごめんなさい、お代が少し足りないみたいです"); return; }
+        if (price) { addMoney(-price); grantWear26(key, pickV, true); world.stats.salon = (world.stats.salon || 0) + 1; }
+        cfg[key] = pickV; changed(); SFX.small();
+        salon26.pick = null;
+        draw(price ? "とってもお似合いです！ このスタイル、いつでも選べるようにしておきますね" : "はい、できあがり。いい感じですよ");
+      };
+    };
+    draw();
+  });
+}
+
+// ---------- きせかえガチャ ----------
+const RARE26 = { N: 62, R: 28, SR: 9, SSR: 1 };
+const RARE_COL26 = { N: "#9aa3b0", R: "#4a8ae0", SR: "#c060e0", SSR: "#e8b020" };
+function gachaPool26() {
+  const s = season(), ev = F26.event();
+  const out = [];
+  for (const key of ["top", "bottom", "hat", "acc"]) for (const [v, inf] of Object.entries(WEAR26[key])) {
+    if (inf.salon) continue;
+    if (inf.season && inf.season !== s) continue;
+    if (inf.event && inf.event !== ev) continue;
+    out.push({ key, v, rare: inf.rare, season: inf.season, event: inf.event });
+  }
+  return out;
+}
+function pull26() {
+  const pool = gachaPool26();
+  let t = Math.random() * 100, rare = "N";
+  for (const [r, w] of Object.entries(RARE26)) { if ((t -= w) < 0) { rare = r; break; } }
+  const order = ["SSR", "SR", "R", "N"];
+  for (let i = order.indexOf(rare); i < order.length; i++) {
+    const c = pool.filter(p => p.rare === order[i]);
+    if (c.length) return c[rnd(c.length)];
+  }
+  return pool[rnd(pool.length)];
+}
+const wearIcon26 = (key, v) => { const c = { ...cfg, [key]: v }; if (key === "bottom" && CHAR.TOPS[c.top].covers) c.top = "Tシャツ"; return renderChar(c, "down", 0).toDataURL(); };
+function openWGacha26(results) {
+  openModal("きせかえガチャ", "salon26", body => {
+    const pool = gachaPool26();
+    const ownedN = pool.filter(p => wearOwned26(p.key, p.v)).length;
+    const ev = F26.event();
+    const res = results ? `<div class="gres26">${results.map(r => `<div class="gcard26" style="--rc:${RARE_COL26[r.rare]}"><b>${r.rare}</b><img src="${wearIcon26(r.key, r.v)}" alt=""><span>${esc(r.v)}</span><small>${WEAR_LABEL26[r.key]}</small>${r.isNew ? `<em>NEW</em><button class="btn light" type="button" data-try="${r.key}:${esc(r.v)}">着てみる</button>` : `<i>かぶり（+100G）</i>`}</div>`).join("")}</div>` : "";
+    body.innerHTML = `<p class="mtext">服やアクセサリーが出てくるガチャ。1回 <b>300G</b> か、<b>ふつうのどんぐり10個</b>。持っていない物が出たら、着せ替えで選べるようになります。同じ物が出たら100G戻ってきます。</p>
+      ${res}
+      <div class="row2"><button class="btn" type="button" data-g="1">1回（300G）</button><button class="btn" type="button" data-g="10">10回（2,700G）</button><button class="btn light" type="button" data-g="acorn">どんぐり10個で1回（${count("acorn_normal")}個）</button></div>
+      <p class="mtext small" id="gMsg">所持金 ${fmt(world.money)}　集めた数 ${ownedN} / ${pool.length}${ev ? `　イベント限定の服が出ています` : ""}</p>
+      <details class="paytable"><summary>出てくるもの・確率</summary><p class="mtext small">N ${RARE26.N}%・R ${RARE26.R}%・SR ${RARE26.SR}%・SSR ${RARE26.SSR}%（同じレア度の中から同じ確率）。季節限定は、その季節だけ。イベント限定は、イベント中だけ出ます。</p>
+        <div class="gtable26">${["SSR", "SR", "R", "N"].map(r => `<div><b style="color:${RARE_COL26[r]}">${r}</b>${pool.filter(p => p.rare === r).map(p => `<span class="${wearOwned26(p.key, p.v) ? "own" : ""}">${esc(p.v)}${p.season ? `（${p.season}限定）` : ""}${p.event ? "（イベント限定）" : ""}</span>`).join("")}</div>`).join("")}</div></details>`;
+    const msg = t => { body.querySelector("#gMsg").textContent = t; };
+    body.querySelectorAll("[data-g]").forEach(b => b.onclick = () => {
+      const g = b.dataset.g, n = g === "10" ? 10 : 1, cost = g === "10" ? 2700 : g === "1" ? 300 : 0;
+      if (g === "acorn") { if (count("acorn_normal") < 10) { msg("ふつうのどんぐりが10個いるよ。村の木の下に落ちてるかも"); return; } removeItem("acorn_normal", 10); }
+      else {
+        if (world.money < cost) { msg("所持金が足りないよ"); return; }
+        if (K.betAllowed && !K.betAllowed(cost)) { msg(K.betMsg()); return; }
+        addMoney(-cost);
+      }
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const p = pull26(); const isNew = grantWear26(p.key, p.v, true);
+        if (!isNew) addMoney(100);
+        out.push({ ...p, isNew });
+      }
+      world.stats.wgacha = (world.stats.wgacha || 0) + n; saveWorld(); SFX.small();
+      const best = out.reduce((a, b) => ["N", "R", "SR", "SSR"].indexOf(b.rare) > ["N", "R", "SR", "SSR"].indexOf(a.rare) ? b : a);
+      if (best.rare === "SSR") F7.notify(`きせかえガチャでSSR「${best.v}」が出た！`, null);
+      openWGacha26(out);
+    });
+    body.querySelectorAll("[data-try]").forEach(b => b.onclick = () => {
+      const [key, v] = b.dataset.try.split(":");
+      if (key === "bottom" && CHAR.TOPS[cfg.top].covers) cfg.top = "Tシャツ";
+      cfg[key] = v; changed(); b.disabled = true; b.textContent = "着たよ";
+    });
+  });
+}
+$("randBtn").addEventListener("click", () => { sanitizeCfg26(cfg); changed(); });
+ACH.push(["イメチェン", "美容室でサロン限定のスタイルにする", () => (world.stats.salon || 0) >= 1], ["おしゃれさん", "きせかえガチャで10回まわす", () => (world.stats.wgacha || 0) >= 10]);
+ACH_REWARD["イメチェン"] = ["money", 500];
+ACH_REWARD["おしゃれさん"] = ["item", "candy25", 3];
+F26.openSalon = openSalon26; F26.openGacha = openWGacha26; F26.grant = grantWear26;
+F26.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -6160,5 +6439,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

@@ -521,9 +521,14 @@ body.chat-open .chat11 { bottom: 74px; max-height: 45%; overflow-y: auto; pointe
 .pass20 b.nt { color: inherit; opacity: .75; }
 .slot { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
 .slot img { pointer-events: none; -webkit-user-drag: none; }
-.hotbar.drag21 { cursor: grabbing; }
+body.drag21, body.drag21 * { cursor: grabbing !important; }
+#mbody .li[data-drag-id] { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+#mbody .li[data-drag-id] img { pointer-events: none; -webkit-user-drag: none; }
+.li.from21 { opacity: .4; }
+.dropbox21.drop21 { outline: 3px dashed var(--lantern); outline-offset: 2px; border-radius: 8px; background: rgba(255, 230, 138, .18); }
+.dndhint21 { opacity: .8; }
 .slot.from21 { opacity: .35; }
-.slot.drop21 { border-color: var(--lantern); box-shadow: 0 0 0 3px var(--lantern); transform: translateY(-3px); }
+#hotbar .slot.drop21 { border-color: var(--lantern); box-shadow: 0 0 0 3px var(--lantern); transform: translateY(-3px); }
 .ghost21 { position: fixed; z-index: 9999; width: 48px; height: 48px; margin: -30px 0 0 -24px; pointer-events: none; border-radius: 8px; border: 2px solid var(--lantern); background: #fff4d2; box-shadow: 0 6px 14px rgba(0, 0, 0, .35); display: grid; place-items: center; }
 .ghost21 img { width: 34px; height: 34px; image-rendering: pixelated; }
 .ghost21 span { position: absolute; right: 3px; bottom: 1px; font-size: .72rem; color: var(--ink); text-shadow: 0 0 2px #fffaf0; }
@@ -1575,7 +1580,7 @@ function enterRoom(key, back) {
   enter(room, room.exit[0], room.exit[1] - 1, "up");
   if (!$("pane-build").hidden) syncBuild();
 }
-const roomTitle = () => roomKey === "home" ? myName() + "の家" : ((world.houses.find(h => h.col + "," + h.row === roomKey)?.owner) || "だれか") + "の家";
+const roomTitle = () => roomKey === "home" ? (typeof F17 !== "undefined" && F17.shared && F17.shared("home") ? "みんなの家" : myName() + "の家") : ((world.houses.find(h => h.col + "," + h.row === roomKey)?.owner) || "だれか") + "の家";
 const roomHas = id => map === room && room.data.furn.some(f => f.id === id);
 let decor = false;
 function setDecor(on) { decor = on && map === room; $("decorbar").hidden = !decor; if (!$("pane-build").hidden) syncBuild(); }
@@ -4487,7 +4492,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.9.10";
+const CLIENT_VERSION = "0.9.11";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5051,13 +5056,13 @@ function freshShared18(why) {
   const oldT = world.tilled; world.tilled = Object.fromEntries(FIELD.map(k => [k, { wet: !!oldT[k]?.wet }]));
   for (const k in world.crops) if (!world.tilled[k]) delete world.crops[k];
   world.quarry = { level: 1, m: { 1: 0, 2: 0, 3: 0 } };
-  if (back) F7.notify(`建てた家にあった家具や箱の中身（${back}個）は、自分の家の収納箱に戻しておいたよ`, null);
+  if (back) F7.notify(`建てた家にあった家具や箱の中身（${back}個）は、自分だけの箱に戻しておいたよ（ひとりで遊ぶときは自分の家の収納箱）`, null);
   saveWorld();
 }
 function returnItems18(items) {
   let n = 0;
   for (const it of Array.isArray(items) ? items.slice(0, 200) : []) if (it && typeof it.id === "string" && Number.isFinite(it.n)) n += homeStore18(it.id, Math.min(99999, Math.floor(it.n)));
-  if (n) { saveWorld(); F7.notify(`村が最初からになる前に箱へ入れていた物（${n}個）が、自分の家の収納箱に届いたよ`, null); }
+  if (n) { saveWorld(); F7.notify(`村が最初からになる前に箱へ入れていた物（${n}個）が届いたよ。みんなの家の鍵つきの箱（自分だけの箱）に入れておくね`, null); }
 }
 function onWelcomeWorld(snap, epoch) {
   if (Number.isFinite(epoch) && (world.sharedEpoch || 0) !== epoch) {
@@ -6280,7 +6285,10 @@ FURN.chest.name = "みんなの収納箱"; ITEMS.f_chest.name = "みんなの収
 
 const H17 = { visit: {}, box: {}, lastPut: {}, seeding: {}, wait: new Map(), loaded: {} };
 const houseOf17 = key => world.houses.find(h => h.col + "," + h.row === key);
-const sharedHouse17 = key => !!(F8.connected && key && key !== "home" && houseOf17(key)?.ownerId);
+const sharedHouse17 = key => !!(F8.connected && key && (key === "home" || houseOf17(key)?.ownerId));
+// オンラインでは、最初からある家は「みんなの家」：だれでも入れて、だれでも模様替えでき、鍵つきの箱はひとりずつ別
+const homeShared17 = key => key === "home" && sharedHouse17("home");
+F17.home = () => homeShared17("home");
 const mineHouse17 = key => { const h = houseOf17(key); return !h || !h.ownerId || h.ownerId === onl.id; };
 F17.shared = sharedHouse17; F17.mine = mineHouse17;
 const layoutOf17 = R => ({ wall: R.wall, floor: R.floor, furn: R.furn, aqua: R.aqua || {} });
@@ -6288,6 +6296,10 @@ const layoutOf17 = R => ({ wall: R.wall, floor: R.floor, furn: R.furn, aqua: R.a
 // ---- whose data the room shows: your own save, or (for friends' houses) what the server sends ----
 const _roomFor17 = roomFor;
 roomFor = function (key) {
+  if (homeShared17(key)) {
+    if (!H17.visit.home) { const d = defaultHomeRoom(); H17.visit.home = { w: d.w, h: d.h, wall: d.wall, floor: d.floor, storage: [], furn: [], visitor: true, home: true }; }
+    return H17.visit.home;
+  }
   if (sharedHouse17(key) && !mineHouse17(key)) {
     if (!H17.visit[key]) {
       const h = houseOf17(key);
@@ -6327,9 +6339,14 @@ function applyHouse17(m) {
   const key = m.key; if (!key) return;
   if (m.missing) return;
   if (m.locked) { if (map === room && roomKey === key) { toast(null, "鍵がかかっていた。外に出よう"); enter(village, lastBack[0], lastBack[1], "down"); } return; }
-  H17.box[key] = { storage: Array.isArray(m.storage) ? m.storage : [], priv: Array.isArray(m.priv) ? m.priv : null };
+  H17.box[key] = { storage: Array.isArray(m.storage) ? m.storage : [], priv: Array.isArray(m.priv) ? m.priv : (H17.box[key]?.priv ?? null) };
   H17.loaded[key] = true;
-  const mine = mineHouse17(key);
+  const mine = key !== "home" && mineHouse17(key);
+  if (key === "home" && !m.layout && !H17.seeding.home) {
+    // みんなの家がまだサーバーに無いときは、最初からある家の並びで作る
+    const d = defaultHomeRoom(); d.furn.push({ id: "lockbox", x: 10, y: 6 });
+    H17.seeding.home = true; send8({ type: "house", act: "put", key, layout: layoutOf17(d) });
+  }
   if (mine) {
     const R = world.rooms[key];
     if (!m.layout && R && !H17.seeding[key]) {
@@ -6348,6 +6365,7 @@ function applyHouse17(m) {
     if (typeof L.floor === "string" && FLOORS.includes(L.floor)) R.floor = L.floor;
     R.furn = cleanFurn17(L.furn, R);
     R.aqua = L.aqua && typeof L.aqua === "object" ? L.aqua : {};
+    if (key === "home") { H17.lastPut.home = JSON.stringify(layoutOf17(R)); if (m.layout) H17.seeding.home = false; F17.tryImport?.(); }
     if (map === room && roomKey === key) { rebuildSolid(); if (room.solid[player.y]?.[player.x]) { const s = freeNear(room, player.x, player.y); placeAt(player, s[0], s[1]); } }
   }
   if (map === room && roomKey === key && !$("pane-build").hidden) syncBuild();
@@ -6355,8 +6373,15 @@ function applyHouse17(m) {
 }
 // the owner's edits go to the server (checked once a second, so every kind of change is caught)
 setInterval(() => {
-  if (!(map === room && sharedHouse17(roomKey) && mineHouse17(roomKey) && H17.loaded[roomKey])) return;
-  const R = world.rooms[roomKey]; if (!R) return;
+  // 部屋を見ている途中でオンラインになった・切れたときは、部屋を作り直す
+  if (map === room && roomKey === "home" && !!room.data.visitor !== homeShared17("home")) {
+    const px = player.x, py = player.y; room = makeRoomMap("home"); rebuildSolid(); map = room;
+    if (room.solid[py]?.[px] || py >= room.h || px >= room.w) { const s = freeNear(room, Math.min(px, room.w - 1), Math.min(py, room.h - 1)); placeAt(player, s[0], s[1]); }
+    if (homeShared17("home")) { H17.loaded.home = false; send8({ type: "house", act: "get", key: "home" }); }
+    updateHud(true); if (!$("pane-build").hidden) syncBuild();
+  }
+  if (!(map === room && sharedHouse17(roomKey) && (roomKey === "home" || mineHouse17(roomKey)) && H17.loaded[roomKey])) return;
+  const R = roomKey === "home" ? H17.visit.home : world.rooms[roomKey]; if (!R) return;
   const L = layoutOf17(R), t = JSON.stringify(L);
   if (t !== H17.lastPut[roomKey]) { H17.lastPut[roomKey] = t; send8({ type: "house", act: "put", key: roomKey, layout: L }); }
 }, 1000);
@@ -6367,44 +6392,55 @@ function openBox17(which, local) {
   const key = roomKey;
   F17.boxOpen = { key, which };
   F17.renderBox = () => {
-    const B = local ? { priv: (room.data.priv = room.data.priv || []) } : H17.box[key] || { storage: [], priv: [] };
+    const B = local ? { priv: (room.data.priv = room.data.priv || []), storage: (room.data.storage = room.data.storage || []) } : H17.box[key] || { storage: [], priv: [] };
     const list = (which === "priv" ? B.priv : B.storage) || [];
     const owner = houseOf17(key)?.owner || "だれか";
-    const title = which === "priv" ? "鍵つきの箱（あなただけ）" : "みんなの収納箱";
+    const home = key === "home" && !local;
+    const title = which === "priv" ? (home ? "自分だけの箱" : "鍵つきの箱（あなただけ）") : local ? "収納箱" : home ? "みんなの家の収納箱" : "みんなの収納箱";
+    const desc = which === "priv" ? (local ? "あなただけの箱。" : home ? "みんなの家の鍵つきの箱は、ひとりずつ別の箱です。中身はあなたにしか見えません。" : "持ち主だけが開けられる箱。中身はサーバーに保存されて、どの端末からでも同じです。")
+      : local ? "しまった物はこの部屋に残ります。" : home ? "みんなの家の箱。だれでも出し入れできます。" : `${esc(owner)}の家の箱。家に入れる人なら、だれでも出し入れできます。`;
     openModal(title, "", body => {
       const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && !ITEMS[id].tool);
-      body.innerHTML = `<p class="mtext">${which === "priv" ? (local ? "あなただけの箱。" : "持ち主だけが開けられる箱。中身はサーバーに保存されて、どの端末からでも同じです。") : `${esc(owner)}の家の箱。家に入れる人なら、だれでも出し入れできます。`}</p>
+      body.innerHTML = `<p class="mtext">${desc}</p>
+        <p class="mtext small dndhint21">${matchMedia("(pointer: coarse)").matches ? "長押ししてから指を動かすと、箱と持ち物の間で動かせるよ" : "ドラッグでも、箱と持ち物の間で動かせるよ"}</p>
         <h3 class="lbl">箱の中（${list.reduce((a, s) => a + s.n, 0)}個）</h3>
-        <div class="list">${list.length ? list.map(s => ITEMS[s.id] ? itemLi(s.id, `${s.n}個`, `<button class="btn light" type="button" data-bo="${esc(s.id)}" data-n="1">1個</button><button class="btn" type="button" data-bo="${esc(s.id)}" data-n="${s.n}">全部</button>`) : "").join("") : `<p class="mtext">からっぽ</p>`}</div>
+        <div class="list dropbox21" data-drop="box">${list.length ? list.map(s => ITEMS[s.id] ? itemLi(s.id, `${s.n}個`, `<button class="btn light" type="button" data-bo="${esc(s.id)}" data-n="1">1個</button><button class="btn" type="button" data-bo="${esc(s.id)}" data-n="${s.n}">全部</button>`) : "").join("") : `<p class="mtext">からっぽ</p>`}</div>
         <h3 class="lbl">持ち物（道具以外）</h3>
-        <div class="list">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個`, `<button class="btn light" type="button" data-bi="${esc(id)}" data-n="1">1個</button><button class="btn" type="button" data-bi="${esc(id)}" data-n="all">全部</button>`)).join("") : `<p class="mtext">しまえる物がないよ</p>`}</div>
+        <div class="list dropbox21" data-drop="inv">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個`, `<button class="btn light" type="button" data-bi="${esc(id)}" data-n="1">1個</button><button class="btn" type="button" data-bi="${esc(id)}" data-n="all">全部</button>`)).join("") : `<p class="mtext">しまえる物がないよ</p>`}</div>
         <p class="mtext small" id="boxMsg"></p>`;
       const msg = body.querySelector("#boxMsg");
-      const go = (act, id, n) => {
+      const go = (act, id, n, slot) => {
         if (local) {
-          const P = room.data.priv, s = P.find(x => x.id === id);
+          const P = which === "priv" ? room.data.priv : room.data.storage, s = P.find(x => x.id === id);
           if (act === "put") { removeItem(id, n); if (s) s.n += n; else P.push({ id, n }); }
-          else { if (!s || s.n < n || !addItem(id, n, true)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; } s.n -= n; if (s.n <= 0) P.splice(P.indexOf(s), 1); }
+          else { if (!s || s.n < n || !addItem(id, n, true)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; } s.n -= n; if (s.n <= 0) P.splice(P.indexOf(s), 1); F7.toSlot?.(id, slot); }
           saveWorld(); F17.renderBox(); return;
         }
         if (!F8.connected) { msg.textContent = "いまはオンラインにつながっていないよ"; return; }
         if (act === "take" && !canTake17(id, n)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; }
-        const rid = Math.random().toString(36).slice(2, 10); H17.wait.set(rid, { act, id, n });
+        const rid = Math.random().toString(36).slice(2, 10); H17.wait.set(rid, { act, id, n, slot });
         send8({ type: "box", key, box: which, act, id, n, rid }); msg.textContent = "…";
       };
       body.querySelectorAll("[data-bi]").forEach(b => b.onclick = () => { const id = b.dataset.bi, n = b.dataset.n === "all" ? count(id) : 1; if (n > 0) go("put", id, Math.min(n, 9999)); });
       body.querySelectorAll("[data-bo]").forEach(b => b.onclick = () => go("take", b.dataset.bo, Math.min(+b.dataset.n, 9999)));
-    }, () => { F17.boxOpen = null; });
+      // ドラッグ用：箱の中の行と持ち物の行に、何をいくつ動かすかを書いておく
+      body.querySelectorAll("[data-bo]").forEach(b => { if (b.dataset.n !== "1") { const li = b.closest(".li"); if (li) { li.dataset.dragId = b.dataset.bo; li.dataset.dragN = b.dataset.n; li.dataset.dragFrom = "box"; } } });
+      body.querySelectorAll("[data-bi]").forEach(b => { if (b.dataset.n === "all") { const li = b.closest(".li"); if (li) { li.dataset.dragId = b.dataset.bi; li.dataset.dragN = count(b.dataset.bi); li.dataset.dragFrom = "inv"; } } });
+      F7.boxDrop = {
+        put: (id, n) => { if (!ITEMS[id] || ITEMS[id].tool) { msg.textContent = "道具はしまえないよ"; return; } n = Math.min(n, count(id), 9999); if (n > 0) go("put", id, n); },
+        take: (id, n, slot) => { const s = list.find(x => x.id === id); if (s) go("take", id, Math.min(n, s.n, 9999), slot); },
+      };
+    }, () => { F17.boxOpen = null; F7.boxDrop = null; });
   };
   F17.renderBox();
 }
 const _openStorage17 = openStorage;
 openStorage = function () {
   if (map === room && sharedHouse17(roomKey)) { openBox17("shared"); return; }
-  room.data.storage = room.data.storage || [];
-  _openStorage17();
+  openBox17("shared", true);
 };
 F17.openPriv = () => {
+  if (map === room && homeShared17(roomKey)) { openBox17("priv"); return; }
   if (map === room && sharedHouse17(roomKey)) {
     if (!mineHouse17(roomKey)) { toast("s17_lockbox", `${houseOf17(roomKey)?.owner || "だれか"}の鍵つきの箱。開かない`); return; }
     openBox17("priv"); return;
@@ -6438,6 +6474,7 @@ syncBuild = function () {
   panel.querySelectorAll("#decorToggle, #wpRow, #flRow").forEach(el => { const o = el.closest(".opt") || el; o.style.display = visitor ? "none" : ""; });
   if (!inShared) { if (box) box.remove(); return; }
   if (!box) { panel.insertAdjacentHTML("beforeend", `<div class="opt" id="access17"></div>`); box = $("access17"); }
+  if (roomKey === "home") { box.innerHTML = `<h3>みんなの家</h3><p class="note">オンラインでは、最初からある家はみんなの家です。だれでも入れて、だれでも模様替えできます。収納箱はみんなで使えて、鍵つきの箱はひとりずつ別の「自分だけの箱」です。ひとりで遊ぶときは、これまでどおり自分の家になります。</p>`; return; }
   const h = houseOf17(roomKey);
   if (visitor) { box.innerHTML = `<h3>この家</h3><p class="note">${esc(h?.owner || "だれか")}の家に遊びに来ています。家具や箱の中身は、持ち主のものがそのまま見えます。</p>`; return; }
   box.innerHTML = `<h3>この家に入れる人</h3><div class="row"><button class="chip" type="button" data-acc="0" aria-pressed="${!h.open}">自分だけ</button><button class="chip" type="button" data-acc="1" aria-pressed="${!!h.open}">だれでも</button></div>
@@ -6456,7 +6493,7 @@ handle8 = m => {
     if (F17.boxOpen && F17.boxOpen.key === m.key) F17.renderBox();
   } else if (m.type === "boxOk") {
     const w = H17.wait.get(m.rid); if (!w) return; H17.wait.delete(m.rid);
-    if (w.act === "put") removeItem(w.id, w.n); else if (!addItem(w.id, w.n, true)) toast(null, "持ち物がいっぱい…");
+    if (w.act === "put") removeItem(w.id, w.n); else if (!addItem(w.id, w.n, true)) toast(null, "持ち物がいっぱい…"); else F7.toSlot?.(w.id, w.slot);
     saveWorld();
   } else if (m.type === "boxNg") {
     H17.wait.delete(m.rid); const el = $("boxMsg"); if (el) el.textContent = String(m.text || "できなかった").slice(0, 60); else toast(null, String(m.text || "できなかった").slice(0, 60));
@@ -6470,6 +6507,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.9.11", date: "2026/10/22", title: "みんなの家・箱とのドラッグ", items: [
+    "オンラインでは、最初からある家が「みんなの家」に。中にいる人どうしが見えて、収納箱はみんなで使える",
+    "みんなの家は、だれでも模様替えできる",
+    "みんなの家の鍵つきの箱は、ひとりずつ別の「自分だけの箱」。中身は自分にしか見えない",
+    "ひとりで遊んでいたときの家の収納箱の中身や、あとから置いた家具は、自分だけの箱に移る",
+    "ひとりで遊ぶときは、これまでどおり自分の家",
+    "収納箱と持ち物の間も、ドラッグ（スマホは長押ししてから）で出し入れできるように。持ち物の段の好きな場所に落とせる"] },
   { v: "0.9.10", date: "2026/10/22", title: "持ち物の並べ替え", items: [
     "持ち物（下の段）の中身を、好きな場所に動かせるようにした",
     "PCはドラッグ、スマホは長押ししてから指を動かす。動かした先にある物とは入れかわる",
@@ -6690,7 +6734,7 @@ ACH.push(
 ACH_REWARD["コツコツ貯金"] = ["money", 500];
 ACH_REWARD["利息のちから"] = ["item", "f_lamp", 1];
 
-// =================== v21: move items in the hotbar (PCはドラッグ、スマホは長押ししてから動かす) ===================
+// =================== v21: move items by dragging (持ち物の並べ替え・箱との出し入れ。PCはドラッグ、スマホは長押ししてから動かす) ===================
 let dnd21 = null, noClick21 = false;
 function moveSlot21(a, b) {
   if (a === b || a < 0 || b < 0 || a >= world.inv.length || b >= world.inv.length) return;
@@ -6699,47 +6743,75 @@ function moveSlot21(a, b) {
   renderHotbar(); saveWorld();
 }
 F7.moveSlot = moveSlot21;
-function slotAt21(x, y) {
-  const el = document.elementFromPoint(x, y); const s = el && el.closest && el.closest("#hotbar .slot");
-  return s ? +s.id.slice(5) : -1;
+// 箱から出した物を、落とした場所（空きか、同じ物のところ）へ寄せる
+F7.toSlot = (id, slot) => {
+  if (!(slot >= 0)) return;
+  const at = world.inv.findIndex(x => x && x.id === id); if (at < 0 || at === slot) return;
+  if (!world.inv[slot]) moveSlot21(at, slot);
+};
+function targetAt21(x, y) {
+  const el = document.elementFromPoint(x, y); if (!el || !el.closest) return null;
+  const s = el.closest("#hotbar .slot"); if (s) return { slot: +s.id.slice(5), el: s };
+  const d = el.closest(".dropbox21"); if (d && F7.boxDrop) return { drop: d.dataset.drop, el: d };
+  return null;
 }
-function mark21(i) { hotbarEl.querySelectorAll(".slot").forEach(s => s.classList.toggle("drop21", +s.id.slice(5) === i && i !== dnd21?.from)); }
-function startDrag21(x, y) {
+function okTarget21(src, t) {
+  if (!t) return false;
+  if (src.kind === "slot") return t.slot >= 0 ? t.slot !== src.from : t.drop === "box";
+  if (src.kind === "inv") return t.drop === "box";
+  return t.slot >= 0 || t.drop === "inv"; // 箱の中の物
+}
+function mark21(t) {
+  document.querySelectorAll(".drop21").forEach(e => e.classList.remove("drop21"));
+  if (t && okTarget21(dnd21, t)) t.el.classList.add("drop21");
+}
+function startDrag21() {
   const d = dnd21; if (!d || d.started) return;
-  const it = world.inv[d.from]; if (!it) { dnd21 = null; return; }
+  if (d.kind === "slot" && !world.inv[d.from]) { dnd21 = null; return; }
   d.started = true; clearTimeout(d.timer);
   const g = d.ghost = document.createElement("div"); g.className = "ghost21";
-  g.innerHTML = `<img src="${ASSETS[ITEMS[it.id].icon]}" alt="">${it.n > 1 ? `<span>${it.n}</span>` : ""}`;
-  document.body.appendChild(g); hotbarEl.classList.add("drag21");
-  $("slot-" + d.from)?.classList.add("from21");
+  g.innerHTML = `<img src="${ASSETS[ITEMS[d.id].icon]}" alt="">${d.n > 1 ? `<span>${d.n}</span>` : ""}`;
+  document.body.appendChild(g); document.body.classList.add("drag21");
+  d.src.classList.add("from21");
   if (navigator.vibrate && d.touch) try { navigator.vibrate(15); } catch (e) {}
-  moveGhost21(x, y);
+  moveGhost21(d.x, d.y);
 }
 function moveGhost21(x, y) {
   const d = dnd21; if (!d?.ghost) return;
   d.ghost.style.left = x + "px"; d.ghost.style.top = y + "px";
-  mark21(slotAt21(x, y));
+  mark21(targetAt21(x, y));
   const r = hotbarEl.getBoundingClientRect();
-  if (x < r.left + 36) hotbarEl.scrollLeft -= 10; else if (x > r.right - 36) hotbarEl.scrollLeft += 10;
+  if (y > r.top - 10 && y < r.bottom + 10) { if (x < r.left + 36) hotbarEl.scrollLeft -= 10; else if (x > r.right - 36) hotbarEl.scrollLeft += 10; }
+  const mb = $("mbody"); if (mb && !$("modal").hidden) { const q = mb.getBoundingClientRect(); if (x > q.left && x < q.right) { if (y < q.top + 30 && y > q.top - 40) mb.scrollTop -= 12; else if (y > q.bottom - 30 && y < q.bottom + 10) mb.scrollTop += 12; } }
 }
 function endDrag21(x, y, drop) {
   const d = dnd21; dnd21 = null; if (!d) return;
   clearTimeout(d.timer);
   if (!d.started) return;
-  d.ghost?.remove(); hotbarEl.classList.remove("drag21");
-  hotbarEl.querySelectorAll(".from21,.drop21").forEach(s => s.classList.remove("from21", "drop21"));
+  d.ghost?.remove(); document.body.classList.remove("drag21");
+  document.querySelectorAll(".from21,.drop21").forEach(e => e.classList.remove("from21", "drop21"));
   noClick21 = true; setTimeout(() => noClick21 = false, 0);
-  const to = drop ? slotAt21(x, y) : -1;
-  if (to >= 0 && to !== d.from) { moveSlot21(d.from, to); SFX.small(); }
-  if (!world.tips21) { world.tips21 = true; saveWorld(); }
+  const t = drop ? targetAt21(x, y) : null; if (!okTarget21(d, t)) return;
+  if (d.kind === "slot" && t.slot >= 0) { moveSlot21(d.from, t.slot); SFX.small(); }
+  else if ((d.kind === "slot" || d.kind === "inv") && t.drop === "box") F7.boxDrop?.put(d.id, d.n);
+  else if (d.kind === "box") F7.boxDrop?.take(d.id, d.n, t.slot >= 0 ? t.slot : -1);
+}
+function beginDrag21(e, info) {
+  if (dnd21) endDrag21(0, 0, false);
+  const x = e.clientX, y = e.clientY;
+  dnd21 = { ...info, x0: x, y0: y, x, y, pid: e.pointerId, touch: e.pointerType !== "mouse", started: false };
+  if (dnd21.touch) dnd21.timer = setTimeout(() => dnd21 && startDrag21(), 350);
 }
 hotbarEl.addEventListener("pointerdown", e => {
   const s = e.target.closest(".slot"); if (!s || (e.pointerType === "mouse" && e.button !== 0)) return;
-  const i = +s.id.slice(5); if (!world.inv[i]) return;
-  if (dnd21) endDrag21(0, 0, false);
-  const x = e.clientX, y = e.clientY;
-  dnd21 = { from: i, x0: x, y0: y, x, y, pid: e.pointerId, touch: e.pointerType !== "mouse", started: false };
-  if (dnd21.touch) dnd21.timer = setTimeout(() => dnd21 && startDrag21(dnd21.x, dnd21.y), 350);
+  const i = +s.id.slice(5), it = world.inv[i]; if (!it) return;
+  beginDrag21(e, { kind: "slot", from: i, id: it.id, n: it.n, src: s });
+});
+document.addEventListener("pointerdown", e => {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  const li = e.target.closest && e.target.closest("#mbody .li[data-drag-id]"); if (!li || e.target.closest("button, input")) return;
+  const id = li.dataset.dragId, n = +li.dataset.dragN || 1; if (!ITEMS[id]) return;
+  beginDrag21(e, { kind: li.dataset.dragFrom === "box" ? "box" : "inv", id, n, src: li });
 });
 addEventListener("pointermove", e => {
   const d = dnd21; if (!d || e.pointerId !== d.pid) return;
@@ -6748,22 +6820,56 @@ addEventListener("pointermove", e => {
     const far = Math.hypot(d.x - d.x0, d.y - d.y0);
     if (d.touch) { if (far > 10) { clearTimeout(d.timer); dnd21 = null; } return; }
     if (far < 6) return;
-    startDrag21(d.x, d.y);
+    startDrag21();
   }
   moveGhost21(d.x, d.y);
 });
 addEventListener("pointerup", e => { if (dnd21 && e.pointerId === dnd21.pid) endDrag21(e.clientX, e.clientY, true); });
 addEventListener("pointercancel", e => { if (dnd21 && e.pointerId === dnd21.pid) endDrag21(0, 0, false); });
 // 動かしている間は、指でスクロールしたり長押しメニューが出たりしないように
-hotbarEl.addEventListener("touchmove", e => { if (dnd21?.started) e.preventDefault(); }, { passive: false });
-hotbarEl.addEventListener("contextmenu", e => { if (e.target.closest(".slot")) e.preventDefault(); });
-hotbarEl.addEventListener("click", e => { if (noClick21) { e.stopPropagation(); e.preventDefault(); } }, true);
+document.addEventListener("touchmove", e => { if (dnd21?.started) e.preventDefault(); }, { passive: false });
+document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("#hotbar .slot, #mbody .li[data-drag-id]")) e.preventDefault(); });
+document.addEventListener("click", e => { if (noClick21) { e.stopPropagation(); e.preventDefault(); } }, true);
 hotbarEl.addEventListener("dragstart", e => e.preventDefault());
-// 持ち物の名前が出たときに、一度だけ並べ替えのやり方を教える
-{
-  const tip = () => { if (world.tips21 || !world.tut?.done) return; world.tips21 = true; saveWorld(); F7.notify(matchMedia("(pointer: coarse)").matches ? "持ち物は、長押ししてから指を動かすと並べ替えられるよ" : "持ち物は、ドラッグして並べ替えられるよ", null); };
-  setTimeout(tip, 8000);
+setTimeout(() => {
+  if (world.tips21 || !world.tut?.done) return; world.tips21 = true; saveWorld();
+  F7.notify(matchMedia("(pointer: coarse)").matches ? "持ち物は、長押ししてから指を動かすと並べ替えられるよ" : "持ち物は、ドラッグして並べ替えられるよ", null);
+}, 8000);
+
+// =================== v22: ひとりで遊んでいたときの家の物を、みんなの家の「自分だけの箱」へ ===================
+function homeExtras22() {
+  const L = world.rooms.home; if (!L) return { items: {}, n: 0 };
+  const items = {}; let n = 0; const add = (id, k) => { if (!ITEMS[id] || !(k > 0)) return; items[id] = (items[id] || 0) + k; n += k; };
+  for (const s of L.storage || []) if (s) add(s.id, s.n);
+  for (const s of L.priv || []) if (s) add(s.id, s.n);
+  const def = {}; for (const f of defaultHomeRoom().furn) def[f.id] = (def[f.id] || 0) + 1;
+  const have = {}; for (const f of L.furn || []) have[f.id] = (have[f.id] || 0) + 1;
+  for (const id in have) add("f_" + id, have[id] - (def[id] || 0));
+  for (const tank of Object.values(L.aqua || {})) for (const id of tank || []) add(id, 1);
+  return { items, n };
 }
+function takeHome22(id, k) {
+  const L = world.rooms.home;
+  for (const P of [L.storage || [], L.priv || []]) for (const s of P.slice()) { if (k <= 0) return; if (s.id !== id) continue; const v = Math.min(k, s.n); s.n -= v; k -= v; if (s.n <= 0) P.splice(P.indexOf(s), 1); }
+  if (id.startsWith("f_")) { const fid = id.slice(2); for (let i = L.furn.length - 1; i >= 0 && k > 0; i--) if (L.furn[i].id === fid) { if (fid === "aquarium") delete (L.aqua || {})[L.furn[i].x + "," + L.furn[i].y]; L.furn.splice(i, 1); k--; } }
+  for (const key of Object.keys(L.aqua || {})) { const t = L.aqua[key]; for (let i = t.length - 1; i >= 0 && k > 0; i--) if (t[i] === id) { t.splice(i, 1); k--; } }
+}
+F17.tryImport = () => {
+  if (!F8.connected || H17.importing) return;
+  const { items, n } = homeExtras22(); if (!n) return;
+  const rid = Math.random().toString(36).slice(2, 10); H17.importing = { rid, at: Date.now() };
+  send8({ type: "house", act: "import", key: "home", items, rid });
+};
+const _handle22 = handle8;
+handle8 = m => {
+  _handle22(m);
+  if (m.type === "houseImport") {
+    if (!H17.importing || H17.importing.rid !== m.rid) return; H17.importing = null;
+    let n = 0; for (const [id, k] of Object.entries(m.ok || {})) if (ITEMS[id] && k > 0) { takeHome22(id, k); n += k; }
+    if (n) { saveWorld(); F7.notify(`ひとりで遊んでいたときの家にあった物（${n}個）を、みんなの家の鍵つきの箱（自分だけの箱）に移したよ`, "s17_lockbox"); if (map === room && roomKey === "home" && !room.data.visitor) rebuildSolid(); }
+  } else if (m.type === "welcome") { H17.importing = null; setTimeout(() => F17.tryImport(), 2500); }
+  else if (m.type === "houseReturn") setTimeout(() => F17.tryImport(), 500);
+};
 
 // =================== start ===================
 function animPreview(now) {

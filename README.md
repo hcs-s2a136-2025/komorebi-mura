@@ -1,4 +1,4 @@
-# こもれび村 オンライン試作（v0.9.10）
+# こもれび村 オンライン試作（v0.9.11）
 
 Spring Boot で動く、こもれび村のオンライン試作サーバーです。
 
@@ -186,7 +186,7 @@ tools/mock-server/  Javaなしでゲーム側を試せる、同じ約束の模�
 | `jp` / `jpWin` | 送る → `jp` を受け取る | スロットの積み立て・当たり。`jp` は新しい額（当たったときは `winner` と `won` も） |
 | `bj` → `bjState` / `bjCharge` / `bjSettle` / `bjNg` | 送る `{act: sit\|leave\|bet\|hit\|stand\|double\|split\|look, amount}` | みんなのBJ。`bjState` は卓のようす（全員へ）、`bjCharge` は賭け金を引く（マイナスなら戻す）、`bjSettle` は精算（本人へ） |
 | `gift` → `giftOk` / `giftNg` | 送る `{to, amount, rid}` | お小遣い。相手には `gift` が届く |
-| `house` → `house` | 送る `{act: get\|put, key, layout, seed}` | 建てた家の中。`get` で中のようす `{layout, storage, priv}`（`priv` は持ち主にだけ）。`put` は持ち主だけ、同じ家にいる人へ届く。入れないときは `locked`、まだ無いときは `missing` |
+| `house` → `house` / `houseImport` | 送る `{act: get\|put\|import, key, layout, seed, items}`。`key:"home"` はオンラインの「みんなの家」（だれでも入れて模様替えでき、鍵つきの箱はひとりずつ別。`import` でひとり用の家の物を自分だけの箱へ） | 建てた家の中。`get` で中のようす `{layout, storage, priv}`（`priv` は持ち主にだけ）。`put` は持ち主だけ、同じ家にいる人へ届く。入れないときは `locked`、まだ無いときは `missing` |
 | `box` → `boxOk` / `boxNg` / `houseBox` | 送る `{act: put\|take, key, which: shared\|priv, id, n, rid}` | 箱の出し入れ。みんなの収納箱は入れる人ならだれでも、鍵つきの箱は持ち主だけ。中身が変わると `houseBox` がその家にいる人へ届く |
 | `sleep` → `clock` | 送る → 受け取る | 眠ると全員が次の朝に。`clock` は日付・時刻・速さ・天気（30秒ごとと、朝になったときに届く） |
 | `board` / `notice` / `feedbackReply` / `worldReset` | 受け取る | 伝言板の新着・お知らせ・お便りの返事・共有の村のリセット |

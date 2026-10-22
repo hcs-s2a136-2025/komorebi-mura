@@ -18,7 +18,9 @@ public final class HouseBook {
 
     public static final int MAX_LAYOUT = 30_000, MAX_KINDS = 60;
     public static final long MAX_COUNT = 99_999, MAX_MOVE = 9_999;
-    private static final Pattern KEY = Pattern.compile("\\d{1,3},\\d{1,3}");
+    /** 建てた家（"48,21"）、みんなの家（"home"）、ひとりずつの箱（"me:プレイヤーID"） */
+    private static final Pattern KEY = Pattern.compile("\\d{1,3},\\d{1,3}|home|me:\\d{1,12}");
+    private static final Pattern BUILT = Pattern.compile("\\d{1,3},\\d{1,3}");
     private static final Pattern ITEM = Pattern.compile("[\\p{L}\\p{N}_:\\-]{1,32}");
 
     public static final class Room {
@@ -35,6 +37,11 @@ public final class HouseBook {
 
     public static boolean validKey(String key) {
         return key != null && KEY.matcher(key).matches();
+    }
+
+    /** 建てた家の場所か（みんなの家・ひとりずつの箱ではない） */
+    public static boolean builtKey(String key) {
+        return key != null && BUILT.matcher(key).matches();
     }
 
     public static boolean validItem(String id) {
@@ -124,6 +131,16 @@ public final class HouseBook {
     /** いまある家の場所の一覧（コピー） */
     public synchronized java.util.List<String> keys() {
         return new java.util.ArrayList<>(rooms.keySet());
+    }
+
+    public synchronized void remove(String key) {
+        rooms.remove(key);
+    }
+
+    /** 箱の中身だけ（コピー）。無ければ空 */
+    public synchronized Map<String, Long> box(String key, boolean priv) {
+        Room r = rooms.get(key);
+        return r == null ? new LinkedHashMap<>() : new LinkedHashMap<>(priv ? r.priv : r.shared);
     }
 
     public synchronized void clear() {

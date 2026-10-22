@@ -7,12 +7,12 @@ const INDEX = process.argv[2], PORT = +process.argv[3] || 8099, VERSION = proces
 const players = new Map(), threads = []; let pid = 1, tid = 1;
 const accounts = []; const saves = new Map(); let jackpot = 3000;
 // 建てた家の中身（HouseBook.java と同じ約束）
-const rooms = new Map(); const KEYRE = /^\d{1,3},\d{1,3}$/, ITEMRE = /^[\p{L}\p{N}_:\-]{1,32}$/u;
-const houseOf = k => (shared.houses || {})[k] || null;
+const rooms = new Map(); const KEYRE = /^(\d{1,3},\d{1,3}|home)$/, ITEMRE = /^[\p{L}\p{N}_:\-]{1,32}$/u;
+const houseOf = k => k === "home" ? { open: true, ownerId: -1 } : (shared.houses || {})[k] || null;
 const isOwner = (k, id) => { const h = houseOf(k); if (!h) return false; const o = h.ownerId == null ? -1 : +h.ownerId; return o < 0 || o === id; };
 const canEnter = (k, id) => { const h = houseOf(k); return !!h && (isOwner(k, id) || !!h.open); };
 const toList = m => Object.entries(m).map(([id, n]) => ({ id, n }));
-const hview = (k, owner) => { const r = rooms.get(k); const v = { layout: r && r.layout ? JSON.parse(r.layout) : null, storage: toList(r ? r.shared : {}) }; if (owner) v.priv = toList(r ? r.priv : {}); return v; };
+const hview = (k, owner, me) => { const r = rooms.get(k); const v = { layout: r && r.layout ? JSON.parse(r.layout) : null, storage: toList(r ? r.shared : {}) }; if (owner) { const pr = k === "home" ? rooms.get("me:" + me) : r; v.priv = toList(pr ? pr.priv : {}); } return v; };
 const addTo = (box, id, n) => { if (!ITEMRE.test(id) || !(n >= 1)) return -1; if (!(id in box) && Object.keys(box).length >= 60) return -1; box[id] = Math.min(99999, (box[id] || 0) + n); return box[id]; };
 const toMap = (map, msg, ex) => { const t = JSON.stringify(msg); for (const o of sessions) if (o !== ex && o.pl && o.map === map) o.send(t); };
 // みんなのBJ：本物と同じ BjGame.java を小さな橋渡し（bj/BjBridge.java）で動かす。BJ_CP にコンパイル先を入れる
@@ -55,7 +55,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
   if (p === "/mock/world") return json(res, 200, shared);
   if (p === "/mock/rooms") return json(res, 200, Object.fromEntries([...rooms].map(([k, r]) => [k, r])));
-  if (p === "/mock/reset") { for (const [k, r] of rooms) { const o = (houseOf(k) || {}).ownerId; if (!(o > 0)) continue; const to = returns.get(o) || {}; for (const [id, n] of [...Object.entries(r.shared), ...Object.entries(r.priv)]) to[id] = (to[id] || 0) + n; returns.set(o, to); } shared = {}; rooms.clear(); epoch++; for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
+  if (p === "/mock/reset") { for (const [k, r] of rooms) { if (!/,/.test(k)) continue; const o = (houseOf(k) || {}).ownerId; if (!(o > 0)) continue; const to = returns.get(o) || {}; for (const [id, n] of [...Object.entries(r.shared), ...Object.entries(r.priv)]) to[id] = (to[id] || 0) + n; returns.set(o, to); } shared = {}; for (const k of [...rooms.keys()]) if (/,/.test(k)) rooms.delete(k); epoch++; for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
   if (p === "/mock/notice") { for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "notice", text: u.searchParams.get("t") })); return json(res, 200, {}); }
   const pl = who(req); if (p.startsWith("/api/") && !pl) return json(res, 401, { message: "もう一度参加してください" });
   if (p === "/api/session") return json(res, 200, { id: pl.id, name: pl.name, version: VERSION, unread: threads.filter(t => t.player === pl && t.playerUnread).length, hasPass: !!pl.pass });
@@ -106,22 +106,27 @@ wss.on("connection", s => {
     if (m.type === "house" && m.act === "returns") { const it = returns.get(s.pl.id); returns.delete(s.pl.id); if (it && Object.keys(it).length) s.send(JSON.stringify({ type: "houseReturn", items: Object.entries(it).map(([id, n]) => ({ id, n })) })); return; }
     if (m.type === "house") { const k = String(m.key || ""); if (!KEYRE.test(k)) return; const me = s.pl.id;
       if (!houseOf(k)) return s.send(JSON.stringify({ type: "house", key: k, missing: true }));
-      const owner = isOwner(k, me), rep = o => ({ type: "house", key: k, owner: o, open: !!houseOf(k).open, ...hview(k, o) });
+      const owner = isOwner(k, me), rep = o => ({ type: "house", key: k, owner: o, open: !!houseOf(k).open, ...hview(k, o, me) });
+      if (m.act === "import" && k === "home") { const key = "me:" + me; let r = rooms.get(key); if (!r) { r = { layout: null, shared: {}, priv: {} }; rooms.set(key, r); } const ok = {};
+        for (const [id, n] of Object.entries(m.items || {})) { const v = Math.min(9999, Math.floor(+n || 0)); if (v > 0 && addTo(r.priv, id, v) >= 0) ok[id] = v; }
+        s.send(JSON.stringify({ type: "houseImport", rid: String(m.rid || "").slice(0, 20), ok })); const b = { type: "houseBox", key: k, ...hview(k, true, me) }; delete b.layout; s.send(JSON.stringify(b)); return; }
       if (m.act === "get") { if (!canEnter(k, me)) return s.send(JSON.stringify({ type: "house", key: k, locked: true })); return s.send(JSON.stringify(rep(owner))); }
       if (m.act === "put" && owner && m.layout && typeof m.layout === "object") { const text = JSON.stringify(m.layout); if (text.length > 30000) return;
         let r = rooms.get(k); const fresh = !r; if (fresh) { r = { layout: null, shared: {}, priv: {} }; rooms.set(k, r); } r.layout = text;
-        if (fresh && m.seed) { for (const [id, n] of Object.entries(m.seed.storage || {})) addTo(r.shared, id, +n); for (const [id, n] of Object.entries(m.seed.priv || {})) addTo(r.priv, id, +n); }
+        if (fresh && m.seed && k !== "home") { for (const [id, n] of Object.entries(m.seed.storage || {})) addTo(r.shared, id, +n); for (const [id, n] of Object.entries(m.seed.priv || {})) addTo(r.priv, id, +n); }
         s.send(JSON.stringify(rep(true))); toMap("house:" + k, rep(false), s); } }
     if (m.type === "box") { const k = String(m.key || ""), id = String(m.id || ""), n = Math.floor(+m.n || 0), rid = String(m.rid || "").slice(0, 20), me = s.pl.id, priv = m.box === "priv";
       const ng = t => s.send(JSON.stringify({ type: "boxNg", rid, text: t }));
       if (!KEYRE.test(k) || !houseOf(k)) return ng("その家は見つからなかった");
       const owner = isOwner(k, me); if (priv ? !owner : !canEnter(k, me)) return ng(priv ? "鍵がかかっていて開かない" : "この家の箱は使えないみたい");
       if (n < 1 || n > 9999 || !ITEMRE.test(id)) return ng("その数は入れられないよ");
-      let r = rooms.get(k); if (!r) { r = { layout: null, shared: {}, priv: {} }; rooms.set(k, r); } const box = priv ? r.priv : r.shared;
+      const bk = priv && k === "home" ? "me:" + me : k;
+      let r = rooms.get(bk); if (!r) { r = { layout: null, shared: {}, priv: {} }; rooms.set(bk, r); } const box = priv ? r.priv : r.shared;
       if (m.act === "put") { if (addTo(box, id, n) < 0) return ng("箱がいっぱいみたい"); }
       else if (m.act === "take") { if ((box[id] || 0) < n) return ng("箱にそれだけ入っていないみたい"); box[id] -= n; if (!box[id]) delete box[id]; } else return;
       s.send(JSON.stringify({ type: "boxOk", rid, act: m.act, id, n }));
-      const mine = { type: "houseBox", key: k, ...hview(k, owner) }; delete mine.layout; s.send(JSON.stringify(mine));
+      const mine = { type: "houseBox", key: k, ...hview(k, owner, me) }; delete mine.layout; s.send(JSON.stringify(mine));
+      if (bk !== k) return;
       const oth = { type: "houseBox", key: k, ...hview(k, false) }; delete oth.layout; toMap("house:" + k, oth, s); }
     if (m.type === "chat") { const t = String(m.text || "").slice(0, 60).trim(); if (!t) return; chat.push({ name: s.pl.name, text: t, at: Date.now() }); bc({ type: "chat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() }, s); }
   });

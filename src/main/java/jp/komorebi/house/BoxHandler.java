@@ -38,17 +38,20 @@ public class BoxHandler implements MessageHandler {
         if (!HouseBook.validKey(key) || !houses.exists(key)) { ng(hub, from, rid, "その家は見つからなかった"); return; }
         boolean owner = houses.isOwner(key, me);
         if (priv ? !owner : !houses.canEnter(key, me)) { ng(hub, from, rid, priv ? "鍵がかかっていて開かない" : "この家の箱は使えないみたい"); return; }
+        // みんなの家の鍵つきの箱は、ひとりずつ別の箱
+        String bookKey = priv && HouseService.HOME.equals(key) ? HouseService.personal(me) : key;
         long left;
-        if ("put".equals(act)) left = houses.book().put(key, priv, id, n);
-        else if ("take".equals(act)) left = houses.book().take(key, priv, id, n);
+        if ("put".equals(act)) left = houses.book().put(bookKey, priv, id, n);
+        else if ("take".equals(act)) left = houses.book().take(bookKey, priv, id, n);
         else return;
         if (left < 0) { ng(hub, from, rid, "put".equals(act) ? "箱がいっぱいみたい" : "箱にそれだけ入っていないみたい"); return; }
-        houses.save(key);
+        houses.save(bookKey);
         hub.send(from, hub.json().createObjectNode().put("type", "boxOk").put("rid", rid).put("act", act).put("id", id).put("n", n));
         ObjectNode mine = hub.json().createObjectNode().put("type", "houseBox").put("key", key);
-        mine.setAll(houses.view(key, owner));
+        mine.setAll(houses.view(key, owner, me));
         mine.remove("layout");
         hub.send(from, mine);
+        if (!bookKey.equals(key)) return;
         ObjectNode others = hub.json().createObjectNode().put("type", "houseBox").put("key", key);
         others.setAll(houses.view(key, false));
         others.remove("layout");

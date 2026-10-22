@@ -35,6 +35,13 @@ public class HouseService {
     /** リセットで消えた家の箱の中身。持ち主（プレイヤーID）→ 品物 → 個数。次につないだときに本人へ返す */
     private final Map<Long, Map<String, Long>> returns = new LinkedHashMap<>();
     private static final String RET = "ret:";
+    /** 最初からある家。オンラインでは「みんなの家」で、だれでも入れて、だれでも模様替えできる */
+    public static final String HOME = "home";
+
+    /** みんなの家の「鍵つきの箱」は、ひとりずつ別の箱になる */
+    public static String personal(long playerId) {
+        return "me:" + playerId;
+    }
 
     public HouseService(JdbcTemplate jdbc, ObjectMapper om, SharedWorldService world) {
         this.jdbc = jdbc;
@@ -67,6 +74,7 @@ public class HouseService {
 
     /** この家の持ち主か。持ち主が決まっていない古い家は、だれでも持ち主あつかい */
     public boolean isOwner(String key, long playerId) {
+        if (HOME.equals(key)) return true;
         JsonNode h = world.layerValue("houses", key);
         if (h == null) return false;
         long owner = h.path("ownerId").asLong(-1);
@@ -74,19 +82,39 @@ public class HouseService {
     }
 
     public boolean exists(String key) {
+        if (HOME.equals(key)) return true;
         return world.layerValue("houses", key) != null;
     }
 
     /** 中に入れるか（持ち主か、持ち主が「だれでも入れる」にしている） */
     public boolean canEnter(String key, long playerId) {
+        if (HOME.equals(key)) return true;
         JsonNode h = world.layerValue("houses", key);
         if (h == null) return false;
         return isOwner(key, playerId) || h.path("open").asBoolean(false);
     }
 
     public boolean isOpen(String key) {
+        if (HOME.equals(key)) return true;
         JsonNode h = world.layerValue("houses", key);
         return h != null && h.path("open").asBoolean(false);
+    }
+
+    /** その人に見せる形。みんなの家では、鍵つきの箱はその人だけの箱を見せる */
+    public ObjectNode view(String key, boolean owner, long playerId) {
+        if (!HOME.equals(key)) return view(key, owner);
+        ObjectNode v = view(HOME, false);
+        if (owner) v.set("priv", om.valueToTree(book.view(personal(playerId), true).get("priv")));
+        return v;
+    }
+
+    /** ひとりで遊んでいたときの家にあった物を、その人だけの箱へ移す。@return 入った分 */
+    public Map<String, Long> importHome(long playerId, Map<String, Long> items) {
+        Map<String, Long> ok = new LinkedHashMap<>();
+        String key = personal(playerId);
+        items.forEach((id, n) -> { if (n != null && n > 0 && book.put(key, true, id, Math.min(n, HouseBook.MAX_MOVE)) >= 0) ok.put(id, Math.min(n, HouseBook.MAX_MOVE)); });
+        if (!ok.isEmpty()) save(key);
+        return ok;
     }
 
     public ObjectNode view(String key, boolean owner) {
@@ -120,6 +148,7 @@ public class HouseService {
     public void resetAll() {
         Map<Long, Map<String, Long>> add = new LinkedHashMap<>();
         for (String key : book.keys()) {
+            if (!HouseBook.builtKey(key)) continue;
             JsonNode h = world.layerValue("houses", key);
             long owner = h == null ? -1 : h.path("ownerId").asLong(-1);
             HouseBook.Room r = book.copy(key);
@@ -128,8 +157,9 @@ public class HouseService {
             r.shared().forEach((id, n) -> to.merge(id, n, Long::sum));
             r.priv().forEach((id, n) -> to.merge(id, n, Long::sum));
         }
-        book.clear();
-        jdbc.update("DELETE FROM house_room WHERE house_key NOT LIKE 'ret:%'");
+        // みんなの家と、ひとりずつの箱は村のリセットでは消さない
+        for (String key : book.keys()) if (HouseBook.builtKey(key)) book.remove(key);
+        jdbc.update("DELETE FROM house_room WHERE house_key LIKE '%,%'");
         synchronized (returns) {
             add.forEach((owner, items) -> {
                 if (items.isEmpty()) return;

@@ -68,9 +68,14 @@
 .pass20 b.nt { color: inherit; opacity: .75; }
 .slot { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
 .slot img { pointer-events: none; -webkit-user-drag: none; }
-.hotbar.drag21 { cursor: grabbing; }
+body.drag21, body.drag21 * { cursor: grabbing !important; }
+#mbody .li[data-drag-id] { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+#mbody .li[data-drag-id] img { pointer-events: none; -webkit-user-drag: none; }
+.li.from21 { opacity: .4; }
+.dropbox21.drop21 { outline: 3px dashed var(--lantern); outline-offset: 2px; border-radius: 8px; background: rgba(255, 230, 138, .18); }
+.dndhint21 { opacity: .8; }
 .slot.from21 { opacity: .35; }
-.slot.drop21 { border-color: var(--lantern); box-shadow: 0 0 0 3px var(--lantern); transform: translateY(-3px); }
+#hotbar .slot.drop21 { border-color: var(--lantern); box-shadow: 0 0 0 3px var(--lantern); transform: translateY(-3px); }
 .ghost21 { position: fixed; z-index: 9999; width: 48px; height: 48px; margin: -30px 0 0 -24px; pointer-events: none; border-radius: 8px; border: 2px solid var(--lantern); background: #fff4d2; box-shadow: 0 6px 14px rgba(0, 0, 0, .35); display: grid; place-items: center; }
 .ghost21 img { width: 34px; height: 34px; image-rendering: pixelated; }
 .ghost21 span { position: absolute; right: 3px; bottom: 1px; font-size: .72rem; color: var(--ink); text-shadow: 0 0 2px #fffaf0; }

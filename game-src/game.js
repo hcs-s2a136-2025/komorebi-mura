@@ -3420,7 +3420,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.9.11";
+const CLIENT_VERSION = "0.9.12";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5435,6 +5435,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.9.12", date: "2026/10/22", title: "一発逆転の魚", items: [
+    "借金しているときだけ、ごくまれに釣れる魚を追加。村の池の「コバンゴイ」（30,000G）と、みなと町の海の「ギャクテンダイ」（50,000G）",
+    "返済が遅れているときは、少しだけ釣れやすい",
+    "実績「起死回生」を追加。「魚博士」には、この2匹は入らない"] },
   { v: "0.9.11", date: "2026/10/22", title: "みんなの家・箱とのドラッグ", items: [
     "オンラインでは、最初からある家が「みんなの家」に。中にいる人どうしが見えて、収納箱はみんなで使える",
     "みんなの家は、だれでも模様替えできる",
@@ -5798,6 +5802,45 @@ handle8 = m => {
   } else if (m.type === "welcome") { H17.importing = null; setTimeout(() => F17.tryImport(), 2500); }
   else if (m.type === "houseReturn") setTimeout(() => F17.tryImport(), 500);
 };
+
+// =================== v23: 借金しているときだけ釣れる、一発逆転の魚 ===================
+const DEBT_FISH23 = [
+  { n: "コバンゴイ", at: "pond", w: .7, p: 30000, debt: true, spr: fishSpr17("#e8b830", "#fff0b0", "#c08a18", (s, r, e) => {
+    for (const [x, y] of [[6, 7], [9, 7], [11, 8], [7, 9]]) { e(x, y, 1, .8, C17("#fff6c8")); s(x, y, C17("#b07a10")); }
+    r(4, 10, 1, 2, C17("#c08a18")); r(5, 11, 1, 1, C17("#c08a18")); s(2, 6, C17("#ffffff")); s(14, 4, C17("#fffbe0")); s(13, 3, C17("#ffffff")); }) },
+  { n: "ギャクテンダイ", at: "sea", w: .5, p: 50000, debt: true, spr: fishSpr17("#f05a7a", "#ffe0e6", "#e8b830", (s, r, e) => {
+    for (const x of [6, 8, 10]) { s(x, 6, C17("#fff0a0")); s(x + 1, 8, C17("#fff0a0")); }
+    r(6, 3, 5, 1, C17("#e8b830")); s(7, 2, C17("#e8b830")); s(9, 2, C17("#e8b830")); s(8, 1, C17("#fff6c8")); s(1, 5, C17("#fffbe0")); s(15, 12, C17("#ffffff")); }) },
+];
+for (const f of DEBT_FISH23) {
+  addSpr17("fish_" + f.n, f.spr);
+  FISH6.push({ n: f.n, at: f.at, w: f.w, p: f.p, debt: true });
+  ITEMS["fish_" + f.n] = { name: f.n, icon: "fish_" + f.n, price: f.p, fish: true, food: 8 };
+}
+// 借金があるときだけ、ごくまれに。返済が遅れているときは少しだけ出やすい
+const _fishOk23 = fishOk;
+fishOk = f => f.debt ? totalDebt() > 0 && _fishOk23(f) : _fishOk23(f);
+const _pickFish23 = pickFish;
+pickFish = at => {
+  if (totalDebt() > 0) {
+    const od = overdueLoans().length > 0;
+    const f = FISH6.find(x => x.debt && x.at === at);
+    if (f && _fishOk23(f) && Math.random() < (at === "sea" ? .004 : .005) * (od ? 2 : 1)) return f.n;
+  }
+  let n, tries = 0; do { n = _pickFish23(at); } while (FISH6.find(x => x.n === n)?.debt && ++tries < 8);
+  return n;
+};
+const _fishHint23 = fishHint;
+fishHint = f => f.debt ? `${f.at === "sea" ? "みなと町の海" : "村の池"}／借金があるときだけ／ごくまれ` : _fishHint23(f);
+const _fishCaught23 = F6.fishCaught;
+F6.fishCaught = got => {
+  _fishCaught23(got);
+  const f = FISH6.find(x => x.n === got);
+  if (f?.debt) { world.stats.debtFish = (world.stats.debtFish || 0) + 1; setTimeout(() => F7.notify(`一発逆転！${got}が釣れた。売れば ${fmt(f.p)} くらいになるよ`, "fish_" + got), 400); }
+};
+{ const a = ACH.find(x => x[0] === "魚博士"); if (a) a[2] = () => FISH6.filter(f => !f.debt).every(f => world.dex[f.n]); }
+ACH.push(["起死回生", "借金しているときにしか釣れない魚を釣る", () => (world.stats.debtFish || 0) >= 1]);
+ACH_REWARD["起死回生"] = ["medal", 10];
 
 // =================== start ===================
 function animPreview(now) {

@@ -3760,7 +3760,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.24.0";
+const CLIENT_VERSION = "0.24.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5787,6 +5787,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.24.1", date: "2026/10/22", title: "イベント画面の不具合を直した", items: [
+    "イベントの画面を閉じたあと、スロットなどほかの画面を開いていると、イベントのお知らせが届いたときにその画面がイベントの画面に書きかわって、動かなくなることがあったのを直した",
+    "季節のイベントのごほうびの欄で、「もらった」の文字の場所がずれていたのを直した。ごほうびの絵と、あと何個かも出すようにした",
+  ] },
   { v: "0.24.0", date: "2026/10/22", title: "雪の日", items: [
     "雪の日に、手ぶらで地面に向かってAを押すと、雪玉が作れる（20個まで。雪がやむと、とけてしまう）",
     "雪玉を持ってAで投げられる。オンラインでは、仲間に当てると相手の画面にも雪がぺしゃっとつく。村の人やペットに当てると、びっくりしてくれる",
@@ -6952,6 +6956,12 @@ function rewardText28(spec) {
     return p;
   }).join("・") || "なし";
 }
+function rewardIcon28(spec) {
+  const a = String(spec || "").split(",").filter(Boolean)[0]?.split(":") || [];
+  if (a[0] === "wear") return renderChar({ ...cfg, [a[1]]: a.slice(2).join(":") }, "down", 0).toDataURL();
+  if (a[0] === "item" && ITEMS[a[1]]) return ASSETS[ITEMS[a[1]].icon];
+  return ASSETS[a[0] === "medal" ? "goldbar" : "coin"];
+}
 function applyReward28(spec) {
   for (const p of String(spec || "").split(",").filter(Boolean)) {
     const a = p.split(":");
@@ -7032,9 +7042,14 @@ function calGoals28(kind) {
 function openEvent28() {
   const e = evOn28() ? EV28.ev : null, cal = calEvent28();
   if (e) send8({ type: "ev", act: "look" });
+  const tok28 = Math.random().toString(36).slice(2, 10);
+  // この画面がまだ開いているか（ほかの画面に変わったら、書きかえない）
+  const alive28 = body => !!body.querySelector(`[data-ev28="${tok28}"]`);
   openModal(e ? e.name : `${EVKIND28[cal]}（季節のイベント）`, "shop", body => {
+    let first = true;
     const draw = () => {
-      if (!body.isConnected) return;
+      if (!first && !alive28(body)) { if (F28.redraw === draw) F28.redraw = null; return; }
+      first = false;
       const ev = evOn28() ? EV28.ev : null;
       let html = "";
       if (ev) {
@@ -7058,16 +7073,16 @@ function openEvent28() {
         const year = Math.floor((world.day - 1) / 28), st = (world.calEv || {})[cal + ":" + year] || { n: 0, got: [] };
         html += `${ev ? `<h3 class="lbl">季節のイベント</h3>` : ""}<p class="mtext">いまは${EVKIND28[cal]}の季節（${season()}の5〜6日目）。村に「${ITEMS[COLLECT28[cal]].name}」が落ちているよ。集めた数でごほうびがもらえます。季節の飾りがよろず屋に、限定の服がきせかえガチャに並びます。</p>
           <p class="mtext">集めた数：<b>${st.n}</b></p>
-          <div class="list">${calGoals28(cal).map(g => `<div class="li"><span class="nm">${g.n}個<span class="sub2">${esc(rewardText28(g.reward))}</span></span><span class="acts">${st.got.includes(g.n) ? "もらった" : ""}</span></div>`).join("")}</div>`;
+          <div class="list">${calGoals28(cal).map(g => `<div class="li"><img src="${rewardIcon28(g.reward)}" alt=""><span class="nm">${g.n}個<span class="sub2">${esc(rewardText28(g.reward))}</span></span><span class="acts">${st.got.includes(g.n) ? `<span class="got28">もらった</span>` : `<span class="mtext small">あと${Math.max(0, g.n - st.n)}個</span>`}</span></div>`).join("")}</div>`;
       }
       if (!ev && !cal) html = `<p class="mtext">いまは開催中のイベントはありません。</p>`;
-      body.innerHTML = html;
+      body.innerHTML = html + `<i hidden data-ev28="${tok28}"></i>`;
       const j = body.querySelector("#evJoin28");
       if (j) j.onclick = () => { j.disabled = true; send8({ type: "ev", act: "join", level: repLv() }); };
     };
     F28.redraw = draw;
     draw();
-    const t = setInterval(() => { if (!body.isConnected) { clearInterval(t); F28.redraw = null; return; } const el = body.querySelector("#evLeft28"); if (el && EV28.ev) { const left = Math.max(0, Math.round((EV28.ev.endsAtLocal - Date.now()) / 1000)); el.textContent = `${Math.floor(left / 60)}分${left % 60}秒`; } }, 1000);
+    const t = setInterval(() => { if (!alive28(body)) { clearInterval(t); if (F28.redraw === draw) F28.redraw = null; return; } const el = body.querySelector("#evLeft28"); if (el && EV28.ev) { const left = Math.max(0, Math.round((EV28.ev.endsAtLocal - Date.now()) / 1000)); el.textContent = `${Math.floor(left / 60)}分${left % 60}秒`; } }, 1000);
   });
 }
 

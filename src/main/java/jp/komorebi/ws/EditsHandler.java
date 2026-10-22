@@ -25,7 +25,14 @@ public class EditsHandler implements MessageHandler {
 
     @Override
     public void handle(PlayerSession from, JsonNode msg, GameSocketHandler hub) {
-        ArrayNode applied = world.apply(msg.get("list"));
+        ArrayNode rejected = hub.json().createArrayNode();
+        ArrayNode applied = world.apply(msg.get("list"), from.playerId(), from.name(), rejected);
+        if (!rejected.isEmpty()) {
+            // 人の飾りを動かそうとした分は、送ってきた人の画面だけ元に戻す
+            ObjectNode back = hub.json().createObjectNode().put("type", "edits").put("by", 0);
+            back.set("list", rejected);
+            hub.send(from, back);
+        }
         if (applied.isEmpty()) return;
         ObjectNode out = hub.json().createObjectNode().put("type", "edits").put("by", from.playerId());
         out.set("list", applied);

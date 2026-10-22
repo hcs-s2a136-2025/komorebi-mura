@@ -3526,7 +3526,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.12.0";
+const CLIENT_VERSION = "0.13.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5541,6 +5541,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.13.0", date: "2026/10/22", title: "村のデコレーション", items: [
+    "よろず屋に「外かざり」コーナー。花の鉢・プランター・街灯・ベンチ・看板・小鳥の水浴び台・花のアーチ・花壇を村に飾れる",
+    "持って地面を向いてAボタンで置く、飾りに向いてAボタンで片付け。花のアーチやイルミネーションは上を歩ける",
+    "季節の飾り：イースター（卵・うさぎ・花かご）、ハロウィン（ジャック・オ・ランタン・おばけ・墓石）、クリスマス（ツリー・イルミネーション・雪だるま）。そのイベントの間だけお店に並ぶ",
+    "ジャック・オ・ランタンとイルミネーションは、イベントの間だけ飾れて光る（片付けなくても、次のイベントでまた出てくる）。ほかの飾りはずっと置いておける",
+    "オンラインでは、飾りはみんなの村に出て、片付けられるのは置いた人だけ（サーバーでも確かめる）",
+    "ひとりで飾っていた物は、すでにある共有の村に入るときや、村が最初からになるときに、自分の家の収納箱へ戻る"] },
   { v: "0.12.0", date: "2026/10/22", title: "美容室ときせかえガチャ", items: [
     "村の東に美容室「Salon こもれび」（表参道ふう）ができた。スタイリストのミナトさんに、髪型と髪色を変えてもらえる",
     "美容室では、変える前に4方向のプレビューで確かめられる。サロン限定の髪型3つ（ポニーテール・マッシュ・ゆるふわロング）と髪色5つは、一度してもらうと着せ替えでも選べる",
@@ -6416,6 +6423,152 @@ ACH_REWARD["おしゃれさん"] = ["item", "candy25", 3];
 F26.openSalon = openSalon26; F26.openGacha = openWGacha26; F26.grant = grantWear26;
 F26.ready = true;
 
+// =================== v27: 村のデコレーション（外かざり）と季節イベントの飾り ===================
+// 飾りは家具（FURN）とは別に DECOR27 で持ち、村では共有の村の "decor" レイヤー（場所 → {id, o: 置いた人のID, n: 名前}）に置く。
+// オンラインでは、置いた人だけが片付けられる（サーバーでも確かめる）。
+// limit: "event" … そのイベントの間だけ置ける・見える（片付けずに置いたままでも、イベントが終わると見えなくなり、次のイベントでまた出てくる）
+var F27 = {};
+const DECOR27 = {
+  pot_red: { name: "赤い花の鉢", price: 120, solid: true, spr: (s, r, e) => { r(4, 10, 8, 5, C17("#c86a3a")); r(4, 10, 8, 1, C17("#e08a5a")); e(8, 7, 4.6, 3, C17("#3f8a46")); for (const [x, y] of [[5, 6], [8, 4], [11, 6], [7, 7], [10, 8]]) e(x, y, 1.3, 1.3, C17("#e2404e")); } },
+  pot_yellow: { name: "黄色い花の鉢", price: 120, solid: true, spr: (s, r, e) => { r(4, 10, 8, 5, C17("#5a7aa8")); r(4, 10, 8, 1, C17("#7a9ac8")); e(8, 7, 4.6, 3, C17("#3f8a46")); for (const [x, y] of [[5, 6], [8, 4], [11, 6], [7, 7], [10, 8]]) e(x, y, 1.3, 1.3, C17("#f0c840")); } },
+  planter: { name: "白いプランター", price: 200, solid: true, spr: (s, r, e) => { r(2, 9, 12, 6, C17("#f4f0ea")); r(2, 9, 12, 1, C17("#ffffff")); r(2, 14, 12, 1, C17("#c8c0b4")); for (let x = 3; x < 14; x += 2) { r(x, 5 + (x % 3), 1, 4, C17("#4a9a4a")); s(x, 4 + (x % 3), C17(x % 4 ? "#f27aa0" : "#ffffff")); } } },
+  lamp27: { name: "街灯", price: 400, solid: true, tall: true, img: "streetlamp" },
+  bench27: { name: "ベンチ", price: 300, solid: true, spr: (s, r, e) => { r(1, 5, 14, 3, C17("#a8743e")); r(1, 9, 14, 3, C17("#c08a4e")); r(1, 9, 14, 1, C17("#d8a868")); r(2, 12, 2, 3, C17("#3a3a44")); r(12, 12, 2, 3, C17("#3a3a44")); r(2, 7, 1, 3, C17("#3a3a44")); r(13, 7, 1, 3, C17("#3a3a44")); } },
+  sign27: { name: "木の看板", price: 150, solid: true, spr: (s, r, e) => { r(2, 3, 12, 7, C17("#c8924e")); r(2, 3, 12, 1, C17("#e0b070")); for (const y of [5, 7]) r(4, y, 8, 1, C17("#7a5028")); r(7, 10, 2, 5, C17("#8a5a2a")); } },
+  birdbath: { name: "小鳥の水浴び台", price: 500, solid: true, spr: (s, r, e) => { e(8, 6, 6, 2.4, C17("#c8c4bc")); e(8, 6, 4.6, 1.4, C17("#7ac8e8")); s(6, 5, C17("#ffffff")); r(7, 8, 2, 5, C17("#b8b4ac")); r(5, 13, 6, 2, C17("#a8a49c")); e(12, 3, 1.6, 1.2, C17("#f0a040")); s(13, 3, C17("#2a2a2a")); } },
+  arch27: { name: "花のアーチ", price: 800, solid: false, tall: true, spr: (s, r, e) => { for (let y = 6; y < 32; y++) { r(1, y, 2, 1, C17("#3f8a46")); r(13, y, 2, 1, C17("#3f8a46")); } for (let x = 1; x < 15; x++) { const y = 6 - Math.round(Math.sin((x - 1) / 13 * Math.PI) * 5); r(x, y, 1, 2, C17("#3f8a46")); } for (const [x, y] of [[2, 10], [13, 14], [2, 20], [13, 24], [4, 3], [8, 1], [11, 3], [2, 28], [13, 6]]) e(x, y, 1.3, 1.3, C17(["#f27aa0", "#ffffff", "#f0c840"][(x + y) % 3])); }, h: 32 },
+  flowerbed27: { name: "花壇", price: 250, solid: true, img: "flowerbed" },
+  // イースター
+  egg_pink: { name: "イースターエッグ（ピンク）", price: 150, event: "easter", solid: true, spr: (s, r, e) => { e(8, 9, 4.4, 5.4, C17("#f6a8c8")); r(4, 8, 9, 2, C17("#ffffff")); for (const x of [5, 8, 11]) s(x, 12, C17("#e8507a")); } },
+  egg_blue: { name: "イースターエッグ（水色）", price: 150, event: "easter", solid: true, spr: (s, r, e) => { e(8, 9, 4.4, 5.4, C17("#a8d8f6")); for (let x = 4; x <= 12; x += 2) s(x, 9 + (x % 4 ? 1 : 0), C17("#f0c840")); r(4, 6, 9, 1, C17("#ffffff")); } },
+  bunny27: { name: "うさぎの置物", price: 400, event: "easter", solid: true, spr: (s, r, e) => { e(8, 11, 4.4, 3.6, C17("#f4f0ea")); e(8, 7, 3, 2.6, C17("#f4f0ea")); r(6, 1, 2, 5, C17("#f4f0ea")); r(9, 1, 2, 5, C17("#f4f0ea")); s(6, 2, C17("#f6a8c8")); s(10, 2, C17("#f6a8c8")); s(7, 7, C17("#2a2a2a")); s(9, 7, C17("#2a2a2a")); s(8, 8, C17("#e8507a")); } },
+  basket27: { name: "花かご", price: 300, event: "easter", solid: true, spr: (s, r, e) => { r(3, 9, 10, 5, C17("#c8924e")); for (let x = 3; x < 13; x += 2) r(x, 9, 1, 5, C17("#a8743e")); for (let x = 3; x <= 12; x++) s(x, 3 + Math.round(Math.abs(x - 7.5) * .7), C17("#a8743e")); for (const [x, y, c] of [[5, 8, "#f27aa0"], [8, 7, "#f0c840"], [11, 8, "#ffffff"], [7, 8, "#a8d8f6"]]) e(x, y, 1.3, 1.3, C17(c)); } },
+  // ハロウィン
+  jack27: { name: "ジャック・オ・ランタン", price: 300, event: "halloween", limit: "event", solid: true, glow: "#ffb040", spr: (s, r, e) => { e(8, 10, 6, 4.6, C17("#e8862a")); for (const x of [5, 8, 11]) r(x, 6, 1, 9, C17("#c86a1a")); r(7, 3, 2, 3, C17("#3a6a2a")); r(5, 8, 2, 2, C17("#ffe080")); r(10, 8, 2, 2, C17("#ffe080")); r(6, 12, 5, 1, C17("#ffe080")); } },
+  ghost27: { name: "おばけの置物", price: 350, event: "halloween", solid: true, spr: (s, r, e) => { e(8, 7, 5, 5, C17("#f4f4fa")); r(3, 7, 11, 6, C17("#f4f4fa")); for (const x of [3, 6, 9, 12]) e(x + .5, 13, 1.4, 1.4, C17("#f4f4fa")); r(6, 6, 1, 2, C17("#2a2a3a")); r(10, 6, 1, 2, C17("#2a2a3a")); e(8.5, 9.5, 1, .8, C17("#2a2a3a")); } },
+  grave27: { name: "墓石", price: 250, event: "halloween", solid: true, spr: (s, r, e) => { r(4, 4, 8, 11, C17("#8a8a94")); e(8, 4, 4, 2.4, C17("#8a8a94")); r(5, 4, 1, 10, C17("#a8a8b2")); r(7, 6, 2, 5, C17("#6a6a74")); r(6, 7, 4, 1, C17("#6a6a74")); r(3, 14, 10, 1, C17("#5a7a4a")); } },
+  // クリスマス
+  xtree27: { name: "クリスマスツリー", price: 900, event: "christmas", solid: true, tall: true, h: 32, glow: "#fff0a0", spr: (s, r, e) => { for (let y = 4; y < 28; y++) { const w = Math.min(13, 2 + Math.floor((y - 4) / 2) + (y % 6 > 3 ? -1 : 0)); r(8 - Math.floor(w / 2), y, w, 1, C17(y % 6 > 3 ? "#2a7a3a" : "#3a9a4a")); } r(7, 28, 2, 3, C17("#7a5028")); r(7, 1, 2, 3, C17("#f0c840")); s(6, 2, C17("#f0c840")); s(9, 2, C17("#f0c840")); for (const [x, y, c] of [[6, 9, "#e2404e"], [10, 13, "#4a8ae0"], [5, 17, "#f0c840"], [9, 20, "#e2404e"], [12, 24, "#f0c840"], [4, 25, "#4a8ae0"], [8, 15, "#ffffff"]]) s(x, y, C17(c)); } },
+  lights27: { name: "イルミネーション", price: 500, event: "christmas", limit: "event", solid: false, glow: "#a8e0ff", spr: (s, r, e) => { for (let x = 0; x < 16; x++) s(x, 4 + Math.round(Math.sin(x / 15 * Math.PI) * 3), C17("#3a3a44")); for (let x = 1; x < 16; x += 3) e(x, 6 + Math.round(Math.sin(x / 15 * Math.PI) * 3), 1, 1.2, C17(["#e2404e", "#f0c840", "#4a8ae0", "#7ad07a", "#f27aa0"][x % 5])); } },
+  snowman27: { name: "雪だるま", price: 300, event: "christmas", solid: true, img: "snowman" },
+};
+for (const [id, d] of Object.entries(DECOR27)) {
+  if (d.spr) { const H = d.h || 16; IMG["d27_" + id] = spr17(d.spr, 16, H); ASSETS["d27_" + id] = IMG["d27_" + id].toDataURL(); d.img = "d27_" + id; }
+  ITEMS["deco_" + id] = { name: d.name, icon: d.img, price: d.price, place: "decor", decor: id };
+}
+world.decor = world.decor || {};
+SH_LAYERS.push("decor");
+SHARED_KEYS14.push("decor");
+const EVENT_NAME27 = { easter: "イースター", halloween: "ハロウィン", christmas: "クリスマス" };
+const decorVisible27 = d => { const D = DECOR27[d.id]; return !!D && !(D.limit === "event" && F26.event() !== D.event); };
+const myDecor27 = d => !d.o || !F8.connected || d.o === F8.myId();
+
+// ---------- 当たり判定・描画 ----------
+const _rebuildSolid27 = rebuildSolid;
+rebuildSolid = function () {
+  _rebuildSolid27();
+  const S = village.solid;
+  for (const k in (world.decor || {})) { const d = world.decor[k]; if (!decorVisible27(d) || !DECOR27[d.id].solid) continue; const [x, y] = k.split(",").map(Number); if (S[y]) S[y][x] = true; }
+};
+const _addToList27 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList27(list, now);
+  if (map !== village) return;
+  for (const k in (world.decor || {})) {
+    const d = world.decor[k]; if (!decorVisible27(d)) continue;
+    const D = DECOR27[d.id], im = IMG[D.img]; if (!im) continue;
+    const [x, y] = k.split(",").map(Number);
+    list.push({ s: (y + 1) * TS - (D.solid ? 0 : 8), d: () => {
+      ctx.drawImage(im, x * TS, (y + 1) * TS - im.height);
+      if (D.glow && (world.time >= 1020 || world.time < 420)) { const a = .18 + Math.sin(now / 300 + x) * .06; ctx.fillStyle = D.glow; ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(x * TS + 8, (y + 1) * TS - im.height / 2, 14, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    } });
+  }
+};
+
+// ---------- 置く・片付ける ----------
+function decorFree27(x, y) {
+  world.decor = world.decor || {};
+  const k = x + "," + y, g = village.ground[y]?.[x] || "";
+  if (!/^(grass|flower|path)/.test(g) || village.solid[y][x] || world.decor[k] || world.fences[k] || world.saplings?.[k] || world.bridges?.[k] || world.tilled[k]) return false;
+  if (world.drops.some(d => d.x === x && d.y === y)) return false;
+  // ペットは歩き回るので邪魔にしない（人と住人と子どもだけ）
+  if ([player, ...friends, ...F25.kids].some(e => !e.hidden && ((e.x === x && e.y === y) || (e.fx === x && e.fy === y)))) return false;
+  return true;
+}
+const _act27 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village && !(typeof decor !== "undefined" && decor)) {
+    world.decor = world.decor || {};
+    const [tx, ty] = front(), k = tx + "," + ty;
+    const sel = world.inv[world.sel], item = sel && ITEMS[sel.id];
+    const here = world.decor[k];
+    if (here && decorVisible27(here)) {
+      const D = DECOR27[here.id];
+      if (!myDecor27(here)) { toast(D.img, `${here.n || "だれか"}さんの${D.name}。勝手に動かせない`); return; }
+      if (!world.inv.some(x => !x || x.id === "deco_" + here.id)) { toast(null, "持ち物がいっぱいで片付けられない"); return; }
+      delete world.decor[k]; addItem("deco_" + here.id, 1, true); rebuildSolid(); saveWorld();
+      toast(D.img, `${D.name}を片付けた`); return;
+    }
+    if (item?.place === "decor") {
+      const D = DECOR27[item.decor];
+      if (D.limit === "event" && F26.event() !== D.event) { toast(D.img, `${D.name}は${EVENT_NAME27[D.event]}の間だけ飾れるよ`); return; }
+      if (!decorFree27(tx, ty)) { toast(null, "ここには飾れないよ"); return; }
+      world.decor[k] = { id: item.decor, o: F8.connected ? F8.myId() : 0, n: myName() };
+      removeItem(sel.id, 1); rebuildSolid(); saveWorld(); SFX.small();
+      world.stats.decor = (world.stats.decor || 0) + 1;
+      dust(tx, ty, [230, 220, 200], 6);
+      toast(D.img, `${D.name}を飾った（向いてAボタンで片付け）`); return;
+    }
+  }
+  _act27();
+};
+// 共有の村をリセットするときは、自分の飾りを自分の家の収納箱に戻す
+const _freshShared27 = freshShared18;
+freshShared18 = function (why) {
+  for (const k in (world.decor || {})) { const d = world.decor[k]; if (DECOR27[d.id] && myDecor27(d)) homeStore18("deco_" + d.id, 1); }
+  world.decor = {};
+  _freshShared27(why);
+};
+
+// ---------- よろず屋の「外かざり」 ----------
+const _shopTabs27 = shopTabs13;
+shopTabs13 = function (tab) { return _shopTabs27(tab).replace("</div>", `<button class="chip" type="button" data-t="decor" aria-pressed="${tab === "decor"}">外かざり</button></div>`); };
+const _openShop27 = openShop;
+openShop = function (tab) {
+  if (tab !== "decor") { _openShop27(tab); return; }
+  openModal("よろず屋", "shop", body => {
+    const ev = F26.event();
+    const ids = Object.keys(DECOR27).filter(id => !DECOR27[id].event || DECOR27[id].event === ev);
+    body.innerHTML = shopTabs13("decor") + `<p class="mtext">所持金 <b>${fmt(world.money)}</b></p>
+      <p class="mtext small">村の地面（草・花・道）に飾れます。持って地面を向いてAボタンで置く、飾りに向いてAボタンで片付け。オンラインでは、みんなの村に飾られて、片付けられるのは置いた人だけです。${ev ? `<br>いまは${EVENT_NAME27[ev]}！ 季節の飾りも並んでいます。` : "<br>イースター・ハロウィン・クリスマスの飾りは、そのイベントの間だけお店に並びます。"}</p>
+      <div class="list">${ids.map(id => { const D = DECOR27[id]; return itemLi("deco_" + id, `${fmt(D.price)}${D.event ? `・${EVENT_NAME27[D.event]}の飾り${D.limit === "event" ? "（イベント中だけ飾れる）" : ""}` : ""}${D.solid ? "" : "・上を歩ける"}`,
+        `<button class="btn" type="button" data-bd="${id}" ${world.money < D.price ? "disabled" : ""}>買う</button>`); }).join("")}</div>`;
+    body.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { closeModal(); openShop(b.dataset.t); });
+    body.querySelectorAll("[data-bd]").forEach(b => b.onclick = () => {
+      const D = DECOR27[b.dataset.bd];
+      if (world.money < D.price) return;
+      if (!addItem("deco_" + b.dataset.bd, 1)) return;
+      addMoney(-D.price); toast(D.img, `${D.name}を買った`); closeModal(); openShop("decor");
+    });
+  });
+};
+// 子どもたちの交換でしか手に入らない家具は、お店に並べない
+const _hideFurn27 = F7.hideFurn;
+F7.hideFurn = k => ["plush25", "bugcage25", "specimen25"].includes(k) || _hideFurn27(k);
+ACH.push(["村のコーディネーター", "村に飾りを10個置く", () => (world.stats.decor || 0) >= 10]);
+ACH_REWARD["村のコーディネーター"] = ["item", "deco_arch27", 1];
+// ひとりで遊んでいたときに飾った物は、すでにある共有の村に入るときに消えてしまうので、自分の家の収納箱へ戻す
+const _onWelcomeWorld27 = onWelcomeWorld;
+onWelcomeWorld = function (snap, epoch) {
+  if (!F11.synced && snap && SH_LAYERS.some(L => Object.keys(snap[L] || {}).length)) {
+    const sd = snap.decor || {}; let n = 0;
+    for (const k in (world.decor || {})) { const d = world.decor[k]; if (!DECOR27[d.id] || !myDecor27(d)) continue; if (sd[k] && sd[k].id === d.id) continue; homeStore18("deco_" + d.id, 1); n++; }
+    if (n) F7.notify(`ひとりで遊んでいたときに飾っていた物（${n}個）を、自分の家の収納箱に戻したよ`, null);
+  }
+  _onWelcomeWorld27(snap, epoch);
+};
+F27.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -6439,5 +6592,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

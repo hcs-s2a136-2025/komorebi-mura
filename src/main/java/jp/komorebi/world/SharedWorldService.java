@@ -34,7 +34,7 @@ public class SharedWorldService implements WelcomeContributor {
 
     private static final Logger log = LoggerFactory.getLogger(SharedWorldService.class);
     public static final Set<String> LAYERS = Set.of("terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths",
-        "stakes", "tilled", "houses", "quarry", "meta");
+        "stakes", "tilled", "houses", "quarry", "meta", "decor");
     private static final Pattern KEY = Pattern.compile("[A-Za-z0-9,:_\\-]{1,24}");
     private static final int MAX_VALUE = 600, MAX_KEYS = 6000, MAX_DOC = 990_000;
 
@@ -64,6 +64,14 @@ public class SharedWorldService implements WelcomeContributor {
 
     /** 編集をまとめて反映し、実際に反映できたものだけを返す（ほかの人に配る用） */
     public synchronized ArrayNode apply(JsonNode list) {
+        return apply(list, 0, "", null);
+    }
+
+    /**
+     * 編集をまとめて反映する。飾り（decor）は、置いた人（o）だけが変えたり片付けたりできる。
+     * 認められなかった変更は rejected に「いまの本当の値」として入れる（送ってきた人の画面を元に戻すため）。
+     */
+    public synchronized ArrayNode apply(JsonNode list, long playerId, String name, ArrayNode rejected) {
         ArrayNode out = om.createArrayNode();
         if (list == null || !list.isArray()) return out;
         int n = 0;
@@ -74,6 +82,23 @@ public class SharedWorldService implements WelcomeContributor {
             JsonNode v = e.get("v");
             JsonNode node = layers.get(l);
             ObjectNode layer = node instanceof ObjectNode o ? o : layers.putObject(l);
+            if ("decor".equals(l)) {
+                JsonNode cur = layer.get(k);
+                long owner = cur == null ? 0 : cur.path("o").asLong(0);
+                boolean ok = cur == null || owner == 0 || owner == playerId;
+                if (ok && v != null && !v.isNull()) {
+                    String id = v.path("id").asText("");
+                    if (!v.isObject() || !id.matches("[a-z0-9_]{1,32}")) ok = false;
+                    else {
+                        ObjectNode nv = om.createObjectNode().put("id", id).put("o", playerId).put("n", name == null ? "" : name);
+                        v = nv; // 置いた人は、サーバーが知っている本人にする
+                    }
+                }
+                if (!ok) {
+                    if (rejected != null) { ObjectNode r = rejected.addObject().put("l", l).put("k", k); r.set("v", cur == null ? NullNode.getInstance() : cur.deepCopy()); }
+                    continue;
+                }
+            }
             if (v == null || v.isNull()) {
                 if (layer.remove(k) == null) continue;
                 v = NullNode.getInstance();

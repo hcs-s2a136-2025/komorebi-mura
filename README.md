@@ -1,4 +1,4 @@
-# こもれび村 オンライン試作（v0.12.0）
+# こもれび村 オンライン試作（v0.13.0）
 
 Spring Boot で動く、こもれび村のオンライン試作サーバーです。
 
@@ -182,7 +182,7 @@ tools/mock-server/  Javaなしでゲーム側を試せる、同じ約束の模�
 |---|---|---|
 | `hello` → `welcome` | 送る → 受け取る | 本人確認。welcome には、ほかの人・共有の村（`world`）・最近のチャット（`chat`）が入る |
 | `move` / `cfg` / `emote` | 両方 | 位置・見た目・スタンプ |
-| `edits` | 両方 | 共有の村の変更 `{list:[{l: レイヤー, k: 場所, v: 値 or null}]}` |
+| `edits` | 両方 | 共有の村の変更 `{list:[{l: レイヤー, k: 場所, v: 値 or null}]}`。飾り（`decor`）は置いた人だけが変えられ、認められなかった分は `by:0` の edits で本人に元の値が返る |
 | `chat` | 両方 | 吹き出しチャット（60文字まで・1秒に1回まで） |
 | `jp` / `jpWin` | 送る → `jp` を受け取る | スロットの積み立て・当たり。`jp` は新しい額（当たったときは `winner` と `won` も） |
 | `bj` → `bjState` / `bjCharge` / `bjSettle` / `bjNg` | 送る `{act: sit\|leave\|bet\|hit\|stand\|double\|split\|look, amount}` | みんなのBJ。`bjState` は卓のようす（全員へ）、`bjCharge` は賭け金を引く（マイナスなら戻す）、`bjSettle` は精算（本人へ） |

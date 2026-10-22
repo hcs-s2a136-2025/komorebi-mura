@@ -3502,14 +3502,14 @@ function openAnimalShop() {
       ...Object.entries(PETS).filter(([k]) => k !== "cat").map(([k, p]) => [`pet:${k}`, p.name, p.price, "ペットとしていっしょに歩く", k]),
       ["item:feed", "飼料×5", 100, "家畜のエサ", "feed"],
     ];
-    body.innerHTML = shopTabs13("animal") + `<p class="mtext">家畜は牧場（池の南）で暮らします（最大8頭）。所持金 <b>${fmt(world.money)}</b></p><div class="list">${rows.map(([id, nm, p, sub, ic]) => {
+    body.innerHTML = shopTabs13("animal") + `<p class="mtext">家畜は牧場（池の南）で暮らします（最大${typeof F32 !== "undefined" && F32.cap ? F32.cap() : 8}頭。家畜小屋を建てるとふえる）。所持金 <b>${fmt(world.money)}</b></p><div class="list">${rows.map(([id, nm, p, sub, ic]) => {
       const owned = id.startsWith("pet:") && world.pets.includes(id.slice(4));
       return `<div class="li"><img src="${ASSETS[ic]}" alt=""><span class="nm">${nm}<span class="sub2">${fmt(p)}・${sub}</span></span><span class="acts">${owned ? "飼っている" : `<button class="btn" type="button" data-ab="${id}" data-p="${p}" ${world.money < p ? "disabled" : ""}>買う</button>`}</span></div>`;
     }).join("")}</div>`;
     body.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { closeModal(); openShop(b.dataset.t); });
     body.querySelectorAll("[data-ab]").forEach(b => b.onclick = () => {
       const [kind, k] = b.dataset.ab.split(":"), p = +b.dataset.p; if (world.money < p) return;
-      if (kind === "animal") { if (world.animals.length >= 8) { toast(null, "牧場がいっぱい"); return; } const names = ANIMAL_NAMES[k] || ["ナナ", "ポポ", "ルル"]; world.animals.push({ id: Date.now(), type: k, name: names[world.animals.length % 3], hearts: 0, fed: false }); syncAnimals(); }
+      if (kind === "animal") { if (world.animals.length >= (typeof F32 !== "undefined" && F32.cap ? F32.cap() : 8)) { toast(null, "牧場がいっぱい"); return; } const names = ANIMAL_NAMES[k] || ["ナナ", "ポポ", "ルル"]; world.animals.push({ id: Date.now(), type: k, name: names[world.animals.length % 3], hearts: 0, fed: false }); syncAnimals(); }
       else if (kind === "pet") { world.pets.push(k); world.petHearts[k] = 0; syncPets(); }
       else addItem("feed", 5);
       addMoney(-p); saveWorld(); closeModal(); openAnimalShop();
@@ -4724,7 +4724,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.18.0";
+const CLIENT_VERSION = "0.19.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -6749,6 +6749,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.19.0", date: "2026/10/22", title: "家以外の建物", items: [
+    "よろず屋に「建物」のたなができた。キットを買って、持ったまま村の草地や道を向いてAボタンで建てる。建物を向いてAボタンで中を見たり、キットに戻したりできる",
+    "ペット小屋（2×2マス）：ペットが毎朝なついて、ときどきおみやげ（どんぐり・花の種・鉱石・小銭など）を持ってくる",
+    "ニワトリ小屋（2×2マス）：エサをあげたニワトリとアヒルが、次の朝ときどきもう1個卵を産む",
+    "家畜小屋（3×2マス）：飼える家畜が6頭ふえる（2つまで、最大20頭）。エサをあげた家畜がもっとなつく。中からまとめてエサやりもできる",
+    "サイロ（1×2マス）：飼料を99個までためておくと、毎朝、家畜に自動でエサをあげてくれる",
+    "オンラインでは、建物はみんなの村に建ち、片付けられるのは建てた人だけ。はたらきは建てた人の動物とペットに効く",
+  ] },
   { v: "0.18.0", date: "2026/10/22", title: "動物がふえた・トリュフさがし", items: [
     "よろず屋で、ヤギ（ヤギミルク）・アヒル（アヒルの卵）・アルパカ（3日に1回、高く売れるアルパカの毛）が飼えるように",
     "ブタ：エサをあげた日に、ブタの前でAを押すと牧場から連れ出せる。草地や花の上を一緒に歩くと、においをかぎつけてトリュフを掘り出してくれる",
@@ -8401,6 +8409,204 @@ animalsNewDay = function () { if (walk31.e) stopWalk31(); _animalsNewDay31(); };
 F31.walk = walk31;
 F31.ready = true;
 
+// =================== v32: 家以外の建物（ペット小屋・ニワトリ小屋・家畜小屋・サイロ） ===================
+// 建物は、村の共有の "decor" レイヤーに置く（場所＝建物のいちばん左下のマス）。オンラインでは置いた人だけが片付けられる（サーバーで確かめる）。
+// 建物のはたらき（なつく・卵・エサやり）は、置いた人の動物とペットにだけ効く。
+var F32 = {};
+const B32 = {
+  pethouse32: { name: "ペット小屋", w: 2, h: 2, money: 3000, mat: { wood: 10 }, desc: "ペットが毎朝なついて、ときどきおみやげを持ってくる",
+    spr: (set, rect) => { const W = C13["#c8924e"], D = C13["#a8743e"], R = C13["#c84a3a"];
+      rect(4, 12, 24, 16, W); for (let x = 6; x < 28; x += 4) rect(x, 12, 1, 16, D); rect(4, 27, 24, 1, D);
+      for (let y = 2; y <= 13; y++) { const hw = Math.round((y - 2) * 14 / 11) + 1; rect(16 - hw, y, hw * 2, 1, y < 5 ? C13["#e86a58"] : R); } rect(1, 13, 30, 2, C13["#9a3428"]);
+      rect(12, 19, 8, 9, C13["#3a2418"]); ell13(set, 16, 19, 4, 3, C13["#3a2418"]); rect(13, 15, 6, 3, C13["#f4e8c8"]); rect(14, 16, 4, 1, C13["#c8a878"]); set(14, 15, C13["#c8a878"]); set(17, 17, C13["#c8a878"]);
+      ell13(set, 25, 26, 2, 1.4, C13["#e8e0d0"]); rect(2, 28, 28, 2, C13["#6a8a4a"]); } },
+  coop32: { name: "ニワトリ小屋", w: 2, h: 2, money: 5000, mat: { wood: 15, stone: 5 }, desc: "エサをあげたニワトリとアヒルが、ときどき卵をもう1個産む（小屋のそばに置いてくれる）",
+    spr: (set, rect) => { const Wl = C13["#f4efe4"], R = C13["#8a5a3a"];
+      rect(3, 14, 26, 18, Wl); for (let y = 17; y < 32; y += 3) rect(3, y, 26, 1, C13["#e0d8c8"]);
+      for (let y = 3; y <= 15; y++) { const hw = Math.round((y - 3) * 15 / 12) + 1; rect(16 - hw, y, hw * 2, 1, y < 6 ? C13["#aa7a58"] : R); } rect(1, 15, 30, 2, C13["#6a4028"]);
+      ell13(set, 16, 9, 2.4, 2.4, C13["#3a2418"]); rect(5, 22, 8, 10, C13["#a8743e"]); rect(5, 22, 8, 1, C13["#c8924e"]); set(11, 27, C13["#f2d070"]);
+      rect(17, 21, 9, 7, C13["#a8d4ec"]); rect(17, 21, 9, 1, C13["#ffffff"]); rect(21, 21, 1, 7, C13["#f4efe4"]); rect(17, 24, 9, 1, C13["#f4efe4"]);
+      ell13(set, 22, 30, 2, 1.6, C13["#fbf4e0"]); ell13(set, 26, 30, 1.6, 1.4, C13["#d8eee2"]); rect(2, 32, 28, 2, C13["#6a8a4a"]); } },
+  barn32: { name: "家畜小屋", w: 3, h: 2, money: 12000, mat: { wood: 30, stone: 15 }, desc: "飼える家畜が6頭ふえる（2つまで）。エサをあげた家畜がもっとなつく。中からまとめてエサやりもできる",
+    spr: (set, rect) => { const Rd = C13["#c8403a"], Wt = C13["#f4efe4"], Rf = C13["#5a4a44"];
+      rect(2, 16, 44, 26, Rd); for (let x = 4; x < 46; x += 4) rect(x, 16, 1, 26, C13["#a8302c"]);
+      for (let y = 2; y <= 17; y++) { const hw = y < 9 ? 10 + (y - 2) * 1.2 : 18 + (y - 9) * .7; rect(Math.round(24 - hw), y, Math.round(hw * 2), 1, y < 4 ? C13["#7a6a64"] : Rf); } rect(0, 16, 48, 2, Wt);
+      rect(19, 6, 10, 7, Wt); rect(20, 7, 8, 5, C13["#3a2418"]); rect(20, 10, 8, 2, C13["#f2d070"]); set(22, 9, C13["#f2d070"]); set(25, 9, C13["#f2d070"]);
+      rect(15, 24, 18, 18, Wt); rect(16, 25, 16, 17, Rd); rect(23, 25, 2, 17, Wt);
+      for (let i = 0; i < 16; i++) { set(16 + Math.floor(i / 2), 25 + i, Wt); set(31 - Math.floor(i / 2), 25 + i, Wt); }
+      rect(5, 24, 6, 6, Wt); rect(6, 25, 4, 4, C13["#a8d4ec"]); rect(37, 24, 6, 6, Wt); rect(38, 25, 4, 4, C13["#a8d4ec"]); rect(0, 42, 48, 2, C13["#6a8a4a"]); } },
+  silo32: { name: "サイロ", w: 1, h: 2, money: 6000, mat: { stone: 20 }, desc: "飼料をためておくと、毎朝、家畜に自動でエサをあげてくれる（99個まで）",
+    spr: (set, rect) => { const B = C13["#b8c4cc"], D = C13["#98a4ae"];
+      rect(2, 10, 12, 32, B); rect(2, 10, 2, 32, C13["#d4dce2"]); rect(12, 10, 2, 32, D); for (let y = 14; y < 42; y += 6) rect(2, y, 12, 1, D);
+      ell13(set, 8, 10, 6, 6, C13["#d8e0e6"]); ell13(set, 6, 8, 2, 2, C13["#f4f8fa"]); rect(2, 10, 12, 1, D);
+      for (let y = 16; y < 42; y += 3) rect(10, y, 3, 1, C13["#6a747c"]); rect(10, 16, 1, 26, C13["#6a747c"]); rect(12, 16, 1, 26, C13["#6a747c"]);
+      rect(1, 42, 14, 2, C13["#8a8a90"]); } },
+};
+for (const [id, b] of Object.entries(B32)) {
+  IMG["b32_" + id] = pix13(b.w * 16, { pethouse32: 30, coop32: 34, barn32: 44, silo32: 44 }[id], b.spr); ASSETS["b32_" + id] = IMG["b32_" + id].toDataURL();
+  DECOR27[id] = { name: b.name, price: Math.round(b.money / 2), solid: true, img: "b32_" + id, event: "b32", b32: true };
+  ITEMS["deco_" + id] = { name: b.name + "のキット", icon: "b32_" + id, price: Math.round(b.money / 2), place: "build32", decor: id };
+}
+const foot32 = (k, d) => { const [x, y] = k.split(",").map(Number), b = B32[d.id]; return { x0: x, y0: y - b.h + 1, x1: x + b.w - 1, y1: y }; };
+const builds32 = () => Object.entries(world.decor || {}).filter(([, d]) => B32[d.id]);
+const mine32 = id => builds32().filter(([, d]) => d.id === id && myDecor27(d)).map(([k]) => k);
+const buildAt32 = (x, y) => builds32().find(([k, d]) => { const f = foot32(k, d); return x >= f.x0 && x <= f.x1 && y >= f.y0 && y <= f.y1; });
+F32.cap = () => 8 + 6 * Math.min(2, mine32("barn32").length);
+F32.mine = mine32;
+// 当たり判定：建物のマスを全部ふさぐ
+const _rebuildSolid32 = rebuildSolid;
+rebuildSolid = function () {
+  _rebuildSolid32();
+  const S = village.solid;
+  for (const [k, d] of builds32()) { const f = foot32(k, d); for (let y = f.y0; y <= f.y1; y++) for (let x = f.x0; x <= f.x1; x++) if (S[y] && x >= 0 && x < village.w) S[y][x] = true; }
+};
+rebuildSolid();
+// 置く場所：プレイヤーから見て向こう側に広がるように
+function anchor32(id) {
+  const b = B32[id], [tx, ty] = front(), half = Math.floor((b.w - 1) / 2);
+  const d = player.dir;
+  const ax = d === "left" ? tx - b.w + 1 : d === "right" ? tx : tx - half;
+  const ay = d === "down" ? ty + b.h - 1 : ty;
+  return [ax, ay];
+}
+function canBuild32(id, ax, ay) {
+  const b = B32[id];
+  for (let y = ay - b.h + 1; y <= ay; y++) for (let x = ax; x <= ax + b.w - 1; x++) {
+    if (!decorFree27(x, y)) return false;
+    if ([...petEnts, ...animalEnts].some(e => e.kind === "animal" && ((e.x === x && e.y === y) || (e.fx === x && e.fy === y)))) return false;
+  }
+  return true;
+}
+// 持っているキットの置き場所を、うすく見せる
+const _addToList32 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList32(list, now);
+  const sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+  if (map !== village || !it || it.place !== "build32" || modalOpen) return;
+  const b = B32[it.decor], [ax, ay] = anchor32(it.decor), ok = canBuild32(it.decor, ax, ay);
+  list.push({ s: 1e9, d: () => {
+    ctx.globalAlpha = .35 + Math.sin(now / 250) * .08; ctx.fillStyle = ok ? "#7ad07a" : "#e2404e";
+    ctx.fillRect(ax * TS, (ay - b.h + 1) * TS, b.w * TS, b.h * TS); ctx.globalAlpha = .5;
+    const im = IMG["b32_" + it.decor]; if (ok && im) ctx.drawImage(im, ax * TS, (ay + 1) * TS - im.height);
+    ctx.globalAlpha = 1;
+  } });
+};
+function dropNear32(k, id, n) {
+  const [x, y] = k.split(",").map(Number);
+  for (const [dx, dy] of [[0, 1], [1, 1], [-1, 0], [2, 0], [-1, 1], [2, 1], [0, 2], [1, 2]]) {
+    const nx = x + dx, ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= village.w || ny >= village.h || village.solid[ny][nx] || world.drops.some(d => d.x === nx && d.y === ny)) continue;
+    if (!/^(grass|flower|path)/.test(village.ground[ny]?.[nx] || "")) continue;
+    world.drops.push({ x: nx, y: ny, id, n }); return true;
+  }
+  return addItem(id, n, true);
+}
+// ---- Aボタン：建物を置く・建物の中を見る ----
+const _act32 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+    const sel = world.inv[world.sel], item = sel && ITEMS[sel.id];
+    if (item?.place === "build32") {
+      const id = item.decor, b = B32[id], [ax, ay] = anchor32(id);
+      if (!canBuild32(id, ax, ay)) { toast(item.icon, `${b.name}は${b.w}×${b.h}マス。草や道の、あいている場所を向いて置こう`); return; }
+      world.decor = world.decor || {};
+      world.decor[ax + "," + ay] = { id, o: F8.connected ? F8.myId() : 0, n: myName() };
+      removeItem(sel.id, 1); rebuildSolid(); saveWorld(); SFX.small();
+      for (let x = ax; x < ax + b.w; x++) dust(x, ay, [230, 220, 200], 6);
+      world.stats.builds32 = (world.stats.builds32 || 0) + 1;
+      toast(item.icon, `${b.name}が建った（向いてAボタンで中を見る）`); return;
+    }
+    const [tx, ty] = front(), hit = buildAt32(tx, ty);
+    if (hit) { openBuild32(hit[0]); return; }
+  }
+  _act32();
+};
+function openBuild32(k) {
+  const d = world.decor[k]; if (!d) return; const b = B32[d.id], mine = myDecor27(d);
+  openModal(b.name, "", body => {
+    let html = `<div class="li"><img src="${ASSETS["b32_" + d.id]}" alt="" style="width:48px;height:48px;object-fit:contain"><span class="nm">${esc(b.name)}<span class="sub2">${mine ? "自分の建物" : esc(d.n || "だれか") + "さんの建物"}・${b.desc}</span></span><span class="acts"></span></div>`;
+    if (mine && d.id === "barn32") {
+      const hungry = world.animals.filter(a => !a.fed).length;
+      html += `<p class="mtext">飼っている家畜 ${world.animals.length} / ${F32.cap()}頭。おなかをすかせているのは${hungry}頭。飼料 ${count("feed")}個</p>
+        <button class="btn" type="button" id="b32feed" ${hungry && count("feed") ? "" : "disabled"}>まとめてエサをあげる</button>`;
+    }
+    if (mine && d.id === "silo32") {
+      const cap = 99 * mine32("silo32").length;
+      html += `<p class="mtext">サイロの飼料 <b>${world.silo32 || 0}</b> / ${cap}個。毎朝、家畜1頭に1個ずつエサをあげます（家畜 ${world.animals.length}頭）。持っている飼料 ${count("feed")}個</p>
+        <div class="row2"><button class="btn" type="button" id="b32in" ${count("feed") && (world.silo32 || 0) < cap ? "" : "disabled"}>持っている飼料を全部入れる</button><button class="btn light" type="button" id="b32out" ${world.silo32 ? "" : "disabled"}>10個取り出す</button></div>`;
+    }
+    if (mine && d.id === "pethouse32") html += `<p class="mtext">${world.pets.length ? `ペット ${world.pets.length}匹が、毎朝ここで休んで、なつき度が1つ上がります。` : "まだペットがいません。よろず屋で迎えられます。"}${world.stats.presents32 ? `これまでのおみやげ ${world.stats.presents32}回` : ""}</p>`;
+    if (mine && d.id === "coop32") { const n = world.animals.filter(a => a.type === "chicken" || a.type === "duck").length; html += `<p class="mtext">${n ? `ニワトリとアヒル ${n}羽。エサをあげた日の次の朝、半分くらいの確率でもう1個、小屋のそばに卵を置いてくれます。` : "ニワトリかアヒルを飼うと、卵がふえます。"}</p>`; }
+    if (mine) html += `<p class="mtext small">場所を変えたいときは、キットに戻して置きなおせます${d.id === "silo32" && world.silo32 ? "（サイロの飼料は持ち物に戻ります）" : ""}。</p><button class="btn light" type="button" id="b32back">キットに戻す</button>`;
+    body.innerHTML = html;
+    body.querySelector("#b32feed")?.addEventListener("click", () => {
+      let n = 0; for (const a of world.animals) { if (a.fed || !count("feed")) continue; removeItem("feed", 1); a.fed = true; a.hearts = Math.min(10, a.hearts + 1); n++; }
+      saveWorld(); closeModal(); toast("feed", `${n}頭にエサをあげた`);
+    });
+    body.querySelector("#b32in")?.addEventListener("click", () => {
+      const cap = 99 * mine32("silo32").length, n = Math.min(count("feed"), cap - (world.silo32 || 0)); if (n <= 0) return;
+      removeItem("feed", n); world.silo32 = (world.silo32 || 0) + n; saveWorld(); closeModal(); openBuild32(k); toast("feed", `サイロに飼料を${n}個入れた`);
+    });
+    body.querySelector("#b32out")?.addEventListener("click", () => {
+      const n = Math.min(10, world.silo32 || 0); if (!addItem("feed", n)) return; world.silo32 -= n; saveWorld(); closeModal(); openBuild32(k);
+    });
+    body.querySelector("#b32back")?.addEventListener("click", () => {
+      if (!world.inv.some(x => !x || x.id === "deco_" + d.id)) { toast(null, "持ち物がいっぱいで片付けられない"); return; }
+      if (d.id === "silo32" && mine32("silo32").length === 1 && world.silo32) { if (!addItem("feed", world.silo32)) { toast(null, "飼料を持ちきれない"); return; } world.silo32 = 0; }
+      delete world.decor[k]; addItem("deco_" + d.id, 1, true); rebuildSolid(); saveWorld(); closeModal(); toast("b32_" + d.id, `${b.name}をキットに戻した`);
+    });
+  });
+}
+F32.open = openBuild32;
+// ---- 朝のはたらき ----
+const PRESENT32 = [["acorn_normal", 2], ["seed_flower", 2], ["ore", 1], ["stone", 3], ["wood", 3], ["money", 0]];
+const _animalsNewDay32 = animalsNewDay;
+animalsNewDay = function () {
+  const notes = [];
+  const coop = mine32("coop32"), barn = mine32("barn32").length, silo = mine32("silo32").length, ph = mine32("pethouse32");
+  if (coop.length) { let n = 0; for (const a of world.animals) if (a.fed && (a.type === "chicken" || a.type === "duck") && Math.random() < .5) { dropNear32(coop[0], ANIMALS[a.type].prod, 1); n++; } if (n) notes.push(`ニワトリ小屋に、卵が${n}個ふえていた`); }
+  if (barn) for (const a of world.animals) if (a.fed) a.hearts = Math.min(10, a.hearts + 1);
+  _animalsNewDay32();
+  if (silo && world.silo32 > 0) { let n = 0; for (const a of world.animals) { if (!(world.silo32 > 0)) break; world.silo32--; a.fed = true; a.hearts = Math.min(10, a.hearts + 1); n++; } if (n) notes.push(`サイロが、家畜${n}頭にエサをあげた（のこり${world.silo32}個）`); if (!world.silo32) notes.push("サイロの飼料がなくなった"); }
+  if (ph.length) {
+    for (const t of world.pets) {
+      world.petHearts[t] = Math.min(10, (world.petHearts[t] || 0) + 1); if (t === "cat") world.cat.hearts = world.petHearts[t];
+      if (Math.random() < .35) {
+        const [id, n] = PRESENT32[rnd(PRESENT32.length)], who = petEnts.find(e => e.ptype === t)?.name || PETS[t].name;
+        if (id === "money") { const g = 50 + rnd(16) * 10; addMoney(g); notes.push(`${who}が、どこかで小銭をくわえてきた（+${g}G）`); }
+        else if (ITEMS[id]) { dropNear32(ph[0], id, n); notes.push(`${who}が、ペット小屋の前に${ITEMS[id].name}を置いていた`); }
+        world.stats.presents32 = (world.stats.presents32 || 0) + 1;
+      }
+    }
+  }
+  if (notes.length) setTimeout(() => F7.notify(notes.join("。"), null), 600);
+};
+// ---- よろず屋の「建物」 ----
+const _shopTabs32 = shopTabs13;
+shopTabs13 = function (tab) { return _shopTabs32(tab).replace("</div>", `<button class="chip" type="button" data-t="build32" aria-pressed="${tab === "build32"}">建物</button></div>`); };
+const _openShop32 = openShop;
+openShop = function (tab) {
+  if (tab !== "build32") { _openShop32(tab); return; }
+  openModal("よろず屋", "shop", body => {
+    const have = Object.keys(B32).map(id => [id, mine32(id).length + count("deco_" + id)]);
+    body.innerHTML = shopTabs13("build32") + `<p class="mtext">所持金 <b>${fmt(world.money)}</b>・木材 ${count("wood")}・石 ${count("stone")}</p>
+      <p class="mtext small">建物のキットを買って、持ったまま村の草地や道を向いてAボタンで建てます。建物を向いてAボタンで中を見たり、キットに戻したりできます。オンラインでは、建物はみんなの村に建ち、はたらきは建てた人の動物とペットに効きます。</p>
+      <div class="list">${have.map(([id, n]) => { const b = B32[id], mat = Object.entries(b.mat).map(([m, q]) => `${ITEMS[m].name}${q}`).join("・"), ok = world.money >= b.money && Object.entries(b.mat).every(([m, q]) => count(m) >= q);
+        return `<div class="li"><img src="${ASSETS["b32_" + id]}" alt="" style="object-fit:contain"><span class="nm">${esc(b.name)}（${b.w}×${b.h}マス）<span class="sub2">${fmt(b.money)}＋${mat}・${b.desc}${n ? `・持っている ${n}` : ""}</span></span><span class="acts"><button class="btn" type="button" data-b32="${id}" ${ok ? "" : "disabled"}>買う</button></span></div>`; }).join("")}</div>`;
+    body.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { closeModal(); openShop(b.dataset.t); });
+    body.querySelectorAll("[data-b32]").forEach(btn => btn.onclick = () => {
+      const id = btn.dataset.b32, b = B32[id];
+      if (world.money < b.money || !Object.entries(b.mat).every(([m, q]) => count(m) >= q)) return;
+      if (!addItem("deco_" + id, 1)) return;
+      addMoney(-b.money); for (const [m, q] of Object.entries(b.mat)) removeItem(m, q);
+      saveWorld(); toast("b32_" + id, `${b.name}のキットを買った。持って、建てたい場所を向いてAボタン`); closeModal(); openShop("build32");
+    });
+  });
+};
+ACH.push(["小さな牧場主", "家以外の建物を3つ建てる", () => (world.stats.builds32 || 0) >= 3]);
+ACH_REWARD["小さな牧場主"] = ["item", "feed", 20];
+F32.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -8424,7 +8630,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

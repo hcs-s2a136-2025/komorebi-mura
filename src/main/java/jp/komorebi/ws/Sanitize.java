@@ -32,12 +32,12 @@ final class Sanitize {
         return DIRS.contains(s) ? s : "down";
     }
 
-    /** 見た目の設定：文字列の値だけ・12項目まで・各20文字まで */
+    /** 見た目の設定：文字列の値だけ・20項目まで・各20文字まで */
     static ObjectNode cfg(JsonNode n, ObjectMapper om) {
         ObjectNode out = om.createObjectNode();
         if (n == null || !n.isObject()) return out;
         int count = 0;
-        for (Iterator<Map.Entry<String, JsonNode>> it = n.fields(); it.hasNext() && count < 12; ) {
+        for (Iterator<Map.Entry<String, JsonNode>> it = n.fields(); it.hasNext() && count < 20; ) {
             Map.Entry<String, JsonNode> e = it.next();
             if (e.getKey().length() > 12) continue;
             JsonNode v = e.getValue();

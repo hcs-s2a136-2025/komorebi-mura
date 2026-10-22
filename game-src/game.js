@@ -2515,8 +2515,193 @@ const OMOTE_WEAR30 = {
 };
 for (const [key, o] of Object.entries(OMOTE_WEAR30)) for (const [v, price] of Object.entries(o)) WEAR26[key][v] = { shop: "omote", price };
 
-const OPTS = [["髪型", "hair", null], ["髪の色", "hairc", 1], ["服", "top", null], ["服の色", "topc", 1],
-              ["ボトムス", "bottom", null], ["ボトムスの色", "bottomc", 1], ["肌の色", "skin", 0], ["帽子", "hat", null], ["アクセサリー", "acc", null], ["靴の色", "shoesc", 0]];
+// =================== v34: 見た目をふやす（前髪・後ろ髪・目・目の色・口・ほっぺ、服や小物もたくさん） ===================
+// 前髪（bangs）は、後ろ髪（hair）の4〜8行目のおでこ部分を差し替えて、組み合わせた髪を作って描く。
+// 目・口・ほっぺは、描いたあとの顔の肌の点だけを塗りかえる（メガネやマスクなど、上にのった物は消さない）。
+const ROW34 = (l, mid, r) => "..." + l + mid + r + "...";
+Object.assign(CHAR.HAIR, {
+  "ベリーショート": ["................", "................", ".....AAAAAA.....", "....AabbaaaA....", "...AaaaaaaaaA...", "...Ac......cA..."],
+  "ぼうず": ["................", "................", ".....AAAAAA.....", "....AaaaaaaA....", "...Ac......cA...", "...A........A..."],
+  "サイドテール": ["................", ".....AAAAAA.....", "....AabbaaaA....", "...AabbaaaaaAA..", "...AaaaaaaacAaA.", "...Aac....caAaA.", "...A........AaA.", "...A........AcA.", "............AaA.", ".............AA."],
+  "三つ編み": ["................", ".....AAAAAA.....", "....AabbaaaA....", "...AabbaaaaaA...", "...AaaaaaaacA...", "..AAac....caAA..", "..AA........AA..", "..Aa........aA..", "..Ac........cA..", "..Aa........aA..", "..Ac........cA..", "..AA........AA.."],
+  "ウルフカット": ["................", ".....AAAAAA.....", "....AabbaaaA....", "...AabbaaaaaA...", "..AAaaaaaaacAA..", "..AAac....caAA..", "..AA........AA..", "..Aa........aA..", "...Ac......cA...", "..A..........A.."],
+  "縦ロール": ["................", ".....AAAAAA.....", "....AabbaaaA....", "...AabbaaaaaA...", "...AaaaaaaacA...", ".AAAac....caAAA.", ".AaA........AaA.", ".AcA........AcA.", ".AaA........AaA.", ".AcA........AcA.", ".AaA........AaA.", "..AA........AA.."],
+  "ハーフアップ": [".......AA.......", ".....AAbaAA.....", "....AabbaaaA....", "...AabbaaaaaA...", "...AaaaaaaacA...", "..AAac....caAA..", "..Aa........aA..", "..Aa........aA..", "..Aa........aA..", "..Aac......caA..", "..Aac......caA..", "...AA......AA..."],
+  "おだんごツイン": ["...AA......AA...", "..AbaAAAAAAAbaA.", "..AaaAabbaaAaaA.", "...AAabbaaaaAA..", "...AaaaaaaacA...", "...Aac....caA...", "...A........A...", "...A........A..."],
+  "ロングウェーブ": ["................", ".....AAAAAA.....", "....AabbaaaA....", "...AabbaaaaaA...", "...AaaaaaaacA...", "..AAac....caAA..", "..Aa........aA..", ".Aa..........aA.", "..Aa........aA..", ".Aac........caA.", "..Aa........aA..", ".AA..........AA."],
+  "アシメ": ["................", ".....AAAAAA.....", "....AabbaaaA....", "...AabbaaaaaA...", "..AAaaaaaaacA...", "..AAac....caA...", "..Aa........A...", "..Aa............", "..Ac............", "..Aa............", "...A............"],
+});
+const BANGS34 = {
+  "髪型のまま": null,
+  "ぱっつん": [ROW34("A", "aaaaaaaa", "A"), ROW34("A", "cccccccc", "A")],
+  "流し前髪": [ROW34("A", "baaaaaaa", "A"), ROW34("A", "aaaac...", "A"), ROW34("A", "c.......", "A")],
+  "センター分け": [ROW34("A", "aaa..aaa", "A"), ROW34("A", "ac....ca", "A")],
+  "シースルー": [ROW34("A", "aa.aa.aa", "A"), ROW34("A", "a..a..a.", "A")],
+  "姫カット": [ROW34("A", "aaaaaaaa", "A"), ROW34("A", "cccccccc", "A"), ROW34("A", "a......a", "A"), ROW34("A", "a......a", "A"), ROW34("A", "c......c", "A")],
+  "触角ヘア": [ROW34("A", "aaaaaaaa", "A"), ROW34("A", "c.cccc.c", "A"), ROW34("c", "........", "c"), ROW34("c", "........", "c"), ROW34("c", "........", "c")],
+  "目隠れ": [ROW34("A", "aaaaaaaa", "A"), ROW34("A", "aaaaaac.", "A"), ROW34("A", "aaac....", "A"), ROW34("A", "ac......", "A")],
+  "短め": [ROW34("A", "aaaaaaaa", "A"), ROW34("A", "c.c..c.c", "A")],
+  "M字": [ROW34("A", "aaaaaaaa", "A"), ROW34("A", "ac.cc.ca", "A")],
+  "おでこ出し": [ROW34("A", "........", "A"), ROW34("A", "........", "A")],
+};
+const EYES34 = {
+  "ふつう": [[0, 6, "E"], [0, 7, "E"]],
+  "キラキラ": [[0, 6, "W"], [0, 7, "E"], [1, 6, "E"], [1, 7, "E"], [1, 5, "E"]],
+  "まんまる": [[0, 6, "E"], [0, 7, "E"], [1, 6, "E"], [1, 7, "E"]],
+  "にっこり": [[1, 7, "E"], [0, 6, "E"], [-1, 7, "E"]],
+  "ジト目": [[0, 7, "E"], [1, 7, "E"], [0, 6, "L"], [1, 6, "L"]],
+  "たれ目": [[0, 6, "E"], [0, 7, "E"], [1, 7, "E"]],
+  "つり目": [[0, 6, "E"], [0, 7, "E"], [1, 6, "E"]],
+  "ほそ目": [[0, 7, "E"], [1, 7, "E"]],
+  "ウインク": "wink",
+  "ハート目": [[-1, 5, "P"], [1, 5, "P"], [-1, 6, "P"], [0, 6, "P"], [1, 6, "P"], [0, 7, "P"]],
+  "星の目": [[0, 5, "Y"], [-1, 6, "Y"], [0, 6, "Y"], [1, 6, "Y"], [0, 7, "Y"]],
+  "ぐるぐる": [[-1, 5, "E"], [0, 5, "E"], [1, 5, "E"], [1, 6, "E"], [1, 7, "E"], [0, 7, "E"], [-1, 7, "E"], [-1, 6, "E"], [0, 6, "W"]],
+  "×の目": [[-1, 5, "E"], [1, 5, "E"], [0, 6, "E"], [-1, 7, "E"], [1, 7, "E"]],
+  "白目": [[0, 6, "W"], [0, 7, "W"]],
+};
+const EYEC34 = { "こげ茶": [44, 32, 48], "黒": [20, 20, 26], "茶色": [110, 66, 40], "青": [40, 90, 200], "水色": [70, 170, 230], "緑": [40, 140, 80], "赤": [200, 40, 50], "むらさき": [120, 60, 180], "金色": [220, 170, 40], "ピンク": [230, 90, 150] };
+const MOUTH34 = {
+  "なし": [], "にこっ": [[7, 8, "M"], [8, 8, "M"]], "ぽかん": [[7, 8, "D"], [8, 8, "D"], [7, 9, "D"], [8, 9, "D"]],
+  "ねこ口": [[6, 8, "M"], [9, 8, "M"], [7, 9, "M"], [8, 9, "M"]], "べー": [[7, 8, "M"], [8, 8, "M"], [8, 9, "T"]],
+  "キバ": [[7, 8, "M"], [8, 8, "M"], [8, 9, "W"]], "ちゅー": [[8, 8, "T"]],
+};
+const CHEEK34 = { "ふつう": 0, "なし": 0, "しっかり": 0, "そばかす": 0 };
+Object.assign(CHAR.SKIN, {
+  "陶器": [[255, 236, 222], [240, 206, 186], [176, 116, 104]], "こんがり": [[176, 120, 84], [146, 94, 64], [86, 52, 40]],
+  "まっしろ": [[248, 248, 252], [214, 214, 226], [130, 130, 150]], "うちゅうの青": [[150, 200, 240], [110, 160, 214], [50, 80, 130]],
+  "ようせいの緑": [[170, 220, 150], [128, 182, 112], [64, 104, 64]], "ゆめのむらさき": [[214, 190, 240], [180, 150, 214], [100, 76, 140]],
+});
+Object.assign(CHAR.HAIRC, {
+  "白": [[255, 255, 255], [232, 232, 240], [196, 196, 210], [120, 120, 140]], "水色": [[190, 236, 255], [120, 200, 240], [70, 150, 206], [40, 90, 140]],
+  "黄緑": [[220, 250, 150], [160, 220, 90], [110, 170, 60], [60, 100, 40]], "むらさき": [[200, 150, 240], [150, 90, 210], [100, 56, 160], [56, 30, 96]],
+  "ピンクブラウン": [[236, 180, 170], [200, 130, 120], [150, 90, 90], [90, 50, 56]], "グレー": [[190, 190, 196], [140, 140, 150], [96, 96, 108], [54, 54, 64]],
+});
+Object.assign(CHAR.CLOTH, {
+  "水色": [[200, 236, 252], [140, 204, 240], [90, 160, 210], [50, 96, 140]], "ミント": [[200, 244, 224], [140, 214, 186], [90, 170, 144], [50, 106, 90]],
+  "ラベンダー": [[232, 220, 252], [196, 176, 236], [150, 126, 200], [86, 70, 130]], "ベージュ": [[246, 232, 210], [222, 200, 166], [184, 160, 124], [110, 92, 70]],
+  "ワイン": [[214, 110, 130], [160, 50, 76], [116, 30, 54], [64, 16, 32]], "蛍光イエロー": [[250, 255, 160], [230, 250, 60], [180, 210, 30], [100, 120, 20]],
+  "オレンジ": [[255, 210, 150], [250, 160, 70], [210, 110, 40], [120, 60, 24]], "グレー": [[226, 226, 230], [180, 180, 188], [132, 132, 142], [72, 72, 82]],
+});
+Object.assign(SHOEC, { "ピンク": [240, 140, 180], "黄色": [240, 200, 60], "緑": [80, 150, 80], "むらさき": [130, 80, 180], "金": [220, 180, 60] });
+Object.assign(CHAR.WHITE, { B: [70, 110, 200], G: [96, 170, 96], O: [240, 150, 60], L: [180, 150, 230], D: [120, 80, 60] });
+Object.assign(CHAR.TOPS, {
+  "キャミソール": { rows: [".....T....T.....", "....TuttttvT....", "....TttttttT...."], covers: false },
+  "オフショルダー": { rows: ["................", "...TuWWWWWWvT...", "....TttttttT...."], covers: false },
+  "フリルブラウス": { rows: [".....TWWWWT.....", "....TWuuuuWT....", "...WTttttttTW..."], covers: false },
+  "カーディガン": { rows: [".....TvWWvT.....", "....TtvWWvtT....", "...TttvWWvttT..."], covers: false },
+  "チェックシャツ": { rows: [".....TuvuvT.....", "....TvuvuvuT....", "...TuvuvuvuvT..."], covers: false },
+  "ジャージ": { rows: [".....TWuuWT.....", "....TtWttWtT....", "...WttttttttW..."], covers: false },
+  "スカルT": { rows: [".....TuuuvT.....", "....TuWWWWvT....", "...TutWKKWtvT..."], covers: false },
+  "ライダース": { rows: [".....TKWWKT.....", "....TKKYKKKT....", "...TKKKYKKKKT..."], covers: false },
+  "よろい": { rows: [".....TXWWXT.....", "....TXWXXWXT....", "...TXXWXXWXXT..."], covers: false },
+  "忍者装束": { rows: [".....TKKKKT.....", "....TtKttKtT....", "...TttKttKttT..."], covers: false },
+  "ロリータドレス": { rows: [".....TWuuWT.....", "....TuWttWvT....", "...TuttPPttvT...", "....TWttttWT....", "..TWWWWWWWWWWT.."], covers: true },
+  "ジャンパースカート": { rows: [".....WWWWWW.....", "....WTttttTW....", "...WWTttttTWW...", "....TttttttT....", "...TttttttttT..."], covers: true },
+  "くまの着ぐるみ": { rows: [".....TttttT.....", "....TttuutvT....", "...TttuuuutvT...", "....TtuuuutT....", "....TttTTttT...."], covers: true },
+  "ピエロ服": { rows: [".....TWRWRT.....", "....TuRtYtRT....", "...TuYtRtYtvT...", "....TRtYtRvT....", "...TWWWWWWWWT..."], covers: true },
+  "宇宙服": { rows: [".....TWWWWT.....", "....TWXBBXWT....", "...TWWXWWXWWT...", "....TWWWWWWT....", "....TXWTTWXT...."], covers: true },
+  "白衣": { rows: [".....TWuuWT.....", "....TWWuuWWT....", "...TWWWuuWWWT...", "....TWWWWWWT....", "....TWW..WWT...."], covers: true },
+});
+Object.assign(CHAR.BOTTOMS, {
+  "フリルスカート": ["...PpppppppqP...", "....PqPqPqPq...."], "チュチュ": ["..PppppppppppP..", "................"],
+  "ジーンズ": [".....PpqpqP.....", ".....PqPPpP....."], "ハーフパンツ": [".....PppqqP.....", ".....P....P....."],
+  "サルエル": ["....PppppqqP....", ".....PqPPqP....."], "キュロット": ["....PpppppqP....", "....PqP..PqP...."],
+});
+let rc34cfg = null;
+const hairCol34 = i => { const v = CHAR.HAIRC[rc34cfg?.hairc]; return Array.isArray(v) ? v[i] : [120, 80, 50]; };
+const ahoPal34 = {}; Object.defineProperty(ahoPal34, "A", { get: () => hairCol34(3) }); Object.defineProperty(ahoPal34, "a", { get: () => hairCol34(1) });
+const NEW_HATS34 = {
+  "くま耳": { rows: ["...AA......AA...", "..AbbA....AbbA..", "..AbaA....AabA.."], pal: { A: [90, 56, 36], a: [150, 100, 64], b: [210, 160, 120] } },
+  "天使の輪": { rows: ["....YYYYYYYY....", "...Y........Y...", "....YYYYYYYY...."], pal: { Y: [255, 230, 120] } },
+  "悪魔のツノ": { rows: ["...A........A...", "...AA......AA...", "....AA....AA...."], pal: { A: [130, 30, 50] } },
+  "アホ毛": { rows: [".......A........", "........a.......", ".......aA......."], pal: ahoPal34 },
+  "大きなリボン": { rows: ["....AAA..AAA....", "...AbaaAAaabA...", "...AaaaAAaaaA...", "....AAA..AAA...."], pal: { A: [190, 40, 90], a: [240, 90, 140], b: [255, 170, 200] } },
+  "ヘアピン": { rows: ["................", "................", "................", "..........YY....", "..........Y....."], pal: { Y: [250, 200, 60] } },
+  "シェフ帽": { rows: ["....AAAAAAAA....", "...AaaaaaaaaA...", "...AaaaaaaaaA...", "....AaaaaaaA....", "....AbbbbbbA...."], pal: { A: [190, 190, 200], a: [252, 252, 252], b: [230, 230, 236] } },
+  "パーティー帽": { rows: [".......Y........", "......ArA.......", ".....AyrrA......", "....AryyrrA....."], pal: { A: [60, 90, 200], r: [230, 70, 110], y: [250, 220, 80], Y: [250, 220, 80] } },
+  "ナイトキャップ": { rows: ["..........W.....", ".......AAAaA....", ".....AaaaaaAA...", "....AaaaaaaaA...", "...WWWWWWWWWW..."], pal: { A: [60, 80, 150], a: [110, 140, 210], W: [250, 250, 252] } },
+  "ハチマキ": { rows: ["................", "................", "................", "...RRRRWRRRRR...", "............RR.."], pal: { R: [210, 50, 60], W: [252, 252, 252] } },
+  "ちょんまげ": { rows: [".......AA.......", "......AAAA......", ".......AA......."], pal: { A: [36, 34, 44] } },
+};
+Object.assign(HATS, NEW_HATS34); HAT_FREE.push(...Object.keys(NEW_HATS34));
+const K34 = [36, 34, 44], W34 = [250, 250, 252];
+Object.assign(ACC_ART26, {
+  "眼帯": (put, dir) => { if (dir === "up") return; for (const [x, y] of [[4, 6], [5, 6], [6, 6], [4, 7], [5, 7], [6, 7]]) put(x, y, K34); if (dir === "down") for (let x = 7; x <= 12; x++) put(x, 5, K34); },
+  "マスク": (put, dir) => { if (dir === "up") return; const xs = dir === "down" ? [4, 11] : [3, 7]; for (let x = xs[0]; x <= xs[1]; x++) { put(x, 8, W34); put(x, 9, [226, 226, 232]); } },
+  "ばんそうこう": (put, dir) => { if (dir === "up") return; const C = [240, 206, 160]; if (dir === "down") { put(9, 8, C); put(10, 8, [214, 176, 130]); put(11, 8, C); } else { put(5, 8, C); put(6, 8, C); } },
+  "ひげ": (put, dir) => { if (dir === "up") return; const D = [70, 46, 34]; if (dir === "down") for (const x of [6, 7, 8, 9]) put(x, 8, D); else { put(3, 8, D); put(4, 8, D); } },
+  "ハートのサングラス": (put, dir) => { if (dir === "up") return; const P = [240, 60, 120]; if (dir === "down") { for (const [x, y] of [[4, 5], [6, 5], [4, 6], [5, 6], [6, 6], [5, 7], [9, 5], [11, 5], [9, 6], [10, 6], [11, 6], [10, 7]]) put(x, y, P); put(7, 6, K34); put(8, 6, K34); } else for (const [x, y] of [[3, 5], [5, 5], [3, 6], [4, 6], [5, 6], [4, 7]]) put(x, y, P); },
+  "モノクル": (put, dir) => { if (dir !== "down") return; const G = [220, 180, 60]; for (const [x, y] of [[9, 5], [10, 5], [11, 5], [11, 6], [11, 7], [9, 7], [9, 6], [12, 8], [12, 9]]) put(x, y, G); },
+  "チョーカー": (put, dir) => { if (dir === "up") return; for (let x = 6; x <= 9; x++) put(x, 10, K34); if (dir === "down") put(7, 11, [220, 60, 90]); },
+  "ネクタイ": (put, dir) => { if (dir !== "down") return; const R = [200, 40, 60], D = [140, 24, 40]; put(7, 10, R); put(8, 10, R); put(7, 11, R); put(8, 11, D); put(7, 12, R); put(8, 12, D); },
+  "天使の羽": (put, dir) => { const W = W34, G = [214, 220, 236]; if (dir === "up") { for (let y = 9; y <= 12; y++) { for (let x = 1; x <= 4; x++) put(x, y, y === 12 && x < 3 ? G : W); for (let x = 11; x <= 14; x++) put(x, y, y === 12 && x > 12 ? G : W); } } else if (dir === "down") { for (let y = 9; y <= 12; y++) { put(1, y, W); put(2, y, G); put(13, y, G); put(14, y, W); } } else for (let y = 9; y <= 12; y++) { put(12, y, G); put(13, y, W); put(14, y - 1, W); } },
+  "悪魔のしっぽ": (put, dir) => { const R = [120, 30, 50]; if (dir === "down") { put(12, 13, R); put(13, 12, R); put(13, 11, R); put(14, 10, R); put(14, 9, R); put(13, 9, R); } else if (dir === "up") { put(8, 13, R); put(8, 14, R); put(9, 15, R); put(10, 15, R); put(11, 14, R); } else { put(13, 13, R); put(14, 12, R); put(14, 11, R); put(15, 10, R); } },
+  "小さなリュック": (put, dir) => { const B = [200, 90, 70], D = [150, 60, 50]; if (dir === "up") { for (let y = 10; y <= 13; y++) for (let x = 5; x <= 10; x++) put(x, y, y === 10 ? D : B); put(7, 12, [240, 200, 80]); } else if (dir === "down") { put(4, 11, D); put(11, 11, D); } else for (let y = 10; y <= 13; y++) for (let x = 11; x <= 13; x++) put(x, y, B); },
+});
+Object.assign(ACCS, Object.fromEntries(["眼帯", "マスク", "ばんそうこう", "ひげ", "ハートのサングラス", "モノクル", "チョーカー", "ネクタイ", "天使の羽", "悪魔のしっぽ", "小さなリュック"].map(k => [k, 1])));
+Object.assign(POOLS, { bangs: BANGS34, eyes: EYES34, eyec: EYEC34, mouth: MOUTH34, cheek: CHEEK34 });
+Object.assign(DEFAULT, { bangs: "髪型のまま", eyes: "ふつう", eyec: "こげ茶", mouth: "なし", cheek: "ふつう" });
+for (const k of ["bangs", "eyes", "eyec", "mouth", "cheek"]) if (!(cfg[k] in POOLS[k])) cfg[k] = (saved?.cfg && saved.cfg[k] in POOLS[k]) ? saved.cfg[k] : DEFAULT[k];
+function hairKey34(h, bg) {
+  const B = BANGS34[bg]; if (!B || !CHAR.HAIR[h] || h === "モヒカン") return h;
+  const key = h + "＋" + bg; if (Object.prototype.hasOwnProperty.call(CHAR.HAIR, key)) return key;
+  const rows = CHAR.HAIR[h].slice(); while (rows.length < 4 + B.length) rows.push("................");
+  B.forEach((row, i) => { const y = 4 + i, r = [...rows[y]]; for (let x = 3; x <= 12; x++) { const ch = row[x]; if (x >= 4 && x <= 11) r[x] = ch; else if (ch !== ".") r[x] = ch; } rows[y] = r.join(""); });
+  Object.defineProperty(CHAR.HAIR, key, { value: rows, enumerable: false, configurable: true });
+  return key;
+}
+const face34Cache = new Map();
+const DEF_EYE34 = [44, 32, 48], CHEEK_R34 = [246, 150, 140];
+const _renderChar34 = renderChar;
+renderChar = function (c, dir, frame) {
+  c = c || {};
+  const plain = (!c.bangs || c.bangs === "髪型のまま") && (!c.eyes || c.eyes === "ふつう") && (!c.eyec || c.eyec === "こげ茶") && (!c.mouth || c.mouth === "なし") && (!c.cheek || c.cheek === "ふつう");
+  const prev = rc34cfg; rc34cfg = c;
+  try {
+    if (plain) return _renderChar34(c, dir, frame);
+    const key = JSON.stringify(c) + dir + frame + gamingShift;
+    if (face34Cache.has(key)) return face34Cache.get(key);
+    const base = _renderChar34({ ...c, hair: hairKey34(c.hair, c.bangs) }, dir, frame);
+    const cv = document.createElement("canvas"); cv.width = cv.height = 16; const x = cv.getContext("2d"); x.drawImage(base, 0, 0);
+    if (dir !== "up") face34(x, c, dir);
+    if (face34Cache.size > 3000) face34Cache.clear();
+    face34Cache.set(key, cv); return cv;
+  } finally { rc34cfg = prev; }
+};
+function face34(x, c, dir) {
+  const img = x.getImageData(0, 0, 16, 16), d = img.data;
+  const at = (px, py) => { const i = (py * 16 + px) * 4; return [d[i], d[i + 1], d[i + 2], d[i + 3]]; };
+  const same = (p, q) => p[3] > 0 && p[0] === q[0] && p[1] === q[1] && p[2] === q[2];
+  const set = (px, py, col) => { if (px < 0 || px > 15 || py < 0 || py > 15) return; const i = (py * 16 + px) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; };
+  const S = CHAR.SKIN[c.skin] || CHAR.SKIN["やや明るめ"];
+  const isSkin = (px, py) => { const p = at(px, py); return same(p, S[0]) || same(p, S[1]) || same(p, DEF_EYE34) || same(p, CHEEK_R34); };
+  const E = EYEC34[c.eyec] || DEF_EYE34;
+  const COL = { E, W: W34, L: S[2], P: [240, 80, 140], Y: [250, 210, 60], M: [170, 70, 80], D: [90, 30, 40], T: [240, 120, 150] };
+  // 目：もとの目（こげ茶の2点）を見つけて、肌にもどしてから描きなおす
+  const eyes = [];
+  for (let px = 3; px <= 12; px++) if (same(at(px, 6), DEF_EYE34) && same(at(px, 7), DEF_EYE34)) eyes.push(px);
+  const shape = EYES34[c.eyes] || EYES34["ふつう"];
+  for (const ex of eyes) {
+    set(ex, 6, S[0]); set(ex, 7, S[0]);
+    const outSign = ex < 8 ? -1 : 1;
+    const sh = shape === "wink" ? (ex < 8 || dir !== "down" ? EYES34["ふつう"] : EYES34["にっこり"]) : shape;
+    for (const [dx, y, k] of sh) { const px = ex + dx * outSign; if (isSkin(px, y)) set(px, y, COL[k]); }
+  }
+  // ほっぺ
+  if (c.cheek && c.cheek !== "ふつう") for (let px = 3; px <= 12; px++) {
+    if (!same(at(px, 8), CHEEK_R34)) continue;
+    set(px, 8, c.cheek === "しっかり" ? [240, 110, 120] : S[0]);
+    if (c.cheek === "しっかり") { const o = px < 8 ? px - 1 : px + 1; if (isSkin(o, 8)) set(o, 8, [246, 140, 140]); }
+  }
+  if (c.cheek === "そばかす") for (const [px, py] of (dir === "down" ? [[4, 7], [6, 8], [9, 8], [11, 7]] : [[4, 8], [6, 8]])) if (isSkin(px, py)) set(px, py, [170, 110, 80]);
+  // 口（正面だけ）
+  if (dir === "down") for (const [px, py, k] of (MOUTH34[c.mouth] || [])) { const p = at(px, py); if (same(p, S[0]) || same(p, S[1])) set(px, py, COL[k]); }
+  x.putImageData(img, 0, 0);
+}
+
+const OPTS = [["髪型（後ろ髪）", "hair", null], ["前髪", "bangs", null], ["髪の色", "hairc", 1], ["目", "eyes", null], ["目の色", "eyec", 0], ["口", "mouth", null], ["ほっぺ", "cheek", null],
+              ["服", "top", null], ["服の色", "topc", 1], ["ボトムス", "bottom", null], ["ボトムスの色", "bottomc", 1], ["肌の色", "skin", 0], ["帽子", "hat", null], ["アクセサリー", "acc", null], ["靴の色", "shoesc", 0]];
 function swatchRow(rowEl, pool, ci, onPick, labelPre, key) {
   for (const name in pool) {
     const b = document.createElement("button"); b.type = "button"; b.dataset.v = name; b.id = `opt-${key}-${name}`;
@@ -3557,7 +3742,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.20.0";
+const CLIENT_VERSION = "0.21.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5582,6 +5767,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.21.0", date: "2026/10/22", title: "着せ替えが大きくなった", items: [
+    "前髪と後ろ髪（髪型）を、べつべつに選べるように。前髪は11種類（ぱっつん・流し前髪・センター分け・シースルー・姫カット・触角ヘア・目隠れ など）",
+    "後ろ髪がふえた：ベリーショート・ぼうず・サイドテール・三つ編み・ウルフカット・縦ロール・ハーフアップ・おだんごツイン・ロングウェーブ・アシメ",
+    "顔：目14種類（キラキラ・ジト目・ウインク・ハート目・ぐるぐる など）と目の色10色、口7種類、ほっぺ4種類",
+    "服16着（フリルブラウス・ロリータドレス・くまの着ぐるみ・ピエロ服・宇宙服・よろい など）、ボトムス6着、帽子11個（天使の輪・悪魔のツノ・アホ毛 など）、アクセサリー11個（眼帯・天使の羽・悪魔のしっぽ など）",
+    "肌の色・髪の色・服の色・靴の色もふえた（うちゅうの青・ようせいの緑など、ふしぎな肌の色も）",
+    "着せ替えの画面を「髪・顔・服・小物」のタブに分けて、ボタンに今の自分が着た絵を出すようにした。新しく増えた物は、最初から全部選べる",
+  ] },
   { v: "0.20.0", date: "2026/10/22", title: "雷の電気", items: [
     "雷雨（⚡）が夏だけでなく、春と秋にもときどき来るように",
     "避雷針：雷雨の日、雷が落ちると電気が2つたまる。見ていなかった雷雨の日も、次の朝に少したまっている",
@@ -7568,6 +7761,45 @@ ACH.push(["かみなり発電所", "避雷針に雷を10回落とす", () => (wo
 ACH_REWARD["かみなり発電所"] = ["money", 3000];
 F33.ready = true;
 
+// =================== v34: 着せ替えの画面（カテゴリーのタブと、絵つきのボタン） ===================
+var F34 = {};
+const CAT34 = { "髪": ["hair", "bangs", "hairc"], "顔": ["eyes", "eyec", "mouth", "cheek", "skin"], "服": ["top", "topc", "bottom", "bottomc", "shoesc"], "小物": ["hat", "acc"] };
+const HEAD34 = new Set(["hair", "bangs", "eyes", "mouth", "cheek", "hat"]);
+let cat34 = (() => { try { return localStorage.getItem("komorebi-wcat") || "髪"; } catch { return "髪"; } })();
+(() => {
+  const opts = $("opts"); if (!opts) return;
+  opts.querySelectorAll(".opt").forEach(sec => { const k = sec.querySelector(".row")?.dataset.key; const cat = Object.keys(CAT34).find(c => CAT34[c].includes(k)); if (cat) sec.dataset.cat34 = cat; });
+  opts.insertAdjacentHTML("beforebegin", `<div class="wtabs34" id="wtabs34" role="tablist">${[...Object.keys(CAT34), "ぜんぶ"].map(c => `<button class="chip" type="button" role="tab" data-c="${c}">${c}</button>`).join("")}</div>`);
+  const tabs = $("wtabs34");
+  const show = c => { cat34 = c; try { localStorage.setItem("komorebi-wcat", c); } catch {} tabs.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.c === c))); opts.querySelectorAll(".opt").forEach(sec => { sec.hidden = c !== "ぜんぶ" && sec.dataset.cat34 && sec.dataset.cat34 !== c; }); };
+  tabs.querySelectorAll("button").forEach(b => b.onclick = () => show(b.dataset.c));
+  show(cat34);
+  const note = opts.querySelector(".note"); if (note) note.textContent = "前髪と後ろ髪（髪型）は組み合わせ自由。目・口・ほっぺも選べます。「未入手」の物は、お店やガチャ、美容室で手に入ります。";
+})();
+// 絵つきボタン：今の自分に、その髪や服を合わせた絵を出す
+function iconChips34() {
+  for (const key of ["hair", "bangs", "eyes", "mouth", "cheek", "top", "bottom", "hat", "acc"]) {
+    document.querySelectorAll(`#opts .row[data-key="${key}"] button.chip`).forEach(b => {
+      const v = b.dataset.v, txt = b.textContent || "", locked = /未入手/.test(txt);
+      const sig = JSON.stringify(cfg) + v + locked + b.disabled;
+      if (b._sig34 === sig && b.querySelector("canvas")) return;
+      b._sig34 = sig;
+      const pv = { ...cfg, [key]: v };
+      if (key === "bottom" && CHAR.TOPS[pv.top]?.covers) pv.top = "Tシャツ";
+      if (key === "eyes" || key === "mouth" || key === "cheek") pv.hat = "なし";
+      b.classList.add("ic34");
+      b.innerHTML = `<canvas width="32" height="32"></canvas><span>${esc(v)}${locked ? "<small>未入手</small>" : ""}</span>`;
+      const x = b.firstChild.getContext("2d"); x.imageSmoothingEnabled = false;
+      try { const im = renderChar(pv, "down", 0); if (HEAD34.has(key)) x.drawImage(im, 2, 0, 12, 12, 4, 4, 24, 24); else x.drawImage(im, 0, 0, 16, 16, 0, 0, 32, 32); } catch {}
+    });
+  }
+}
+const _syncUI34 = syncUI;
+syncUI = function () { _syncUI34(); iconChips34(); };
+F34.icons = iconChips34; F34.render = (c, d) => renderChar({ ...DEFAULT, ...c }, d || "down", 0);
+syncUI();
+F34.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -7591,5 +7823,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F34, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

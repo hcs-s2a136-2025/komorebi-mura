@@ -174,3 +174,11 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .snap30 { display: flex; gap: 12px; align-items: center; background: var(--panel-2); border-radius: 10px; padding: 10px 12px; margin: 8px 0 10px; }
 .snap30 img { width: 64px; height: 64px; image-rendering: pixelated; background: #e6ded0; border-radius: 8px; flex: none; }
 .snap30 small { opacity: .75; }
+/* v34: 着せ替え */
+.wtabs34 { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px 0; }
+.wtabs34 .chip { padding: 6px 14px; }
+#opts .chip.ic34 { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 6px 5px; min-width: 64px; line-height: 1.15; vertical-align: top; }
+#opts .chip.ic34 canvas { width: 40px; height: 40px; image-rendering: pixelated; background: var(--panel-2); border-radius: 6px; }
+#opts .chip.ic34 span { font-size: .72rem; text-align: center; max-width: 76px; word-break: keep-all; overflow-wrap: anywhere; }
+#opts .chip.ic34 small { display: block; font-size: .62rem; opacity: .7; }
+#opts .chip.ic34[disabled] canvas { opacity: .45; filter: grayscale(.6); }

@@ -3797,7 +3797,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.25.0";
+const CLIENT_VERSION = "0.25.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5825,6 +5825,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.25.1", date: "2026/10/23", title: "スマホの表示を直した", items: [
+    "スマホで、掲示板のイベントの欄などの「名前｜内容」の表が、名前が1文字ずつ縦にならんでしまっていたのを直した",
+  ] },
   { v: "0.25.0", date: "2026/10/22", title: "家の間取り・増築・お店が3つに", items: [
     "家の中に部屋が作れるように。家の中で「建築」タブの「間取り」から、ワンルーム・居間＋寝室・3部屋・4部屋・5部屋・6部屋をえらぶと、壁とドアが自動でつく",
     "建てた家は大きいほど、えらべる部屋の数がふえて、1部屋も広くなる（幅64ドットまで2部屋・112ドットまで4部屋・それより大きいと6部屋）",

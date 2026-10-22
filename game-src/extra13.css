@@ -196,3 +196,7 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .plan38b small { font-size: .64rem; opacity: .7; }
 .plan38b.on { border-color: var(--lantern); }
 .plan38b[disabled]:not(.on) { opacity: .5; cursor: default; }
+/* 表（ラベル｜値）：スマホでラベルが1文字ずつ縦にならないように */
+.stat { grid-template-columns: fit-content(58%) minmax(0, 1fr); }
+.stat > span { min-width: 4em; }
+.stat > b { overflow-wrap: anywhere; }

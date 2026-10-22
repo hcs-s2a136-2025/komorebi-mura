@@ -28,6 +28,12 @@
   </section>
 
   <section class="card">
+    <h2>イベント</h2>
+    <p class="muted">釣り大会・イースター・ハロウィン・クリスマス・独自イベントを、好きな日時に開けます。順位やごほうびもここで決めます。</p>
+    <div class="row"><a class="btn" href="/admin/events">イベントを開く・見る</a></div>
+  </section>
+
+  <section class="card">
     <h2>村の時計</h2>
     <p th:text="${clockText}">1日目</p>
     <form class="row" method="post" th:action="@{/admin/clock/morning}"><button class="btn ghost" type="submit">次の日の朝にする</button></form>

@@ -50,3 +50,8 @@ table.players { width: 100%; border-collapse: collapse; font-size: .9rem; }
 table.players th, table.players td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(0, 0, 0, .08); vertical-align: middle; }
 table.players td.acts { display: flex; gap: 6px; flex-wrap: wrap; }
 table.players td.acts form { display: flex; gap: 4px; align-items: center; margin: 0; }
+.evform { display: grid; gap: 10px; }
+.evform label { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; flex: 1; min-width: 180px; }
+.evform input, .evform select, .evform textarea { font: inherit; padding: 6px 8px; }
+.evform .row { display: flex; flex-wrap: wrap; gap: 10px; }
+.evform h3 { margin: 6px 0 0; font-size: 1rem; }

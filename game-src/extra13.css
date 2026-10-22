@@ -132,3 +132,15 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .gcard26 i { font-style: normal; font-size: .62rem; color: #8a8278; } .gcard26 .btn { padding: 2px 8px; font-size: .7rem; }
 .gtable26 div { margin: 4px 0; font-size: .78rem; line-height: 1.8; } .gtable26 b { margin-right: 6px; }
 .gtable26 span { display: inline-block; margin-right: 8px; color: #8a8278; } .gtable26 span.own { color: #1d1b1a; font-weight: bold; }
+.evboard28 { display: grid; gap: 2px; font-size: .88rem; }
+.evboard28 div { display: grid; grid-template-columns: 3em 1fr auto; gap: 8px; padding: 3px 6px; border-bottom: 1px dashed rgba(90, 58, 40, .2); }
+.evboard28 b { font-family: var(--f-pixel); font-weight: 400; }
+#evBtn28 { position: relative; }
+@media (max-width: 520px) {
+  header { gap: 4px; }
+  header h1 { font-size: 1rem; }
+  header .btn { padding: 6px 6px; font-size: .72rem; }
+  #bgmBtn { max-width: 66px; overflow: hidden; text-overflow: ellipsis; }
+}
+.list .li .acts { white-space: nowrap; }
+@media (max-width: 380px) { header h1 { font-size: .9rem; } header { gap: 3px; } }

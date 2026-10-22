@@ -3526,7 +3526,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.13.0";
+const CLIENT_VERSION = "0.14.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5541,6 +5541,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.14.0", date: "2026/10/22", title: "イベント", items: [
+    "管理人が、釣り大会・イースター・ハロウィン・クリスマス・独自イベントを、好きな日時に開けるように（管理人室の「イベント」）",
+    "オンラインでイベントが始まると、上に「イベント」ボタンが出る。参加すると、釣った魚や拾った物が記録されて、みんなで順位を競える",
+    "釣り大会は「ポイント合計・釣った数・種類・いちばん大きい魚」から、管理人が順位の決め方をえらぶ。魚にはその場で大きさ（cm）がつく",
+    "イースターは卵、ハロウィンはお菓子、クリスマスはプレゼントが村に落ちて、拾った数で競う",
+    "終わると、順位・参加賞・達成賞のごほうび（お金・メダル・アイテム・限定の服や飾り）が届く。同じごほうびは二度もらえず、つないでいなかった人には次につないだときに届く",
+    "季節のイベント（ひとりでも）：春・秋・冬の5〜6日目は、イースター・ハロウィン・クリスマス。拾った数（10・20・30個）で限定の服や飾りがもらえる",
+    "スマホで上のボタンがはみ出さないように詰めた"] },
   { v: "0.13.0", date: "2026/10/22", title: "村のデコレーション", items: [
     "よろず屋に「外かざり」コーナー。花の鉢・プランター・街灯・ベンチ・看板・小鳥の水浴び台・花のアーチ・花壇を村に飾れる",
     "持って地面を向いてAボタンで置く、飾りに向いてAボタンで片付け。花のアーチやイルミネーションは上を歩ける",
@@ -6569,6 +6577,222 @@ onWelcomeWorld = function (snap, epoch) {
 };
 F27.ready = true;
 
+// =================== v28: イベント（管理人が開くオンラインのイベント・季節のイベント） ===================
+// オンライン：管理人室で開かれたイベントに参加して、釣った魚や拾った物がサーバーに記録され、みんなで順位を競う。ごほうびはサーバーから届く。
+// 季節のイベント（だれでも・ひとりでも）：春の5〜6日目はイースター、秋の5〜6日目はハロウィン、冬の5〜6日目はクリスマス。
+//   村に卵・お菓子・プレゼントが落ちて、拾った数でごほうび（10個・20個・30個）。
+var F28 = {};
+const EV28 = { ev: null, board: [], cal: null };
+const EVITEMS28 = {
+  ev_egg: { name: "色つき卵", price: 20, spr: (s, r, e) => { e(8, 9, 4, 5, C17("#f6a8c8")); r(4, 8, 9, 2, C17("#a8d8f6")); for (const x of [6, 9]) s(x, 12, C17("#f0c840")); } },
+  ev_candy: { name: "ハロウィンのお菓子", price: 20, spr: (s, r, e) => { e(8, 8, 3.4, 3, C17("#e8862a")); r(2, 7, 3, 3, C17("#8a50c8")); r(11, 7, 3, 3, C17("#8a50c8")); s(7, 7, C17("#ffd0a0")); } },
+  ev_present: { name: "小さなプレゼント", price: 20, spr: (s, r, e) => { r(3, 6, 10, 9, C17("#e2404e")); r(7, 6, 2, 9, C17("#f0c840")); r(3, 9, 10, 2, C17("#f0c840")); e(6, 4, 2, 1.4, C17("#f0c840")); e(10, 4, 2, 1.4, C17("#f0c840")); } },
+  ev_star: { name: "星のかけら", price: 20, spr: (s, r, e) => { const Y = C17("#f8d848"); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * Math.PI * 2 / 5; for (let t = 0; t < 6; t++) s(Math.round(8 + Math.cos(a) * t), Math.round(8 + Math.sin(a) * t), Y); } e(8, 8, 2.4, 2.4, Y); s(7, 7, C17("#ffffff")); } },
+};
+for (const [id, a] of Object.entries(EVITEMS28)) { addSpr17(id, a.spr); ITEMS[id] = { name: a.name, icon: id, price: a.price }; }
+const COLLECT28 = { easter: "ev_egg", halloween: "ev_candy", christmas: "ev_present", custom: "ev_star", fishing: "ev_star" };
+const EVKIND28 = { easter: "イースター", halloween: "ハロウィン", christmas: "クリスマス", fishing: "釣り大会", custom: "イベント" };
+const SCORING28 = { points: "釣った魚のポイント合計", count: "釣った数", kinds: "釣った魚の種類", biggest: "いちばん大きい魚（cm）", collect: "拾った数", none: "参加するだけ（順位なし）" };
+const FISHBASE28 = { "フナ": 20, "コイ": 50, "ナマズ": 60, "ウナギ": 70, "イワナ": 30, "ブラックバス": 45, "ワカサギ": 12, "サケ": 70, "ヌシ": 150, "アジ": 25, "タイ": 45, "マグロ": 150, "ネッタイギョ": 15, "カツオ": 60, "ブリ": 90,
+  "ヤマメ": 25, "ドジョウ": 15, "ザリガニ": 12, "ニジマス": 40, "サバ": 40, "イカ": 35, "タコ": 60, "ヒラメ": 55, "コバンゴイ": 80, "ギャクテンダイ": 70 };
+
+// ---------- いまのイベント ----------
+const evOn28 = () => !!(EV28.ev && F8.connected && Date.now() < EV28.ev.endsAtLocal);
+function calEvent28() {
+  const d = dayOfSeason(), s = season();
+  if (d !== 5 && d !== 6) return null;
+  return { "春": "easter", "秋": "halloween", "冬": "christmas" }[s] || null;
+}
+F26.event = () => { if (evOn28() && ["easter", "halloween", "christmas"].includes(EV28.ev.kind)) return EV28.ev.kind; return calEvent28(); };
+function setEv28(e) {
+  if (!e) { EV28.ev = null; clearEvDrops28(); syncEvBtn28(); return; }
+  // サーバーとの時計のずれを直して、こちらの時計での終わりの時刻を持つ
+  e.endsAtLocal = Date.now() + Math.max(0, e.endsAt - (e.now || Date.now()));
+  const prev = EV28.ev;
+  EV28.ev = { ...(prev && prev.id === e.id ? prev : {}), ...e };
+  if (e.top) EV28.board = e.top;
+  syncEvBtn28();
+}
+function clearEvDrops28() { const n = world.drops.length; world.drops = world.drops.filter(d => !d.ev); if (n !== world.drops.length) saveWorld(); }
+
+// ---------- 画面の上のボタン ----------
+$("fbBtn").insertAdjacentHTML("beforebegin", `<button class="btn ghost" id="evBtn28" type="button" hidden>イベント<span class="dot8" id="evDot28" hidden></span></button>`);
+$("evBtn28").addEventListener("click", () => openEvent28());
+function syncEvBtn28() {
+  const on = evOn28() || !!calEvent28();
+  $("evBtn28").hidden = !on;
+  $("evDot28").hidden = !(evOn28() && !EV28.ev.joined);
+}
+setInterval(() => { syncEvBtn28(); if (!evOn28() && !calEvent28()) clearEvDrops28(); }, 2000);
+
+// ---------- ごほうび ----------
+function rewardText28(spec) {
+  return String(spec || "").split(",").filter(Boolean).map(p => {
+    const a = p.split(":");
+    if (a[0] === "money") return fmt(+a[1]);
+    if (a[0] === "medal") return `メダル${a[1]}枚`;
+    if (a[0] === "item") return `${ITEMS[a[1]]?.name || a[1]}${+a[2] > 1 ? "×" + a[2] : ""}`;
+    if (a[0] === "wear") return `${WEAR_LABEL26[a[1]] || "服"}「${a.slice(2).join(":")}」`;
+    return p;
+  }).join("・") || "なし";
+}
+function applyReward28(spec) {
+  for (const p of String(spec || "").split(",").filter(Boolean)) {
+    const a = p.split(":");
+    if (a[0] === "money") addMoney(Math.max(0, Math.min(10000000, +a[1] || 0)));
+    else if (a[0] === "medal") world.medals = (world.medals || 0) + Math.max(0, Math.min(100000, +a[1] || 0));
+    else if (a[0] === "item" && ITEMS[a[1]]) { const n = Math.max(1, Math.min(999, +a[2] || 1)); if (!addItem(a[1], n, true)) homeStore18(a[1], n); }
+    else if (a[0] === "wear" && ["top", "bottom", "hat", "acc"].includes(a[1])) grantWear26(a[1], a.slice(2).join(":"), true);
+  }
+  saveWorld(); updateHud(true);
+}
+function gotReward28(m) {
+  world.evClaimed = world.evClaimed || [];
+  const id = +m.id;
+  if (!world.evClaimed.includes(id)) {
+    applyReward28(m.reward);
+    world.evClaimed.push(id); if (world.evClaimed.length > 200) world.evClaimed.shift(); saveWorld();
+    F7.notify(`イベント「${m.name}」のごほうび${m.rank ? `（${m.rank}位 / ${m.total}人）` : ""}：${rewardText28(m.reward)}`, null);
+  }
+  send8({ type: "ev", act: "claim", id });
+}
+
+// ---------- 釣り・拾う ----------
+const _fishCaught28 = F6.fishCaught;
+F6.fishCaught = got => {
+  _fishCaught28(got);
+  const e = EV28.ev;
+  if (!(evOn28() && e.joined && e.activity === "fish")) return;
+  const base = FISHBASE28[got] || 30, size = Math.max(1, Math.round(base * (.7 + Math.random() * .6)));
+  send8({ type: "ev", act: "fish", fish: got, size });
+  setTimeout(() => toast("fish_" + got, `大会の記録：${got} ${size}cm`), 900);
+};
+let evSpawnT28 = 0;
+function evCollectKind28() {
+  if (evOn28() && EV28.ev.joined && EV28.ev.activity === "collect") return { item: COLLECT28[EV28.ev.kind] || "ev_star", online: true };
+  const c = calEvent28(); if (c) return { item: COLLECT28[c], online: false, cal: c };
+  return null;
+}
+const _update28 = F6.update;
+F6.update = dt => {
+  const before = new Map(world.drops.filter(d => d.ev).map(d => [d.x + "," + d.y, d.id]));
+  _update28(dt);
+  if (map !== village) return;
+  const k = evCollectKind28();
+  if (!k) return;
+  // 村に、拾う物を少しずつ落とす（8個まで）
+  if ((evSpawnT28 -= dt) <= 0) {
+    evSpawnT28 = 20;
+    const now = world.drops.filter(d => d.ev).length;
+    if (now < 8) for (let i = 0; i < 40; i++) { const x = 2 + rnd(village.w - 4), y = 9 + rnd(village.h - 11); if (!inPaddock(x, y) && freeGrass(x, y)) { world.drops.push({ x, y, id: k.item, n: 1, ev: true }); break; } }
+  }
+  if (!before.size) return;
+  const nowSet = new Set(world.drops.filter(d => d.ev).map(d => d.x + "," + d.y));
+  for (const [key] of before) if (!nowSet.has(key)) {
+    if (k.online) send8({ type: "ev", act: "collect" });
+    else calPicked28(k.cal);
+  }
+};
+// 季節のイベント（ひとりでも）：拾った数で、限定の服や飾りがもらえる
+function calPicked28(kind) {
+  const year = Math.floor((world.day - 1) / 28);
+  world.calEv = world.calEv || {};
+  const st = world.calEv[kind + ":" + year] = world.calEv[kind + ":" + year] || { n: 0, got: [] };
+  st.n++;
+  const goals = calGoals28(kind);
+  for (const g of goals) if (st.n >= g.n && !st.got.includes(g.n)) {
+    st.got.push(g.n); applyReward28(g.reward);
+    F7.notify(`${EVKIND28[kind]}：${g.n}個集めた！ ごほうび：${rewardText28(g.reward)}`, null);
+  }
+  saveWorld();
+}
+function calGoals28(kind) {
+  const wear = Object.entries(WEAR26).flatMap(([key, o]) => Object.entries(o).filter(([, i]) => i.event === kind).map(([v]) => `wear:${key}:${v}`));
+  const deco = Object.entries(DECOR27).filter(([, d]) => d.event === kind).map(([id]) => `item:deco_${id}:1`);
+  return [{ n: 10, reward: [wear[0], "money:300"].filter(Boolean).join(",") }, { n: 20, reward: [wear[1] || wear[0], deco[0]].filter(Boolean).join(",") }, { n: 30, reward: [deco[1] || deco[0], "medal:5"].filter(Boolean).join(",") }];
+}
+
+// ---------- イベントの画面 ----------
+function openEvent28() {
+  const e = evOn28() ? EV28.ev : null, cal = calEvent28();
+  if (e) send8({ type: "ev", act: "look" });
+  openModal(e ? e.name : `${EVKIND28[cal]}（季節のイベント）`, "shop", body => {
+    const draw = () => {
+      if (!body.isConnected) return;
+      const ev = evOn28() ? EV28.ev : null;
+      let html = "";
+      if (ev) {
+        const left = Math.max(0, Math.round((ev.endsAtLocal - Date.now()) / 1000));
+        const rw = ev.rewards || {};
+        const howto = ev.activity === "fish" ? "参加したあとに釣った魚が、自動で記録されます（村の池でも、みなと町の海でも）。" : ev.activity === "collect" ? `参加したあと、村に落ちている「${ITEMS[COLLECT28[ev.kind] || "ev_star"].name}」を拾うと記録されます。` : "参加するだけでOK。終わったら参加賞がもらえます。";
+        html += `<p class="mtext"><b>${esc(EVKIND28[ev.kind] || ev.kindName || "")}</b>　のこり <b id="evLeft28">${Math.floor(left / 60)}分${left % 60}秒</b>　参加 ${ev.people || 0}人</p>
+          ${ev.rules ? `<p class="mtext">${esc(ev.rules)}</p>` : ""}
+          <p class="mtext small">順位の決め方：${esc(SCORING28[ev.scoring] || ev.scoringName || "")}。${howto}</p>
+          <div class="list">${[["r1", "1位"], ["r2", "2位"], ["r3", "3位"], ["all", "参加賞"], ["goal", `達成賞（${rw.goalScore || 0}以上）`]].filter(([k]) => rw[k]).map(([k, l]) => `<div class="li"><span class="nm">${l}<span class="sub2">${esc(rewardText28(rw[k]))}</span></span></div>`).join("") || `<p class="mtext small">ごほうびは管理人が決めています。</p>`}</div>`;
+        if (!ev.joined) {
+          const lv = repLv(), fee = ev.joinFee || 0;
+          html += `<p class="mtext small">${fee ? `参加費 ${fmt(fee)}。` : ""}${ev.minLevel ? `評判レベル${ev.minLevel}から参加できます（いまはLv${lv}）。` : ""}</p>
+            <div class="row2"><button class="btn" type="button" id="evJoin28" ${lv < (ev.minLevel || 0) || world.money < fee ? "disabled" : ""}>参加する</button></div>`;
+        } else {
+          html += `<p class="mtext">あなたの記録：<b>${ev.score ?? 0}</b>${ev.activity === "fish" ? `（${ev.count || 0}匹・${ev.kinds || 0}種類・いちばん大きい魚 ${ev.best || 0}cm・${ev.points || 0}ポイント）` : ev.activity === "collect" ? `（拾った数 ${ev.collected || 0}）` : ""}</p>`;
+        }
+        html += `<h3 class="lbl">順位</h3><div class="evboard28">${(EV28.board || []).map((r, i) => `<div><span>${i + 1}位</span><span>${esc(r.name)}</span><b>${r.score}</b></div>`).join("") || `<p class="mtext small">まだだれも記録していません。</p>`}</div>`;
+      }
+      if (cal) {
+        const year = Math.floor((world.day - 1) / 28), st = (world.calEv || {})[cal + ":" + year] || { n: 0, got: [] };
+        html += `${ev ? `<h3 class="lbl">季節のイベント</h3>` : ""}<p class="mtext">いまは${EVKIND28[cal]}の季節（${season()}の5〜6日目）。村に「${ITEMS[COLLECT28[cal]].name}」が落ちているよ。集めた数でごほうびがもらえます。季節の飾りがよろず屋に、限定の服がきせかえガチャに並びます。</p>
+          <p class="mtext">集めた数：<b>${st.n}</b></p>
+          <div class="list">${calGoals28(cal).map(g => `<div class="li"><span class="nm">${g.n}個<span class="sub2">${esc(rewardText28(g.reward))}</span></span><span class="acts">${st.got.includes(g.n) ? "もらった" : ""}</span></div>`).join("")}</div>`;
+      }
+      if (!ev && !cal) html = `<p class="mtext">いまは開催中のイベントはありません。</p>`;
+      body.innerHTML = html;
+      const j = body.querySelector("#evJoin28");
+      if (j) j.onclick = () => { j.disabled = true; send8({ type: "ev", act: "join", level: repLv() }); };
+    };
+    F28.redraw = draw;
+    draw();
+    const t = setInterval(() => { if (!body.isConnected) { clearInterval(t); F28.redraw = null; return; } const el = body.querySelector("#evLeft28"); if (el && EV28.ev) { const left = Math.max(0, Math.round((EV28.ev.endsAtLocal - Date.now()) / 1000)); el.textContent = `${Math.floor(left / 60)}分${left % 60}秒`; } }, 1000);
+  });
+}
+
+// ---------- サーバーからのお知らせ ----------
+const _handle28 = handle8;
+handle8 = m => {
+  _handle28(m);
+  switch (m.type) {
+    case "welcome":
+      setEv28(m.event || null);
+      for (const r of m.evRewards || []) gotReward28(r);
+      if (m.event && !m.event.joined) setTimeout(() => toast(null, `イベント「${m.event.name}」開催中！ 上の「イベント」から参加できるよ`), 2500);
+      break;
+    case "evState":
+      if (m.event && (!EV28.ev || EV28.ev.id !== m.event.id)) { F7.notify(`イベント「${m.event.name}」が始まった！ 上の「イベント」から参加できるよ`, null); setEv28({ ...m.event, joined: false }); }
+      else if (!m.event) setEv28(null);
+      else setEv28({ ...m.event, joined: EV28.ev.joined, score: EV28.ev.score });
+      break;
+    case "evMe":
+      if (m.event) setEv28(m.event); else setEv28(null);
+      if (m.joined && m.fee > 0) { addMoney(-Math.min(world.money, m.fee)); toast("coin", `参加費 ${fmt(m.fee)} を払った`); }
+      if (m.joined) toast(null, `イベント「${m.event?.name || ""}」に参加した！`);
+      break;
+    case "evBoard":
+      EV28.board = m.top || [];
+      if (EV28.ev && EV28.ev.id === m.id) EV28.ev.people = m.people;
+      break;
+    case "evNg": toast(null, String(m.text || "").slice(0, 60)); break;
+    case "evReward": gotReward28(m); break;
+    case "evEnd":
+      F7.notify(`イベント「${m.name}」が終わった！ ${(m.top || []).map(r => `${r.rank}位 ${r.name}（${r.score}）`).join("、") || ""}`, null);
+      break;
+    default: return;
+  }
+  if (F28.redraw) F28.redraw();
+};
+syncEvBtn28();
+ACH.push(["イベント参加", "イベントのごほうびをもらう", () => (world.evClaimed || []).length > 0 || Object.values(world.calEv || {}).some(s => s.got.length)]);
+ACH_REWARD["イベント参加"] = ["money", 500];
+F28.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -6592,5 +6816,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

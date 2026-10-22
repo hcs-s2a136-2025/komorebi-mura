@@ -1,4 +1,4 @@
-# こもれび村 オンライン試作（v0.13.0）
+# こもれび村 オンライン試作（v0.14.0）
 
 Spring Boot で動く、こもれび村のオンライン試作サーバーです。
 
@@ -121,7 +121,7 @@ public class BragHandler implements MessageHandler {
 
 ### テーブルや列をふやす
 
-`src/main/resources/db/migration/` に次の番号の `V5__add_xxx.sql` を足すと、起動時に Flyway が自動で反映します。**すでにある V1〜V4 のファイルは書きかえない**のがルールです。
+`src/main/resources/db/migration/` に次の番号の `V6__add_xxx.sql` を足すと、起動時に Flyway が自動で反映します。**すでにある V1〜V5 のファイルは書きかえない**のがルールです。
 
 ### ゲーム本体を直す
 
@@ -148,6 +148,7 @@ src/main/java/jp/komorebi/
   save/      プレイヤーごとのセーブデータ
   house/     家の中（模様・家具）とみんなの収納箱・鍵つきの箱（中身の計算は Spring なしの HouseBook.java）
   casino/    みんなのジャックポット・お小遣い・みんなのBJ（ルールは Spring なしの BjGame.java）
+  event/     管理人が開くイベント（ルールは Spring なしの EventRules、進行・記録・ごほうびは EventService、画面は /admin/events）
   casino/mj/ みんなの麻雀（正式ルール。ルールと進行は Spring なしの MjRules / MjGame / MjAi、つなぐ係は MjTableService）
   clock/     村の時計（日付・時刻・天気、眠ると朝）
   board/     伝言板
@@ -187,6 +188,7 @@ tools/mock-server/  Javaなしでゲーム側を試せる、同じ約束の模�
 | `jp` / `jpWin` | 送る → `jp` を受け取る | スロットの積み立て・当たり。`jp` は新しい額（当たったときは `winner` と `won` も） |
 | `bj` → `bjState` / `bjCharge` / `bjSettle` / `bjNg` | 送る `{act: sit\|leave\|bet\|hit\|stand\|double\|split\|look, amount}` | みんなのBJ。`bjState` は卓のようす（全員へ）、`bjCharge` は賭け金を引く（マイナスなら戻す）、`bjSettle` は精算（本人へ） |
 | `mj` → `mjLobby` / `mjTable` / `mjNg` / `mjPay` | 送る `{act: list\|create\|sit\|start\|leave\|look\|discard\|tsumo\|kan\|kyuushu\|ron\|pon\|minkan\|chi\|pass\|next, a, b}` | みんなの麻雀。`mjTable` は自分の手牌だけ入った卓のようす（本人へ）、`mjPay` は精算（留守のときは次の welcome の `mjPay`） |
+| `ev` → `evMe` / `evNg`、受け取る `evState` / `evBoard` / `evReward` / `evEnd` | 送る `{act: look\|join\|fish\|collect\|claim}` | イベント（開く・終えるのは管理人室だけ）。welcome に開催中の `event` と、まだ受け取っていない `evRewards` が入る |
 | `gift` → `giftOk` / `giftNg` | 送る `{to, amount, rid}` | お小遣い。相手には `gift` が届く |
 | `house` → `house` / `houseImport` | 送る `{act: get\|put\|import, key, layout, seed, items}`。`key:"home"` はオンラインの「みんなの家」（だれでも入れて模様替えでき、鍵つきの箱はひとりずつ別。`import` でひとり用の家の物を自分だけの箱へ） | 建てた家の中。`get` で中のようす `{layout, storage, priv}`（`priv` は持ち主にだけ）。`put` は持ち主だけ、同じ家にいる人へ届く。入れないときは `locked`、まだ無いときは `missing` |
 | `box` → `boxOk` / `boxNg` / `houseBox` | 送る `{act: put\|take, key, which: shared\|priv, id, n, rid}` | 箱の出し入れ。みんなの収納箱は入れる人ならだれでも、鍵つきの箱は持ち主だけ。中身が変わると `houseBox` がその家にいる人へ届く |

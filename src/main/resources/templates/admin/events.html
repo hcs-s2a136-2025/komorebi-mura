@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>イベント｜こもれび村 管理人室</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<header class="bar">
+  <h1>イベント</h1>
+  <span class="grow"></span>
+  <a class="btn ghost" href="/admin">管理人室に戻る</a>
+</header>
+<main class="wrap">
+  <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+
+  <section class="card">
+    <h2>イベントの一覧</h2>
+    <p class="muted" th:if="${#lists.isEmpty(events)}">まだイベントはありません</p>
+    <table class="players" th:unless="${#lists.isEmpty(events)}">
+      <tr><th>イベント</th><th>期間</th><th>状態</th><th>参加</th><th>上位</th><th></th></tr>
+      <tr th:each="e : ${events}">
+        <td><a th:href="@{/admin/events/{id}(id=${e.id()})}" th:text="${e.name()}">name</a><br><span class="muted" th:text="|${e.kindName()}・${e.scoringName()}|">kind</span></td>
+        <td th:text="|${fmt.format(e.startsAt())} 〜 ${fmt.format(e.endsAt())}|">time</td>
+        <td th:text="${e.status() == 'active' ? '開催中' : (e.status() == 'scheduled' ? '開催前' : '終了')}">status</td>
+        <td th:text="|${people.get(e.id())}人|">0</td>
+        <td><span th:each="r : ${top.get(e.id())}" th:text="|${r.rank()}位 ${r.name()}（${r.score()}） |">1位</span></td>
+        <td class="row">
+          <form method="post" th:action="@{/admin/events/{id}/start(id=${e.id()})}" th:if="${e.status() == 'scheduled'}"><button class="btn" type="submit">今すぐ開始</button></form>
+          <form method="post" th:action="@{/admin/events/{id}/end(id=${e.id()})}" th:if="${e.status() != 'ended'}"><button class="btn ghost" type="submit">終了する</button></form>
+          <form method="post" th:action="@{/admin/events/{id}/delete(id=${e.id()})}" th:if="${e.status() == 'scheduled'}"><button class="btn ghost" type="submit">消す</button></form>
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>イベントを開く</h2>
+    <p class="muted">開催中のイベントは1つだけです。時間が重なったら、先に始まる方から順に開きます。終了すると、順位と達成ラインに応じてごほうびが自動で渡ります（同じ人に二度は渡りません。つないでいない人には、次につないだときに届きます）。</p>
+    <form class="evform" method="post" th:action="@{/admin/events}">
+      <label>イベント名 <input name="name" maxlength="40" required placeholder="例：秋の大物釣り大会"></label>
+      <label>種類
+        <select name="kind"><option th:each="k : ${kinds}" th:value="${k.key}" th:text="${k.value}">fishing</option></select>
+      </label>
+      <label>順位の決め方
+        <select name="scoring"><option th:each="s : ${scorings}" th:value="${s.key}" th:text="${s.value}">points</option></select>
+      </label>
+      <p class="muted">釣り大会は「ポイント合計・釣った数・種類・いちばん大きい魚」から選べます。イースター（卵）・ハロウィン（お菓子）・クリスマス（プレゼント）は、村に落ちている物を拾った数で決まります。独自イベントは全部から選べます（「参加するだけ」は順位なしで参加賞だけ）。</p>
+      <label>ルールの説明（プレイヤーに見せる） <textarea name="rules" maxlength="1000" rows="3" placeholder="例：池でも海でもOK。いちばん大きい魚を釣った人が優勝！"></textarea></label>
+      <div class="row">
+        <label>始まり <input type="datetime-local" name="start" th:value="${defStart}" required></label>
+        <label>終わり <input type="datetime-local" name="end" th:value="${defEnd}" required></label>
+      </div>
+      <div class="row">
+        <label>参加費（G） <input type="number" name="joinFee" min="0" max="100000" value="0"></label>
+        <label>参加できる評判レベル（以上） <input type="number" name="minLevel" min="0" max="10" value="0"></label>
+      </div>
+      <h3>ごほうび</h3>
+      <p class="muted">カンマで区切って書きます：<code>money:1000</code>（お金）、<code>medal:10</code>（メダル）、<code>item:アイテムID:個数</code>、<code>wear:top|bottom|hat|acc:名前</code>（限定の服など）。下の入力欄は、候補から選ぶこともできます。</p>
+      <datalist id="rwlist">
+        <option value="money:1000"></option><option value="money:3000"></option><option value="medal:10"></option>
+        <option value="wear:hat:王冠"></option><option value="wear:hat:ティアラ"></option>
+        <option value="wear:hat:うさ耳"></option><option value="wear:top:うさぎパーカー"></option><option value="item:deco_bunny27:1"></option><option value="item:deco_egg_pink:1"></option>
+        <option value="wear:hat:魔女の帽子"></option><option value="wear:top:魔女のローブ"></option><option value="item:deco_jack27:1"></option><option value="item:deco_ghost27:1"></option>
+        <option value="wear:top:サンタ服"></option><option value="wear:hat:トナカイのツノ"></option><option value="item:deco_xtree27:1"></option><option value="item:deco_lights27:1"></option>
+        <option value="item:f_trophy:1"></option><option value="item:gem:3"></option><option value="item:cookie25:3"></option><option value="item:deco_arch27:1"></option>
+      </datalist>
+      <div class="row">
+        <label>1位 <input name="r1" list="rwlist" placeholder="money:3000,wear:hat:王冠"></label>
+        <label>2位 <input name="r2" list="rwlist" placeholder="money:2000"></label>
+        <label>3位 <input name="r3" list="rwlist" placeholder="money:1000"></label>
+      </div>
+      <div class="row">
+        <label>参加賞（参加した全員） <input name="all" list="rwlist" placeholder="item:cookie25:3"></label>
+        <label>達成ライン（この数以上） <input type="number" name="goalScore" min="0" value="0"></label>
+        <label>達成賞 <input name="goal" list="rwlist" placeholder="medal:10"></label>
+      </div>
+      <button class="btn" type="submit">登録する</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

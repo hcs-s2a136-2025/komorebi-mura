@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="|${e.name()}｜こもれび村 管理人室|">イベント</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<header class="bar">
+  <h1 th:text="${e.name()}">イベント</h1>
+  <span class="grow"></span>
+  <a class="btn ghost" href="/admin/events">イベントの一覧</a>
+</header>
+<main class="wrap">
+  <section class="card">
+    <p th:text="|${e.kindName()}・${e.scoringName()}・${fmt.format(e.startsAt())} 〜 ${fmt.format(e.endsAt())}|">info</p>
+    <p class="muted" th:text="${e.rules()}">rules</p>
+    <p class="muted" th:text="|参加費 ${e.joinFee()}G・評判レベル ${e.minLevel()} 以上|">fee</p>
+    <ul class="online">
+      <li th:each="r : ${e.rewards()}" th:if="${!#strings.isEmpty(r.value)}"><b th:text="${r.key == 'r1' ? '1位' : (r.key == 'r2' ? '2位' : (r.key == 'r3' ? '3位' : (r.key == 'all' ? '参加賞' : (r.key == 'goal' ? '達成賞' : '達成ライン'))))}">1位</b> <span th:text="${r.value}">money</span></li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>順位（<span th:text="${#lists.size(ranking)}">0</span>人）</h2>
+    <table class="players">
+      <tr><th>順位</th><th>なまえ</th><th>記録</th></tr>
+      <tr th:each="r : ${ranking}"><td th:text="${r.rank()}">1</td><td th:text="${r.name()}">name</td><td th:text="${r.score()}">0</td></tr>
+    </table>
+  </section>
+</main>
+</body>
+</html>

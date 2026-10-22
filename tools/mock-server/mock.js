@@ -29,6 +29,20 @@ if (fs.existsSync(BJ_CP)) {
 }
 // みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
 let mj = null; const mjPending = new Map();
+// イベント（本物は EventService.java。ここでは同じ約束をメモリだけで）
+let ev = null; let evNext = 1; const evRewards = new Map(); // playerId -> [{id,name,rank,total,reward}]
+const evAct = e => ["easter", "halloween", "christmas"].includes(e.kind) ? "collect" : e.kind === "fishing" ? "fish" : e.scoring === "collect" ? "collect" : e.scoring === "none" ? "none" : "fish";
+const evVal = (e, sc) => ({ count: sc.count, kinds: sc.kinds.length, biggest: sc.best, collect: sc.collected, none: 0 })[e.scoring] ?? sc.points;
+const evTop = e => [...e.scores.entries()].map(([id, sc]) => ({ id, name: sc.name, score: evVal(e, sc) })).sort((a, b) => b.score - a.score);
+const evNode = (e, me) => { const sc = e.scores.get(me); return { id: e.id, name: e.name, kind: e.kind, kindName: e.kind, scoring: e.scoring, scoringName: e.scoring, activity: evAct(e), rules: e.rules, startsAt: e.startsAt, endsAt: e.endsAt, now: Date.now(), joinFee: e.joinFee, minLevel: e.minLevel, rewards: e.rewards, joined: !!sc, ...(sc ? { score: evVal(e, sc), count: sc.count, points: sc.points, kinds: sc.kinds.length, best: sc.best, collected: sc.collected } : {}), top: evTop(e).slice(0, 10).map(r => ({ name: r.name, score: r.score })), people: e.scores.size }; };
+function evFinish() {
+  const e = ev; if (!e) return; ev = null; const top = evTop(e), rw = e.rewards, goal = +rw.goalScore || 0;
+  top.forEach((r, i) => { const spec = [i < 3 && e.scoring !== "none" ? rw["r" + (i + 1)] : "", rw.all, goal && r.score >= goal ? rw.goal : ""].filter(Boolean).join(",");
+    const msg = { type: "evReward", id: e.id, name: e.name, rank: e.scoring === "none" ? 0 : i + 1, total: top.length, reward: spec };
+    const on = [...sessions].filter(o => o.pl && o.pl.id === r.id); if (on.length) on.forEach(o => o.send(JSON.stringify(msg))); evRewards.set(r.id, [...(evRewards.get(r.id) || []).filter(x => x.id !== e.id), msg]); });
+  for (const o of sessions) if (o.pl) { o.send(JSON.stringify({ type: "evState", event: null })); o.send(JSON.stringify({ type: "evEnd", id: e.id, name: e.name, top: top.slice(0, 3).map((r, i) => ({ rank: i + 1, name: r.name, score: r.score })) })); }
+}
+setInterval(() => { if (ev && Date.now() >= ev.endsAt) evFinish(); if (ev && ev.dirty) { ev.dirty = false; for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evBoard", id: ev.id, people: ev.scores.size, top: evTop(ev).slice(0, 10).map(r => ({ name: r.name, score: r.score })) })); } }, 1000);
 if (fs.existsSync(path.join(BJ_CP, "MjBridge.class"))) {
   mj = spawn("java", ["-cp", BJ_CP, "MjBridge"], { stdio: ["pipe", "pipe", "ignore"] });
   let buf = "";
@@ -65,6 +79,11 @@ const server = http.createServer(async (req, res) => {
   if (p.startsWith("/mock/reply")) { const t = threads.find(t => t.id === +u.searchParams.get("id")); t.messages.push({ sender: "ADMIN", body: u.searchParams.get("body"), createdAt: new Date().toISOString() }); t.playerUnread = true; t.status = "WIP"; for (const s of sessions) if (s.pl && s.pl.id === t.player.id) s.send(JSON.stringify({ type: "feedbackReply", threadId: t.id, title: t.title })); return json(res, 200, {}); }
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
   if (p === "/mock/world") return json(res, 200, shared);
+  if (p === "/mock/event/start") { const q = u.searchParams; ev = { id: evNext++, name: q.get("name") || "テスト大会", kind: q.get("kind") || "fishing", scoring: q.get("scoring") || "points", rules: q.get("rules") || "", startsAt: Date.now(), endsAt: Date.now() + (+q.get("secs") || 60) * 1000, joinFee: +q.get("fee") || 0, minLevel: +q.get("lv") || 0, rewards: { r1: q.get("r1") || "", r2: q.get("r2") || "", r3: q.get("r3") || "", all: q.get("all") || "", goal: q.get("goal") || "", goalScore: q.get("goalScore") || "0" }, scores: new Map() };
+    for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evState", event: evNode(ev, -1) })); return json(res, 200, { id: ev.id }); }
+  if (p === "/mock/event/end") { evFinish(); return json(res, 200, {}); }
+  if (p === "/mock/event") return json(res, 200, ev ? { ...ev, scores: Object.fromEntries(ev.scores) } : null);
+  if (p === "/mock/event/rewards") return json(res, 200, Object.fromEntries(evRewards));
   if (p === "/mock/rooms") return json(res, 200, Object.fromEntries([...rooms].map(([k, r]) => [k, r])));
   if (p === "/mock/reset") { for (const [k, r] of rooms) { if (!/,/.test(k)) continue; const o = (houseOf(k) || {}).ownerId; if (!(o > 0)) continue; const to = returns.get(o) || {}; for (const [id, n] of [...Object.entries(r.shared), ...Object.entries(r.priv)]) to[id] = (to[id] || 0) + n; returns.set(o, to); } shared = {}; for (const k of [...rooms.keys()]) if (/,/.test(k)) rooms.delete(k); epoch++; for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
   if (p === "/mock/notice") { for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "notice", text: u.searchParams.get("t") })); return json(res, 200, {}); }
@@ -98,7 +117,7 @@ wss.on("connection", s => {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), chat: chat.slice(-30), clock: cstate(), jackpot }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot }));
       mjPending.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -115,6 +134,16 @@ wss.on("connection", s => {
       if (!(amt > 0 && amt <= 100000) || to === s.pl.id) s.send(JSON.stringify({ type: "giftNg", rid, text: "渡せる額は1〜100,000Gだよ" }));
       else if (!t) s.send(JSON.stringify({ type: "giftNg", rid, text: "相手がいまつないでいないみたい" }));
       else { t.send(JSON.stringify({ type: "gift", from: s.pl.id, name: s.pl.name, amount: amt })); s.send(JSON.stringify({ type: "giftOk", rid, to, amount: amt })); } }
+    if (m.type === "ev") { const me = s.pl.id, send = o => s.send(JSON.stringify(o));
+      if (m.act === "claim") { evRewards.set(me, (evRewards.get(me) || []).filter(x => x.id !== +m.id)); return; }
+      if (m.act === "look") return send({ type: "evMe", event: ev ? evNode(ev, me) : null });
+      if (!ev) return send({ type: "evNg", text: "いまは開催中のイベントがありません" });
+      if (m.act === "join") { if (ev.scores.has(me)) return send({ type: "evMe", event: evNode(ev, me) }); if ((+m.level || 0) < ev.minLevel) return send({ type: "evNg", text: "評判レベルが足りない" });
+        ev.scores.set(me, { name: s.pl.name, points: 0, count: 0, best: 0, collected: 0, kinds: [], last: 0 }); ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me), joined: true, fee: ev.joinFee }); }
+      const sc = ev.scores.get(me); if (!sc) return; const now = Date.now(), act = evAct(ev);
+      if (m.act === "fish" && act === "fish" && now - sc.last >= 2500) { sc.last = now; const size = Math.floor(+m.size || 0); if (size < 1 || size > 210) return; sc.points += 50; sc.count++; if (!sc.kinds.includes(m.fish)) sc.kinds.push(String(m.fish).slice(0, 16)); sc.best = Math.max(sc.best, size); ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
+      if (m.act === "collect" && act === "collect" && now - sc.last >= 700) { sc.last = now; sc.collected++; ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
+      return; }
     if (m.type === "mj" && mj) mj.stdin.write(["C", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.act || "").replace(/\W/g, ""), Math.floor(+m.a || 0), Math.floor(+m.b || 0)].join("\t") + "\n");
     if (m.type === "bj" && bj) bj.stdin.write(["C", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.act || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n");
     if (m.type === "house" && m.act === "returns") { const it = returns.get(s.pl.id); returns.delete(s.pl.id); if (it && Object.keys(it).length) s.send(JSON.stringify({ type: "houseReturn", items: Object.entries(it).map(([id, n]) => ({ id, n })) })); return; }

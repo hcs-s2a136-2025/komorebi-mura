@@ -99,3 +99,7 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .mjlobby .li { background: #1e3a2a; border-color: #2f5a3f; color: #e8f3dd; }
 .mjlobby .li .nm, .mjlobby .li .sub2 { color: #e8f3dd; }
 .mjlobby .li .sub2 { opacity: .8; }
+.ac25 { display: inline-flex; align-items: center; gap: 1px; margin-right: 6px; white-space: nowrap; }
+.ac25 img { width: 18px; height: 18px; image-rendering: pixelated; }
+.ac25.lack { opacity: .4; }
+.acrow25 { line-height: 1.9; }

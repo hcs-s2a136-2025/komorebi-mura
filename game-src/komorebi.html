@@ -552,6 +552,10 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .mjlobby .li { background: #1e3a2a; border-color: #2f5a3f; color: #e8f3dd; }
 .mjlobby .li .nm, .mjlobby .li .sub2 { color: #e8f3dd; }
 .mjlobby .li .sub2 { opacity: .8; }
+.ac25 { display: inline-flex; align-items: center; gap: 1px; margin-right: 6px; white-space: nowrap; }
+.ac25 img { width: 18px; height: 18px; image-rendering: pixelated; }
+.ac25.lack { opacity: .4; }
+.acrow25 { line-height: 1.9; }
 </style>
 
 <header>
@@ -4512,7 +4516,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.10.0";
+const CLIENT_VERSION = "0.11.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -6527,6 +6531,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.11.0", date: "2026/10/22", title: "どんぐりと村の子どもたち", items: [
+    "村の木の下や道ばたに、どんぐりが落ちるように。毎朝新しく落ちて、15時ごろにも少し落ちる（歩くと拾える）",
+    "どんぐりは6種類：ふつう・小さな・虫食い・大きな・つやつや・金色（とてもめずらしい）。雨の日・池のそば・木の多いところ・秋で出やすい種類が変わる",
+    "村に子どもが5人：ことり・てつ・まめた・れいか・ちい。時間によって、道沿い・池のほとり・森・原っぱ・お店の前などに移動する",
+    "子どもに話しかけると、どんぐりとお菓子・おもちゃ・家具・めずらしい物を交換できる。子どもごとに好きなどんぐりと交換内容がちがう",
+    "新しいアイテム：べっこうあめ・どんぐりクッキー・ビー玉・けん玉、家具：くまのぬいぐるみ・虫かご・どんぐり標本",
+    "記録タブにどんぐりの数、実績を3つ追加"] },
   { v: "0.10.0", date: "2026/10/22", title: "みんなの麻雀（正式ルール）", items: [
     "オンラインでは、雀卓で友達と同じ卓に座って打てるように。4人そろわないときはCPUが入る",
     "ポン・チー・カン（暗槓・明槓・加槓）、立直・一発・ダブル立直、海底・河底・嶺上開花・槍槓、フリテン、喰い替えなし",
@@ -6967,6 +6978,261 @@ handle8 = m => {
   if (K.net.onMj) K.net.onMj(m);
 };
 
+// =================== v25: どんぐりの収集・6種類・子どもたちとの交換 ===================
+// どんぐりは村の地面に落ちている物（world.drops）として置くので、拾い方・描き方は今までの落とし物と同じ。
+// 種類・出やすさ・子どもたちの好みと交換内容は、下のデータを書きかえるだけで足したり変えたりできる。
+var F25 = {};
+const ACORNS25 = {
+  acorn_normal: { name: "ふつうのどんぐり", price: 5, w: 55, note: "よく落ちている、基本のどんぐり",
+    spr: (s, r, e) => { e(8, 10, 4, 4.6, C17("#b8783a")); e(7, 9, 1.2, 2, C17("#d89a58")); e(8, 5.5, 4.6, 2.2, C17("#6a4a2a")); for (const x of [5, 7, 9, 11]) s(x, 5, C17("#8a6a42")); r(8, 2, 1, 2, C17("#5a3a1a")); } },
+  acorn_small: { name: "小さなどんぐり", price: 4, w: 18, note: "小ぶりでころんとした、かわいいどんぐり",
+    spr: (s, r, e) => { e(8, 11, 2.6, 3, C17("#c08040")); e(7.4, 10.4, .8, 1.2, C17("#e0a868")); e(8, 7.8, 3, 1.6, C17("#6a4a2a")); r(8, 5, 1, 2, C17("#5a3a1a")); } },
+  acorn_bug: { name: "虫食いどんぐり", price: 3, w: 12, note: "小さな穴が開いている。虫が好きな子が欲しがる",
+    spr: (s, r, e) => { e(8, 10, 4, 4.6, C17("#a06c38")); e(8, 5.5, 4.6, 2.2, C17("#5e4226")); r(8, 2, 1, 2, C17("#5a3a1a")); s(6, 9, C17("#2a1a10")); s(10, 11, C17("#2a1a10")); s(9, 13, C17("#2a1a10")); s(6, 12, C17("#3a2614")); } },
+  acorn_big: { name: "大きなどんぐり", price: 15, w: 8, note: "ふつうよりずっと大きい、立派などんぐり",
+    spr: (s, r, e) => { e(8, 9.6, 6, 5.6, C17("#b0702e")); e(6, 8.6, 1.6, 2.6, C17("#d8985a")); e(8, 4.4, 6.4, 2.6, C17("#62442a")); for (const x of [3, 5, 7, 9, 11, 13]) s(x, 4, C17("#86683e")); r(8, 0, 1, 2, C17("#5a3a1a")); } },
+  acorn_shiny: { name: "つやつやどんぐり", price: 25, w: 6, note: "表面がぴかぴか光る、きれいなどんぐり",
+    spr: (s, r, e) => { e(8, 10, 4, 4.6, C17("#c8682a")); e(6.6, 8.6, 1.4, 2.4, C17("#ffd0a0")); s(6, 8, C17("#ffffff")); e(8, 5.5, 4.6, 2.2, C17("#5a3a22")); r(8, 2, 1, 2, C17("#5a3a1a")); s(13, 8, C17("#fff6c8")); s(12, 13, C17("#fff6c8")); s(2, 11, C17("#ffffff")); } },
+  acorn_gold: { name: "金色のどんぐり", price: 300, w: 1, note: "めったに見つからない、金色に光るどんぐり",
+    spr: (s, r, e) => { e(8, 10, 4, 4.6, C17("#f0c030")); e(6.6, 8.6, 1.4, 2.4, C17("#fff2a0")); s(6, 8, C17("#ffffff")); e(8, 5.5, 4.6, 2.2, C17("#b8861a")); for (const x of [5, 7, 9, 11]) s(x, 5, C17("#e8b830")); r(8, 2, 1, 2, C17("#8a5a10")); s(13, 7, C17("#ffffff")); s(14, 12, C17("#fff6c8")); s(2, 12, C17("#ffffff")); s(3, 6, C17("#fff6c8")); } },
+};
+for (const [id, a] of Object.entries(ACORNS25)) { addSpr17(id, a.spr); ITEMS[id] = { name: a.name, icon: id, price: a.price, acorn: true }; }
+
+// 子どもたちからもらえる新しい物（お菓子・おもちゃ・家具）
+const KIDITEMS25 = {
+  candy25: { name: "べっこうあめ", price: 40, food: 15, spr: (s, r, e) => { e(8, 7, 4.4, 4.4, C17("#f0a830")); e(6.6, 5.6, 1.4, 1.4, C17("#ffe0a0")); r(8, 11, 1, 5, C17("#e8dcc0")); } },
+  cookie25: { name: "どんぐりクッキー", price: 80, food: 25, spr: (s, r, e) => { e(8, 9, 6, 5, C17("#d8a868")); for (const [x, y] of [[6, 7], [10, 8], [7, 11], [11, 11]]) { e(x, y, 1.2, 1, C17("#8a5a2a")); } } },
+  marble25: { name: "ビー玉", price: 60, spr: (s, r, e) => { e(8, 8, 5, 5, C17("#7ac8e8")); e(9, 9, 2.6, 2, C17("#3a8ae0")); e(6, 6, 1.4, 1.4, C17("#ffffff")); } },
+  kendama25: { name: "けん玉", price: 150, spr: (s, r, e) => { e(8, 4, 3.4, 3.4, C17("#e04848")); s(7, 3, C17("#ffb0b0")); r(7, 7, 3, 2, C17("#c89060")); r(8, 9, 1, 6, C17("#c89060")); r(5, 8, 2, 2, C17("#c89060")); r(10, 8, 2, 2, C17("#c89060")); } },
+};
+for (const [id, a] of Object.entries(KIDITEMS25)) { addSpr17(id, a.spr); ITEMS[id] = { name: a.name, icon: id, price: a.price, ...(a.food ? { food: a.food } : {}) }; }
+addSpr17("s25_plush", (s, r, e) => { e(8, 10, 5, 4.6, C17("#c8905a")); e(8, 5, 4, 3.6, C17("#c8905a")); e(4.6, 2.6, 1.6, 1.6, C17("#c8905a")); e(11.4, 2.6, 1.6, 1.6, C17("#c8905a")); e(8, 6, 1.8, 1.2, C17("#f0d8b8")); s(6, 4, C17("#2a1a10")); s(10, 4, C17("#2a1a10")); s(8, 6, C17("#2a1a10")); r(6, 9, 5, 1, C17("#e04848")); });
+addSpr17("s25_bugcage", (s, r, e) => { r(3, 4, 11, 10, C17("#e8f0d0")); r(3, 3, 11, 1, C17("#3a8a4a")); r(3, 14, 11, 1, C17("#3a8a4a")); for (let x = 4; x < 14; x += 2) r(x, 4, 1, 10, C17("#a8c898")); r(7, 1, 3, 2, C17("#3a8a4a")); e(8, 10, 2, 1.2, C17("#2a2a2a")); s(6, 9, C17("#2a2a2a")); s(10, 9, C17("#2a2a2a")); });
+addSpr17("s25_specimen", (s, r, e) => { r(2, 3, 13, 11, C17("#8a5a2a")); r(3, 4, 11, 9, C17("#f6eedc")); let i = 0; for (const c of ["#b8783a", "#c08040", "#a06c38", "#b0702e", "#c8682a", "#f0c030"]) { const x = 4 + (i % 3) * 3, y = 5 + Math.floor(i / 3) * 4; e(x + .5, y + 1.5, 1, 1.4, C17(c)); r(x, y, 2, 1, C17("#5a3a1a")); i++; } });
+FURN.plush25 = { name: "くまのぬいぐるみ", img: "s25_plush", w: 1, h: 1, oy: -2, price: 500 }; ITEMS.f_plush25 = { name: "くまのぬいぐるみ", icon: "s25_plush", furn: "plush25", price: 500 };
+FURN.bugcage25 = { name: "虫かご", img: "s25_bugcage", w: 1, h: 1, oy: -2, price: 300 }; ITEMS.f_bugcage25 = { name: "虫かご", icon: "s25_bugcage", furn: "bugcage25", price: 300 };
+FURN.specimen25 = { name: "どんぐり標本", img: "s25_specimen", w: 1, h: 1, oy: -2, price: 1200, wall: true }; ITEMS.f_specimen25 = { name: "どんぐり標本", icon: "s25_specimen", furn: "specimen25", price: 1200 };
+
+// ---------- どんぐりの落ち方 ----------
+const nearTree25 = (x, y, r) => { let n = 0; for (const k in world.trees) { if (world.trees[k].hp <= 0) continue; const [tx, ty] = k.split(",").map(Number); if (Math.abs(tx - x) <= r && Math.abs(ty - y) <= r) n++; } return n; };
+const nearGround25 = (x, y, r, re) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (re.test(village.ground[y + dy]?.[x + dx] || "")) return true; return false; };
+function acornKind25(x, y) {
+  const w = {}; for (const [id, a] of Object.entries(ACORNS25)) w[id] = a.w;
+  const rain = rainy(), s = season();
+  if (rain) { w.acorn_bug *= 2; w.acorn_shiny *= 1.5; }
+  if (nearGround25(x, y, 3, /^water/)) w.acorn_shiny *= 2;
+  if (nearTree25(x, y, 3) >= 3) { w.acorn_big *= 2; w.acorn_bug *= 1.5; }
+  if (nearGround25(x, y, 1, /^path/)) { w.acorn_small *= 1.5; w.acorn_normal *= 1.2; }
+  if (s === "秋") { w.acorn_gold *= 2; w.acorn_big *= 1.5; }
+  let t = Object.values(w).reduce((a, b) => a + b, 0) * Math.random();
+  for (const [id, v] of Object.entries(w)) if ((t -= v) < 0) return id;
+  return "acorn_normal";
+}
+function spawnAcorns25(n) {
+  const cands = [];
+  for (let y = 1; y < village.h - 1; y++) for (let x = 1; x < village.w - 1; x++) {
+    if (inPaddock(x, y) || !freeGrass(x, y)) continue;
+    if (nearTree25(x, y, 2) > 0 || nearGround25(x, y, 1, /^path/)) cands.push([x, y]);
+  }
+  const now = world.drops.filter(d => d.acorn).length;
+  n = Math.min(n, 30 - now);
+  for (let i = 0; i < n && cands.length; i++) {
+    const [x, y] = cands.splice(rnd(cands.length), 1)[0];
+    world.drops.push({ x, y, id: acornKind25(x, y), n: 1, acorn: true });
+  }
+}
+function acornTick25() {
+  // 朝：前の日のどんぐりを片付けて、新しく落とす。15時ごろにも少し落ちる
+  if (world.acornDay !== world.day) {
+    world.drops = world.drops.filter(d => !d.acorn);
+    world.acornDay = world.day;
+    spawnAcorns25({ "春": 9, "夏": 7, "秋": 16, "冬": 5 }[season()] || 8);
+    saveWorld();
+  } else if (world.time >= 900 && world.acornNoon !== world.day) {
+    world.acornNoon = world.day;
+    spawnAcorns25(season() === "秋" ? 6 : 3);
+    saveWorld();
+  }
+}
+
+// ---------- 子どもたち ----------
+// schedule: [何時から, 何時まで, [x0, y0, x1, y1], 場所の名前]（時刻は分。360=6時）
+const KIDS25 = {
+  "ことり": { trait: "きれいなものが大好きな、おしゃれな女の子", cfg: { skin: "色白", hair: "おだんご", hairc: "ピンク", top: "ワンピース", topc: "赤", bottom: "スカート", bottomc: "赤", hat: "リボン", acc: "なし", shoesc: "赤" },
+    likes: { acorn_shiny: "大好き", acorn_gold: "大好き", acorn_normal: "ふつう" }, rainHide: true,
+    schedule: [[540, 720, [10, 9, 46, 10], "道沿い"], [720, 900, [18, 12, 30, 13], "池のほとり"], [900, 1080, [40, 10, 60, 14], "原っぱ"]],
+    lines: ["見て見て、このどんぐりつやつやでしょ？", "光るものって、見てるだけでしあわせ", "つやつやのどんぐり、雨の日によく見つかるんだって"],
+    offers: [
+      { id: "marble", need: { acorn_shiny: 1 }, give: ["marble25", 2], limit: "day", max: 2 },
+      { id: "candy", need: { acorn_normal: 6 }, give: ["candy25", 1], limit: "day", max: 3 },
+      { id: "flower", need: { acorn_shiny: 3 }, give: ["seed_flower", 5], limit: "day", max: 1 },
+      { id: "plush", need: { acorn_shiny: 5, acorn_big: 1 }, give: ["f_plush25", 1], limit: "season", max: 1 },
+      { id: "gem", need: { acorn_gold: 1 }, give: ["gem", 2], limit: "season", max: 2 } ] },
+  "てつ": { trait: "虫と森が大好きな、日焼けした男の子", cfg: { skin: "小麦色", hair: "ショート", hairc: "黒", top: "Tシャツ", topc: "緑", bottom: "ショートパンツ", bottomc: "茶", hat: "麦わら帽子", acc: "なし", shoesc: "茶" },
+    likes: { acorn_bug: "大好き", acorn_normal: "ふつう", acorn_small: "ふつう" }, rainHide: false,
+    schedule: [[420, 660, [2, 19, 14, 28], "森"], [660, 840, [18, 12, 30, 13], "池のほとり"], [840, 1080, [2, 19, 14, 28], "森"]],
+    lines: ["この穴、きっとゾウムシの赤ちゃんが開けたんだ！", "雨上がりの森は、虫がいっぱい出てくるんだよ", "虫食いどんぐりは宝物だよ。だれも欲しがらないけどね"],
+    offers: [
+      { id: "sapling", need: { acorn_bug: 3 }, give: ["sapling", 1], limit: "day", max: 1 },
+      { id: "cookie", need: { acorn_normal: 8 }, give: ["cookie25", 1], limit: "day", max: 2 },
+      { id: "fish", need: { acorn_bug: 2, acorn_small: 2 }, give: ["fish_ヤマメ", 1], limit: "day", max: 1 },
+      { id: "cage", need: { acorn_bug: 5 }, give: ["f_bugcage25", 1], limit: "season", max: 1 },
+      { id: "ore", need: { acorn_gold: 1 }, give: ["ore", 6], limit: "season", max: 2 } ] },
+  "まめた": { trait: "めずらしいものを集めている、もの知りな男の子", cfg: { skin: "やや明るめ", hair: "ボブ", hairc: "ブラウン", top: "オーバーオール", topc: "青", bottom: "パンツ", bottomc: "青", hat: "なし", acc: "メガネ", shoesc: "黒" },
+    likes: { acorn_gold: "大好き", acorn_big: "大好き", acorn_normal: "ふつう" }, rainHide: true,
+    schedule: [[600, 780, [40, 10, 60, 27], "原っぱ"], [780, 1020, [46, 9, 60, 10], "東の道沿い"], [1020, 1140, [16, 9, 40, 10], "お店の前"]],
+    lines: ["どんぐりは全部で6種類あるんだ。全部集めた？", "金色のどんぐりは、秋にちょっとだけ見つかりやすいらしいよ", "大きなどんぐりは、木がたくさんあるところに落ちてる"],
+    offers: [
+      { id: "kendama", need: { acorn_big: 2 }, give: ["kendama25", 1], limit: "day", max: 1 },
+      { id: "gem", need: { acorn_big: 4 }, give: ["gem", 1], limit: "day", max: 1 },
+      { id: "specimen", need: { acorn_normal: 1, acorn_small: 1, acorn_bug: 1, acorn_big: 1, acorn_shiny: 1, acorn_gold: 1 }, give: ["f_specimen25", 1], limit: "once", max: 1 },
+      { id: "trophy", need: { acorn_gold: 1 }, give: ["f_trophy", 1], limit: "once", max: 1 },
+      { id: "goldbar", need: { acorn_gold: 2 }, give: ["goldbar", 1], limit: "season", max: 1 } ] },
+  "れいか": { trait: "アクセサリーをたくさん持っている、お金持ちのお嬢さま", cfg: { skin: "色白", hair: "ロング", hairc: "金", top: "ドレス", topc: "紫", bottom: "スカート", bottomc: "紫", hat: "なし", acc: "サングラス", shoesc: "白" },
+    likes: { acorn_gold: "大好き", acorn_shiny: "好き", acorn_big: "好き" }, rainHide: true,
+    schedule: [[780, 1020, [16, 9, 40, 10], "お店の前"], [1020, 1140, [18, 12, 30, 13], "池のほとり"]],
+    lines: ["ごきげんよう。きれいなどんぐりなら、高く買ってさしあげてよ", "パパがね、金色のどんぐりは幸運のしるしだって", "ふつうのどんぐり？ ……まあ、かわいらしいこと"],
+    offers: [
+      { id: "money", need: { acorn_big: 3 }, give: ["money", 500], limit: "day", max: 1 },
+      { id: "money2", need: { acorn_shiny: 4 }, give: ["money", 1000], limit: "day", max: 1 },
+      { id: "chandelier", need: { acorn_gold: 1, acorn_shiny: 2 }, give: ["f_chandelier", 1], limit: "season", max: 1 },
+      { id: "piano", need: { acorn_gold: 3 }, give: ["f_piano", 1], limit: "once", max: 1 },
+      { id: "statue", need: { acorn_gold: 1, acorn_shiny: 6 }, give: ["f_goldstatue", 1], limit: "once", max: 1 } ] },
+  "ちい": { trait: "村でいちばん小さい、甘いものが好きな子", cfg: { skin: "やや明るめ", hair: "ツインテール", hairc: "ブラウン", top: "パーカー", topc: "黄", bottom: "ショートパンツ", bottomc: "青", hat: "なし", acc: "なし", shoesc: "赤" },
+    likes: { acorn_small: "大好き", acorn_normal: "好き" }, rainHide: true,
+    schedule: [[480, 720, [3, 16, 12, 18], "畑のそば"], [720, 960, [12, 27, 28, 29], "池の南"], [960, 1080, [10, 9, 30, 10], "道沿い"]],
+    lines: ["ちっちゃいどんぐり、ちいとおんなじ！", "あまいのすき。あめもすき", "どんぐりころころ〜♪"],
+    offers: [
+      { id: "candy", need: { acorn_small: 3 }, give: ["candy25", 1], limit: "day", max: 3 },
+      { id: "cookie", need: { acorn_small: 5 }, give: ["cookie25", 1], limit: "day", max: 2 },
+      { id: "marble", need: { acorn_small: 4, acorn_normal: 2 }, give: ["marble25", 3], limit: "day", max: 1 },
+      { id: "plant", need: { acorn_small: 10 }, give: ["f_plant", 1], limit: "season", max: 1 } ] },
+};
+const kids25 = Object.entries(KIDS25).map(([n, d]) => { const e = entity(-5, -5, { ...DEFAULT, ...d.cfg }, n, "kid"); e.kid = true; e.hidden = true; return e; });
+F25.kids = kids25;
+const kidState25 = n => { world.kids25 = world.kids25 || {}; return world.kids25[n] = world.kids25[n] || { met: false, trades: {} }; };
+const kidZone25 = (d, t) => d.schedule.find(([a, b]) => t >= a && t < b) || null;
+function kidNext25(d, t) {
+  const n = d.schedule.find(([a]) => a > t);
+  return n ? `${Math.floor(n[0] / 60)}時ごろは${n[3]}にいるよ` : "夕方にはおうちに帰るよ";
+}
+function kidThink25(k, dt) {
+  const d = KIDS25[k.name], z = kidZone25(d, world.time);
+  k.hidden = !z || (d.rainHide && rainy());
+  if (k.hidden) { if (k.x !== -5) placeAt(k, -5, -5); return; }
+  const [x0, y0, x1, y1] = z[2];
+  if (k.x < 0) {
+    for (let i = 0; i < 30; i++) { const x = x0 + rnd(x1 - x0 + 1), y = y0 + rnd(y1 - y0 + 1); if (!blocked(village, x, y, k)) { placeAt(k, x, y); break; } }
+    if (k.x < 0) return;
+  }
+  if (k.moving || (k.think -= dt) > 0) return;
+  k.think = .5 + Math.random() * 1.8;
+  const inZone = k.x >= x0 && k.x <= x1 && k.y >= y0 && k.y <= y1;
+  if (!inZone) {
+    k.lost = (k.lost || 0) + 1;
+    // 遠くで迷ったら、見えないところでそっと移動する
+    if (k.lost > 12 && Math.abs(k.x - player.x) + Math.abs(k.y - player.y) > 14) { placeAt(k, -5, -5); k.lost = 0; return; }
+    const cx = (x0 + x1) >> 1, cy = (y0 + y1) >> 1, dx = cx - k.x, dy = cy - k.y;
+    const o = Math.abs(dx) > Math.abs(dy) ? [dx > 0 ? "right" : "left", dy > 0 ? "down" : "up"] : [dy > 0 ? "down" : "up", dx > 0 ? "right" : "left"];
+    if (!stepTo(k, o[0]) && !stepTo(k, o[1])) stepTo(k, pick(DIRS));
+  } else { k.lost = 0; if (Math.random() < .55) stepTo(k, pick(DIRS)); }
+}
+const _entsVillage25 = F6.entsVillage;
+F6.entsVillage = () => [..._entsVillage25(), ...kids25.filter(k => !k.hidden)];
+const _drawEnt25 = drawEnt;
+drawEnt = function (e) {
+  if (!e.kid) { _drawEnt25(e); return; }
+  ctx.fillStyle = "rgba(20,30,20,.28)"; ctx.fillRect(e.px + 5, e.py + 15, 6, 1);
+  const fr = e.moving ? [0, 1, 0, 2][Math.floor(e.step) % 4] : 0;
+  ctx.drawImage(renderChar(e.cfg, e.dir, fr), 0, 0, 16, 16, Math.round(e.px) + 2, Math.round(e.py) + 4 - (fr ? 1 : 0), 12, 12);
+};
+const _update25 = F6.update;
+F6.update = dt => {
+  const before = new Map(world.drops.filter(d => d.acorn).map(d => [d.x + "," + d.y, d.id]));
+  _update25(dt);
+  if (map === village) {
+    for (const k of kids25) { kidThink25(k, dt); updateEnt(k, dt * .5); }
+    acornTick25();
+    // 拾ったどんぐりを数える（金色はお知らせ）
+    if (before.size) {
+      const now = new Set(world.drops.filter(d => d.acorn).map(d => d.x + "," + d.y));
+      for (const [k, id] of before) if (!now.has(k)) {
+        world.stats.acorns = (world.stats.acorns || 0) + 1;
+        if (id === "acorn_gold") { world.stats.goldAcorn = (world.stats.goldAcorn || 0) + 1; F7.notify("金色のどんぐりを見つけた！ めったに落ちていない、幸運のどんぐり", "acorn_gold"); }
+      }
+    }
+  }
+};
+
+// ---------- 話しかけて交換 ----------
+const _act25 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+    const [tx, ty] = front(); const k = kids25.find(e => !e.hidden && e.x === tx && e.y === ty);
+    if (k) { k.dir = { up: "down", down: "up", left: "right", right: "left" }[player.dir]; k.think = 4; openKid25(k.name); return; }
+  }
+  _act25();
+};
+function offerLeft25(n, o) {
+  const t = kidState25(n).trades[o.id] || {};
+  const seasonKey = Math.floor((world.day - 1) / 7);
+  const used = o.limit === "day" ? (t.day === world.day ? t.n : 0) : o.limit === "season" ? (t.season === seasonKey ? t.n : 0) : (t.total || 0);
+  return Math.max(0, o.max - used);
+}
+const hasNeed25 = need => Object.entries(need).every(([id, n]) => count(id) >= n);
+const canReceive25 = ([id, n]) => id === "money" || world.inv.some(x => !x || x.id === id);
+function openKid25(name) {
+  const d = KIDS25[name], st = kidState25(name);
+  const first = !st.met; st.met = true;
+  openModal(name, "shop", body => {
+    const draw = msg => {
+      const line = msg || (first ? `${name}だよ。${d.trait}って、みんなに言われてる。どんぐり、持ってない？` : d.lines[rnd(d.lines.length)]);
+      const mine = Object.keys(ACORNS25).filter(id => count(id) > 0).map(id => `<span class="ac25"><img src="${ASSETS[id]}" alt="">${count(id)}</span>`).join("") || "まだ持っていない";
+      body.innerHTML = `<div class="say13"><img src="${charIcon13(d.cfg)}" alt=""><p>「${esc(line)}」<br><span class="sub2">${esc(d.trait)}。${esc(kidNext25(d, world.time))}</span></p></div>
+        <p class="mtext small">好きなどんぐり：${Object.entries(d.likes).map(([id, v]) => `${esc(ACORNS25[id].name)}（${v}）`).join("・")}</p>
+        <p class="mtext small acrow25">持っているどんぐり：${mine}</p>
+        <div class="list">${d.offers.map(o => {
+          const left = offerLeft25(name, o), ok = hasNeed25(o.need), room = canReceive25(o.give);
+          const giveName = o.give[0] === "money" ? `${fmt(o.give[1])}` : `${ITEMS[o.give[0]].name}${o.give[1] > 1 ? "×" + o.give[1] : ""}`;
+          const needHtml = Object.entries(o.need).map(([id, n]) => `<span class="ac25 ${count(id) >= n ? "" : "lack"}"><img src="${ASSETS[id]}" alt="" title="${esc(ACORNS25[id].name)}">×${n}</span>`).join("");
+          const lim = o.limit === "day" ? `今日はあと${left}回` : o.limit === "season" ? `この季節はあと${left}回` : left ? "一回きり" : "もう交換した";
+          return `<div class="li"><img src="${o.give[0] === "money" ? ASSETS.coin : ASSETS[ITEMS[o.give[0]].icon]}" alt=""><span class="nm">${esc(giveName)}<span class="sub2">${needHtml}　${lim}</span></span>
+            <span class="acts"><button class="btn" type="button" data-of="${o.id}" ${left && ok && room ? "" : "disabled"}>${!left ? "おしまい" : !ok ? "足りない" : !room ? "持ち物がいっぱい" : "交換する"}</button></span></div>`;
+        }).join("")}</div>`;
+      body.querySelectorAll("[data-of]").forEach(b => b.onclick = () => {
+        const o = d.offers.find(x => x.id === b.dataset.of);
+        if (!o || !offerLeft25(name, o) || !hasNeed25(o.need) || !canReceive25(o.give)) return;
+        for (const [id, n] of Object.entries(o.need)) removeItem(id, n);
+        if (o.give[0] === "money") addMoney(o.give[1]); else addItem(o.give[0], o.give[1]);
+        const t = st.trades[o.id] = st.trades[o.id] || {}; const sk = Math.floor((world.day - 1) / 7);
+        if (o.limit === "day") { t.n = t.day === world.day ? t.n + 1 : 1; t.day = world.day; }
+        else if (o.limit === "season") { t.n = t.season === sk ? t.n + 1 : 1; t.season = sk; }
+        t.total = (t.total || 0) + 1;
+        world.stats.kidTrades = (world.stats.kidTrades || 0) + 1;
+        saveWorld(); SFX.small();
+        const giveName = o.give[0] === "money" ? fmt(o.give[1]) : ITEMS[o.give[0]].name;
+        toast(o.give[0] === "money" ? "coin" : ITEMS[o.give[0]].icon, `${name}と交換して、${giveName}をもらった`);
+        const loved = Object.keys(o.need).some(id => d.likes[id] === "大好き");
+        draw(loved ? "わあ、ありがとう！ これ、ずっと欲しかったの！" : "ありがとう！ 大事にするね");
+      });
+    };
+    draw();
+  });
+}
+// どんぐりの名前の説明（図鑑がわり。記録タブ）
+const _logExtra25 = F7.logExtra;
+F7.logExtra = () => `${_logExtra25 ? _logExtra25() : ""}<div class="opt"><h3>どんぐり（拾った数 ${world.stats.acorns || 0}）</h3><div class="stat">${Object.entries(ACORNS25).map(([id, a]) => `<span><img src="${ASSETS[id]}" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:middle"> ${esc(a.name)}</span><b>${count(id)}個</b>`).join("")}</div>
+  <p class="note">子どもたち：${Object.keys(KIDS25).map(n => kidState25(n).met ? esc(n) : "？？？").join("・")}。村のあちこちにいて、時間で居場所が変わるよ。</p></div>`;
+ACH.push(
+  ["どんぐり拾い", "どんぐりを30個拾う", () => (world.stats.acorns || 0) >= 30],
+  ["金色のしるし", "金色のどんぐりを見つける", () => (world.stats.goldAcorn || 0) >= 1],
+  ["子どもたちの人気者", "5人の子ども全員と交換する", () => Object.keys(KIDS25).every(n => Object.keys(world.kids25?.[n]?.trades || {}).length > 0)],
+);
+ACH_REWARD["どんぐり拾い"] = ["item", "cookie25", 3];
+ACH_REWARD["金色のしるし"] = ["medal", 5];
+ACH_REWARD["子どもたちの人気者"] = ["money", 1000];
+F25.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -6990,7 +7256,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

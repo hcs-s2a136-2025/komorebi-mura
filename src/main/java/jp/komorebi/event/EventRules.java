@@ -33,7 +33,9 @@ public final class EventRules {
         Map.entry("ネッタイギョ", new Fish(60, 15)), Map.entry("カツオ", new Fish(80, 60)), Map.entry("ブリ", new Fish(90, 90)), Map.entry("ヤマメ", new Fish(55, 25)),
         Map.entry("ドジョウ", new Fish(30, 15)), Map.entry("ザリガニ", new Fish(25, 12)), Map.entry("ニジマス", new Fish(65, 40)), Map.entry("サバ", new Fish(45, 40)),
         Map.entry("イカ", new Fish(70, 35)), Map.entry("タコ", new Fish(120, 60)), Map.entry("ヒラメ", new Fish(100, 55)),
-        Map.entry("コバンゴイ", new Fish(1000, 80)), Map.entry("ギャクテンダイ", new Fish(1000, 70)));
+        Map.entry("コバンゴイ", new Fish(1000, 80)), Map.entry("ギャクテンダイ", new Fish(1000, 70)),
+        Map.entry("ヘラブナ", new Fish(80, 35)), Map.entry("アユ", new Fish(120, 22)), Map.entry("ライギョ", new Fish(160, 70)),
+        Map.entry("カサゴ", new Fish(90, 25)), Map.entry("ロウニンアジ", new Fish(320, 100)), Map.entry("チョウチンアンコウ", new Fish(520, 40)));
 
     /** 何をして競うか：fish（釣り）/ collect（拾う）/ none（参加だけ） */
     public static String activity(String kind, String scoring) {

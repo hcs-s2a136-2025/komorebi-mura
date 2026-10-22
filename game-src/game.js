@@ -975,7 +975,12 @@ function act() {
     swing("hoe", .32, () => {
       if (map === village && /^(grass|flower)/.test(ground || "") && !world.paths[key] && !village.solid[ty][tx] && !ents.some(e => e.x === tx && e.y === ty)) {
         world.tilled[key] = { wet: false }; village.ground[ty][tx] = "tilled"; saveWorld(); dust(tx, ty, [150, 108, 70]); F7.ev("till");
-      } else if (ground === "tilled") toast("hoe", "もう耕してあるよ");
+      } else if (ground === "tilled" && map === village && !world.crops[key]) {
+        // 何も植えていない畑は、もう一度鍬を使うと草地にもどせる（まちがえて耕したとき用）
+        if (F7.untill && F7.untill.key === key && performance.now() - F7.untill.t < 4000) {
+          F7.untill = null; delete world.tilled[key]; village.ground[ty][tx] = grassAt(tx, ty); dust(tx, ty, [96, 160, 80], 5); saveWorld(); toast("hoe", "畑を草地にもどした");
+        } else { F7.untill = { key, t: performance.now() }; toast("hoe", "もう耕してあるよ。もう一度使うと、草地にもどせる"); }
+      } else if (ground === "tilled") toast("hoe", world.crops[key] ? "作物が育っているよ" : "もう耕してあるよ");
       else toast("hoe", "ここは耕せないみたい");
     }); return;
   }
@@ -3526,7 +3531,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.14.0";
+const CLIENT_VERSION = "0.15.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5541,6 +5546,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.15.0", date: "2026/10/22", title: "釣りのえさ・畑をもどす", items: [
+    "まちがえて耕した畑は、何も植えていなければ、もう一度鍬を使うと草地にもどせる（シャベルでもOK）",
+    "釣りのえさ5種類：土えさ（雨の日に畑を耕すと見つかる）・練りえさ（どんぐり3個でクラフト）・小エビ（よろず屋）・ルアー（木と鉱石でクラフト）・光るルアー（アメジストと鉱石でクラフト）",
+    "えさを持ってAボタンで釣り竿につける（もう一度押すとはずす）。えさをつけると早くかかり、えさの好きな魚が寄ってくる。釣れるとえさを1つ使う",
+    "えさをつけたときだけ釣れる魚：ヘラブナ・アユ・ライギョ・カサゴ・ロウニンアジ・チョウチンアンコウ"] },
   { v: "0.14.0", date: "2026/10/22", title: "イベント", items: [
     "管理人が、釣り大会・イースター・ハロウィン・クリスマス・独自イベントを、好きな日時に開けるように（管理人室の「イベント」）",
     "オンラインでイベントが始まると、上に「イベント」ボタンが出る。参加すると、釣った魚や拾った物が記録されて、みんなで順位を競える",
@@ -6793,6 +6803,100 @@ ACH.push(["イベント参加", "イベントのごほうびをもらう", () =>
 ACH_REWARD["イベント参加"] = ["money", 500];
 F28.ready = true;
 
+// =================== v29: 釣りのえさ（えさで釣れる魚が変わる）・畑を草地にもどす ===================
+var F29 = {};
+const BAIT29 = {
+  bait_soil: { name: "土えさ", price: 10, note: "雨の日に畑を耕すと、しめった土から見つかる。池の魚がよく寄ってくる",
+    like: { "フナ": 2, "コイ": 2, "ナマズ": 2, "ウナギ": 2, "ドジョウ": 2, "ヤマメ": 2, "イワナ": 2, "ニジマス": 1.5 },
+    spr: (s, r, e) => { r(4, 6, 9, 8, C17("#c8864e")); r(4, 6, 9, 1, C17("#e0a670")); r(3, 5, 11, 2, C17("#a8683a")); e(8, 5, 4, 1.4, C17("#5a3a24")); s(6, 5, C17("#7a5236")); s(10, 4, C17("#7a5236")); r(5, 9, 7, 1, C17("#a8683a")); } },
+  bait_paste: { name: "練りえさ", price: 15, note: "どんぐりを練って作る。コイやフナの仲間が好き",
+    like: { "フナ": 3, "コイ": 3, "ワカサギ": 2 },
+    spr: (s, r, e) => { e(8, 9, 5, 4, C17("#d8b878")); e(7, 8, 2, 1.4, C17("#efd8a8")); s(10, 10, C17("#b8985a")); s(6, 11, C17("#b8985a")); } },
+  bait_shrimp: { name: "小エビ", price: 15, note: "海の魚の大好物。よろず屋で買える",
+    like: { "アジ": 2, "タイ": 2.5, "ヒラメ": 2, "サバ": 1.5, "タコ": 1.5 },
+    spr: (s, r, e) => { e(9, 9, 4, 2.4, C17("#f08a6a")); e(5, 8, 2, 1.6, C17("#f08a6a")); for (const x of [7, 9, 11]) s(x, 8, C17("#c8603e")); s(4, 7, C17("#2a2a2a")); r(13, 9, 2, 1, C17("#f0a080")); r(2, 6, 2, 1, C17("#c8603e")); } },
+  bait_lure: { name: "ルアー", price: 40, note: "木と鉱石で作る。大きな魚がかかりやすい",
+    like: { "ブラックバス": 3, "マグロ": 2, "カツオ": 2, "ブリ": 2, "サケ": 1.5, "ヒラメ": 1.5, "ナマズ": 1.5, "フナ": .3, "ワカサギ": .3, "ドジョウ": .3, "ザリガニ": .3, "アジ": .3, "ヤマメ": .5, "ネッタイギョ": .4 },
+    spr: (s, r, e) => { e(8, 8, 5, 2.4, C17("#4a9ae0")); e(6, 7, 2, 1, C17("#a8d8f6")); s(4, 8, C17("#ffffff")); s(4, 7, C17("#2a2a2a")); r(13, 8, 2, 1, C17("#c8c8d0")); r(8, 11, 1, 3, C17("#c8c8d0")); s(7, 13, C17("#c8c8d0")); s(9, 13, C17("#c8c8d0")); } },
+  bait_glow: { name: "光るルアー", price: 120, note: "アメジストで光らせたルアー。夜の海の魚や、池のヌシが寄ってくる",
+    like: { "イカ": 2.5, "タコ": 2, "ヌシ": 2, "アジ": .3, "タイ": .5, "ネッタイギョ": .4, "フナ": .5, "サバ": .6 },
+    spr: (s, r, e) => { e(8, 8, 5, 2.4, C17("#c890f0")); e(6, 7, 2, 1, C17("#f0d8ff")); s(4, 8, C17("#ffffff")); s(4, 7, C17("#2a2a2a")); r(8, 11, 1, 3, C17("#c8c8d0")); s(2, 4, C17("#fff6c8")); s(13, 4, C17("#fff6c8")); s(12, 12, C17("#fff6c8")); } },
+};
+for (const [id, b] of Object.entries(BAIT29)) { addSpr17(id, b.spr); ITEMS[id] = { name: b.name, icon: id, price: b.price, bait: true }; }
+// えさをつけたときだけ釣れる魚
+const FISH29 = [
+  { n: "ヘラブナ", at: "pond", w: 10, p: 80, bait: "bait_paste", base: 35, spr: fishSpr17("#b8b0a0", "#e8e4dc", "#8a8478", (s, r) => { r(6, 6, 6, 1, C17("#8a8478")); }) },
+  { n: "アユ", at: "pond", w: 10, p: 120, bait: "bait_soil", s: ["夏", "秋"], base: 22, spr: fishSpr17("#9ab088", "#f2eee0", "#7a8a68", (s, r) => { r(5, 7, 3, 1, C17("#f0c840")); }) },
+  { n: "ライギョ", at: "pond", w: 6, p: 160, bait: "bait_lure", base: 70, spr: fishSpr17("#5a6a4a", "#a8b090", "#3a4a2e", (s, r) => { for (const [x, y] of [[6, 7], [9, 8], [11, 7], [7, 9]]) s(x, y, C17("#2a3220")); }) },
+  { n: "カサゴ", at: "sea", w: 10, p: 90, bait: "bait_shrimp", base: 25, spr: fishSpr17("#d8603e", "#f8c8a8", "#a8402a", (s, r) => { for (const x of [6, 8, 10]) r(x, 5, 1, 2, C17("#a8402a")); }) },
+  { n: "ロウニンアジ", at: "sea", w: 5, p: 320, bait: "bait_lure", base: 100, spr: fishSpr17("#7a8ab0", "#e0e4f0", "#4a5a80", (s, r) => { r(5, 7, 7, 1, C17("#4a5a80")); }) },
+  { n: "チョウチンアンコウ", at: "sea", w: 4, p: 520, bait: "bait_glow", time: "night", base: 40, spr: (s, r, e) => { e(8, 9, 6, 4.4, C17("#4a3a5a")); e(8, 11, 4, 2, C17("#6a5a7a")); r(6, 3, 1, 4, C17("#6a5a7a")); e(5, 3, 1.4, 1.4, C17("#fff08a")); s(10, 8, C17("#fff6c8")); r(3, 11, 4, 1, C17("#e8e8f0")); } },
+];
+for (const f of FISH29) {
+  addSpr17("fish_" + f.n, f.spr);
+  FISH6.push({ n: f.n, at: f.at, w: f.w, p: f.p, bait: f.bait, ...(f.s ? { s: f.s } : {}), ...(f.time ? { time: f.time } : {}) });
+  ITEMS["fish_" + f.n] = { name: f.n, icon: "fish_" + f.n, price: f.p, fish: true, food: 8 };
+  if (typeof FISHBASE28 !== "undefined") FISHBASE28[f.n] = f.base;
+}
+const baitOn29 = () => world.bait && count(world.bait) > 0 ? world.bait : null;
+const _fishOk29 = fishOk;
+fishOk = f => f.bait ? baitOn29() === f.bait && _fishOk29({ ...f, bait: undefined }) : _fishOk29(f);
+const _fishHint29 = fishHint;
+fishHint = f => f.bait ? `${f.at === "sea" ? "みなと町の海" : "村の池"}／${ITEMS[f.bait].name}をつけたとき${f.s ? "／" + f.s.join("・") : ""}${f.time === "night" ? "／夜" : ""}` : _fishHint29(f);
+// えさをつけていると、好きな魚が寄ってきやすい
+const _pickFish29 = pickFish;
+pickFish = at => {
+  const b = baitOn29();
+  if (!b) return _pickFish29(at);
+  if (totalDebt() > 0) { const d = FISH6.find(x => x.debt && x.at === at); if (d && Math.random() < (at === "sea" ? .004 : .005) * (overdueLoans().length ? 2 : 1)) return d.n; }
+  const like = BAIT29[b].like;
+  const pool = FISH6.filter(f => f.at === at && !f.debt && fishOk(f)).map(f => [f.n, f.w * (like[f.n] || 1) * (f.bait === b ? 2.5 : 1) * (f.bonus && rainy() && isNight() ? 4 : 1)]);
+  let t = pool.reduce((a, f) => a + f[1], 0) * Math.random();
+  for (const [n, w] of pool) if ((t -= w) < 0) return n;
+  return pool[0][0];
+};
+// 釣れたら、えさを1つ使う
+const _fishCaught29 = F6.fishCaught;
+F6.fishCaught = got => {
+  const b = baitOn29();
+  _fishCaught29(got);
+  if (b) { removeItem(b, 1); if (!count(b)) { world.bait = null; setTimeout(() => toast(b, `${ITEMS[b].name}がなくなった`), 1200); } saveWorld(); }
+};
+// えさを持ってAボタンで、釣り竿につける。えさをつけると、早くかかる
+const _act29 = act;
+act = function () {
+  const sel = world.inv[world.sel], item = sel && ITEMS[sel.id];
+  if (!modalOpen && !fish && !busy && !placing && item?.bait) {
+    if (world.bait === sel.id) { world.bait = null; toast(sel.id, `${item.name}をはずした`); }
+    else { world.bait = sel.id; toast(sel.id, `釣り竿に${item.name}をつけた（あと${count(sel.id)}回）`); }
+    saveWorld(); renderHotbar(); return;
+  }
+  const before = fish;
+  _act29();
+  if (!before && fish && fish.phase === "cast" && baitOn29()) fish.wait *= .6;
+};
+// 手に持っている物の名前に、つけているえさを出す
+const _renderHotbar29 = renderHotbar;
+renderHotbar = function () {
+  _renderHotbar29();
+  const sel = world.inv[world.sel], nm = hotbarEl.querySelector(".selname");
+  if (nm && sel && ITEMS[sel.id]?.use === "rod" && baitOn29()) nm.textContent = `${ITEMS[sel.id].name}（えさ：${ITEMS[world.bait].name}）`;
+  if (nm && sel && ITEMS[sel.id]?.bait) nm.textContent = `${ITEMS[sel.id].name}（Aボタンで釣り竿につける${world.bait === sel.id ? "・いまつけている" : ""}）`;
+};
+// 雨の日に畑を耕すと、土えさが見つかる
+const _ev29 = F7.ev;
+F7.ev = (name, ...a) => {
+  if (_ev29) _ev29(name, ...a);
+  if (name === "till" && Math.random() < (rainy() ? .4 : .06)) {
+    const n = rainy() && Math.random() < .4 ? 2 : 1;
+    if (addItem("bait_soil", n, true)) toast("bait_soil", rainy() ? `しめった土から、釣りのえさが見つかった（土えさ×${n}）` : "土の中から、釣りのえさが見つかった（土えさ×1）");
+  }
+};
+RECIPES.push({ out: "bait_paste", n: 3, need: { acorn_normal: 3 } }, { out: "bait_lure", n: 3, need: { wood: 1, ore: 1 } }, { out: "bait_glow", n: 3, need: { gem: 1, ore: 1 } });
+SHOP_STOCK.push("bait_shrimp"); SHOP_BASE.push("bait_shrimp");
+F29.pets = () => petEnts;
+F29.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -6816,5 +6920,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

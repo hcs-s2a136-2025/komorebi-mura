@@ -767,7 +767,7 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.24.3";
+  const VER = "0.24.4";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -808,6 +808,13 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
       } catch (e) { msg("送れませんでした。スクリーンショットで送ってね"); }
     };
   }
+  // ゲームの中でつかまえたエラー（止まらずに続けられたもの）。たくさん続くときだけ知らせる
+  const seen = new Set();
+  window.__komoErr = (e, where) => {
+    const key = (where || "") + ":" + (e && e.message);
+    if (!seen.has(key)) { seen.add(key); errs.push({ message: `[${where || "?"}] ${(e && e.message) || e}`, stack: e && e.stack }); try { console.warn("komorebi:", where, e); } catch (x) {} }
+    const now = Date.now(); burst = burst.filter(t => now - t < 5000); burst.push(now); if (burst.length > 120) show("stuck");
+  };
   addEventListener("error", ev => {
     if (!ev.error && !ev.message) return;            // 画像の読み込み失敗などは数えない
     errs.push({ message: ev.message, line: ev.lineno, col: ev.colno, stack: ev.error && ev.error.stack });
@@ -1485,6 +1492,24 @@ function defaultWorld() {
 let world = hotData?.world || store.get("komorebi-world-v4") || defaultWorld();
 if (world.v !== 4 || !Array.isArray(world.inv) || world.inv.length !== SLOTS) world = defaultWorld();
 const saveWorld = () => store.set("komorebi-world-v4", world);
+// こわれたデータ（null や形のちがう物）を、起動のいちばん最初に取りのぞく（知らない物の名前は、あとの v37 で調べる）
+function sanitizeShape(w) {
+  if (!w || typeof w !== "object") return;
+  const obj = v => v && typeof v === "object";
+  if (Array.isArray(w.inv)) w.inv = w.inv.map(s => obj(s) && typeof s.id === "string" && s.n > 0 ? s : null);
+  if (obj(w.rooms)) for (const k in w.rooms) { const R = w.rooms[k]; if (!obj(R)) { delete w.rooms[k]; continue; }
+    R.storage = Array.isArray(R.storage) ? R.storage.filter(x => obj(x) && typeof x.id === "string" && x.n > 0) : [];
+    R.furn = Array.isArray(R.furn) ? R.furn.filter(f => obj(f) && typeof f.id === "string" && Number.isInteger(f.x) && Number.isInteger(f.y)) : []; }
+  for (const L of ["crops", "trees", "rocks", "decor", "projects", "tilled", "saplings", "bridges"]) if (obj(w[L])) for (const k in w[L]) if (w[L][k] === null || w[L][k] === undefined || (L !== "tilled" && L !== "bridges" && L !== "saplings" && !obj(w[L][k]))) delete w[L][k];
+  if (Array.isArray(w.drops)) w.drops = w.drops.filter(d => obj(d) && typeof d.id === "string" && Number.isInteger(d.x) && Number.isInteger(d.y));
+  if (Array.isArray(w.pets)) w.pets = [...new Set(w.pets.filter(t => typeof t === "string"))];
+  if (Array.isArray(w.animals)) w.animals = w.animals.filter(a => obj(a) && typeof a.type === "string");
+  if (Array.isArray(w.quests)) w.quests = w.quests.filter(obj);
+  if (Array.isArray(w.stalls)) w.stalls = w.stalls.filter(st => obj(st) && Number.isInteger(st.x) && Number.isInteger(st.y)).map(st => ({ ...st, goods: Array.isArray(st.goods) ? st.goods.filter(g => obj(g) && typeof g.id === "string") : [], earned: +st.earned || 0 }));
+  if (Array.isArray(w.loans)) w.loans = w.loans.filter(obj);
+  if (Array.isArray(w.houses)) w.houses = w.houses.filter(h => obj(h) && Number.isFinite(h.W) && Number.isFinite(h.H));
+}
+try { sanitizeShape(world); } catch (e) {}
 if (!world.rooms) world.rooms = { home: defaultHomeRoom() };
 
 // =================== maps ===================
@@ -2581,6 +2606,7 @@ let last = performance.now(), saveTick = 0;
 function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   gamingShift = Math.floor(now / 110) % 12;
+  try {
   if (!modalOpen) {
     if (!(F12.on && F12.on())) world.time += dt * 6;
     if (world.time >= 1440 && !(F12.on && F12.on())) { newDay("夜ふかしして倒れてしまった…"); if (!world.labor) { setDecor(false); if (map !== room) { roomKey = "home"; room = makeRoomMap("home"); rebuildSolid(); lastBack = [7, 7]; } enter(room, room.exit[0], room.exit[1] - 1, "up"); } }
@@ -2600,8 +2626,11 @@ function frame(now) {
     if ((saveTick += dt) > 5) { saveTick = 0; saveWorld(); }
     updateHud();
   }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "update"); busy = null; }
+  try {
   for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 140 * dt; if (p.life <= 0) particles.splice(i, 1); }
   draw(now);
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "draw"); try { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over"; } catch (x) {} }
   requestAnimationFrame(frame);
 }
 
@@ -3162,7 +3191,7 @@ function addToList6(list, now) {
     if (world.projects.beds.done) BEDS.forEach(([x, y]) => list.push({ s: (y + 1) * TS, d: () => ctx.drawImage(IMG.flowerbed, x * TS, y * TS) }));
     for (const s of world.stalls) list.push({ s: (s.y + 1) * TS, d: () => { ctx.drawImage(IMG.stall, s.x * TS, s.y * TS - 16); s.goods.slice(0, 3).forEach((g, i) => ctx.drawImage(IMG[ITEMS[g.id].icon], 0, 0, 16, 16, s.x * TS + 4 + i * 8, s.y * TS + 1, 8, 8)); } });
     if (todayEvent()?.id === "snow") [[14, 11], [17, 12], [12, 12]].forEach(([x, y]) => list.push({ s: (y + 1) * TS, d: () => ctx.drawImage(IMG.snowman, x * TS, y * TS) }));
-    for (const d of world.drops) list.push({ s: d.y * TS + 12, d: () => { const b = Math.sin(now / 200 + d.x) * 1; ctx.drawImage(IMG[ITEMS[d.id].icon], 0, 0, 16, 16, d.x * TS + 3, d.y * TS + 3 + b, 10, 10); } });
+    for (const d of world.drops) if (ITEMS[d.id] && IMG[ITEMS[d.id].icon]) list.push({ s: d.y * TS + 12, d: () => { const b = Math.sin(now / 200 + d.x) * 1; ctx.drawImage(IMG[ITEMS[d.id].icon], 0, 0, 16, 16, d.x * TS + 3, d.y * TS + 3 + b, 10, 10); } });
   }
   if (map === dg?.map) {
     for (const d of dg.drops) list.push({ s: d.y * TS + 12, d: () => ctx.drawImage(IMG[ITEMS[d.id].icon], 0, 0, 16, 16, d.x * TS + 3, d.y * TS + 3 + Math.sin(now / 200 + d.x), 10, 10) });
@@ -4999,7 +5028,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.24.3";
+const CLIENT_VERSION = "0.24.4";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5081,7 +5110,7 @@ function connect8() {
   if (ws8 && (ws8.readyState === 0 || ws8.readyState === 1)) return;
   try { ws8 = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws"); } catch (e) { return; }
   ws8.onopen = () => send8({ type: "hello", token: onl.token, ...posMsg(), cfg, version: CLIENT_VERSION });
-  ws8.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } handle8(m); };
+  ws8.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } try { handle8(m); } catch (x) { if (window.__komoErr) window.__komoErr(x, "online:" + (m && m.type)); } };
   ws8.onclose = () => {
     F8.connected = false; remotes.clear(); setStatus();
     if (!stop8) setTimeout(connect8, Math.min(30000, 1500 * 2 ** Math.min(5, retry8++)));
@@ -7026,6 +7055,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.24.4", date: "2026/10/22", title: "エラーで止まりにくくした", items: [
+    "起動のいちばん最初に、こわれたデータ（空っぽの持ち物や、形のちがう記録など）を取りのぞくようにした",
+    "このページが知らない物（新しいバージョンの物など）が持ち物や収納、お店、牧場にあっても止まらないように。知らない物はいったん「あずかり」に移して、わかるようになったら自分の家の収納箱に戻す",
+    "ゲームの動きや画面を描くところでエラーが起きても、止まらずに続けられるようにした（何度も続くときだけ、エラーの画面を出す）",
+    "オンラインのお知らせを受け取るところでエラーが起きても、つながりが止まらないようにした",
+  ] },
   { v: "0.24.3", date: "2026/10/22", title: "ウサギやハムスターがいると起動しない不具合を直した", items: [
     "ペットにウサギかハムスターがいると、ゲームが起動しないで真っ暗な画面のまま止まっていたのを直した",
   ] },
@@ -9513,6 +9548,48 @@ ACH_REWARD["雪合戦の名人"] = ["money", 2000]; ACH_REWARD["かまくらの�
 F36.throw = throw36;
 F36.ready = true;
 
+// =================== v37: こわれたデータや、知らない物があっても止まらないように ===================
+// 新しいバージョンで遊んだデータを古いページで開いたときなど、知らない物は「あずかり」に移しておき、知っている物になったら戻す。
+var F37 = {};
+function sanitize37() {
+  const w = world; if (!w || typeof w !== "object") return;
+  w.lost37 = Array.isArray(w.lost37) ? w.lost37.filter(s => s && typeof s.id === "string" && s.n > 0) : [];
+  let fixed = 0;
+  // あずかっていた物を戻す
+  if (w.lost37.length) w.lost37 = w.lost37.filter(s => { if (!ITEMS[s.id]) return true; const R = roomFor("home"); R.storage = R.storage || []; const t = R.storage.find(x => x && x.id === s.id); if (t) t.n += s.n; else R.storage.push({ id: s.id, n: s.n }); return false; });
+  const lose = (id, n) => { if (typeof id === "string" && n > 0) w.lost37.push({ id, n }); fixed++; };
+  if (Array.isArray(w.inv)) w.inv = w.inv.map(s => { if (!s) return null; if (typeof s.id !== "string" || !ITEMS[s.id] || !(s.n > 0)) { lose(s.id, s.n); return null; } return s; });
+  for (const R of Object.values(w.rooms || {})) {
+    if (!R || typeof R !== "object") continue;
+    if (Array.isArray(R.storage)) R.storage = R.storage.filter(s => { if (s && ITEMS[s.id] && s.n > 0) return true; if (s) lose(s.id, s.n); return false; });
+    if (Array.isArray(R.furn)) R.furn = R.furn.filter(f => { if (f && FURN[f.id]) return true; if (f && typeof f.id === "string") lose("f_" + f.id, 1); return false; });
+  }
+  if (Array.isArray(w.drops)) w.drops = w.drops.filter(d => d && ITEMS[d.id] && Number.isInteger(d.x) && Number.isInteger(d.y));
+  for (const k in (w.crops || {})) { const c = w.crops[k]; if (!c || !CROP_INFO[c.type] || !ITEMS[c.type]) { delete w.crops[k]; fixed++; } }
+  if (Array.isArray(w.stalls)) for (const st of w.stalls) if (st && Array.isArray(st.goods)) st.goods = st.goods.filter(g => { if (g && ITEMS[g.id]) return true; if (g) lose(g.id, g.n); return false; });
+  if (w.vend33 && Array.isArray(w.vend33.goods)) w.vend33.goods = w.vend33.goods.filter(g => { if (g && ITEMS[g.id]) return true; if (g) lose(g.id, g.n); return false; });
+  if (Array.isArray(w.pets)) { const keep = w.pets.filter(t => PETS[t]); if (keep.length !== w.pets.length) { w.lostPets37 = [...new Set([...(w.lostPets37 || []), ...w.pets.filter(t => !PETS[t])])]; w.pets = keep; fixed++; } }
+  if (Array.isArray(w.lostPets37) && w.lostPets37.length) { const back = w.lostPets37.filter(t => PETS[t] && !w.pets.includes(t)); if (back.length) { w.pets.push(...back); w.lostPets37 = w.lostPets37.filter(t => !PETS[t]); } }
+  if (Array.isArray(w.animals)) { const bad = w.animals.filter(a => !a || !ANIMALS[a.type]); if (bad.length) { w.lostAnimals37 = [...(w.lostAnimals37 || []), ...bad.filter(Boolean)]; w.animals = w.animals.filter(a => a && ANIMALS[a.type]); fixed++; } }
+  if (Array.isArray(w.lostAnimals37) && w.lostAnimals37.length) { const back = w.lostAnimals37.filter(a => ANIMALS[a.type]); if (back.length) { w.animals.push(...back); w.lostAnimals37 = w.lostAnimals37.filter(a => !ANIMALS[a.type]); } }
+  if (w.bait && !ITEMS[w.bait]) w.bait = null;
+  if (Array.isArray(w.quests)) w.quests = w.quests.filter(q => q && (q.kind !== "item" || ITEMS[q.id]) && (q.kind !== "kill" || MOB_NAME[q.mob]));
+  for (const k in (w.projects || {})) if (!w.projects[k] || typeof w.projects[k] !== "object") { delete w.projects[k]; fixed++; } else { const p = w.projects[k]; p.need = p.need && typeof p.need === "object" ? p.need : {}; p.have = p.have && typeof p.have === "object" ? p.have : {}; }
+  for (const k in (w.decor || {})) if (!w.decor[k] || typeof w.decor[k].id !== "string") delete w.decor[k];
+  if (typeof w.money !== "number" || !isFinite(w.money)) { w.money = 0; fixed++; }
+  if (typeof w.hp !== "number" || !isFinite(w.hp)) w.hp = 100;
+  if (!w.stats || typeof w.stats !== "object") w.stats = {};
+  return fixed;
+}
+F37.sanitize = sanitize37;
+try { if (sanitize37()) { saveWorld(); } syncPets(); syncAnimals(); rebuildSolid(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "sanitize"); }
+const _loadSave37 = loadSave;
+loadSave = function (obj, label) {
+  if (obj && obj.world) { const keep = world; world = obj.world; try { sanitizeShape(world); sanitize37(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "sanitize"); } obj.world = world; world = keep; }
+  return _loadSave37(obj, label);
+};
+F37.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -9536,7 +9613,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

@@ -41,6 +41,13 @@
       } catch (e) { msg("送れませんでした。スクリーンショットで送ってね"); }
     };
   }
+  // ゲームの中でつかまえたエラー（止まらずに続けられたもの）。たくさん続くときだけ知らせる
+  const seen = new Set();
+  window.__komoErr = (e, where) => {
+    const key = (where || "") + ":" + (e && e.message);
+    if (!seen.has(key)) { seen.add(key); errs.push({ message: `[${where || "?"}] ${(e && e.message) || e}`, stack: e && e.stack }); try { console.warn("komorebi:", where, e); } catch (x) {} }
+    const now = Date.now(); burst = burst.filter(t => now - t < 5000); burst.push(now); if (burst.length > 120) show("stuck");
+  };
   addEventListener("error", ev => {
     if (!ev.error && !ev.message) return;            // 画像の読み込み失敗などは数えない
     errs.push({ message: ev.message, line: ev.lineno, col: ev.colno, stack: ev.error && ev.error.stack });

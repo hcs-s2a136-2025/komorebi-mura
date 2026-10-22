@@ -638,6 +638,8 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .kuji35 { margin-top: 10px; padding: 14px; text-align: center; background: #fbf6ec; border: 2px solid #d8403a; border-radius: 10px; color: #3a2a24; }
 .kuji35 b { display: block; font-size: 1.6rem; color: #c8302a; letter-spacing: .2em; }
 .kuji35 p { margin: 6px 0 2px; }
+.kama36 { display: flex; gap: 12px; align-items: center; background: #eef4fa; border-radius: 10px; padding: 10px 12px; color: #2a3a4a; }
+.kama36 img { width: 96px; image-rendering: pixelated; flex: none; }
 </style>
 
 <header>
@@ -3657,7 +3659,7 @@ syncUI = function () {
       const covered = (key === "bottom") && CHAR.TOPS[cfg.top]?.covers;
       b.disabled = !ok || covered;
       if (b.classList.contains("chip")) b.textContent = ok ? b.dataset.v : b.dataset.v + "（未入手）";
-      b.title = ok ? "" : info.shop ? "表参道のお店で買える" : info.salon ? "表参道の美容室で手に入る" : info.event ? "イベントやガチャ（イベント中）で手に入る" : "美容室のきせかえガチャで手に入る";
+      b.title = ok ? "" : info.where ? info.where : info.shop ? "表参道のお店で買える" : info.salon ? "表参道の美容室で手に入る" : info.event ? "イベントやガチャ（イベント中）で手に入る" : "美容室のきせかえガチャで手に入る";
     });
   }
 };
@@ -3891,6 +3893,10 @@ Object.assign(WEAR26.hair, { "ベリーショート": { salon: 1500 }, "ぼう�
 WEAR26.bangs = { "ぱっつん": { salon: 800 }, "流し前髪": { salon: 800 }, "センター分け": { salon: 800 }, "シースルー": { salon: 1200 }, "姫カット": { salon: 1500 }, "触角ヘア": { salon: 1200 }, "目隠れ": { salon: 1500 }, "短め": { salon: 600 }, "M字": { salon: 1000 }, "おでこ出し": { salon: 600 } };
 Object.assign(WEAR26.hairc, { "白": { salon: 2500 }, "水色": { salon: 2000 }, "黄緑": { salon: 2000 }, "むらさき": { salon: 2000 }, "ピンクブラウン": { salon: 2000 }, "グレー": { salon: 1500 } });
 WEAR_LABEL26.bangs = "前髪";
+
+// v36：雪の日のかまくらで、まれに見つかる帽子
+HATS["ゆきうさぎ帽子"] = { rows: ["....A......A....", "...AbA....AbA...", "...AbA....AbA...", "....AaaaaaaA....", "...AaaaaaaaaA...", "...ArrraarrrA..."], pal: { A: [196, 206, 220], a: [252, 252, 255], b: [250, 180, 200], r: [230, 70, 90] } };
+WEAR26.hat["ゆきうさぎ帽子"] = { shop: "kamakura", where: "雪の日のかまくらで、まれに見つかる" };
 
 const OPTS = [["髪型（後ろ髪）", "hair", null], ["前髪", "bangs", null], ["髪の色", "hairc", 1], ["目", "eyes", null], ["目の色", "eyec", 0], ["口", "mouth", null], ["ほっぺ", "cheek", null],
               ["服", "top", null], ["服の色", "topc", 1], ["ボトムス", "bottom", null], ["ボトムスの色", "bottomc", 1], ["肌の色", "skin", 0], ["帽子", "hat", null], ["アクセサリー", "acc", null], ["靴の色", "shoesc", 0]];
@@ -4934,7 +4940,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.23.0";
+const CLIENT_VERSION = "0.24.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -6961,6 +6967,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.24.0", date: "2026/10/22", title: "雪の日", items: [
+    "雪の日に、手ぶらで地面に向かってAを押すと、雪玉が作れる（20個まで。雪がやむと、とけてしまう）",
+    "雪玉を持ってAで投げられる。オンラインでは、仲間に当てると相手の画面にも雪がぺしゃっとつく。村の人やペットに当てると、びっくりしてくれる",
+    "雪玉でクラフト：雪だるま（5個）・マフラーの雪だるま（6個）・雪うさぎ（2個）。村に飾れて、春が来るととけていく",
+    "雪の日だけ、村のすみっこにかまくらができる。1日1回、中の包みからおみやげ（みかん・あまざけ・おもち・雪の結晶）。とてもまれに「ゆきうさぎ帽子」",
+    "実績「雪合戦の名人」「かまくらの常連」",
+  ] },
   { v: "0.23.0", date: "2026/10/22", title: "美容室が表参道へ・おしゃれは買って楽しむ", items: [
     "美容室「Salon こもれび」が、村から表参道にお引っ越し。きせかえガチャも一緒に移った",
     "美容室に「前髪」のメニューができた。新しい髪型・前髪・髪色は、美容室でしてもらうと着せ替えでも選べるようになる",
@@ -9243,6 +9256,182 @@ ACH.push(["村おこしの立役者", "温泉から観覧車まで、共同プ�
 ACH_REWARD["村おこしの立役者"] = ["money", 10000];
 F35.ready = true;
 
+// =================== v36: 雪の日（雪玉・雪合戦・雪だるま・かまくら） ===================
+var F36 = {};
+const snowing36 = () => world.weather === "snow";
+addSpr17("snowball35", (s, r, e) => { e(8, 9, 4.4, 4.2, C17("#fbfcff")); e(6.6, 7.6, 1.6, 1.4, C17("#ffffff")); s(10, 11, C17("#d0dcec")); s(11, 10, C17("#d0dcec")); s(9, 12, C17("#d0dcec")); });
+addSpr17("crystal36", (s, r, e) => { const B = C17("#9ad8f6"), W = C17("#e8f8ff"); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; for (let t = 0; t < 6; t++) s(Math.round(8 + Math.cos(a) * t), Math.round(8 + Math.sin(a) * t), t > 3 ? W : B); } e(8, 8, 1.6, 1.6, W); });
+addSpr17("mikan36", (s, r, e) => { e(8, 9, 5, 4.4, C17("#f6a030")); e(6.6, 7.6, 1.6, 1.2, C17("#ffd080")); r(7, 4, 2, 1, C17("#5a9a3a")); r(9, 3, 3, 2, C17("#7ac05a")); });
+addSpr17("amazake36", (s, r, e) => { e(8, 12, 5, 2, C17("#c89a6a")); r(4, 6, 8, 7, C17("#f4efe4")); e(8, 6, 4, 1.4, C17("#fbfaf4")); r(12, 8, 2, 3, C17("#f4efe4")); for (const x of [6, 9]) s(x, 3, C17("#e8eef4")); s(7, 2, C17("#e8eef4")); });
+addSpr17("mochi36", (s, r, e) => { e(8, 11, 5.4, 3, C17("#f8f6f0")); e(8, 8, 4, 2.6, C17("#ffffff")); r(4, 12, 8, 2, C17("#c8964e")); s(7, 7, C17("#ffffff")); });
+Object.assign(ITEMS, {
+  snowball35: { name: "雪玉", icon: "snowball35", price: 0 },
+  crystal36: { name: "雪の結晶", icon: "crystal36", price: 1500 },
+  mikan36: { name: "みかん", icon: "mikan36", price: 40, food: 30 },
+  amazake36: { name: "あまざけ", icon: "amazake36", price: 60, food: 40 },
+  mochi36: { name: "おもち", icon: "mochi36", price: 80, food: 50 },
+});
+// 雪だるま（雪玉でクラフトする飾り。冬のあいだ飾れて、春になるととける）
+const SNOWMEN36 = {
+  snowman36a: { name: "雪だるま", need: 5, spr: (s, r, e) => { e(8, 12, 5.4, 4, C17("#fbfcff")); e(8, 6, 4, 3.6, C17("#fbfcff")); s(6, 5, C17("#2a2a2a")); s(10, 5, C17("#2a2a2a")); r(8, 6, 2, 1, C17("#f08a3a")); for (const y of [10, 12, 14]) s(8, y, C17("#5a5a64")); r(2, 9, 3, 1, C17("#7a5236")); r(11, 9, 3, 1, C17("#7a5236")); r(5, 1, 6, 2, C17("#c8403a")); r(6, 0, 4, 1, C17("#e86a58")); } },
+  snowman36b: { name: "マフラーの雪だるま", need: 6, spr: (s, r, e) => { e(8, 12, 5.4, 4, C17("#fbfcff")); e(8, 6, 4, 3.6, C17("#fbfcff")); s(6, 5, C17("#2a2a2a")); s(10, 5, C17("#2a2a2a")); s(8, 7, C17("#2a2a2a")); r(4, 9, 8, 2, C17("#4a8ae0")); r(9, 11, 2, 3, C17("#4a8ae0")); r(5, 1, 6, 2, C17("#3a6aa8")); s(8, 0, C17("#ffffff")); } },
+  snowbunny36: { name: "雪うさぎ", need: 2, spr: (s, r, e) => { e(8, 11, 5.4, 3.2, C17("#fbfcff")); e(7, 10, 2.4, 1, C17("#ffffff")); s(5, 10, C17("#e2404e")); s(6, 10, C17("#e2404e")); r(8, 5, 2, 4, C17("#5a9a3a")); r(11, 6, 2, 3, C17("#5a9a3a")); } },
+};
+for (const [id, d] of Object.entries(SNOWMEN36)) {
+  IMG["d27_" + id] = spr17(d.spr, 16, 16); ASSETS["d27_" + id] = IMG["d27_" + id].toDataURL();
+  DECOR27[id] = { name: d.name, price: 0, solid: true, img: "d27_" + id, event: "snow36" };
+  ITEMS["deco_" + id] = { name: d.name, icon: "d27_" + id, price: 0, place: "decor", decor: id };
+  RECIPES.push({ out: "deco_" + id, n: 1, need: { snowball35: d.need } });
+}
+// ---- 雪玉をひろう（雪の日、手ぶらで地面に向かってA）・投げる（雪玉を持ってA） ----
+const balls36 = [], splats36 = [];
+let hit36 = 0, lastThrow36 = 0;
+function throw36(x, y, dir, fromRemote) {
+  const [dx, dy] = DIRS[dir]; let n = 0, hitE = null;
+  const M = map, ents = fromRemote ? [] : [...F8.remotes(), ...(M === village ? [...friends.filter(f => !f.hidden), ...petEnts] : []), ...(M.statics || [])];
+  for (n = 1; n <= 7; n++) {
+    const tx = x + dx * n, ty = y + dy * n;
+    if (!fromRemote) { const e = ents.find(e => e.x === tx && e.y === ty); if (e) { hitE = e; break; } }
+    if (tx < 0 || ty < 0 || tx >= M.w || ty >= M.h || M.solid[ty]?.[tx]) break;
+  }
+  const dist = Math.min(n, 7);
+  balls36.push({ x, y, dx, dy, dist, t0: performance.now(), dur: dist * 70 });
+  return { hitE, dist };
+}
+const _act36 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving) {
+    const sel = world.inv[world.sel], [tx, ty] = front(), k = tx + "," + ty;
+    if (sel?.id === "snowball35") {
+      if (performance.now() - lastThrow36 < 350) return; lastThrow36 = performance.now();
+      const { hitE } = throw36(player.x, player.y, player.dir);
+      removeItem("snowball35", 1); renderHotbar();
+      if (F8.connected) send8({ type: "snow", x: player.x, y: player.y, dir: player.dir, m: mapKey(), ...(hitE?.rid ? { to: hitE.rid } : {}) });
+      world.stats.snowThrow36 = (world.stats.snowThrow36 || 0) + 1;
+      if (hitE) setTimeout(() => {
+        if (hitE.rid) { toast("snowball35", `${hitE.name}に雪玉が当たった！`); world.stats.snowHit36 = (world.stats.snowHit36 || 0) + 1; }
+        else if (hitE.kind === "npc") hitE.say = { text: ["つめたっ！", "やったなー！", "雪合戦だね！", "えいっ、おかえし！"][rnd(4)], until: performance.now() + 2200 };
+        else if (hitE.kind === "pet") hitE.say = { text: "!?", until: performance.now() + 1500 };
+        else hitE.say = { text: "わっ、つめたい！", until: performance.now() + 1800 };
+        splats36.push({ x: hitE.x, y: hitE.y, until: performance.now() + 700 });
+      }, 200);
+      saveWorld(); return;
+    }
+    if (!sel && snowing36() && map === village && /^(grass|flower|path)/.test(village.ground[ty]?.[tx] || "") && !village.solid[ty]?.[tx] && !world.crops[k] && !world.tilled[k] && !(world.decor || {})[k] && !world.drops.some(d => d.x === tx && d.y === ty) && !entsOf(village).some(e => e.x === tx && e.y === ty)) {
+      if (count("snowball35") >= 20) { toast("snowball35", "雪玉はもう持ちきれない（20個まで）"); return; }
+      // 手ぶらのままにしておけるように、えらんでいるマス以外に入れる
+      let si = world.inv.findIndex(x => x && x.id === "snowball35"); if (si < 0) si = world.inv.findIndex((x, j) => !x && j !== world.sel); if (si < 0 && !world.inv[world.sel]) si = world.sel;
+      if (si >= 0) { if (world.inv[si]) world.inv[si].n++; else world.inv[si] = { id: "snowball35", n: 1 }; renderHotbar(); dust(tx, ty, [250, 252, 255], 5); if (!world.stats.snowball36) toast("snowball35", "雪をぎゅっとにぎって、雪玉を作った。持ってAで投げられる。5個でクラフトから雪だるまも作れるよ"); world.stats.snowball36 = (world.stats.snowball36 || 0) + 1; saveWorld(); }
+      else toast(null, "持ち物がいっぱいで、雪玉を持てない");
+      return;
+    }
+  }
+  _act36();
+};
+// オンライン：だれかが投げた雪玉を見る・当てられる
+const _handle36 = handle8;
+handle8 = function (m) {
+  if (m && m.type === "snow") {
+    if (m.m === mapKey() && Number.isInteger(m.x) && Number.isInteger(m.y) && DIRS[m.dir]) throw36(m.x, m.y, m.dir, m);
+    if (m.to && m.to === F8.myId()) setTimeout(() => {
+      hit36 = performance.now() + 1300; const who = remotes.get(m.id)?.name || "だれか";
+      toast("snowball35", `${who}に雪玉を当てられた！ つめたい！`); world.stats.snowHitMe36 = (world.stats.snowHitMe36 || 0) + 1;
+    }, 200);
+    return;
+  }
+  return _handle36(m);
+};
+// ---- かまくら（雪の日に、村のすみっこにできる） ----
+IMG.kama36 = pix13(48, 36, (set, rect) => { ell13(set, 24, 26, 23, 20, C13["#e8eef6"]); ell13(set, 24, 24, 21, 18, C13["#fbfcff"]); ell13(set, 18, 14, 8, 5, C13["#ffffff"]);
+  ell13(set, 24, 30, 9, 9, C13["#3a2a30"]); ell13(set, 24, 31, 7, 7, C13["#e8a040"]); ell13(set, 24, 32, 4, 4, C13["#f6d070"]); rect(10, 32, 28, 2, C13["#d8e0ea"]); });
+ASSETS.kama36 = IMG.kama36.toDataURL();
+const KAMA_SPOTS36 = [[58, 3], [2, 3], [12, 41], [60, 41]];
+let kamaAt36 = null;
+function kamaFree36(ax, ay) {
+  for (let y = ay - 1; y <= ay; y++) for (let x = ax; x < ax + 3; x++) { if (x < 0 || y < 0 || x >= village.w || y >= village.h) return false; if (village.solid[y][x] || !/^(grass|flower)/.test(village.ground[y][x]) || world.tilled[x + "," + y] || (world.decor || {})[x + "," + y]) return false; }
+  return true;
+}
+const _rebuildSolid36 = rebuildSolid;
+rebuildSolid = function () {
+  _rebuildSolid36(); kamaAt36 = null;
+  if (!snowing36()) return;
+  kamaAt36 = KAMA_SPOTS36.find(([x, y]) => kamaFree36(x, y)) || null;
+  if (kamaAt36) { const [ax, ay] = kamaAt36; for (let y = ay - 1; y <= ay; y++) for (let x = ax; x < ax + 3; x++) village.solid[y][x] = true; }
+};
+let lastW36 = world.weather;
+const _f6update36 = F6.update;
+F6.update = dt => {
+  _f6update36(dt);
+  if (world.weather !== lastW36) { lastW36 = world.weather; rebuildSolid(); if (snowing36() && kamaAt36) F7.notify("雪が積もった。村のすみっこに、かまくらができたみたい", "kama36"); }
+  hit36 = hit36 > performance.now() ? hit36 : 0;
+};
+const KAMA_GIFT36 = [["hat", .05], ["crystal36", .17], ["mochi36", .22], ["amazake36", .26], ["mikan36", .30]];
+function openKama36() {
+  const d = world.kama36 === world.day;
+  openModal("かまくら", "", body => {
+    body.innerHTML = `<div class="kama36"><img src="${ASSETS.kama36}" alt=""><p>${d ? "中はほんのりあたたかい。今日はもう、おみやげをもらったよ。また雪の日に来てね" : "雪をくりぬいた、まんまるのかまくら。中に入ると、ろうそくの明かりがゆれている…。奥に、だれかが置いていった包みがあるみたい"}</p></div>
+      ${d ? "" : `<div class="row2"><button class="btn" type="button" id="kamaGo">包みをあけてみる</button></div>`}<div id="kamaRes"></div>`;
+    body.querySelector("#kamaGo")?.addEventListener("click", () => {
+      if (world.kama36 === world.day) return; world.kama36 = world.day;
+      let r = Math.random(), got = "mikan36"; for (const [id, p] of KAMA_GIFT36) { if ((r -= p) < 0) { got = id; break; } }
+      let msg;
+      if (got === "hat") { if (grantWear26("hat", "ゆきうさぎ帽子", true)) msg = "とってもめずらしい「ゆきうさぎ帽子」が入っていた！ 着せ替えで選べるよ"; else { addItem("crystal36", 3, true); msg = "きらきらの雪の結晶が3つ入っていた"; } }
+      else { const n = got === "mikan36" ? 3 : got === "crystal36" ? 1 : 2; addItem(got, n, true); msg = `${ITEMS[got].name}が${n}つ入っていた${got === "crystal36" ? "（めずらしい！ 高く売れるよ）" : ""}`; }
+      world.stats.kama36 = (world.stats.kama36 || 0) + 1; saveWorld();
+      body.querySelector("#kamaGo").disabled = true;
+      body.querySelector("#kamaRes").innerHTML = `<div class="warn" style="background:#eef6fb;border-color:#9ac8e8;color:#2a4a6a">${esc(msg)}</div>`;
+      if (got === "hat") SFX.small();
+    });
+  });
+}
+F36.openKama = openKama36;
+const _act36b = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village && kamaAt36) {
+    const [tx, ty] = front(), [ax, ay] = kamaAt36;
+    if (tx >= ax && tx < ax + 3 && ty >= ay - 1 && ty <= ay) { openKama36(); return; }
+  }
+  _act36b();
+};
+// ---- 描く ----
+const _addToList36 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList36(list, now);
+  if (map === village && kamaAt36) { const [ax, ay] = kamaAt36; list.push({ s: (ay + 1) * TS - 1, d: () => { ctx.drawImage(IMG.kama36, ax * TS, (ay + 1) * TS - IMG.kama36.height); const f = .5 + Math.sin(now / 200) * .15; ctx.fillStyle = `rgba(255,200,90,${f * .35})`; ctx.beginPath(); ctx.arc(ax * TS + 24, (ay + 1) * TS - 8, 9, 0, 7); ctx.fill(); } }); }
+  for (let i = balls36.length - 1; i >= 0; i--) {
+    const b = balls36[i], t = (now - b.t0) / b.dur;
+    if (t >= 1) { balls36.splice(i, 1); splats36.push({ x: b.x + b.dx * b.dist, y: b.y + b.dy * b.dist, until: now + 500, puff: true }); continue; }
+    const px = (b.x + b.dx * b.dist * t) * TS + 8, py = (b.y + b.dy * b.dist * t) * TS + 6 - Math.sin(t * Math.PI) * 6;
+    list.push({ s: 1e9 - 2, d: () => { ctx.fillStyle = "rgba(20,30,40,.25)"; ctx.fillRect(px - 2, (b.y + b.dy * b.dist * t) * TS + 12, 4, 1); ctx.fillStyle = "#fbfcff"; ctx.beginPath(); ctx.arc(px, py, 2.4, 0, 7); ctx.fill(); ctx.fillStyle = "#d0dcec"; ctx.fillRect(px, py, 1, 1); } });
+  }
+  for (let i = splats36.length - 1; i >= 0; i--) {
+    const s = splats36[i]; if (s.until < now) { splats36.splice(i, 1); continue; }
+    const a = (s.until - now) / 700;
+    list.push({ s: 1e9 - 1, d: () => { ctx.fillStyle = `rgba(250,252,255,${Math.min(1, a * 1.4)})`; for (let k = 0; k < 6; k++) { const an = k * 1.05 + s.x, r = (1 - a) * 7 + 2; ctx.fillRect(s.x * TS + 8 + Math.cos(an) * r - 1, s.y * TS + 8 + Math.sin(an) * r - 1, 2, 2); } } });
+  }
+  if (hit36) list.push({ s: 1e9, d: () => { const a = (hit36 - now) / 1300; ctx.fillStyle = `rgba(252,253,255,${.85 * a})`; ctx.beginPath(); ctx.arc(player.px + 8, player.py + 6, 5, 0, 7); ctx.arc(player.px + 4, player.py + 9, 3, 0, 7); ctx.arc(player.px + 12, player.py + 8, 3, 0, 7); ctx.fill(); } });
+};
+// ---- 朝：雪玉がとける・春になると雪だるまがとける ----
+const _f6newday36 = F6.onNewDay;
+F6.onNewDay = () => {
+  _f6newday36();
+  const notes = [];
+  if (!snowing36() && count("snowball35")) { removeItem("snowball35", count("snowball35")); notes.push("持っていた雪玉が、とけて水になった"); }
+  if (season() !== "冬") {
+    let n = 0;
+    for (const k in (world.decor || {})) { const d = world.decor[k]; if (SNOWMEN36[d.id] && myDecor27(d)) { delete world.decor[k]; n++; } }
+    for (const id of Object.keys(SNOWMEN36)) { const c = count("deco_" + id); if (c) { removeItem("deco_" + id, c); n += c; } }
+    if (n) { notes.push(`春が来て、雪だるまが${n}つとけていった。また冬に会おうね`); rebuildSolid(); }
+  }
+  rebuildSolid();
+  if (notes.length) setTimeout(() => F7.notify(notes.join("。"), "snowball35"), 1000);
+};
+rebuildSolid();
+ACH.push(["雪合戦の名人", "オンラインで、雪玉をだれかに10回当てる", () => (world.stats.snowHit36 || 0) >= 10], ["かまくらの常連", "かまくらで5回おみやげをもらう", () => (world.stats.kama36 || 0) >= 5]);
+ACH_REWARD["雪合戦の名人"] = ["money", 2000]; ACH_REWARD["かまくらの常連"] = ["item", "crystal36", 1];
+F36.throw = throw36;
+F36.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -9266,7 +9455,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

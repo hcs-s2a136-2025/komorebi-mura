@@ -124,6 +124,7 @@ wss.on("connection", s => {
     if (m.type === "move") { Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }
     if (m.type === "cfg") { s.cfg = m.cfg; bc({ type: "cfg", id: s.pl.id, cfg: m.cfg }, s); }
     if (m.type === "emote") bc({ type: "emote", id: s.pl.id, e: m.e }, s);
+    if (m.type === "snow") { const o = { type: "snow", id: s.pl.id, x: m.x | 0, y: m.y | 0, dir: m.dir, m: String(m.m || "").slice(0, 32) }; if (m.to && m.to !== s.pl.id) o.to = m.to; bc(o, s); }
     if (m.type === "ping") s.send(JSON.stringify({ type: "pong" }));
     if (m.type === "sleep") { if (Date.now() - clock.start < 3000) return s.send(JSON.stringify({ type: "notice", text: "さっき朝になったばかり" })); advance("sleep", s.pl); }
     if (m.type === "edits") { const out = [], back = []; for (const e of (m.list || []).slice(0, 300)) { if (!e || typeof e.k !== "string") continue; shared[e.l] = shared[e.l] || {};

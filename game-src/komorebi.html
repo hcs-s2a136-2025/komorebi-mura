@@ -744,6 +744,24 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .mcview44 button.on { background: #ffd86a; border-color: #ffd86a; color: #2a2228; font-weight: bold; }
 .mclog44 .t b { color: #ffb0c8; }
 .mclog44 .t.me b { color: #9fe0a0; }
+
+/* v45 カラオケ（音ゲー）・ラウンジ */
+.kdiff45 { display: flex; gap: 6px; margin: 6px 0; }
+.kdiff45 button { font: inherit; font-size: .85rem; padding: 3px 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .35); background: transparent; color: #e8dcf0; cursor: pointer; }
+.kdiff45 button.on { background: #ffd86a; border-color: #ffd86a; color: #2a2228; font-weight: bold; }
+.k45 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.k45ly { width: 100%; max-width: 360px; min-height: 52px; text-align: center; }
+.k45ly > div:first-child { font-size: 1.15rem; font-weight: bold; color: #f4ecff; letter-spacing: .04em; }
+.k45ly .on { color: #ff8fb8; text-shadow: 0 0 6px rgba(255, 143, 184, .6); }
+.k45ly .k45rdy { color: #ffd86a; }
+.k45ly2 { font-size: .8rem; opacity: .6; margin-top: 2px; min-height: 1.2em; }
+#k45cv { width: min(100%, 360px); aspect-ratio: 3 / 4; image-rendering: pixelated; border-radius: 8px; border: 2px solid #5a4a6a; touch-action: none; cursor: pointer; }
+.k45hud { display: flex; justify-content: space-between; width: min(100%, 360px); font-size: .9rem; }
+.k45hud #k45sc { font-weight: bold; color: #ffd86a; }
+.k45res { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin: 6px 0 10px; font-size: .85rem; }
+.k45res b { color: #ffd86a; margin-left: 3px; }
+.talk45 { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.talk45 .btn { text-align: left; justify-content: flex-start; }
 </style>
 
 <header>
@@ -870,7 +888,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.28.4";
+  const VER = "0.29.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -1211,6 +1229,8 @@ const BGM = (() => {
       fadeTo(0, .35); setTimeout(() => { if (want === name && enabled) { switchNow(); fadeTo(vol * .9, .5); } }, 380);
     },
     setVolume(v) { vol = v; if (enabled && ac) fadeTo(vol * .9, .15); },
+    // カラオケ中などに、いったん小さくする（false で元にもどす）
+    duck(on) { if (enabled && ac) fadeTo(on ? 0 : vol * .9, .3); },
     SONGS,
   };
 })();
@@ -1265,6 +1285,8 @@ const SFX = (() => {
   }
 
   const api = {
+    // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
+    audio() { if (!ctx()) return null; return { ac, out, tone, noise, hz }; },
     get on() { return pref.on; }, get vol() { return pref.vol; },
     setOn(v) { pref.on = !!v; save(); if (!pref.on) api.spinStop(); },
     setVol(v) { pref.vol = Math.max(0, Math.min(1, +v)); save(); if (out) out.gain.value = pref.vol * 2; },
@@ -5196,7 +5218,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.28.4";
+const CLIENT_VERSION = "0.29.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7224,6 +7246,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.29.0", date: "2026/10/23", title: "カラオケが音ゲーに・ラウンジで会話と贈り物", items: [
+    "すすきのの「カラオケ うたかた」が音ゲーになった。落ちてくる音符が線に重なったら D・F・J・K（または矢印キー）、スマホは画面の4つの列をタップ。うまく押すとメロディが鳴って、歌になる",
+    "曲は5曲、むずかしさは「かんたん・ふつう・むずかしい」の3つ。歌詞もカラオケみたいに色が変わっていく。95点以上で賞金、100点（全部PERFECT）で大きな賞金。曲とむずかしさごとにベストが残る",
+    "ラウンジ 月下：指名すると、その日はじめは女の子から話をふられる。3つの答えから選んで、ぴったりの答えなら好感度が上がる（1日1回）",
+    "ラウンジ 月下：持ち物から贈り物をわたせるようになった（1日1回）。大好きな物なら好感度+2、好きな物なら+1、苦手な物だと-1。わかった好みは画面に残る",
+    "好感度が10になると、その子と特別なできごとがある。実績「月下の恋」を追加",
+  ] },
   { v: "0.28.4", date: "2026/10/23", title: "ほかの人の家畜が見えないことがあったのを直した", items: [
     "ほかの人の畑・家畜・ペットのようすを、サーバーを再起動しても覚えておくようにした。前は再起動のたびに消えて、持ち主がもう一度ログインするまで見えなかった",
     "持ち主がログインしていなくても、最後に来たときのようすが見える",
@@ -11559,6 +11588,380 @@ $("mcin44").addEventListener("keydown", e => e.stopPropagation());
 F44.farms = farms44; F44.rPets = rPets44; F44.rAnimals = rAnimals44;
 F44.ready = true;
 
+// =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
+var F45 = {};
+// ---------- カラオケ うたかた（音ゲー） ----------
+// 1フレーズ＝2小節（8拍）。[歌詞, 小節ごとのコード, "音 長さ 音 長さ …"]（長さは拍。r は休み）
+const KSONGS45 = {
+  "こもれびのうた": { bpm: 96, star: 1, ph: [
+    ["こもれびの みちを ゆけば", "C Am", "E4 1 G4 1 A4 1 G4 1 E4 1 D4 .5 E4 .5 C4 2"],
+    ["かぜが そっと わらう", "F G", "D4 1 E4 1 F4 1 A4 1 G4 3 r 1"],
+    ["はたけの つちの においが", "C Am", "E4 1 G4 1 C5 1 B4 1 A4 1 G4 1 E4 2"],
+    ["きょうも ぼくを よぶ", "F C", "F4 1 E4 1 D4 1 E4 1 C4 3 r 1"],
+    ["ちいさな たねに みずを", "F C", "A4 1 A4 .5 B4 .5 C5 1 A4 1 G4 1 E4 1 G4 2"],
+    ["あしたを ゆめみて", "Dm C", "F4 1 G4 1 A4 1 B4 1 C5 3 r 1"],
+    ["こもれびの したで また", "Am C", "E5 1 D5 1 C5 1 A4 1 G4 1 A4 .5 G4 .5 E4 2"],
+    ["あおうね", "G C", "D4 1 E4 1 G4 1 D4 1 C4 4"],
+  ] },
+  "ラッキーナイト": { bpm: 128, star: 2, ph: [
+    ["ネオンが またたく よるに", "Am F", "A4 .5 C5 .5 E5 1 D5 .5 C5 .5 A4 1 G4 .5 A4 .5 C5 1 A4 2"],
+    ["コインが はねて おどる", "C G", "E5 .5 E5 .5 D5 1 C5 .5 D5 .5 E5 1 G5 1 E5 1 D5 2"],
+    ["きょうは ついてる きがする", "Am F", "A4 .5 C5 .5 E5 1 D5 .5 C5 .5 A4 1 G4 .5 A4 .5 C5 1 D5 2"],
+    ["まわれ まわれ もっと", "G E", "E5 1 D5 1 C5 1 D5 1 E5 3 r 1"],
+    ["ラッキー ラッキー ナイト", "F G", "A5 .5 G5 .5 E5 1 A5 .5 G5 .5 E5 1 D5 .5 E5 .5 G5 1 E5 2"],
+    ["ほしより きらきら", "Em Am", "C5 .5 D5 .5 E5 1 G5 1 E5 1 D5 1 C5 1 A4 2"],
+    ["ラッキー ラッキー ナイト", "F G", "A5 .5 G5 .5 E5 1 A5 .5 G5 .5 E5 1 D5 .5 E5 .5 G5 1 A5 2"],
+    ["あさまで おどろう", "E Am", "G5 1 E5 1 D5 1 C5 1 A4 4"],
+  ] },
+  "すすきのブルース": { bpm: 84, star: 2, ph: [
+    ["ネオンの まちに ゆきが ふる", "Gm Cm", "G4 1 Bb4 1 C5 1 D5 1 C5 1 Bb4 1 G4 2"],
+    ["コートの えりを たてて", "F Gm", "F4 1 G4 1 Bb4 1 G4 1 F4 1 D4 1 G4 2"],
+    ["ラーメンの ゆげが しみる", "Gm Cm", "G4 1 Bb4 1 D5 1 F5 1 Eb5 1 D5 1 C5 2"],
+    ["ひとりの よるも わるくない", "Eb D", "Bb4 1 C5 1 D5 1 Bb4 1 A4 1 F4 1 G4 2"],
+    ["すすきの すすきの", "Gm Gm", "D5 1.5 C5 .5 Bb4 1 G4 1 D5 1.5 C5 .5 Bb4 2"],
+    ["あしたは だれに あえるかな", "Cm F", "C5 1 D5 1 Eb5 1 D5 1 C5 1 Bb4 1 A4 2"],
+    ["すすきの すすきの", "Gm Eb", "D5 1.5 C5 .5 Bb4 1 G4 1 F5 1.5 Eb5 .5 D5 2"],
+    ["ゆきの なか うたう", "D Gm", "C5 1 Bb4 1 A4 1 F4 1 G4 4"],
+  ] },
+  "畑でつかまえて": { bpm: 112, star: 2, ph: [
+    ["あさの はたけで みつけた", "G D", "G4 .5 G4 .5 B4 1 D5 1 B4 1 C5 .5 B4 .5 A4 1 G4 2"],
+    ["まっかな トマトに キスを", "C G", "B4 .5 B4 .5 D5 1 E5 1 D5 1 C5 1 A4 1 B4 2"],
+    ["にんじん かぶに じゃがいも", "G D", "G4 .5 A4 .5 B4 1 D5 .5 B4 .5 A4 1 G4 .5 A4 .5 B4 1 A4 2"],
+    ["みんな あつまれ", "C G", "D5 1 E5 1 D5 1 B4 1 G4 3 r 1"],
+    ["つかまえて つかまえて", "C D", "D5 .5 D5 .5 E5 1 D5 .5 D5 .5 E5 1 D5 .5 B4 .5 G4 1 A4 2"],
+    ["はたけで まってる", "G Em", "B4 1 C5 1 D5 1 G5 1 E5 1 D5 1 B4 2"],
+    ["つかまえて つかまえて", "C D", "D5 .5 D5 .5 E5 1 D5 .5 D5 .5 E5 1 G5 .5 E5 .5 D5 1 B4 2"],
+    ["しゅうかく びより", "D G", "A4 1 B4 1 A4 1 F#4 1 G4 4"],
+  ] },
+  "十日目の夜": { bpm: 72, star: 1, ph: [
+    ["とおかめの よるに ほしが", "F C", "C5 1 A4 1 F4 1 A4 1 Bb4 1 A4 1 G4 2"],
+    ["そっと ふってきた", "Bb F", "A4 1 Bb4 1 C5 1 D5 1 C5 3 r 1"],
+    ["かわした やくそく ひとつ", "Dm Bb", "D5 1 C5 1 A4 1 C5 1 Bb4 1 G4 1 A4 2"],
+    ["むねに しまって", "C F", "G4 1 A4 1 Bb4 1 G4 1 F4 3 r 1"],
+    ["とおくに いても おなじ", "F Dm", "A4 1 C5 1 F5 1 E5 1 D5 1 C5 1 A4 2"],
+    ["そらを みてる", "Bb C", "Bb4 1 C5 1 D5 1 Bb4 1 C5 3 r 1"],
+    ["とおかめの よるが あけても", "Dm C", "F5 1 E5 1 D5 1 C5 1 Bb4 1 A4 1 G4 2"],
+    ["わすれない", "C F", "A4 1 Bb4 1 G4 1 E4 1 F4 4"],
+  ] },
+};
+const KDIFF45 = {
+  easy: { name: "かんたん", speed: 150, prize: [300, 1500] },
+  normal: { name: "ふつう", speed: 190, prize: [800, 5000] },
+  hard: { name: "むずかしい", speed: 250, prize: [1500, 10000] },
+};
+const KLANE_COL45 = ["#ff8fb8", "#ffd86a", "#7fd8ff", "#9fe89a"];
+const KKEY45 = { d: 0, f: 1, j: 2, k: 3, D: 0, F: 1, J: 2, K: 3, ArrowLeft: 0, ArrowDown: 1, ArrowUp: 2, ArrowRight: 3 };
+function midi45(s) { const m = /^([A-G])(#|b)?(\d)$/.exec(s); if (!m) return 60; return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0); }
+function chord45(s) { const m = /^([A-G])(#|b)?(m?)$/.exec(s) || ["", "C", "", ""]; const r = 48 + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0); return [r, r + (m[3] ? 3 : 4), r + 7]; }
+// 曲を音符の列にする（t は曲の頭からの拍）
+function parseSong45(song) {
+  const notes = [], chords = [];
+  song.ph.forEach(([ly, ch, mel], pi) => {
+    ch.split(" ").forEach((c, bi) => chords.push(chord45(c)));
+    const tk = mel.trim().split(/\s+/); let t = pi * 8, k = 0;
+    for (let i = 0; i < tk.length; i += 2) { const d = +tk[i + 1]; if (tk[i] !== "r") notes.push({ t, m: midi45(tk[i]), d, ph: pi, k: k++ }); t += d; }
+  });
+  return { notes, chords, beats: song.ph.length * 8 };
+}
+function chart45(parsed, diff) {
+  const ms = parsed.notes.map(n => n.m), lo = Math.min(...ms), hi = Math.max(...ms);
+  const lane = m => Math.min(3, Math.floor((m - lo) * 4 / (hi - lo + 1)));
+  let list = parsed.notes.map(n => ({ ...n, lane: lane(n.m) }));
+  if (diff === "easy") list = list.filter(n => Math.abs(n.t - Math.round(n.t)) < 1e-6);
+  if (diff === "hard") list = list.concat(list.filter(n => n.d >= 2).map(n => ({ ...n, lane: (n.lane + 2) % 4, twin: true })));
+  return list.sort((a, b) => a.t - b.t || a.lane - b.lane);
+}
+function kBest45() { world.stats.kBest45 = world.stats.kBest45 || {}; return world.stats.kBest45; }
+let kDiff45 = "normal";
+function openKaraoke45() {
+  openModal("カラオケ うたかた", "yami", body => {
+    const n = world.stats.karaoke || 0, best = world.stats.karaokeBest || 0, B = kBest45(), D = KDIFF45[kDiff45];
+    body.innerHTML = staffSay13(charIcon13(STAFF13.karaoke), `1曲500G！ 音符に合わせてボタンを押すと、歌になるよ。95点以上で ${fmt(D.prize[0])}、100点はなんと ${fmt(D.prize[1])}！`) +
+      `<div class="kdiff45">${Object.entries(KDIFF45).map(([k, d]) => `<button type="button" class="${k === kDiff45 ? "on" : ""}" data-kd="${k}">${d.name}</button>`).join("")}</div>
+      <div class="list">${Object.entries(KSONGS45).map(([s, so]) => `<div class="li"><span class="nm">♪ ${s}<span class="sub2">${"★".repeat(so.star)}${"☆".repeat(3 - so.star)}　テンポ ${so.bpm}　ベスト ${B[s + "|" + kDiff45] ?? "-"}点</span></span><span class="acts"><button class="btn" type="button" data-song="${s}" ${world.money < 500 ? "disabled" : ""}>歌う</button></span></div>`).join("")}</div>
+      <p class="mtext small">あそびかた：上から落ちてくる音符が、下の線に重なったときに押す。<br>パソコンは D・F・J・K（または ←・↓・↑・→）、スマホは画面の4つの列をタップ。</p>
+      <p class="mtext">歌った回数 ${n}曲　自己ベスト ${best}点　所持金 <b>${fmt(world.money)}</b></p>`;
+    body.querySelectorAll("[data-kd]").forEach(b => b.onclick = () => { kDiff45 = b.dataset.kd; closeModal(); openKaraoke45(); });
+    body.querySelectorAll("[data-song]").forEach(b => b.onclick = () => { if (world.money < 500) return; addMoney(-500); sing45(b.dataset.song, kDiff45); });
+  });
+}
+function sing45(name, diff) {
+  const song = KSONGS45[name], D = KDIFF45[diff], P = parseSong45(song), notes = chart45(P, diff);
+  const spb = 60 / song.bpm, lead = 4 * spb + .6, end = lead + P.beats * spb + 1.2;
+  const A = typeof SFX !== "undefined" && SFX.audio ? SFX.audio() : null;
+  const lat = A ? (A.ac.outputLatency || A.ac.baseLatency || 0) : 0;
+  const t0 = A ? A.ac.currentTime : performance.now() / 1000;
+  const now = () => (A ? A.ac.currentTime - lat : performance.now() / 1000) - t0;
+  notes.forEach(n => { n.time = lead + n.t * spb; n.j = null; });
+  const st = { perfect: 0, great: 0, good: 0, miss: 0, combo: 0, maxCombo: 0, judge: "", judgeAt: -9, flash: [-9, -9, -9, -9], done: false };
+  try { if (typeof BGM !== "undefined" && BGM.duck) BGM.duck(true); } catch (e) { }
+  // 伴奏（ベース・コード・リズム）と、うすいガイドメロディを先に並べておき、少しずつ鳴らす
+  const ev = [];
+  if (A) {
+    for (let i = 0; i < 4; i++) ev.push([.6 + i * spb, "click", i === 0 ? 1760 : 1320]);
+    for (let b = 0; b < P.beats; b++) {
+      const t = lead + b * spb, ch = P.chords[Math.floor(b / 4)] || [48, 52, 55];
+      if (b % 4 === 0) ev.push([t, "pad", ch]);
+      ev.push([t, "bass", ch[0] - 12 + (b % 2 && song.bpm >= 100 ? 7 : 0)]);
+      if (b % 2 === 0) ev.push([t, "kick"]); else ev.push([t, "snare"]);
+      ev.push([t, "hat"]); if (song.bpm >= 100) ev.push([t + spb / 2, "hat"]);
+    }
+    P.notes.forEach(n => ev.push([lead + n.t * spb, "guide", n.m, n.d * spb]));
+    ev.sort((a, b) => a[0] - b[0]);
+  }
+  let evI = 0;
+  const play = (e, at) => {
+    const { tone, noise, hz } = A;
+    if (e[1] === "click") tone(at, e[2], .05, { type: "square", vol: .12 });
+    else if (e[1] === "pad") e[2].forEach(m => tone(at, hz(m), spb * 3.8, { type: "triangle", vol: .035, att: .05, filt: 1800 }));
+    else if (e[1] === "bass") tone(at, hz(e[2]), spb * .85, { type: "triangle", vol: .16, filt: 900 });
+    else if (e[1] === "kick") tone(at, 120, .18, { type: "sine", vol: .4, f2: 45 });
+    else if (e[1] === "snare") noise(at, .1, { vol: .14, hp: 1800 });
+    else if (e[1] === "hat") noise(at, .03, { vol: .05, hp: 7000 });
+    else if (e[1] === "guide") tone(at, hz(e[2]), Math.min(e[3], 1.2) * .9, { type: "sine", vol: .035, att: .02 });
+  };
+  const sing = (m, d) => { if (!A) return; const t = A.ac.currentTime + .005, dur = Math.min(.9, Math.max(.18, d * spb * .95)); A.tone(t, A.hz(m), dur, { type: "triangle", vol: .2, att: .01 }); A.tone(t, A.hz(m + 12), dur * .8, { type: "sine", vol: .06, att: .01 }); };
+  openModal(`カラオケ うたかた　♪ ${name}`, "yami", body => {
+    body.innerHTML = `<div class="k45"><div class="k45ly"><div id="k45ly"></div><div class="k45ly2" id="k45ly2"></div></div>
+      <canvas id="k45cv" width="240" height="320"></canvas>
+      <div class="k45hud"><span>${D.name}</span><span id="k45sc">0点</span></div></div>`;
+  }, () => stop());
+  const cv = $("k45cv"), g = cv.getContext("2d"), W = 240, JY = 282, LW = 50, LX = i => 20 + i * LW;
+  const press = lane => {
+    if (st.done) return; const t = now(); st.flash[lane] = t;
+    let best = null; for (const n of notes) { if (n.j || n.lane !== lane) continue; const dt = Math.abs(t - n.time); if (dt <= .16 && (!best || dt < Math.abs(t - best.time))) best = n; if (n.time > t + .2) break; }
+    if (!best) return;
+    const dt = Math.abs(t - best.time); best.j = dt <= .06 ? "perfect" : dt <= .11 ? "great" : "good";
+    st[best.j]++; st.combo++; st.maxCombo = Math.max(st.maxCombo, st.combo); st.judge = best.j; st.judgeAt = t;
+    if (!best.twin) sing(best.m, best.d);
+  };
+  const onKey = e => {
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+    const l = KKEY45[e.key]; if (l === undefined) return;
+    e.preventDefault(); e.stopPropagation(); if (!e.repeat) press(l);
+  };
+  addEventListener("keydown", onKey, true);
+  cv.addEventListener("pointerdown", e => { const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * W / r.width, l = Math.floor((x - 20) / LW); if (l >= 0 && l < 4) { e.preventDefault(); press(l); } });
+  let stopped = false;
+  function stop() { if (stopped) return; stopped = true; removeEventListener("keydown", onKey, true); try { if (typeof BGM !== "undefined" && BGM.duck) BGM.duck(false); } catch (e) { } }
+  let lySig = "";
+  const lyrics = t => {
+    const pi = Math.max(0, Math.min(song.ph.length - 1, Math.floor((t - lead) / (8 * spb)))), ph = song.ph[pi][0];
+    const pn = P.notes.filter(n => n.ph === pi), done = t < lead ? 0 : pn.filter(n => lead + n.t * spb <= t + .02).length / pn.length;
+    const cut = Math.round(ph.length * done), sig = pi + ":" + cut;
+    if (sig === lySig) return; lySig = sig;
+    $("k45ly").innerHTML = t < lead - 2 * spb ? `<span class="k45rdy">♪ ${esc(name)}</span>` : `<span class="on">${esc(ph.slice(0, cut))}</span>${esc(ph.slice(cut))}`;
+    $("k45ly2").textContent = song.ph[pi + 1] ? song.ph[pi + 1][0] : "";
+  };
+  const scoreNow = () => { const tot = notes.length || 1; return Math.floor((st.perfect + st.great * .8 + st.good * .5) / tot * 100); };
+  const draw = t => {
+    g.fillStyle = "#1b1424"; g.fillRect(0, 0, W, 320);
+    for (let i = 0; i < 4; i++) {
+      const fl = Math.max(0, 1 - (t - st.flash[i]) / .15);
+      g.fillStyle = i % 2 ? "#241b30" : "#2a2036"; g.fillRect(LX(i), 0, LW - 2, 320);
+      if (fl > 0) { g.globalAlpha = fl * .35; g.fillStyle = KLANE_COL45[i]; g.fillRect(LX(i), 0, LW - 2, JY + 10); g.globalAlpha = 1; }
+    }
+    g.fillStyle = "#fff"; g.globalAlpha = .85; g.fillRect(16, JY, 4 * LW + 6, 2); g.globalAlpha = 1;
+    for (let i = 0; i < 4; i++) { g.fillStyle = KLANE_COL45[i]; g.globalAlpha = .5; g.fillRect(LX(i) + 4, JY - 4, LW - 10, 10); g.globalAlpha = 1; g.fillStyle = "#cfc3dc"; g.font = "10px sans-serif"; g.textAlign = "center"; g.fillText("DFJK"[i], LX(i) + LW / 2 - 1, 312); }
+    for (const n of notes) {
+      if (n.j) continue; const y = JY - (n.time - t) * D.speed; if (y < -14) break; if (y > 330) continue;
+      g.fillStyle = KLANE_COL45[n.lane]; g.fillRect(LX(n.lane) + 3, Math.round(y) - 5, LW - 8, 10);
+      g.fillStyle = "rgba(255,255,255,.7)"; g.fillRect(LX(n.lane) + 5, Math.round(y) - 4, LW - 12, 2);
+    }
+    const ja = t - st.judgeAt;
+    if (ja < .45 && st.judge) {
+      g.globalAlpha = Math.max(0, 1 - ja / .45); g.textAlign = "center"; g.font = "bold 18px sans-serif";
+      g.fillStyle = { perfect: "#ffe27a", great: "#8fe0ff", good: "#c8f0b0", miss: "#ff8a8a" }[st.judge];
+      g.fillText({ perfect: "PERFECT", great: "GREAT", good: "GOOD", miss: "MISS" }[st.judge], W / 2, 200 - ja * 20); g.globalAlpha = 1;
+    }
+    if (st.combo >= 3) { g.textAlign = "center"; g.font = "bold 13px sans-serif"; g.fillStyle = "#fff"; g.fillText(`${st.combo} COMBO`, W / 2, 226); }
+    if (t < lead) { const c = Math.ceil((lead - t) / spb); if (c <= 4 && t > .5) { g.font = "bold 30px sans-serif"; g.fillStyle = "#ffd86a"; g.textAlign = "center"; g.fillText(String(c), W / 2, 150); } }
+  };
+  const loop = () => {
+    if (stopped || !cv.isConnected) { stop(); return; }
+    const t = now();
+    if (A) { const lim = A.ac.currentTime - t0 + .3; while (evI < ev.length && ev[evI][0] < lim) { const e = ev[evI++]; play(e, t0 + e[0]); } }
+    for (const n of notes) { if (n.j) continue; if (n.time > t - .16) break; n.j = "miss"; st.miss++; st.combo = 0; st.judge = "miss"; st.judgeAt = t; }
+    lyrics(t); draw(t);
+    const sc = $("k45sc"); if (sc) sc.textContent = scoreNow() + "点";
+    if (t >= end) { finish(); return; }
+    requestAnimationFrame(loop);
+  };
+  function finish() {
+    st.done = true; stop();
+    const score = scoreNow(), prize = score >= 100 ? D.prize[1] : score >= 95 ? D.prize[0] : 0, B = kBest45(), key = name + "|" + diff, newBest = score > (B[key] ?? -1);
+    B[key] = Math.max(B[key] ?? 0, score);
+    world.stats.karaoke = (world.stats.karaoke || 0) + 1; world.stats.karaokeBest = Math.max(world.stats.karaokeBest || 0, score);
+    if (prize) { addMoney(prize); se13(prize >= D.prize[1] ? "jackpot" : "win"); }
+    saveWorld();
+    const msg = score >= 100 ? "100点！ 伝説の歌声！" : score >= 95 ? "すごい、95点越え！" : score >= 85 ? "上手！ 会場があったまった" : score >= 70 ? "いい感じ！" : "ドンマイ、楽しんだもん勝ち";
+    closeModal();
+    openModal("カラオケ うたかた　採点", "yami", body => {
+      body.innerHTML = `<p class="mtext">♪ ${esc(name)}（${D.name}）</p><div class="kscore13">${score}</div>
+        <p class="mtext">${msg}${newBest ? "　<b>自己ベスト！</b>" : ""}${prize ? `<br><b>賞金 ${fmt(prize)}</b>` : ""}</p>
+        <div class="k45res"><span>PERFECT <b>${st.perfect}</b></span><span>GREAT <b>${st.great}</b></span><span>GOOD <b>${st.good}</b></span><span>MISS <b>${st.miss}</b></span><span>最大コンボ <b>${st.maxCombo}</b></span></div>
+        <div class="row2"><button class="btn" type="button" id="k45again" ${world.money < 500 ? "disabled" : ""}>もう一度（500G）</button><button class="btn light" type="button" id="k45back">曲をえらぶ</button></div>`;
+      body.querySelector("#k45again").onclick = () => { if (world.money < 500) return; addMoney(-500); closeModal(); sing45(name, diff); };
+      body.querySelector("#k45back").onclick = () => { closeModal(); openKaraoke45(); };
+    });
+  }
+  requestAnimationFrame(loop);
+  F45.k = { st, notes, now, press };
+}
+openKaraoke13 = openKaraoke45;
+sing13 = song => sing45(KSONGS45[song] ? song : Object.keys(KSONGS45)[0], kDiff45);
+F45.songs = KSONGS45; F45.parse = parseSong45; F45.chart = chart45; F45.sing = sing45;
+
+// ---------- ラウンジ 月下（会話の選択肢と贈り物） ----------
+const JUNK45 = new Set(["jelly", "wing", "stone", "wood", "ore", "feed", "acorn_bug", "acorn_small", "stonepath", "fence", "snowball35"]);
+const SWEET45 = new Set(["dish_cake", "macaron30", "parfait30", "candy25", "cookie25", "manju41", "mochi36", "amazake36", "ev_candy", "pancake", "dish_jam"]);
+const SHINY45 = new Set(["gem", "crystal36", "ev_star", "acorn_shiny", "acorn_gold", "goldbar"]);
+const FLOWER45 = new Set(["deco_pot_red", "deco_pot_yellow", "deco_basket27", "deco_flowerbed27", "deco_arch27", "seed_flower"]);
+const isJunk45 = id => JUNK45.has(id) || id.startsWith("bait_") || (id.startsWith("seed_") && id !== "seed_flower");
+const HOSTX45 = {
+  "ミレイ": {
+    rate: id => FLOWER45.has(id) || ["ev_star", "crystal36", "latte30", "coffee"].includes(id) ? 2 : SWEET45.has(id) || SHINY45.has(id) || ["mikan36", "tamago41"].includes(id) ? 1 : isJunk45(id) ? -1 : 0,
+    react: ["…これは、ちょっと困るかも。気持ちだけ、いただくわね", "ありがとう。大事にするわね", "まあ、うれしい。わたしの好きな物、覚えていてくれたの？", "…こんなにすてきな物。今夜はずっと、胸があたたかいわ"],
+    topics: [
+      ["最近、眠れない夜は本を読むの。あなたは、どんな夜をすごしてる？", [["星を見ながら、ぼーっとしてる", 2, "すてき。同じ空を見てるのかもしれないわね"], ["疲れて、すぐ寝ちゃう", 1, "ふふ、働き者の証拠ね"], ["夜通しカジノ！", 0, "…体は大事にしてね"]]],
+      ["好きな季節はある？", [["星がきれいな冬", 2, "わかる。冷たい空気の中の星って、特別よね"], ["収穫の秋", 1, "実りの季節。村の人らしいわ"], ["特にないかな", 0, "そう…。じゃあ、これから見つけましょ"]]],
+      ["ここだけの話、わたし、昔は天文学者になりたかったの", [["今からでも遅くないよ", 2, "…ありがとう。そう言ってくれた人、初めて"], ["へえ、意外", 1, "でしょう？ 内緒よ"], ["お金にならなそう", 0, "…現実的なのね"]]],
+      ["少し疲れた顔してる。なにかあった？", [["ミレイと話したら元気が出た", 2, "まあ。そう言われると、わたしも元気になるわ"], ["畑仕事が大変で", 1, "がんばってるのね。今夜はゆっくりして"], ["べつに、なんでもない", 0, "…話したくなったら、いつでも聞くわ"]]],
+      ["一冊だけ本を持って無人島に行くなら、なにを持っていく？", [["星座の図鑑", 2, "気が合うわね。夜がきっと楽しいわ"], ["料理の本", 1, "実用的。生きのびられそう"], ["本はいらない", 0, "あら…少しさみしいわね"]]],
+      ["わたしの話、退屈じゃない？", [["ずっと聞いていたい", 2, "…ありがとう。今夜は少し、おしゃべりになりそう"], ["ちょうどいい静けさ", 1, "ふふ、それならよかった"], ["正直、ちょっと眠い", 0, "あら、ごめんなさい。お水を持ってくるわね"]]],
+    ],
+    lover: ["閉店後、店の外でミレイが待っていた。", "「今夜は星が少ないけど…あなたといると、満天みたいに思えるの」", "「これからも、ここに来てくれる？ …わたしのために」"],
+  },
+  "アヤネ": {
+    rate: id => SWEET45.has(id) || ["strawberry", "ekiben41", "tamago41", "latte30"].includes(id) || id.startsWith("dish_") ? 2 : ["f_photo", "badge", "keychain", "f_figure", "corn", "potato", "tomato", "mikan36"].includes(id) || id.startsWith("acorn_") && !isJunk45(id) ? 1 : isJunk45(id) || ITEMS[id]?.fish ? -1 : 0,
+    react: ["えー…これ、どうしたらいいの？ …でも、ありがと", "ありがとー！ うれしい！", "うそ、これ大好きなやつ！ わかってるー！", "きゃー！ 最高！ 今日いちばん…ううん、今年いちばんうれしい！"],
+    topics: [
+      ["ねえねえ、カラオケ行ったら何歌う？", [["アヤネとデュエット", 2, "えー！ 絶対行こ！ 約束だよ！"], ["しっとりバラード", 1, "意外！ 聞いてみたいかも"], ["歌は苦手…", 0, "えー、もったいない！ 楽しんだもん勝ちだよ"]]],
+      ["すすき亭で一番好きなのは？", [["味噌ラーメン", 2, "わかってるー！ 味噌こそ正義！"], ["塩バターコーン", 1, "あれもおいしいよね〜"], ["ラーメンは食べない", 0, "うそでしょ!? 人生半分損してるよ！"]]],
+      ["今日のあたしのネイル、どう？", [["すごく似合ってる、かわいい", 2, "やった！ 気づいてくれるの、うれしい！"], ["キラキラしてるね", 1, "でしょー？ 新色なんだ"], ["ネイル？", 0, "…もー、ちゃんと見てよー！"]]],
+      ["休みの日って、なにしてる？", [["新しいお店を開拓してる", 2, "いいね！ 今度あたしも連れてって！"], ["畑の世話", 1, "えらーい。野菜できたら見せてね"], ["ずっと寝てる", 0, "あはは、それも大事！ …でも、もったいない！"]]],
+      ["あたしって、うるさいかな？", [["元気をもらえるから好きだよ", 2, "…え、ほんと？ なんか照れるんだけど"], ["にぎやかで楽しい", 1, "よかったー！"], ["ちょっとだけ", 0, "がーん…。ちょっと静かにしてみる…"]]],
+      ["もし宝くじが当たったら、どうする？", [["みんなでパーティー", 2, "最高！ そのときはあたしも呼んでね！"], ["貯金する", 1, "しっかりしてるー"], ["全部カジノに", 0, "それ絶対なくなるやつ！"]]],
+    ],
+    lover: ["閉店後、アヤネが息を切らして追いかけてきた。", "「待って！ …あのね、あたし、あなたが来る日がいちばん楽しいの」", "「今度は、お店の外で会いたいな。…だめ？」"],
+  },
+  "ルナ": {
+    rate: id => SHINY45.has(id) || ["truffle_black", "truffle_white"].includes(id) ? 2 : ["coffee", "latte30", "mikan36", "f_neon30", "f_canvas30", "deco_lights27"].includes(id) || FLOWER45.has(id) ? 1 : isJunk45(id) || ["parfait30", "candy25", "ev_candy"].includes(id) ? -1 : 0,
+    react: ["…これ、わたしに？ …べつに、いらないけど", "…ありがと。もらっておく", "…きれい。…どうしてわたしの好きな物、知ってるの", "…ばか。こんなの、ずるい。…大切にする"],
+    topics: [
+      ["…占い、信じる？", [["ルナの占いなら信じる", 2, "…ばか。でも、ちょっとうれしい"], ["いいことだけ信じる", 1, "都合がいいのね。…でも、それが正解かも"], ["全然信じない", 0, "そう。べつにいいけど"]]],
+      ["月って、満ちても欠けても、きれいだと思わない？", [["欠けてる月も好き", 2, "…わかる人、少ないのよ。あなたはわかるのね"], ["満月が一番", 1, "まあ、ふつうはそうね"], ["月より団子", 0, "…あなたらしいわ"]]],
+      ["今日のラッキーカラー、教えてあげようか", [["ルナの好きな色がいい", 2, "…青。…なに見てるの"], ["お願いします", 1, "銀色。持ってる？"], ["興味ない", 0, "…そう"]]],
+      ["人混みは苦手。あなたは？", [["静かな場所で話すほうが好き", 2, "…気が合うかもね、わたしたち"], ["にぎやかなのも好き", 1, "ふうん。…たまにはいいかもね"], ["人が多いほど楽しい", 0, "わたしとは逆ね"]]],
+      ["なんで、いつもわたしを指名するの？", [["ルナと話すと落ち着くから", 2, "…そういうこと、さらっと言わないで"], ["なんとなく", 1, "なんとなく、ね。…まあいいわ"], ["ほかの子が忙しそうで", 0, "…へえ。そう"]]],
+      ["夜の街と、あなたの村。どっちが好き？", [["ルナがいるこの街", 2, "…調子いいんだから。…でも、悪くない"], ["村の静かな夜", 1, "そう。いつか見てみたいかも"], ["どっちも興味ない", 0, "…変な人"]]],
+    ],
+    lover: ["閉店後、ルナが月を見上げていた。", "「…占いでね、ずっと待ってた人が来るって出てたの。…あなただった」", "「…これからは、指名なんてしなくていい。会いに来て」"],
+  },
+};
+// 好感度：会話の選択（1日1回）と、贈り物（1日1回）で上がる。ドリンクでも少し上がる
+function hostTalk45(n, first) {
+  const h = HOSTS13[n], X = HOSTX45[n], st = lounge13()[n];
+  st.known = st.known || {};
+  let note = "", line = null, topic = null;
+  const giftCheck = () => {
+    if (st.hearts >= 5 && !st.gift) { st.gift = true; addItem(h.gift, 1, true); note = `${n}から「${ITEMS[h.gift].name}」をもらった！`; }
+    if (st.hearts >= 10 && !world.stats.loungeMax) world.stats.loungeMax = 1;
+  };
+  if (first && st.talkDay !== world.day) { st.tIdx = ((st.tIdx ?? rnd(X.topics.length)) + 1) % X.topics.length; topic = X.topics[st.tIdx]; }
+  else line = first ? hostLine13(n) : null;
+  giftCheck(); saveWorld();
+  const hearts = () => `<span class="hearts13">${"♥".repeat(Math.min(10, st.hearts))}${"♡".repeat(Math.max(0, 10 - st.hearts))}</span>`;
+  const knownTxt = () => { const L = Object.entries(st.known), love = L.filter(([, r]) => r >= 1).map(([id]) => ITEMS[id]?.name).filter(Boolean), hate = L.filter(([, r]) => r < 0).map(([id]) => ITEMS[id]?.name).filter(Boolean); return love.length || hate.length ? `<p class="mtext small">わかったこと　${love.length ? `好き：${esc(love.slice(0, 6).join("・"))}` : ""}${hate.length ? `　苦手：${esc(hate.slice(0, 4).join("・"))}` : ""}</p>` : ""; };
+  const render = () => openModal(`ラウンジ 月下　${n}`, "yami", body => {
+    if (topic) {
+      const ch = topic[1].map((c, i) => [c, i]).sort(() => Math.random() - .5);
+      body.innerHTML = staffSay13(charIcon13(h.cfg), esc(topic[0])) + `<p class="mtext">${hearts()}</p><div class="talk45">${ch.map(([c, i]) => `<button class="btn light" type="button" data-tk="${i}">${esc(c[0])}</button>`).join("")}</div>`;
+      body.querySelectorAll("[data-tk]").forEach(b => b.onclick = () => {
+        const c = topic[1][+b.dataset.tk]; st.talkDay = world.day; topic = null; line = c[2];
+        if (c[1] === 2) { st.hearts = Math.min(10, st.hearts + 1); note = "好感度が上がった！"; se13("win"); }
+        else note = c[1] === 1 ? "（悪くない反応）" : "（ちょっと、ずれた答えだったかも）";
+        giftCheck(); saveWorld(); closeModal(); render(); afterLover();
+      });
+      return;
+    }
+    const giftToday = st.giftDay === world.day;
+    body.innerHTML = staffSay13(charIcon13(h.cfg), esc(line || hostLine13(n))) +
+      `<p class="mtext">${hearts()}${note ? `　<b>${esc(note)}</b>` : ""}</p>${knownTxt()}
+      <div class="list">${DRINKS13.map(([id, nm, p, hh, hp]) => {
+        const blocked = id === "champ" && totalDebt() > 0;
+        return `<div class="li"><img src="${ASSETS.s13_coffee}" alt=""><span class="nm">${nm}<span class="sub2">${fmt(p)}・HP+${hp}${hh ? `・好感度+${hh}` : ""}${blocked ? "・借金があると止められる" : ""}</span></span><span class="acts"><button class="btn" type="button" data-dr="${id}" ${world.money < p || blocked ? "disabled" : ""}>たのむ</button></span></div>`;
+      }).join("")}</div>
+      <p class="mtext">所持金 <b>${fmt(world.money)}</b>${st.talkDay === world.day ? "" : "　今日はまだ、ゆっくり話していない"}</p>
+      <div class="row2"><button class="btn" type="button" id="hostGift" ${giftToday ? "disabled" : ""}>${giftToday ? "贈り物は1日1回" : "贈り物をわたす"}</button><button class="btn light" type="button" id="hostMore">話を聞く</button><button class="btn light" type="button" id="hostBack">ほかの子を見る</button><button class="btn light" type="button" id="hostBye">帰る</button></div>`;
+    body.querySelectorAll("[data-dr]").forEach(b => b.onclick = () => {
+      const d = DRINKS13.find(x => x[0] === b.dataset.dr); const [id, nm, p, hh, hp] = d; if (world.money < p) return;
+      addMoney(-p); world.hp = Math.min(100, world.hp + hp); updateHp(); note = "";
+      if (hh) { const daily = world.stats["drink_" + n] === world.day && id === "cocktail"; if (!daily) st.hearts = Math.min(10, st.hearts + hh); if (id === "cocktail") world.stats["drink_" + n] = world.day; }
+      line = id === "champ" ? (n === "アヤネ" ? "えっ、シャンパン!? ありがとう…今日いちばんうれしい！" : n === "ミレイ" ? "まあ…ありがとう。今夜のこと、ずっと覚えておくわね" : "…ばか。ありがとう") :
+        id === "fruit" ? "わあ、きれい！ いっしょに食べよ" : id === "cocktail" ? "乾杯。今日もおつかれさま" : "はい、ウーロン茶。のどかわいてたでしょ";
+      giftCheck(); saveWorld(); closeModal(); render(); afterLover();
+    });
+    body.querySelector("#hostGift").onclick = () => { closeModal(); giftPick(); };
+    body.querySelector("#hostMore").onclick = () => { line = hostLine13(n); note = ""; closeModal(); render(); };
+    body.querySelector("#hostBack").onclick = () => { closeModal(); openLounge13(); };
+    body.querySelector("#hostBye").onclick = () => { closeModal(); toast(null, `「また来てね」${n}が手をふってくれた`); };
+  });
+  const giftPick = () => openModal(`${n}に贈り物`, "yami", body => {
+    const seen = new Set(), list = world.inv.filter(it => it && ITEMS[it.id] && !ITEMS[it.id].tool && !seen.has(it.id) && seen.add(it.id));
+    body.innerHTML = `<p class="mtext">${esc(h.prof)}。なにをわたす？（1つだけ）</p>` + (list.length ? `<div class="list">${list.map(it => itemLi(it.id, `${it.n}個持っている${st.known[it.id] !== undefined ? `・${st.known[it.id] >= 2 ? "大好きな物" : st.known[it.id] === 1 ? "好きな物" : st.known[it.id] < 0 ? "苦手な物" : "ふつう"}` : ""}`, `<button class="btn" type="button" data-gf="${it.id}">わたす</button>`)).join("")}</div>` : `<p class="mtext">わたせる物を持っていないみたい</p>`) +
+      `<div class="row2"><button class="btn light" type="button" id="gfBack">やめる</button></div>`;
+    body.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => {
+      const id = b.dataset.gf; if (!count(id) || st.giftDay === world.day) return;
+      removeItem(id, 1); st.giftDay = world.day;
+      const r = X.rate(id); st.known[id] = r; line = X.react[r + 1];
+      if (r > 0) { st.hearts = Math.min(10, st.hearts + r); note = r >= 2 ? "とても喜んでくれた！ 好感度が2上がった" : "好感度が上がった"; se13("win"); }
+      else if (r < 0) { st.hearts = Math.max(0, st.hearts - 1); note = "苦手な物だったみたい…（好感度-1）"; }
+      else note = "（ふつうの反応）";
+      world.stats.loungeGifts = (world.stats.loungeGifts || 0) + 1;
+      giftCheck(); saveWorld(); closeModal(); render(); afterLover();
+    });
+    body.querySelector("#gfBack").onclick = () => { closeModal(); render(); };
+  });
+  // 好感度10になったら、一度だけ特別なできごと
+  const afterLover = () => {
+    if (st.hearts < 10 || st.lover) return;
+    st.lover = true; world.stats.loungeLover = 1; saveWorld();
+    setTimeout(() => {
+      closeModal();
+      openModal(`ラウンジ 月下　${n}`, "yami", body => {
+        body.innerHTML = `${X.lover.map((l, i) => i === 0 ? `<p class="mtext">${esc(l)}</p>` : staffSay13(i === 1 ? charIcon13(h.cfg) : "", esc(l))).join("")}<p class="mtext"><b>${n}と、特別な関係になった</b></p><div class="row2"><button class="btn" type="button" id="lvOk">うなずく</button></div>`;
+        body.querySelector("#lvOk").onclick = () => { closeModal(); render(); };
+      });
+    }, 400);
+  };
+  closeModal(); render();
+  if (!topic) afterLover();
+  F45.host = { n, st };
+}
+hostTalk13 = hostTalk45;
+// 好感度の高い子は、迎え方が変わる
+const _hostLine45 = hostLine13;
+hostLine13 = n => {
+  const st = world.lounge && world.lounge[n];
+  if (st && st.lover && Math.random() < .4) return n === "ミレイ" ? "来てくれたのね。…今夜も、隣にいてくれる？" : n === "アヤネ" ? "あ、来た来た！ 待ってたんだから！" : "…遅い。…待ってたなんて、言ってないから";
+  return _hostLine45(n);
+};
+// 指名の画面に、今日のようす（話した・贈った）を出す
+const _openLounge45 = openLounge13;
+openLounge13 = () => {
+  _openLounge45();
+  const L = lounge13();
+  document.querySelectorAll("#mbody [data-host]").forEach(b => {
+    const st = L[b.dataset.host], sub = b.closest(".li")?.querySelector(".sub2"); if (!st || !sub) return;
+    sub.insertAdjacentHTML("beforeend", `<br>${st.lover ? "♥ 特別な関係　" : ""}${st.talkDay === world.day ? "今日は話した" : "今日はまだ話していない"}・${st.giftDay === world.day ? "贈り物ずみ" : "贈り物まだ"}`);
+  });
+  const p = [...document.querySelectorAll("#mbody .mtext")].pop(); if (p) p.innerHTML = p.innerHTML.replace("好感度は1日1回、話すと上がります", "好感度は、会話でいい答えを選ぶか、好きな物を贈ると上がります（どちらも1日1回）");
+};
+ACH.push(["月下の恋", "ラウンジのだれかと、特別な関係になる", () => !!world.stats.loungeLover]);
+F45.hostx = HOSTX45; F45.openK = () => openKaraoke13(); F45.openLounge = () => openLounge13();
+F45.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -11582,7 +11985,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

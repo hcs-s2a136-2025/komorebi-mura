@@ -48,6 +48,8 @@ const SFX = (() => {
   }
 
   const api = {
+    // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
+    audio() { if (!ctx()) return null; return { ac, out, tone, noise, hz }; },
     get on() { return pref.on; }, get vol() { return pref.vol; },
     setOn(v) { pref.on = !!v; save(); if (!pref.on) api.spinStop(); },
     setVol(v) { pref.vol = Math.max(0, Math.min(1, +v)); save(); if (out) out.gain.value = pref.vol * 2; },

@@ -136,6 +136,8 @@ const BGM = (() => {
       fadeTo(0, .35); setTimeout(() => { if (want === name && enabled) { switchNow(); fadeTo(vol * .9, .5); } }, 380);
     },
     setVolume(v) { vol = v; if (enabled && ac) fadeTo(vol * .9, .15); },
+    // カラオケ中などに、いったん小さくする（false で元にもどす）
+    duck(on) { if (enabled && ac) fadeTo(on ? 0 : vol * .9, .3); },
     SONGS,
   };
 })();

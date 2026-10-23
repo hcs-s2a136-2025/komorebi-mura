@@ -3928,7 +3928,10 @@ Object.assign(CHAR.BOTTOMS, {
   "サルエル": ["....PppppqqP....", ".....PqPPqP....."], "キュロット": ["....PpppppqP....", "....PqP..PqP...."],
 });
 let rc34cfg = null;
-const hairCol34 = i => { const v = CHAR.HAIRC[rc34cfg?.hairc]; return Array.isArray(v) ? v[i] : [120, 80, 50]; };
+const RB34 = [[255, 236, 150], [255, 170, 130], [220, 100, 160], [120, 60, 150]];
+const hsl34 = (h, sat, l) => { const a = sat * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); }; return [f(0), f(8), f(4)]; };
+// 髪の色を借りる小物（アホ毛・動物の耳）。虹とゲーミングの髪にも合わせる
+const hairCol34 = i => { const v = CHAR.HAIRC[rc34cfg?.hairc]; if (Array.isArray(v)) return v[i]; if (v === "rainbow") return RB34[i]; if (v === "gaming") return hsl34((gamingShift * 30) % 360, .85, [.8, .62, .45, .28][i]); return [120, 80, 50]; };
 const ahoPal34 = {}; Object.defineProperty(ahoPal34, "A", { get: () => hairCol34(3) }); Object.defineProperty(ahoPal34, "a", { get: () => hairCol34(1) });
 const NEW_HATS34 = {
   "くま耳": { rows: ["...AA......AA...", "..AbbA....AbbA..", "..AbaA....AabA.."], pal: { A: [90, 56, 36], a: [150, 100, 64], b: [210, 160, 120] } },
@@ -7119,6 +7122,7 @@ const CHANGES19 = [
     "着せ替えで「未入手」の物を押すと、どこで手に入るかが出るようにした。「まだ持っていない物の入手方法」で、お店ごとの一覧も見られる",
     "麻雀：前の対局の終わりに誰かが卓を離れると、卓が止まって、4人目が座れなくなることがあったのを直した。終局のあと「卓に戻る」を押さなかった人や、つながっていない人の席は空くようにした",
     "麻雀：「ひとりで打つ」を選んだあとでも、「みんなの卓に行く」で戻れるようにした",
+    "うさ耳・猫耳・くま耳の色が、髪の色にならず白いままのことがあったのを直した（虹・ゲーミングの髪にも合わせる）",
   ] },
   { v: "0.25.5", date: "2026/10/23", title: "美容室でまとめてイメチェン", items: [
     "美容室で、髪型・前髪・髪色をタブを切りかえながら選んでおいて、最後に「この髪にする」でまとめて変えられるようにした。合計の値段もいっしょに出る",
@@ -9979,6 +9983,9 @@ const earPal38 = (inner) => { const p = {}; Object.defineProperty(p, "A", { get:
 if (HATS["うさ耳"]) HATS["うさ耳"].pal = earPal38([255, 190, 210]);
 if (HATS["猫耳"]) HATS["猫耳"].pal = earPal38([250, 160, 190]);
 if (HATS["くま耳"]) HATS["くま耳"].pal = earPal38(null);
+// 色の決め方を変えたので、読みこみ中に描いてしまった絵（白いままの耳など）を捨てて、描きなおす
+cache.clear(); acc26Cache.clear(); face34Cache.clear();
+document.querySelectorAll("#opts button").forEach(b => { b._sig34 = null; });
 
 // ---- お店を分ける：よろず屋・こもれび牧場・こもれび工務店 ----
 const _buildingImg38 = buildingImg;

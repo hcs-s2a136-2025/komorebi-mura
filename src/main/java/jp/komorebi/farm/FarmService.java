@@ -1,9 +1,19 @@
 package jp.komorebi.farm;
 
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,22 +21,74 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jp.komorebi.ws.PlayerSession;
 import jp.komorebi.ws.WelcomeContributor;
 
 /**
  * みんなの畑・家畜・ペットのようす（見るだけ）。それぞれの人が自分のぶんを送ってきて、ほかの人の画面に出す。
- * 最後に送られてきたものをメモリに持っておき、あとから来た人にも welcome で渡す（サーバーを再起動すると、また送られてくるまで空）。
+ * 最後に送られてきたものを持っておき、あとから来た人にも welcome で渡す。持ち主がつないでいなくても見える。
+ * データベース（farm_snapshot）にも少し遅れて書いておくので、サーバーを再起動しても消えない（60日送られてこなかった人は出さない）。
  */
 @Service
 public class FarmService implements WelcomeContributor {
 
     private static final Pattern ID = Pattern.compile("[a-z0-9_]{1,24}");
+    private static final Logger log = LoggerFactory.getLogger(FarmService.class);
+    private static final int MAX_DOC = 60_000;
+    private static final Duration KEEP = Duration.ofDays(60);
     private final ObjectMapper om;
+    private final JdbcTemplate jdbc;
     private final Map<Long, ObjectNode> farms = new ConcurrentHashMap<>();
+    private final Set<Long> dirty = ConcurrentHashMap.newKeySet();
 
-    public FarmService(ObjectMapper om) {
+    public FarmService(ObjectMapper om, JdbcTemplate jdbc) {
         this.om = om;
+        this.jdbc = jdbc;
+    }
+
+    @PostConstruct
+    void load() {
+        try {
+            Timestamp since = Timestamp.from(Instant.now().minus(KEEP));
+            jdbc.query("SELECT f.player_id, f.doc, p.name FROM farm_snapshot f JOIN player p ON p.id = f.player_id WHERE p.deleted_at IS NULL AND f.updated_at > ?", rs -> {
+                try {
+                    JsonNode n = om.readTree(rs.getString(2));
+                    if (n instanceof ObjectNode o) { o.put("name", clean(rs.getString(3), 16)); farms.put(rs.getLong(1), o); }
+                } catch (Exception e) {
+                    log.warn("畑のようすが読めなかったので飛ばします（player {}）: {}", rs.getLong(1), e.getMessage());
+                }
+            }, since);
+        } catch (Exception e) {
+            log.warn("畑のようすを読み込めませんでした。空から始めます: {}", e.getMessage());
+        }
+    }
+
+    /** 変わった人のぶんだけ、まとめて書く */
+    @Scheduled(fixedDelay = 20_000)
+    public void persist() {
+        if (dirty.isEmpty()) return;
+        List<Long> ids = new ArrayList<>(dirty);
+        Timestamp now = Timestamp.from(Instant.now());
+        for (Long id : ids) {
+            dirty.remove(id);
+            ObjectNode f = farms.get(id);
+            if (f == null) continue;
+            String json = f.toString();
+            if (json.length() > MAX_DOC) continue;
+            try {
+                int up = jdbc.update("UPDATE farm_snapshot SET doc = ?, updated_at = ? WHERE player_id = ?", json, now, id);
+                if (up == 0) jdbc.update("INSERT INTO farm_snapshot (player_id, doc, updated_at) VALUES (?, ?, ?)", id, json, now);
+            } catch (Exception e) {
+                log.warn("畑のようすを保存できませんでした（player {}）: {}", id, e.getMessage());
+            }
+        }
+    }
+
+    @PreDestroy
+    void flush() {
+        persist();
     }
 
     /** 受け取ったものを、決まった形・大きさにそろえて取っておく。そろえたものを返す */
@@ -58,12 +120,19 @@ public class FarmService implements WelcomeContributor {
             if (!ID.matcher(b).matches()) continue;
             ArrayNode o = pets.addArray(); o.add(b); o.add(Math.max(0, Math.min(20, p.path(1).asInt(0)))); o.add(clean(p.path(2).asText(""), 12));
         }
-        farms.put(playerId, f);
+        ObjectNode prev = farms.put(playerId, f);
+        if (prev == null || !prev.equals(f)) dirty.add(playerId);
         return f;
     }
 
     public void forget(long playerId) {
         farms.remove(playerId);
+        dirty.remove(playerId);
+        try {
+            jdbc.update("DELETE FROM farm_snapshot WHERE player_id = ?", playerId);
+        } catch (Exception e) {
+            log.warn("畑のようすを消せませんでした（player {}）: {}", playerId, e.getMessage());
+        }
     }
 
     @Override

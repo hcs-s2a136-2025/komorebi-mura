@@ -3847,7 +3847,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.28.3";
+const CLIENT_VERSION = "0.28.4";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5875,6 +5875,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.28.4", date: "2026/10/23", title: "ほかの人の家畜が見えないことがあったのを直した", items: [
+    "ほかの人の畑・家畜・ペットのようすを、サーバーを再起動しても覚えておくようにした。前は再起動のたびに消えて、持ち主がもう一度ログインするまで見えなかった",
+    "持ち主がログインしていなくても、最後に来たときのようすが見える",
+    "牧場はみんな同じ場所なので、ほかの人の家畜が自分の家畜や、ほかの人の家畜と重なって隠れていたのを直した。空いているマスにずらして出す",
+  ] },
   { v: "0.28.3", date: "2026/10/23", title: "カジノのチャットを見やすく", items: [
     "卓についているときは、発言に「卓」「みんな」の印がつくようになった（色違い）",
     "表示を「ぜんぶ」「卓だけ」「みんなだけ」で切りかえられるようになった",
@@ -10052,17 +10057,30 @@ function onFarm44(f) {
   farms44.set(f.id, { name: String(f.name || "だれか").slice(0, 16), crops: new Map((Array.isArray(f.crops) ? f.crops : []).filter(c => Array.isArray(c)).map(c => [c[0] + "," + c[1], [String(c[2]), c[3] | 0]])), animals: Array.isArray(f.animals) ? f.animals : [], pets: Array.isArray(f.pets) ? f.pets : [] });
   syncRemote44(f.id);
 }
+function spreadTile44(x, y, key) {
+  const taken = new Set();
+  for (const e of animalEnts) { taken.add(e.x + "," + e.y); taken.add(e.fx + "," + e.fy); }
+  for (const [k2, e] of rAnimals44) if (k2 !== key && e.tx44 !== undefined) taken.add(e.tx44 + "," + e.ty44);
+  const ok = (nx, ny, inPen) => nx >= 0 && ny >= 0 && nx < village.w && ny < village.h && !village.solid[ny][nx] && !taken.has(nx + "," + ny)
+    && (!inPen || (nx >= PADDOCK.x0 && nx <= PADDOCK.x1 && ny >= PADDOCK.y0 && ny <= PADDOCK.y1));
+  for (const inPen of [true, false]) for (let r = 0; r <= 6; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    if (Math.abs(dx) + Math.abs(dy) !== r) continue;
+    if (ok(x + dx, y + dy, inPen)) return [x + dx, y + dy];
+  }
+  return [x, y];
+}
 function syncRemote44(pid) {
   const F = farms44.get(pid);
   for (const k of [...rAnimals44.keys()]) if (k.startsWith(pid + ":") && !(F && F.animals[+k.split(":")[1]])) rAnimals44.delete(k);
   if (F) F.animals.forEach((a, i) => {
     if (!Array.isArray(a)) return;
-    const [t, n, x, y] = a, k = pid + ":" + i; if (!ANIMALS[t] || !IMG[t] || !Number.isInteger(x) || !Number.isInteger(y)) return;
-    let e = rAnimals44.get(k);
+    const [t, n, x0, y0] = a, k = pid + ":" + i; if (!ANIMALS[t] || !IMG[t] || !Number.isInteger(x0) || !Number.isInteger(y0)) return;
+    // 牧場はみんな同じ場所なので、自分の家畜やほかの人の家畜と重ならないマスにずらして出す
+    const [x, y] = spreadTile44(x0, y0, k); let e = rAnimals44.get(k);
     if (!e || e.sprite !== t) { e = entity(x, y, null, String(n || ""), "animal"); e.sprite = t; e.speed = .6; e.home = village; rAnimals44.set(k, e); }
     else if (Math.abs(e.x - x) + Math.abs(e.y - y) === 1 && !e.moving) { e.dir = x > e.x ? "right" : x < e.x ? "left" : y > e.y ? "down" : "up"; e.fx = x; e.fy = y; e.moving = true; e.prog = 0; }
     else if (e.x !== x || e.y !== y) placeAt(e, x, y);
-    e.name = String(n || ""); e.owner44 = F.name; e.atype44 = t;
+    e.name = String(n || ""); e.owner44 = F.name; e.atype44 = t; e.tx44 = x; e.ty44 = y;
   });
   const old = rPets44.get(pid) || [];
   const ents = (F ? F.pets : []).map((p, i) => {
@@ -10100,7 +10118,7 @@ F7.addToList = (list, now) => {
 let farmLast44 = "", farmAt44 = 0;
 function farmSnap44() {
   const crops = []; for (const [k, c] of Object.entries(world.crops || {})) { if (!c || c.dead) continue; const [x, y] = k.split(",").map(Number); crops.push([x, y, c.type, c.stage | 0]); if (crops.length >= 600) break; }
-  const animals = (world.animals || []).slice(0, 40).map(a => { const e = animalEnts.find(x => x.aid === a.id); return [a.type, String(a.name || "").slice(0, 12), e ? e.x : PADDOCK.x0, e ? e.y : PADDOCK.y0]; });
+  const animals = (world.animals || []).slice(0, 40).map((a, i) => { const e = animalEnts.find(x => x.aid === a.id); return [a.type, String(a.name || "").slice(0, 12), e ? e.x : PADDOCK.x0 + (i % 6), e ? e.y : PADDOCK.y0 + Math.floor(i / 6) % 4]; });
   const pets = (world.pets || []).slice(0, 8).map(id => [basePet43(id), petVar43(id), String(petNameOf43(id)).slice(0, 12)]);
   return { crops, animals, pets };
 }
@@ -10215,5 +10233,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

@@ -661,6 +661,17 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .salonsum39 span { padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.05); }
 .salonsum39 span.ch { background: #fbe8c0; }
 .salonsum39 small { margin-left: 4px; opacity: .75; }
+
+/* v40：道具の強化・入手方法 */
+.tool40 .sub2 { display: block; }
+.ng40 { color: #c0392b; font-weight: 700; }
+.ok40 { background: #eaf7e4; border: 2px solid #8cc47a; border-radius: 8px; padding: 6px 10px; margin: 6px 0; font-size: .92rem; }
+#opts button.locked40 { opacity: .55; cursor: help; }
+#opts button.locked40:hover { opacity: .8; }
+.wherebar40 { padding: 6px 16px 0; }
+.wherebar40 .btn { font-size: .8rem; padding: 4px 12px; width: auto; min-height: 0; border-radius: 8px; }
+.where40 { position: relative; box-sizing: border-box; background: #fff8e8; border: 2px solid #e8c878; border-radius: 10px; padding: 8px 30px 8px 10px; margin: 6px 16px 4px; font-size: .86rem; line-height: 1.6; }
+.where40 .x40 { position: absolute; top: 4px; right: 6px; border: 0; background: none; font-size: 1.1rem; cursor: pointer; color: #8a6a3a; }
 </style>
 
 <header>
@@ -787,7 +798,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.25.5";
+  const VER = "0.26.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5072,7 +5083,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.25.5";
+const CLIENT_VERSION = "0.26.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7100,6 +7111,15 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.26.0", date: "2026/10/23", title: "道具のグレードアップ・服の入手方法・4人麻雀の直し", items: [
+    "こもれび工務店に「道具の強化」ができた。鍬・じょうろ・斧・つるはし・釣り竿を、銅→はがね→金→虹の順に鍛え直せる（お金と鉱石など・腕前のレベルが必要）",
+    "強くなると、まとめて耕せる・まとめて水やりできる・少ない回数で木や岩をこわせる・アタリが長くなる、など。道具の名前と色も変わる",
+    "強化した釣り竿でしか釣れない魚が8種類（オイカワ・メバル・チョウザメ・カジキ・イトウ・リュウグウノツカイ・ナナイロウオ・シーラカンス）",
+    "腕前で買える品：成長の粉（農業Lv5）・金のルアー（釣りLv5）・苗木（採集Lv3）",
+    "着せ替えで「未入手」の物を押すと、どこで手に入るかが出るようにした。「まだ持っていない物の入手方法」で、お店ごとの一覧も見られる",
+    "麻雀：前の対局の終わりに誰かが卓を離れると、卓が止まって、4人目が座れなくなることがあったのを直した。終局のあと「卓に戻る」を押さなかった人や、つながっていない人の席は空くようにした",
+    "麻雀：「ひとりで打つ」を選んだあとでも、「みんなの卓に行く」で戻れるようにした",
+  ] },
   { v: "0.25.5", date: "2026/10/23", title: "美容室でまとめてイメチェン", items: [
     "美容室で、髪型・前髪・髪色をタブを切りかえながら選んでおいて、最後に「この髪にする」でまとめて変えられるようにした。合計の値段もいっしょに出る",
     "まとめて変えた見た目も、ほかの人の画面にちゃんと反映される",
@@ -9625,6 +9645,37 @@ F36.ready = true;
 
 // =================== v37: こわれたデータや、知らない物があっても止まらないように ===================
 // 新しいバージョンで遊んだデータを古いページで開いたときなど、知らない物は「あずかり」に移しておき、知っている物になったら戻す。
+// =================== v40 データ：強化した釣り竿でしか釣れない魚・腕前で買える品 ===================
+// （あずかり物の整理 sanitize37 より前に置く。持ち物に入っていても、読みこみのときに消えないように）
+const ROD_FISH40 = [
+  { n: "オイカワ", at: "pond", w: 9, p: 140, rod: 1, base: 15, spr: fishSpr17("#7aa0b8", "#f4e8e0", "#e05a5a", (s, r) => { for (const x of [6, 8, 10]) r(x, 7, 1, 3, C17("#e88aa8")); s(5, 10, C17("#e05a5a")); }) },
+  { n: "メバル", at: "sea", w: 9, p: 130, rod: 1, base: 25, spr: fishSpr17("#8a5a4a", "#d8b8a0", "#5a3a30", (s, r) => { r(3, 6, 3, 3, C17("#8a5a4a")); s(4, 7, C17("#ffffff")); s(4, 8, C17("#1a1a2a")); for (const x of [7, 10]) r(x, 6, 1, 3, C17("#5a3a30")); }) },
+  { n: "チョウザメ", at: "pond", w: 5, p: 380, rod: 2, base: 120, spr: (s, r, e) => { e(8, 8, 7, 2.4, C17("#7a8090")); e(8, 9.2, 6, 1.1, C17("#c8ccd4")); for (let x = 4; x <= 12; x += 2) s(x, 7, C17("#dfe3ea")); r(0, 8, 2, 1, C17("#7a8090")); s(3, 8, C17("#1a1a2a")); r(14, 5, 2, 3, C17("#5a6070")); r(14, 9, 1, 2, C17("#5a6070")); r(7, 10, 2, 2, C17("#5a6070")); } },
+  { n: "カジキ", at: "sea", w: 4, p: 450, rod: 2, base: 250, spr: fishSpr17("#2a4a8a", "#d8e4f4", "#1a2a5a", (s, r) => { r(0, 8, 3, 1, C17("#1a2a5a")); r(6, 3, 5, 2, C17("#1a2a5a")); r(7, 2, 2, 1, C17("#1a2a5a")); }) },
+  { n: "イトウ", at: "pond", w: 3, p: 1000, rod: 3, base: 100, spr: fishSpr17("#8a6a5a", "#e8d8c8", "#b83a3a", (s) => { for (const [x, y] of [[6, 6], [8, 7], [10, 6], [11, 8], [7, 9], [9, 6]]) s(x, y, C17("#4a3030")); }) },
+  { n: "リュウグウノツカイ", at: "sea", w: 2, p: 1500, rod: 3, base: 300, spr: (s, r) => { r(1, 8, 14, 2, C17("#d8dce8")); r(1, 10, 14, 1, C17("#a8b0c4")); for (let x = 2; x <= 13; x += 2) s(x, 7, C17("#e04848")); r(1, 5, 1, 3, C17("#e04848")); r(2, 4, 1, 2, C17("#e04848")); s(2, 8, C17("#1a1a2a")); r(14, 7, 2, 1, C17("#e04848")); } },
+  { n: "ナナイロウオ", at: "pond", w: 2, p: 3000, rod: 4, base: 40, spr: (s, r, e) => {
+      const RB = ["#f05a5a", "#f0a040", "#f0e050", "#70d070", "#50b0f0", "#7a70e0", "#c070e0"];
+      for (let y = 4; y <= 12; y++) for (let x = 2; x <= 14; x++) { const dx = (x + .5 - 8) / 5.6, dy = (y + .5 - 8) / 3.2; if (dx * dx + dy * dy <= 1) s(x, y, C17(RB[Math.min(6, Math.max(0, x - 3) >> 1)])); }
+      for (let i = 0; i < 4; i++) r(13 + Math.min(i, 2), 6 - i + 1, 1, 2 + i * 2 - 1, C17("#f0f0ff")); s(4, 7, C17("#ffffff")); s(4, 8, C17("#1a1a2a")); s(9, 5, C17("#ffffff")); } },
+  { n: "シーラカンス", at: "sea", w: 1.5, p: 3000, rod: 4, base: 150, spr: fishSpr17("#3a4a6a", "#6a7a9a", "#2a3450", (s, r) => { for (const [x, y] of [[6, 7], [9, 9], [11, 7], [8, 6], [10, 8]]) s(x, y, C17("#e8ecf4")); r(7, 11, 2, 2, C17("#2a3450")); r(10, 11, 2, 2, C17("#2a3450")); }) },
+];
+for (const f of ROD_FISH40) {
+  addSpr17("fish_" + f.n, f.spr);
+  FISH6.push({ n: f.n, at: f.at, w: f.w, p: f.p, rod: f.rod });
+  ITEMS["fish_" + f.n] = { name: f.n, icon: "fish_" + f.n, price: f.p, fish: true, food: 8 };
+  FISHBASE28[f.n] = f.base;
+}
+// 金のルアー（釣りLv5で買える）：強化した竿でしか釣れない魚が寄ってくる
+BAIT29.bait_gold40 = { name: "金のルアー", price: 300, note: "腕のいい釣り人だけが使いこなせる。強化した竿でしか釣れない魚が、ぐっと寄ってくる",
+  like: Object.fromEntries(ROD_FISH40.map(f => [f.n, 3])),
+  spr: (s, r, e) => { e(8, 8, 5, 2.4, C17("#f0c040")); e(6, 7, 2, 1, C17("#fff4b8")); s(4, 8, C17("#ffffff")); s(4, 7, C17("#2a2a2a")); r(13, 8, 2, 1, C17("#c8a030")); r(8, 11, 1, 3, C17("#c8c8d0")); s(7, 13, C17("#c8c8d0")); s(9, 13, C17("#c8c8d0")); s(11, 6, C17("#ffffff")); } };
+addSpr17("bait_gold40", BAIT29.bait_gold40.spr);
+ITEMS.bait_gold40 = { name: "金のルアー", icon: "bait_gold40", price: 300, bait: true };
+// 成長の粉（農業Lv5で買える）：育っている作物に使うと、ひと晩ぶん育つ
+addSpr17("grow40", (s, r, e) => { r(4, 4, 8, 10, C17("#e8dcc0")); r(4, 4, 8, 1, C17("#fff4dc")); r(5, 2, 6, 2, C17("#c8a878")); r(4, 8, 8, 3, C17("#7ac060")); e(8, 9.5, 2, 1.2, C17("#c8f0a0")); s(6, 6, C17("#a8d878")); s(10, 12, C17("#a8d878")); s(3, 3, C17("#fff6c8")); s(13, 5, C17("#fff6c8")); });
+ITEMS.grow40 = { name: "成長の粉", icon: "grow40", price: 400, grow40: true };
+
 var F37 = {};
 function sanitize37() {
   const w = world; if (!w || typeof w !== "object") return;
@@ -10060,6 +10111,312 @@ handle8 = m => {
 };
 F39.ready = true;
 
+// =================== v40: 道具のグレードアップ・腕前で買える品・服の入手方法 ===================
+var F40 = {};
+// ---------- 道具の段階（銅→はがね→金→虹）。道具の種類ごとに、その人の道具が強くなる ----------
+const TOOL_IDS40 = ["hoe", "can", "axe", "pick", "rod"];
+const TOOL_SK40 = { hoe: "farm", can: "farm", axe: "gather", pick: "gather", rod: "fish" };
+const TIER40 = [{ pre: "", name: "ふつう" }, { pre: "銅の", name: "銅" }, { pre: "はがねの", name: "はがね" }, { pre: "金の", name: "金" }, { pre: "虹の", name: "虹" }];
+const UP40 = [null,
+  { lv: 2, money: 1000, mat: { ore: 5 } },
+  { lv: 4, money: 3000, mat: { ore: 12, stone: 20 } },
+  { lv: 6, money: 8000, mat: { ore: 20, gem: 2 } },
+  { lv: 8, money: 20000, mat: { ore: 30, gem: 5 } }];
+const EFFECT40 = {
+  hoe: ["", "振るのが速くなる", "横3マスまとめて耕せる", "3×3マスまとめて耕せる", "5×3マスまとめて耕せる・とても速い"],
+  can: ["", "横3マスまとめて水やり", "3×2マスまとめて水やり", "3×3マスまとめて水やり", "5×3マスまとめて水やり"],
+  axe: ["", "振るのが速くなる", "木を2回で切り倒せる", "2回で切り倒せる・木材がよく出る", "1回で切り倒せる・木材がもっと出る"],
+  pick: ["", "振るのが速くなる", "岩に2倍のダメージ", "2倍のダメージ・鉱石が出やすい", "3倍のダメージ・鉱石がもっと出る"],
+  rod: ["", "アタリが長く、早くかかる", "アタリがもっと長く、早くかかる", "アタリがとても長く、早くかかる", "アタリがいちばん長く、すぐかかる"],
+};
+const SPEED40 = [1, .85, .75, .65, .55], DMG40 = [0, 0, 1, 1, 2], WOOD40 = [0, 0, 0, .3, .5], ORE40 = [0, 0, 0, .25, .4];
+const AREA40 = { hoe: [[1, 1], [1, 1], [3, 1], [3, 3], [5, 3]], can: [[1, 1], [3, 1], [3, 2], [3, 3], [5, 3]] };
+const BITE40 = [1, 1.15, 1.3, 1.45, 1.6], CAST40 = [1, .9, .8, .7, .6];
+function tlv40(k) { const t = world && world.tools40, v = t && t[k]; return Number.isInteger(v) && v >= 1 && v <= 4 ? v : 0; }
+F40.lv = tlv40;
+// 名前は「金の鍬」のように、段階つきで出す
+for (const k of TOOL_IDS40) {
+  const it = ITEMS[k]; if (!it) continue;
+  const base = it.name; it.base40 = base;
+  Object.defineProperty(it, "name", { get: () => TIER40[tlv40(k)].pre + base, enumerable: true, configurable: true });
+}
+// 見た目：金属（じょうろは本体、釣り竿は竿）の色を段階の色に塗りかえる
+const TIER_PAL40 = [null,
+  [[246, 192, 146], [216, 134, 84], [160, 88, 52], [104, 58, 42]],
+  [[214, 238, 255], [132, 182, 232], [72, 112, 172], [42, 62, 104]],
+  [[255, 242, 156], [244, 200, 64], [200, 140, 30], [132, 86, 22]]];
+const ORIG40 = {}, ORIG_URL40 = {};
+for (const k of TOOL_IDS40) ORIG_URL40[k] = ASSETS[k];
+function hsl40(h, s, l) { const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); }; return [f(0), f(8), f(4)]; }
+function origOf40(k) {
+  if (ORIG40[k]) return ORIG40[k];
+  const im = IMG[k]; if (!im || (im instanceof HTMLImageElement && (!im.complete || !im.naturalWidth))) return null;
+  const c = document.createElement("canvas"); c.width = im.width || 16; c.height = im.height || 16; c.getContext("2d").drawImage(im, 0, 0);
+  return ORIG40[k] = c;
+}
+function tinted40(k, lv) {
+  const src = origOf40(k); if (!src) return null;
+  const W = src.width, H = src.height, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d"); x.drawImage(src, 0, 0);
+  const d = x.getImageData(0, 0, W, H), a = d.data;
+  for (let i = 0; i < a.length; i += 4) {
+    if (!a[i + 3]) continue;
+    const r = a[i], g = a[i + 1], b = a[i + 2], L = (r * 3 + g * 6 + b) / 10;
+    const hit = k === "can" ? b > r + 25 && L > 60 : k === "rod" ? r > b + 60 && L > 100 : Math.max(r, g, b) - Math.min(r, g, b) < 34 && L > 80;
+    if (!hit) continue;
+    const idx = L > 200 ? 0 : L > 150 ? 1 : L > 100 ? 2 : 3, px = (i >> 2) % W, py = Math.floor((i >> 2) / W);
+    const col = lv === 4 ? hsl40((px * 26 + py * 14) % 360, .78, [.82, .67, .52, .36][idx]) : TIER_PAL40[lv][idx];
+    a[i] = col[0]; a[i + 1] = col[1]; a[i + 2] = col[2];
+  }
+  x.putImageData(d, 0, 0); return c;
+}
+let lookSig40 = "";
+function applyToolLooks40() {
+  let ok = true;
+  for (const k of TOOL_IDS40) {
+    const lv = tlv40(k);
+    if (!lv) { if (ORIG40[k]) IMG[k] = ORIG40[k]; ASSETS[k] = ORIG_URL40[k]; continue; }
+    const c = tinted40(k, lv); if (!c) { ok = false; continue; }
+    IMG[k] = c; ASSETS[k] = c.toDataURL();
+  }
+  lookSig40 = ok ? JSON.stringify(TOOL_IDS40.map(tlv40)) : "";
+  return ok;
+}
+F40.applyLooks = applyToolLooks40;
+const _renderHotbar40 = renderHotbar;
+renderHotbar = function () {
+  // 読みこみ・ログインなどで段階が変わっていたら、見た目を合わせてから出す
+  if (JSON.stringify(TOOL_IDS40.map(tlv40)) !== lookSig40) { try { applyToolLooks40(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "toolLooks"); } }
+  return _renderHotbar40.apply(this, arguments);
+};
+Promise.all(TOOL_IDS40.map(k => IMG[k] && IMG[k].decode ? IMG[k].decode().catch(() => {}) : null)).then(() => { lookSig40 = ""; try { renderHotbar(); } catch {} });
+
+// ---------- 使ったときの効き目 ----------
+function areaTiles40(kind, lv, tx, ty) {
+  const [W, D] = AREA40[kind][lv], [dx, dy] = DIRS[player.dir], px = dy !== 0 ? 1 : 0, py = dx !== 0 ? 1 : 0, h = (W - 1) / 2, out = [];
+  for (let d = 0; d < D; d++) for (let w = -h; w <= h; w++) { const x = tx + dx * d + px * w, y = ty + dy * d + py * w; if (x === tx && y === ty) continue; out.push([x, y]); }
+  return out;
+}
+function tillable40(x, y, es) {
+  if (map !== village) return false;
+  const g = village.ground[y]?.[x], k = x + "," + y;
+  return /^(grass|flower)/.test(g || "") && !world.paths[k] && !village.solid[y]?.[x] && !world.crops[k] && !(player.x === x && player.y === y) && !es.some(e => e.x === x && e.y === y);
+}
+const _swing40 = swing;
+swing = function (kind, dur, done) {
+  const lv = TOOL_SK40[kind] ? tlv40(kind) : 0;
+  if (!lv || typeof done !== "function") return _swing40(kind, dur, done);
+  const [tx, ty] = front(), key = tx + "," + ty;
+  let fin = done;
+  if (kind === "axe") fin = () => {
+    const tk = map === village ? treeAt(tx, ty) : null, t = tk ? world.trees[tk] : null, alive = !!(t && t.hp > 0);
+    if (alive && DMG40[lv]) t.hp = Math.max(1, t.hp - DMG40[lv]);
+    done();
+    if (alive && t.hp <= 0 && Math.random() < WOOD40[lv]) { const n = lv >= 4 ? 2 : 1; if (addItem("wood", n, true)) setTimeout(() => toast("wood", `${ITEMS.axe.name}のおかげで、木材がもう${n}本とれた`), 900); }
+  };
+  else if (kind === "pick") fin = () => {
+    const rock = map === village ? world.rocks[key] : null, alive = !!(rock && rock.hp > 0);
+    if (alive && DMG40[lv]) rock.hp = Math.max(1, rock.hp - DMG40[lv]);
+    done();
+    if (alive && !world.rocks[key] && Math.random() < ORE40[lv] && addItem("ore", 1, true)) setTimeout(() => toast("ore", `${ITEMS.pick.name}のおかげで、鉱石がもう1個出てきた`), 900);
+  };
+  else if (kind === "hoe") fin = () => {
+    const before = !!world.tilled[key];
+    done();
+    if (before || !world.tilled[key] || AREA40.hoe[lv][0] * AREA40.hoe[lv][1] <= 1) return;
+    const es = entsOf(map); let n = 0;
+    for (const [x, y] of areaTiles40("hoe", lv, tx, ty)) {
+      if (!tillable40(x, y, es)) continue;
+      world.tilled[x + "," + y] = { wet: false }; village.ground[y][x] = "tilled"; dust(x, y, [150, 108, 70], 3); F7.ev("till"); n++;
+    }
+    if (n) saveWorld();
+  };
+  else if (kind === "can") fin = () => {
+    done();
+    if (map !== village || !world.tilled[key]) return;
+    let n = 0;
+    for (const [x, y] of areaTiles40("can", lv, tx, ty)) { const t = world.tilled[x + "," + y]; if (!t) continue; const was = t.wet; t.wet = true; F7.ev("water", was, null); n++; }
+    if (n) saveWorld();
+  };
+  return _swing40(kind, dur * SPEED40[lv], fin);
+};
+// 釣り竿：アタリが長く、早くかかる
+const _biteWin40 = F7.biteWin;
+F7.biteWin = () => _biteWin40() * BITE40[tlv40("rod")];
+// 強化した釣り竿でしか釣れない魚
+const _fishOk40 = fishOk;
+fishOk = f => f.rod ? tlv40("rod") >= f.rod && _fishOk40(f) : _fishOk40(f);
+const _fishHint40 = fishHint;
+fishHint = f => f.rod ? `${_fishHint40(f)}／${TIER40[f.rod].pre}釣り竿以上` : _fishHint40(f);
+const _fishCaught40 = F6.fishCaught;
+F6.fishCaught = got => {
+  _fishCaught40(got);
+  const f = FISH6.find(x => x.n === got);
+  if (f && f.rod && world.dex[got] === 1) setTimeout(() => F7.notify(`${ITEMS.rod.name}だからこそ釣れた、${got}！`, "fish_" + got), 500);
+};
+{ const a = ACH.find(x => x[0] === "魚博士"); if (a) a[2] = () => FISH6.filter(f => !f.debt && !f.rod).every(f => world.dex[f.n]); }
+ACH.push(["伝説の釣り人", "強化した釣り竿でしか釣れない魚を、ぜんぶ釣る", () => FISH6.filter(f => f.rod).every(f => world.dex[f.n])],
+  ["道具の達人", "道具をひとつ、虹まで鍛える", () => TOOL_IDS40.some(k => tlv40(k) >= 4)]);
+ACH_REWARD["伝説の釣り人"] = ["money", 10000];
+ACH_REWARD["道具の達人"] = ["medal", 10];
+// えさをつけたとき・竿を投げたときの速さ、成長の粉
+const _act40 = act;
+act = function () {
+  const sel = world.inv[world.sel], item = sel && ITEMS[sel.id];
+  if (!modalOpen && !fish && !busy && !placing && item && item.grow40 && map === village) {
+    const [tx, ty] = front(), key = tx + "," + ty, crop = world.crops[key];
+    if (crop) {
+      if (crop.dead) { toast("grow40", "枯れた作物には効かないみたい"); return; }
+      if (crop.stage >= 2) { toast("grow40", "もう収穫できるよ"); return; }
+      crop.stage++; crop.prog = 0; removeItem(sel.id, 1); dust(tx, ty, [170, 230, 130], 8); saveWorld(); renderHotbar();
+      toast("grow40", crop.stage >= 2 ? "ぐんぐん育って、収穫できるようになった！" : "ぐんぐん育った！");
+      return;
+    }
+    if (village.ground[ty]?.[tx] === "tilled") { toast("grow40", "育っている作物に使おう"); return; }
+  }
+  const before = fish;
+  _act40.apply(this, arguments);
+  if (!before && fish && fish.phase === "cast") fish.wait *= CAST40[tlv40("rod")];
+};
+
+// ---------- こもれび工務店：道具の強化・腕前で買える品 ----------
+const GOODS40 = [["grow40", "farm", 5], ["bait_gold40", "fish", 5], ["sapling", "gather", 3]];
+const _builderTabs40 = builderTabs38;
+builderTabs38 = function (tab) {
+  if (tab !== "tools") return _builderTabs40(tab).replace(/<\/div>$/, `<button class="chip" type="button" data-b38="tools" aria-pressed="false">道具の強化</button></div>`);
+  return staffSay13(charIcon13(STAFF38.builder), "道具の鍛え直しもやってますよ。腕前（スキルのレベル）が上がるほど、いい道具を使いこなせるようになります") +
+    `<div class="mtabs"><button class="chip" type="button" data-b38="kits" aria-pressed="false">建物のキット</button><button class="chip" type="button" data-b38="ext" aria-pressed="false">わが家の増築</button><button class="chip" type="button" data-b38="tools" aria-pressed="true">道具の強化</button></div>`;
+};
+const matText40 = mat => Object.entries(mat).map(([m, q]) => `${ITEMS[m].name}${q}`).join("・");
+const canUp40 = (k, nx) => nx && count(k) > 0 && skLv(TOOL_SK40[k]) >= nx.lv && world.money >= nx.money && Object.entries(nx.mat).every(([m, q]) => count(m) >= q);
+function drawTools40(body, msg) {
+  const rows = TOOL_IDS40.map(k => {
+    const lv = tlv40(k), nx = UP40[lv + 1], sk = TOOL_SK40[k], have = count(k) > 0, now = skLv(sk);
+    const fishLine = k === "rod" && nx ? ROD_FISH40.filter(f => f.rod === lv + 1).map(f => `${f.n}（${f.at === "sea" ? "海" : "池"}）`).join("・") : "";
+    const need = nx ? `${fmt(nx.money)}＋${matText40(nx.mat)}・${SKILL[sk][0]}Lv${nx.lv}から${now < nx.lv ? `<b class="ng40">（いまLv${now}）</b>` : ""}` : "";
+    return `<div class="li tool40"><img src="${ASSETS[k]}" alt=""><span class="nm">${esc(ITEMS[k].name)}
+      <span class="sub2">いま：${lv ? EFFECT40[k][lv] : "ふつうの道具"}</span>
+      ${nx ? `<span class="sub2">次は${TIER40[lv + 1].name}：${EFFECT40[k][lv + 1]}${fishLine ? `／釣れるようになる魚：${fishLine}` : ""}</span><span class="sub2">${need}</span>` : `<span class="sub2">いちばん上まで鍛えた</span>`}
+      ${have ? "" : `<span class="sub2 ng40">持っていないよ（よろず屋で買える）</span>`}</span>
+      <span class="acts">${nx ? `<button class="btn" type="button" data-up40="${k}" ${canUp40(k, nx) ? "" : "disabled"}>強化する</button>` : ""}</span></div>`;
+  }).join("");
+  const goods = GOODS40.map(([id, sk, lv]) => {
+    const it = ITEMS[id], ok = skLv(sk) >= lv;
+    return itemLi(id, `${fmt(it.price)}・${SKILL[sk][0]}Lv${lv}から${ok ? "" : `<b class="ng40">（いまLv${skLv(sk)}）</b>`}${id === "grow40" ? "・育っている作物に使うと、ひと晩ぶん育つ" : id === "bait_gold40" ? "・強化した竿でしか釣れない魚が寄ってくる" : id === "sapling" ? "・好きな場所に木を植えられる" : ""}`,
+      ok ? `<button class="btn light" type="button" data-g40="${id}" data-n="1" ${world.money < it.price ? "disabled" : ""}>1個</button><button class="btn" type="button" data-g40="${id}" data-n="5" ${world.money < it.price * 5 ? "disabled" : ""}>5個</button>` : `<button class="btn" type="button" disabled>腕前が足りない</button>`);
+  }).join("");
+  const lvLine = Object.keys(SKILL).map(k => `${SKILL[k][0]} Lv${skLv(k)}`).join("・");
+  body.innerHTML = builderTabs38("tools") + `<p class="mtext">所持金 <b>${fmt(world.money)}</b>・石 ${count("stone")}・鉱石 ${count("ore")}・アメジスト ${count("gem")}<br><span class="small">あなたの腕前：${lvLine}</span></p>${msg || ""}
+    <h3 class="lbl">道具の強化（銅 → はがね → 金 → 虹）</h3><div class="list">${rows}</div>
+    <h3 class="lbl">腕前で買える品</h3><div class="list">${goods}</div>
+    <p class="note">強化はその場で終わります。腕前（スキルのレベル）は、畑・釣り・木や岩・料理をするほど上がります。村タブの「職業」でそのスキルを選んでいると、経験値が1.25倍です。強化した道具は、売ったり買いなおしたりしても強さはそのままです。</p>`;
+  wireBuilderTabs38();
+  body.querySelectorAll("[data-up40]").forEach(b => b.onclick = () => {
+    const k = b.dataset.up40, lv = tlv40(k), nx = UP40[lv + 1];
+    if (!canUp40(k, nx)) return;
+    addMoney(-nx.money); for (const [m, q] of Object.entries(nx.mat)) removeItem(m, q);
+    world.tools40 = world.tools40 && typeof world.tools40 === "object" ? world.tools40 : {};
+    world.tools40[k] = lv + 1; saveWorld(); applyToolLooks40(); renderHotbar(); if (typeof SFX !== "undefined" && SFX.small) SFX.small();
+    toast(k, `${ITEMS[k].name}に鍛え直した！ ${EFFECT40[k][lv + 1]}`);
+    drawTools40(body, `<div class="ok40">${esc(ITEMS[k].name)}に鍛え直した！ ${esc(EFFECT40[k][lv + 1])}</div>`);
+  });
+  body.querySelectorAll("[data-g40]").forEach(b => b.onclick = () => {
+    const id = b.dataset.g40, n = +b.dataset.n, g = GOODS40.find(x => x[0] === id), it = ITEMS[id];
+    if (!g || skLv(g[1]) < g[2]) return;
+    let got = 0;
+    for (let i = 0; i < n && world.money >= it.price; i++) { if (!addItem(id, 1, true)) break; addMoney(-it.price); got++; }
+    drawTools40(body, got ? `<div class="ok40">${esc(it.name)}を${got}個買った</div>` : `<div class="warn">持ち物がいっぱいで買えなかったよ</div>`);
+  });
+}
+const _openBuilder40 = openBuilder38;
+openBuilder38 = function (tab) {
+  if (tab !== "tools") return _openBuilder40(tab);
+  openModal("こもれび工務店", "shop", body => drawTools40(body));
+};
+F38.openBuilder = openBuilder38;
+F40.openTools = () => openBuilder38("tools");
+
+// ---------- 着せ替え：まだ持っていない物の入手方法 ----------
+const LUMI40 = { top: { "パーカー": 1200, "セーター": 1500, "スーツ": 3000, "ドレス": 3500 }, hat: { "キャップ": 600, "ベレー帽": 900, "中折れ帽": 1500 } };
+const HEART_HATS40 = (() => { const m = {}; try { for (const [n, evs] of Object.entries(HEART_EV)) for (const [th, ev] of Object.entries(evs)) if (ev && ev[2] && ev[2][0] === "hat") (m[ev[2][1]] = m[ev[2][1]] || []).push(`${n}と仲良くなる（♥${th}）`); } catch {} return m; })();
+const PRIZE_HATS40 = Object.fromEntries(PRIZES.filter(([id]) => id.startsWith("hat:")).map(([id, c]) => [id.slice(4), c]));
+const EVENT_HATS40 = { "花かんむり": "春の釣り大会で優勝する", "かぼちゃ帽": "秋の収穫祭の料理コンテストで優勝する", "サンタ帽": "冬の雪まつりで、村のみんなに3人あいさつする" };
+function wearWhere40(key, v) {
+  const inf = WEAR26[key] && WEAR26[key][v];
+  if (inf) {
+    if (inf.where) return { place: "季節・イベント", text: inf.where };
+    if (inf.shop === "omote" && key === "top" && OMOTE_WEAR30.top[v]) return { place: "MAISON SOIRÉE（表参道）", text: `表参道の MAISON SOIRÉE で ${fmt(inf.price)}` };
+    if (inf.shop === "omote") return { place: "セレクトショップ ULU（表参道）", text: `表参道のセレクトショップ ULU で ${fmt(inf.price)}` };
+    if (inf.salon) return { place: "Salon こもれび（表参道）", text: `表参道の美容室 Salon こもれび で ${fmt(inf.salon)}` };
+    if (inf.event) return { place: "季節・イベント", text: `${EVENT_NAME27[inf.event] || "イベント"}のイベント中に、美容室のきせかえガチャ（${inf.rare}）やイベントのごほうびで手に入る` };
+    if (inf.season) return { place: "きせかえガチャ（表参道の美容室）", text: `${inf.season}のあいだだけ、表参道の美容室にある、きせかえガチャで出る（${inf.rare}）` };
+    return { place: "きせかえガチャ（表参道の美容室）", text: `表参道の美容室にある、きせかえガチャで出る（${inf.rare || "N"}）${key === "hat" && v === "王冠" ? "。洞窟の主（ゴーレム）をたおしても手に入る" : ""}` };
+  }
+  if (LUMI40[key] && LUMI40[key][v]) return { place: "ブティック ルミエール（都会）", text: `都会のブティック ルミエール で ${fmt(LUMI40[key][v])}` };
+  if (key === "top" && v === "痛T") return { place: "にじいろ堂（秋葉原）", text: "秋葉原のアニメのお店 にじいろ堂 で 2,000 G" };
+  if (key === "hat" && v === "猫耳") return { place: "にじいろ堂（秋葉原）", text: "秋葉原のアニメのお店 にじいろ堂 で 1,200 G" };
+  if (key === "top" && v === "メイド服") return { place: "メイド喫茶 ねこみみ亭（秋葉原）", text: "秋葉原のメイド喫茶 ねこみみ亭で、メイドさんと仲良くなる（♥5）" };
+  if (key === "hat" && v === "ホワイトブリム") return { place: "メイド喫茶 ねこみみ亭（秋葉原）", text: "秋葉原のメイド喫茶 ねこみみ亭で、メイドさんと仲良くなる（♥3）" };
+  if (key === "hat" && v === "マリン帽") return { place: "そのほか", text: "みなと町の行商人の店で 800 G" };
+  if (key === "hat" && PRIZE_HATS40[v]) return { place: "そのほか", text: `カジノの景品交換（メダル${PRIZE_HATS40[v]}枚）` };
+  if (key === "hat" && (EVENT_HATS40[v] || HEART_HATS40[v])) return { place: "季節・イベント", text: [EVENT_HATS40[v], ...(HEART_HATS40[v] || [])].filter(Boolean).join("／") };
+  return { place: "そのほか", text: "イベントや行商人、洞窟の主などから手に入る" };
+}
+function wearLocked40(key, v) {
+  if (WEAR26[key] && WEAR26[key][v]) return !wearOwned26(key, v);
+  if (key === "top") return !topUnlocked(v);
+  if (key === "hat") return !hatUnlocked(v);
+  return false;
+}
+F40.where = wearWhere40;
+const WKEYS40 = ["hair", "bangs", "hairc", "top", "bottom", "hat", "acc"];
+const WLABEL40 = { hair: "髪型", bangs: "前髪", hairc: "髪の色", top: "服", bottom: "ボトムス", hat: "帽子", acc: "アクセサリー" };
+(() => {
+  const opts = $("opts"); if (!opts) return;
+  const box = document.createElement("div"); box.id = "where40"; box.className = "where40"; box.hidden = true;
+  const bar = document.createElement("div"); bar.className = "wherebar40"; bar.innerHTML = `<button class="btn light" type="button" id="whereAll40">まだ持っていない物の入手方法</button>`;
+  opts.parentNode.insertBefore(bar, opts); opts.parentNode.insertBefore(box, opts);
+  // まだ持っていない物を押したら、着るかわりに入手方法を出す
+  opts.addEventListener("click", e => {
+    const b = e.target && e.target.closest && e.target.closest("button.locked40"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const key = b.closest(".row")?.dataset.key, v = b.dataset.v; if (!key || !v) return;
+    const w = wearWhere40(key, v);
+    box.innerHTML = `<b>「${esc(v)}」</b>（${WLABEL40[key] || ""}）はまだ持っていないよ<br>入手方法：${esc(w.text)}<button class="x40" type="button" aria-label="閉じる">×</button>`;
+    box.hidden = false; box.querySelector(".x40").onclick = () => { box.hidden = true; };
+    try { box.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch {}
+  }, true);
+  $("whereAll40").onclick = () => openWhereAll40();
+})();
+const _syncUI40 = syncUI;
+syncUI = function () {
+  _syncUI40();
+  for (const key of WKEYS40) document.querySelectorAll(`#opts .row[data-key="${key}"] button`).forEach(b => {
+    const v = b.dataset.v; if (v === undefined) return;
+    if (wearLocked40(key, v)) { b.disabled = false; b.classList.add("locked40"); b.setAttribute("aria-disabled", "true"); b.title = "押すと入手方法が出るよ"; }
+    else if (b.classList.contains("locked40")) { b.classList.remove("locked40"); b.removeAttribute("aria-disabled"); b.title = ""; }
+  });
+};
+function wearPool40(key) { const p = key === "bangs" ? BANGS34 : key === "hair" ? CHAR.HAIR : key === "hairc" ? CHAR.HAIRC : POOLS[key]; return Array.isArray(p) ? p : Object.keys(p || {}); }
+const PLACE_ORDER40 = ["セレクトショップ ULU（表参道）", "MAISON SOIRÉE（表参道）", "Salon こもれび（表参道）", "きせかえガチャ（表参道の美容室）", "ブティック ルミエール（都会）", "にじいろ堂（秋葉原）", "メイド喫茶 ねこみみ亭（秋葉原）", "季節・イベント", "そのほか"];
+function openWhereAll40() {
+  const groups = {};
+  for (const key of WKEYS40) for (const v of wearPool40(key)) {
+    if (!wearLocked40(key, v)) continue;
+    const w = wearWhere40(key, v); (groups[w.place] = groups[w.place] || []).push({ key, v, text: w.text });
+  }
+  const places = PLACE_ORDER40.filter(p => groups[p]).concat(Object.keys(groups).filter(p => !PLACE_ORDER40.includes(p)));
+  const icon = (key, v) => { try { const im = renderChar({ ...cfg, [key]: v, ...(key === "hair" || key === "bangs" ? { hat: "なし" } : {}) }, key === "acc" && BACK34.has(v) ? "up" : "down", 0); return im.toDataURL(); } catch { return ""; } };
+  openModal("まだ持っていない物の入手方法", "shop", body => {
+    body.innerHTML = places.length ? `<p class="mtext">お店の名前ごとにまとめたよ。表参道・都会・秋葉原・みなと町へは、村のバス停からバスで行けます。</p>` +
+      places.map(p => `<h3 class="lbl">${esc(p)}（${groups[p].length}）</h3><div class="list">${groups[p].map(x => `<div class="li"><img src="${icon(x.key, x.v)}" alt=""><span class="nm">${esc(x.v)}<span class="sub2">${WLABEL40[x.key]}・${esc(x.text)}</span></span></div>`).join("")}</div>`).join("")
+      : `<p class="mtext">着せ替えの服や小物は、ぜんぶ持っているよ。すごい。</p>`;
+  });
+}
+F40.openWhereAll = openWhereAll40;
+syncUI();
+F40.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -10083,7 +10440,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>
@@ -10674,10 +11031,11 @@ function setupMahjongLobby(cb, body) {
   cb.innerHTML = `<p class="mtext">常連の3人（${CPU.join("・")}）と東風戦。門前限定（ポン・チー・カンなし）、立直・ツモ・ロンあり、ウマ10-20。最終の点数とウマに応じてお金をやり取りします。払いきれない負け分は、十日屋の貸せる上限までが借金になります。途中で卓を離れるとラス扱いで精算します。</p>
     <div class="mtabs" id="rates">${RATES.map(([r, l]) => `<button class="chip" type="button" data-rate="${r}" aria-pressed="${S.mjRate === r}">${l}</button>`).join("")}</div>
     <p class="mtext small" id="rateinfo"></p>
-    <div class="row2"><button class="btn" type="button" id="sit">卓につく</button></div>
+    <div class="row2"><button class="btn" type="button" id="sit">卓につく</button>${K.net && K.net.connected() ? `<button class="btn light" type="button" id="mjToMulti">みんなの卓に行く</button>` : ""}</div>
     <details class="paytable"><summary>役と点数（この卓のルール）</summary><p class="mtext small">役：立直、門前清自摸和、断么九、平和、一盃口、役牌、一気通貫、三色同順、三暗刻、対々和、七対子、混一色、清一色、ドラ・裏ドラ。役満：国士無双、四暗刻、大三元、字一色。符は簡略化して平和ツモ20符・平和ロン30符・七対子25符・それ以外はツモ30符／ロン40符。親は局ごとに交代（連荘なし）。流局はテンパイ料3000点。フリテンの人はロンできません。</p></details>`;
   const info = () => { const r = S.mjRate; cb.querySelector("#rateinfo").textContent = `目安：トップで+${fmt((15 + 20) * r)}前後、ラスで${fmt((-15 - 20) * r)}前後（素点±15000の場合）`; };
   info();
+  const toMulti = cb.querySelector("#mjToMulti"); if (toMulti) toMulti.onclick = () => { S.mjMode = "multi"; setupMJMulti(cb, body); };
   cb.querySelectorAll("[data-rate]").forEach(b => b.onclick = () => { S.mjRate = +b.dataset.rate; cb.querySelectorAll("[data-rate]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); info(); });
   cb.querySelector("#sit").onclick = () => {
     const need = S.mjRate * 35, room = K.loanRoom ? K.loanRoom("yami") : 0;

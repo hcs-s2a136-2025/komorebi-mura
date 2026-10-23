@@ -584,10 +584,11 @@ function setupMahjongLobby(cb, body) {
   cb.innerHTML = `<p class="mtext">常連の3人（${CPU.join("・")}）と東風戦。門前限定（ポン・チー・カンなし）、立直・ツモ・ロンあり、ウマ10-20。最終の点数とウマに応じてお金をやり取りします。払いきれない負け分は、十日屋の貸せる上限までが借金になります。途中で卓を離れるとラス扱いで精算します。</p>
     <div class="mtabs" id="rates">${RATES.map(([r, l]) => `<button class="chip" type="button" data-rate="${r}" aria-pressed="${S.mjRate === r}">${l}</button>`).join("")}</div>
     <p class="mtext small" id="rateinfo"></p>
-    <div class="row2"><button class="btn" type="button" id="sit">卓につく</button></div>
+    <div class="row2"><button class="btn" type="button" id="sit">卓につく</button>${K.net && K.net.connected() ? `<button class="btn light" type="button" id="mjToMulti">みんなの卓に行く</button>` : ""}</div>
     <details class="paytable"><summary>役と点数（この卓のルール）</summary><p class="mtext small">役：立直、門前清自摸和、断么九、平和、一盃口、役牌、一気通貫、三色同順、三暗刻、対々和、七対子、混一色、清一色、ドラ・裏ドラ。役満：国士無双、四暗刻、大三元、字一色。符は簡略化して平和ツモ20符・平和ロン30符・七対子25符・それ以外はツモ30符／ロン40符。親は局ごとに交代（連荘なし）。流局はテンパイ料3000点。フリテンの人はロンできません。</p></details>`;
   const info = () => { const r = S.mjRate; cb.querySelector("#rateinfo").textContent = `目安：トップで+${fmt((15 + 20) * r)}前後、ラスで${fmt((-15 - 20) * r)}前後（素点±15000の場合）`; };
   info();
+  const toMulti = cb.querySelector("#mjToMulti"); if (toMulti) toMulti.onclick = () => { S.mjMode = "multi"; setupMJMulti(cb, body); };
   cb.querySelectorAll("[data-rate]").forEach(b => b.onclick = () => { S.mjRate = +b.dataset.rate; cb.querySelectorAll("[data-rate]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); info(); });
   cb.querySelector("#sit").onclick = () => {
     const need = S.mjRate * 35, room = K.loanRoom ? K.loanRoom("yami") : 0;

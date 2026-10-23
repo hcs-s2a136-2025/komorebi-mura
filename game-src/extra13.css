@@ -208,3 +208,14 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .salonsum39 span { padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.05); }
 .salonsum39 span.ch { background: #fbe8c0; }
 .salonsum39 small { margin-left: 4px; opacity: .75; }
+
+/* v40：道具の強化・入手方法 */
+.tool40 .sub2 { display: block; }
+.ng40 { color: #c0392b; font-weight: 700; }
+.ok40 { background: #eaf7e4; border: 2px solid #8cc47a; border-radius: 8px; padding: 6px 10px; margin: 6px 0; font-size: .92rem; }
+#opts button.locked40 { opacity: .55; cursor: help; }
+#opts button.locked40:hover { opacity: .8; }
+.wherebar40 { padding: 6px 16px 0; }
+.wherebar40 .btn { font-size: .8rem; padding: 4px 12px; width: auto; min-height: 0; border-radius: 8px; }
+.where40 { position: relative; box-sizing: border-box; background: #fff8e8; border: 2px solid #e8c878; border-radius: 10px; padding: 8px 30px 8px 10px; margin: 6px 16px 4px; font-size: .86rem; line-height: 1.6; }
+.where40 .x40 { position: absolute; top: 4px; right: 6px; border: 0; background: none; font-size: 1.1rem; cursor: pointer; color: #8a6a3a; }

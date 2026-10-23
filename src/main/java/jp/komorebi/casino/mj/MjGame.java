@@ -34,7 +34,7 @@ public final class MjGame {
     }
 
     public static final int MAX_TABLES = 6;
-    public static final long TURN_MS = 20_000, CLAIM_MS = 9_000, RESULT_MS = 15_000, END_MS = 40_000, CPU_MS = 650, RIICHI_AUTO_MS = 900;
+    public static final long TURN_MS = 20_000, CLAIM_MS = 9_000, RESULT_MS = 15_000, END_MS = 40_000, CPU_MS = 650, RIICHI_AUTO_MS = 900, WAIT_OFFLINE_MS = 20_000;
     public static final long[] RATES = { 0, 10, 50, 100, 500 };
     public static final String[] RATE_NAMES = { "ノーレート", "点1（1000点=10G）", "点5（1000点=50G）", "テンピン（1000点=100G）", "デカピン（1000点=500G）" };
     private static final String[] CPU_NAMES = { "銀次", "タツ", "ミドリ", "ゲン", "ハル", "ミナミ" };
@@ -61,7 +61,8 @@ public final class MjGame {
         switch (act) {
             case "list" -> { sendLobby(pid); if (t != null) t.sendTo(pid, now); }
             case "create" -> {
-                if (t != null) { t.sendTo(pid, now); return; }
+                if (t != null && "wait".equals(t.phase)) { t.leave(pid, now); t = null; }
+                if (t != null) { busyElsewhere(pid, t, now); return; }
                 if (tables.size() >= MAX_TABLES) { ng(pid, "いまは卓がいっぱい。空くまで少し待ってね"); return; }
                 Table nt = new Table(nextId++, pid, a == 1, Math.max(0, Math.min(RATES.length - 1, b)));
                 tables.put(nt.id, nt);
@@ -71,7 +72,9 @@ public final class MjGame {
                 nt.broadcast(now);
             }
             case "sit" -> {
-                if (t != null) { t.sendTo(pid, now); return; }
+                if (t != null && t.id == a) { t.sendTo(pid, now); return; }
+                if (t != null && "wait".equals(t.phase)) { t.leave(pid, now); t = null; }
+                if (t != null) { busyElsewhere(pid, t, now); return; }
                 Table nt = tables.get(a);
                 if (nt == null) { ng(pid, "その卓は見つからなかった"); return; }
                 if (!"wait".equals(nt.phase)) { ng(pid, "その卓はもう始まっているみたい"); return; }
@@ -92,7 +95,21 @@ public final class MjGame {
     }
 
     public synchronized void tick(long now, LongPredicate online) {
-        for (Table t : new ArrayList<>(tables.values())) t.tick(now, online);
+        for (Table t : new ArrayList<>(tables.values())) {
+            try {
+                t.tick(now, online);
+            } catch (RuntimeException e) {
+                // ひとつの卓がおかしくなっても、ほかの卓を止めない。おかしくなった卓は片付けて、座っていた人は一覧に戻す
+                tables.remove(t.id);
+                for (Seat s : t.seats) if (s != null && !s.cpu) { where.remove(s.id); ng(s.id, "卓の進行がおかしくなったので、いったん片付けたよ。ごめんね"); sendLobby(s.id); }
+                lobbyChanged();
+            }
+        }
+    }
+
+    private void busyElsewhere(long pid, Table t, long now) {
+        ng(pid, "卓" + t.id + "の対局がまだ続いてるよ。終わるか、卓を離れてから座ってね");
+        t.sendTo(pid, now);
     }
 
     /** 管理人室用：卓の数と座っている人数 */
@@ -153,6 +170,10 @@ public final class MjGame {
         final List<River> river = new ArrayList<>();
         final Set<Integer> discKinds = new HashSet<>();
         boolean riichi, doubleRiichi, ippatsu, pendingRiichi, pendingDouble, furitenTemp, furitenRiichi, discarded, ready;
+        /** 終局のあと「卓に戻る」を自分で押した */
+        boolean back;
+        /** 待ち卓で、つながらなくなった時刻（0はつながっている） */
+        long offSince;
         int drawn = -1;
         final Set<Integer> banned = new HashSet<>();
         long actAt;
@@ -795,10 +816,19 @@ public final class MjGame {
 
         /** 終局のあと、人だけ残して卓を待ち状態に戻す */
         void reset(long now) {
-            for (int i = 0; i < 4; i++) if (seats[i] != null && seats[i].cpu) seats[i] = null;
+            List<Long> gone = new ArrayList<>();
+            for (int i = 0; i < 4; i++) {
+                Seat s = seats[i];
+                if (s == null) continue;
+                if (s.cpu) { seats[i] = null; continue; }
+                // 「卓に戻る」を押さなかった人（閉じた・つながっていない人）は席を空ける。そうしないと幽霊の席で4人目が座れない
+                if (!s.back) { seats[i] = null; where.remove(s.id); gone.add(s.id); continue; }
+                s.back = false; s.ready = false; s.offSince = 0;
+            }
             phase = "wait";
             result = null;
             msg = "";
+            for (long g : gone) { sendLobby(g); sendTo(g, now); }
             if (humans() == 0) { tables.remove(id); lobbyChanged(); return; }
             if (seatOf(owner) < 0) for (Seat s : seats) if (s != null) { owner = s.id; break; }
             lobbyChanged();
@@ -820,6 +850,17 @@ public final class MjGame {
                 s.auto = false;
                 s.name = s.name + "（代打ち）";
                 if (humans() == 0) { tables.remove(id); lobbyChanged(); return; }
+            } else if ("end".equals(phase)) {
+                // 精算はもう済んでいる。席に穴をあけると進行が止まるので、終局の画面のあいだはCPUに座っていてもらう
+                s.cpu = true;
+                s.id = 0;
+                s.auto = false;
+                s.ready = true;
+                if (humans() == 0) { tables.remove(id); lobbyChanged(); sendLobby(pid); return; }
+                checkReady(now);
+                lobbyChanged();
+                sendLobby(pid);
+                return;
             } else {
                 seats[i] = null;
                 if (humans() == 0) { tables.remove(id); lobbyChanged(); sendLobby(pid); return; }
@@ -839,7 +880,7 @@ public final class MjGame {
             s.timeouts = 0;
             s.auto = false;
             if ("next".equals(act)) {
-                if ("result".equals(phase) || "end".equals(phase)) { s.ready = true; checkReady(now); }
+                if ("result".equals(phase) || "end".equals(phase)) { s.ready = true; if ("end".equals(phase)) s.back = true; checkReady(now); }
                 return;
             }
             if (!"play".equals(phase)) return;
@@ -900,7 +941,24 @@ public final class MjGame {
                 // だれもつないでいない待ち卓は片付ける
                 boolean any = false;
                 for (Seat s : seats) if (s != null && online.test(s.id)) any = true;
-                if (!any) { for (Seat s : seats) if (s != null) where.remove(s.id); tables.remove(id); lobbyChanged(); }
+                if (!any) { for (Seat s : seats) if (s != null) where.remove(s.id); tables.remove(id); lobbyChanged(); return; }
+                // しばらくつながっていない人の席は空ける（幽霊の席で、ほかの人が座れなくならないように）
+                boolean changed = false;
+                for (int i = 0; i < 4; i++) {
+                    Seat s = seats[i];
+                    if (s == null || s.cpu) continue;
+                    if (online.test(s.id)) { s.offSince = 0; continue; }
+                    if (s.offSince == 0) { s.offSince = now; continue; }
+                    if (now - s.offSince < WAIT_OFFLINE_MS) continue;
+                    where.remove(s.id);
+                    seats[i] = null;
+                    changed = true;
+                }
+                if (changed) {
+                    if (seatOf(owner) < 0) for (Seat s : seats) if (s != null && !s.cpu) { owner = s.id; break; }
+                    lobbyChanged();
+                    broadcast(now);
+                }
                 return;
             }
             if ("result".equals(phase) || "end".equals(phase)) {

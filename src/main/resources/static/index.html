@@ -723,7 +723,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 
 /* v44：カジノの中のチャット */
 .mchat44 { margin: 4px 14px 10px; border-top: 1px dashed rgba(255, 255, 255, .25); padding-top: 6px; }
-.mclog44 { max-height: 84px; overflow-y: auto; font-size: .8rem; line-height: 1.5; margin-bottom: 4px; }
+.mclog44 { max-height: 118px; overflow-y: auto; font-size: .8rem; line-height: 1.5; margin-bottom: 4px; }
 .mclog44 b { margin-right: 6px; color: #ffd86a; }
 .mclog44 .me b { color: #9fe0a0; }
 .mclog44 .sys { opacity: .6; }
@@ -734,7 +734,14 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .mcto44[hidden] { display: none; }
 .mcto44 button { font: inherit; font-size: .78rem; padding: 2px 8px; border: 0; background: #3a3040; color: #d8cce0; cursor: pointer; }
 .mcto44 button.on { background: #ffd86a; color: #2a2228; font-weight: bold; }
-.mclog44 i { font-style: normal; font-size: .7rem; background: #ffd86a; color: #2a2228; border-radius: 4px; padding: 0 4px; margin-right: 4px; }
+.mclog44 i { font-style: normal; font-size: .7rem; border-radius: 4px; padding: 0 4px; margin-right: 4px; }
+.mclog44 i.tt { background: #ffb0c8; color: #2a2228; }
+.mclog44 i.ta { background: #8fc8ff; color: #1c2430; }
+.mcview44 { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; font-size: .72rem; }
+.mcview44[hidden] { display: none; }
+.mcview44 span { opacity: .7; margin-right: 2px; }
+.mcview44 button { font: inherit; padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .3); background: transparent; color: #d8cce0; cursor: pointer; }
+.mcview44 button.on { background: #ffd86a; border-color: #ffd86a; color: #2a2228; font-weight: bold; }
 .mclog44 .t b { color: #ffb0c8; }
 .mclog44 .t.me b { color: #9fe0a0; }
 </style>
@@ -863,7 +870,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.28.2";
+  const VER = "0.28.3";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5189,7 +5196,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.28.2";
+const CLIENT_VERSION = "0.28.3";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7217,6 +7224,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.28.3", date: "2026/10/23", title: "カジノのチャットを見やすく", items: [
+    "卓についているときは、発言に「卓」「みんな」の印がつくようになった（色違い）",
+    "表示を「ぜんぶ」「卓だけ」「みんなだけ」で切りかえられるようになった",
+    "30分以内の発言を30件まで残すようにした。上にスクロールすると前の発言も読める（読んでいるあいだは、新しい発言が来ても勝手に下へ戻らない）",
+  ] },
   { v: "0.28.2", date: "2026/10/23", title: "卓のチャット・ペットのぷるぷるを直した", items: [
     "麻雀やBJの卓についているときは、カジノのチャット欄で「卓」と「みんな」を切りかえられるようになった。「卓」は同じ卓の人だけ、「みんな」はサーバーの全員に届く",
     "ペットをたくさん連れていると、道をふさぎ合ってその場で上下にぷるぷる動き続けることがあったのを直した。ペットは主人が歩いた足あとをたどって、一列になってついてくる",
@@ -11473,14 +11485,15 @@ handle8 = m => {
   } catch (e) { if (window.__komoErr) window.__komoErr(e, "v44 net"); }
 };
 // ---------- カジノの中でもチャット ----------
-$("mbox").insertAdjacentHTML("beforeend", `<div class="mchat44" id="mchat44" hidden><div class="mclog44" id="mclog44"></div><form class="mcform44" id="mcform44"><span class="mcto44" id="mcto44" hidden><button type="button" data-to44="all">みんな</button><button type="button" data-to44="table">卓</button></span><input id="mcin44" type="text" maxlength="60" placeholder="みんなに話しかける" autocomplete="off"><button class="btn" type="submit">送る</button></form></div>`);
+$("mbox").insertAdjacentHTML("beforeend", `<div class="mchat44" id="mchat44" hidden><div class="mcview44" id="mcview44" hidden><span>表示</span><button type="button" data-v44="both">ぜんぶ</button><button type="button" data-v44="table">卓だけ</button><button type="button" data-v44="all">みんなだけ</button></div><div class="mclog44" id="mclog44"></div><form class="mcform44" id="mcform44"><span class="mcto44" id="mcto44" hidden><button type="button" data-to44="all">みんな</button><button type="button" data-to44="table">卓</button></span><input id="mcin44" type="text" maxlength="60" placeholder="みんなに話しかける" autocomplete="off"><button class="btn" type="submit">送る</button></form></div>`);
 // 卓の中だけのチャット（麻雀・BJ）。サーバー全体のチャットとまとめて表示して、送る先だけ切りかえる
 const tchatLog44 = [];
-let mcSig44 = "", mcTo44 = "table", mcTable44 = null;
+let mcSig44 = "", mcTo44 = "table", mcTable44 = null, mcView44 = "both";
 function addTChat44(c) { tchatLog44.push(c); if (tchatLog44.length > 40) tchatLog44.shift(); mcSig44 = ""; }
 function renderMChat44() {
   const box = $("mchat44"), mb = $("mbox");
   const on = modalOpen && F8.connected && mb.classList.contains("dark");
+  if (on && box.hidden) mcForceBottom44 = true;
   box.hidden = !on; if (!on) { mcTable44 = null; return; }
   const tb = K.tableNow ? K.tableNow() : null;
   if (tb !== mcTable44) { mcTable44 = tb; if (tb) mcTo44 = "table"; mcSig44 = ""; }
@@ -11489,14 +11502,23 @@ function renderMChat44() {
   box.querySelectorAll("[data-to44]").forEach(b => b.classList.toggle("on", b.dataset.to44 === to));
   const ph = to === "table" ? (tb === "mj" ? "同じ卓の人に話しかける" : "BJの卓の人に話しかける") : "サーバーのみんなに話しかける";
   if ($("mcin44").placeholder !== ph) $("mcin44").placeholder = ph;
-  const now = Date.now();
-  const lines = [...chatLog.filter(c => now - c.at < 15 * 60e3), ...(tb ? tchatLog44.filter(c => now - c.at < 15 * 60e3) : [])].sort((a, b) => a.at - b.at).slice(-6);
-  const sig = to + "|" + lines.map(c => c.at + c.text).join("|");
+  $("mcview44").hidden = !tb;
+  box.querySelectorAll("[data-v44]").forEach(b => b.classList.toggle("on", b.dataset.v44 === mcView44));
+  const now = Date.now(), view = tb ? mcView44 : "all";
+  const lines = [...(view !== "table" ? chatLog.filter(c => now - c.at < 30 * 60e3) : []), ...(tb && view !== "all" ? tchatLog44.filter(c => now - c.at < 30 * 60e3) : [])].sort((a, b) => a.at - b.at).slice(-30);
+  const sig = to + "|" + view + "|" + lines.map(c => c.at + c.text).join("|");
   if (sig === mcSig44) return; mcSig44 = sig;
   const el = $("mclog44");
-  el.innerHTML = lines.length ? lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}${c.t ? " t" : ""}">${c.t ? `<i>卓</i>` : ""}<b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("") : `<div class="sys">${tb ? "「卓」は同じ卓の人だけ、「みんな」はサーバーの全員に届くよ" : "ここからチャットできるよ"}</div>`;
-  el.scrollTop = el.scrollHeight;
+  // 上にスクロールして読んでいるときは、新しい発言が来ても勝手に下へ戻さない
+  const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+  const tag = c => c.sys ? "" : tb ? (c.t ? `<i class="tt">卓</i>` : `<i class="ta">みんな</i>`) : "";
+  el.innerHTML = lines.length ? lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}${c.t ? " t" : ""}">${tag(c)}<b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("")
+    : `<div class="sys">${tb ? (view === "table" ? "卓のチャットはまだないよ" : view === "all" ? "みんなのチャットはまだないよ" : "「卓」は同じ卓の人だけ、「みんな」はサーバーの全員に届くよ") : "ここからチャットできるよ"}</div>`;
+  if (atBottom || mcForceBottom44) el.scrollTop = el.scrollHeight;
+  mcForceBottom44 = false;
 }
+let mcForceBottom44 = true;
+$("mcview44").addEventListener("click", e => { const b = e.target.closest("[data-v44]"); if (!b) return; mcView44 = b.dataset.v44; mcSig44 = ""; mcForceBottom44 = true; renderMChat44(); });
 setInterval(renderMChat44, 400);
 $("mcto44").addEventListener("click", e => { const b = e.target.closest("[data-to44]"); if (!b) return; mcTo44 = b.dataset.to44; mcSig44 = ""; renderMChat44(); $("mcin44").focus(); });
 $("mcform44").addEventListener("submit", e => {
@@ -11506,7 +11528,7 @@ $("mcform44").addEventListener("submit", e => {
   const tb = K.tableNow ? K.tableNow() : null;
   if (tb && mcTo44 === "table") { send8({ type: "tchat", text: t }); addTChat44({ name: onl.name || myName(), text: t, at: Date.now(), me: true, t: true }); }
   else { send8({ type: "chat", text: t }); addChat({ name: onl.name || myName(), text: t, at: Date.now(), me: true }); player.say = { text: t.length > 22 ? t.slice(0, 21) + "…" : t, until: performance.now() + 4500 }; }
-  inp.value = ""; mcSig44 = ""; renderMChat44();
+  inp.value = ""; mcSig44 = ""; mcForceBottom44 = true; renderMChat44();
 });
 const _handle44c = handle8;
 handle8 = m => {

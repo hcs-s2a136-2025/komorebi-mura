@@ -261,7 +261,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 
 /* v44：カジノの中のチャット */
 .mchat44 { margin: 4px 14px 10px; border-top: 1px dashed rgba(255, 255, 255, .25); padding-top: 6px; }
-.mclog44 { max-height: 84px; overflow-y: auto; font-size: .8rem; line-height: 1.5; margin-bottom: 4px; }
+.mclog44 { max-height: 118px; overflow-y: auto; font-size: .8rem; line-height: 1.5; margin-bottom: 4px; }
 .mclog44 b { margin-right: 6px; color: #ffd86a; }
 .mclog44 .me b { color: #9fe0a0; }
 .mclog44 .sys { opacity: .6; }
@@ -272,6 +272,13 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .mcto44[hidden] { display: none; }
 .mcto44 button { font: inherit; font-size: .78rem; padding: 2px 8px; border: 0; background: #3a3040; color: #d8cce0; cursor: pointer; }
 .mcto44 button.on { background: #ffd86a; color: #2a2228; font-weight: bold; }
-.mclog44 i { font-style: normal; font-size: .7rem; background: #ffd86a; color: #2a2228; border-radius: 4px; padding: 0 4px; margin-right: 4px; }
+.mclog44 i { font-style: normal; font-size: .7rem; border-radius: 4px; padding: 0 4px; margin-right: 4px; }
+.mclog44 i.tt { background: #ffb0c8; color: #2a2228; }
+.mclog44 i.ta { background: #8fc8ff; color: #1c2430; }
+.mcview44 { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; font-size: .72rem; }
+.mcview44[hidden] { display: none; }
+.mcview44 span { opacity: .7; margin-right: 2px; }
+.mcview44 button { font: inherit; padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .3); background: transparent; color: #d8cce0; cursor: pointer; }
+.mcview44 button.on { background: #ffd86a; border-color: #ffd86a; color: #2a2228; font-weight: bold; }
 .mclog44 .t b { color: #ffb0c8; }
 .mclog44 .t.me b { color: #9fe0a0; }

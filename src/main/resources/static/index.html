@@ -771,6 +771,12 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .pet46 .sub2 { display: block; font-size: .75rem; opacity: .7; }
 .modes46 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .modes46 .chip { font-size: .78rem; padding: 2px 8px; }
+
+/* v49 いまオンラインの人 */
+.on49 { gap: 10px; }
+.dot49 { width: 10px; height: 10px; border-radius: 50%; background: #5bc0f8; flex: none; box-shadow: 0 0 0 2px rgba(91, 192, 248, .25); }
+.dot49.me { background: #ff6b6b; box-shadow: 0 0 0 2px rgba(255, 107, 107, .25); }
+#onl8:hover { text-decoration: underline; }
 </style>
 
 <header>
@@ -897,7 +903,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.29.3";
+  const VER = "0.29.4";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -1874,7 +1880,9 @@ function blankMap(w, h, name) {
 function addObj(m, img, x, y, sortY) { m.objs.push({ img, x, y, sortY: sortY ?? y + IMG[img].height }); }
 function solidRect(m, x0, y0, w, h) { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (m.base[y] && x >= 0 && x < m.w) m.base[y][x] = true; }
 
-const VW = 64, VH = 44;
+// 村の大きさ。VH0 までが元からの村。v0.29.4 で、その下の配列に「北の丘」（NY0〜）を足した。
+// 北の丘は、こもれびパレスの左の木のすき間（NGAP の2マス）から行き来する（配列では下にあるが、画面では村の上につながっているように見せる）
+const VW = 64, VH0 = 44, NY0 = 44, VH = 64, NGAP = [20, 21];
 const BIGQ = { x0: 42, x1: 60, y0: 30, y1: 41, gate: [50, 29], ramps: [[51, 34], [45, 38]], bands: [[30, 33], [35, 37], [39, 41]] };
 function makeVillage() {
   const m = blankMap(VW, VH, "こもれび村"); m.fenceS = new Set();
@@ -1884,7 +1892,7 @@ function makeVillage() {
     .forEach(([x, y, c]) => m.ground[y][x] = "flower" + c);
   const path = (x, y) => m.ground[y][x] = "path" + ((x + y) % 2);
   for (let x = 1; x <= VW - 2; x++) path(x, 8);
-  for (let y = 8; y <= VH - 3; y++) path(15, y);
+  for (let y = 8; y <= VH0 - 3; y++) path(15, y);
   for (let y = 8; y <= BIGQ.gate[1]; y++) path(BIGQ.gate[0], y);
   for (let x = 16; x <= 40; x++) path(x, 33);
   for (const b of BUILDINGS) path(b.col, 7);
@@ -1910,8 +1918,17 @@ function makeVillage() {
   m.doors["34,16"] = { kind: "cave", col: 34, row: 16 };
   const trees = [];
   for (let x = 0; x < VW; x += 2) trees.push([x, 1]);
-  for (let y = 4; y <= VH - 3; y += 3) { if (y !== 7 && y !== 8) trees.push([0, y]); trees.push([VW - 2, y]); }
+  for (let y = 4; y <= VH0 - 3; y += 3) { if (y !== 7 && y !== 8) trees.push([0, y]); trees.push([VW - 2, y]); }
+  for (let x = 0; x < VW; x += 2) trees.push([x, VH0 - 1]);
+  // 北の丘：パレスの左から上へぬける道と、丘のまわりの木
+  for (let y = 0; y <= 7; y++) path(NGAP[0], y); path(NGAP[1], 0); path(NGAP[1], 1);
+  for (const x of NGAP) { path(x, VH - 1); path(x, VH - 2); }
+  for (let y = VH - 3; y >= NY0 + 9; y--) path(NGAP[0], y);
+  for (const [x, y, c] of [[6, 49, "P"], [13, 53, "Y"], [30, 48, "W"], [41, 55, "P"], [52, 50, "Y"], [58, 57, "W"], [9, 59, "Y"], [35, 60, "P"], [47, 47, "W"], [26, 56, "Y"]]) m.ground[y][x] = "flower" + c;
+  for (let x = 0; x < VW; x += 2) trees.push([x, NY0 + 1]);
+  for (let y = NY0 + 4; y <= VH - 3; y += 3) { trees.push([0, y]); trees.push([VW - 2, y]); }
   for (let x = 0; x < VW; x += 2) trees.push([x, VH - 1]);
+  for (let x = 0; x < VW; x++) m.ground[NY0][x] = "grass1";
   m.noBuild = new Set();
   trees.forEach(([x, y]) => { if (/^path/.test(m.ground[y][x]) || /^path/.test(m.ground[y][x + 1] || "")) return; addObj(m, "tree", x * TS, (y - 1) * TS); solidRect(m, x, y, 2, 1); m.noBuild.add(x + "," + (y - 1)); m.noBuild.add((x + 1) + "," + (y - 1)); });
   CHOP_TREES.forEach(([x, y]) => { m.noBuild.add(x + "," + (y - 1)); m.noBuild.add((x + 1) + "," + (y - 1)); });
@@ -2314,7 +2331,7 @@ function overdueLoans() { return world.loans.filter(l => world.day > l.due); }
 function totalDebt() { return world.loans.reduce((a, l) => a + l.owed, 0); }
 let hudCache = "";
 function updateHud(force) {
-  const where = map.isInterior ? map.name : map === room ? roomTitle() + (decor ? "（模様替え中）" : "") : map === labor ? `労働施設（作業 ${world.labor?.done ?? 0} / ${world.labor?.quota ?? 0}${typeof F7 !== "undefined" && F7.laborLeft ? F7.laborLeft() : ""}）` : map.name;
+  const where = map.isInterior ? map.name : map === room ? roomTitle() + (decor ? "（模様替え中）" : "") : map === labor ? `労働施設（作業 ${world.labor?.done ?? 0} / ${world.labor?.quota ?? 0}${typeof F7 !== "undefined" && F7.laborLeft ? F7.laborLeft() : ""}）` : map === village && player.y >= NY0 ? "北の丘（こもれび村）" : map.name;
   const debt = totalDebt(); const od = overdueLoans();
   const next = world.loans.length ? Math.min(...world.loans.map(l => l.due)) : 0;
   const dtext = debt ? (od.length ? `借金 ${fmt(debt)}・返済期限切れ！` : `借金 ${fmt(debt)}（期限まであと${next - world.day}日）`) : "";
@@ -2896,18 +2913,23 @@ function drawEnt(e) {
   const bob = e === player && busy && ["hoe", "axe", "pick"].includes(busy.kind) && busy.t / busy.dur > .7 ? 1 : 0;
   ctx.drawImage(renderChar(e === player ? cfg : e.cfg, e.dir, fr), Math.round(e.px), Math.round(e.py) - (fr ? 1 : 0) + bob);
 }
+// 画面に映す縦のはんい（村と北の丘は同じ配列だけど、となりあって見えないように分ける）
+function camBand() {
+  if (map !== village || village.h <= VH0) return [0, map.h * TS];
+  return player.y >= NY0 ? [NY0 * TS, village.h * TS] : [0, VH0 * TS];
+}
 function draw(now) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#101914"; ctx.fillRect(0, 0, cv.width, cv.height);
   ctx.imageSmoothingEnabled = false;
-  const mw = map.w * TS, mh = map.h * TS;
+  const mw = map.w * TS, [cb0, cb1] = camBand(), mh = cb1 - cb0;
   let camX = player.px + 8 - vw / 2, camY = player.py + 8 - vh / 2;
   camX = mw <= vw ? (mw - vw) / 2 : Math.max(0, Math.min(mw - vw, camX));
-  camY = mh <= vh ? (mh - vh) / 2 : Math.max(0, Math.min(mh - vh, camY));
+  camY = mh <= vh ? cb0 + (mh - vh) / 2 : Math.max(cb0, Math.min(cb1 - vh, camY));
   camX = Math.round(camX * scale) / scale; camY = Math.round(camY * scale) / scale;
   const k = scale * dpr;
   ctx.setTransform(k, 0, 0, k, -camX * k, -camY * k);
-  const x0 = Math.max(0, Math.floor(camX / TS)), y0 = Math.max(0, Math.floor(camY / TS));
-  const x1 = Math.min(map.w - 1, Math.ceil((camX + vw) / TS)), y1 = Math.min(map.h - 1, Math.ceil((camY + vh) / TS));
+  const x0 = Math.max(0, Math.floor(camX / TS)), y0 = Math.max(cb0 / TS, Math.floor(camY / TS));
+  const x1 = Math.min(map.w - 1, Math.ceil((camX + vw) / TS)), y1 = Math.min(cb1 / TS - 1, Math.ceil((camY + vh) / TS));
   const wf = Math.floor(now / 650) % 2;
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     let g = map.ground[y][x];
@@ -5274,7 +5296,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.29.3";
+const CLIENT_VERSION = "0.29.4";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7033,10 +7055,10 @@ cv.addEventListener("wheel", e => {
 cv.addEventListener("pointerdown", e => {
   if (e.pointerType !== "mouse" || e.button !== 0 || modalOpen || placing) return;
   const r = cv.getBoundingClientRect();
-  const mw = map.w * TS, mh = map.h * TS;
+  const mw = map.w * TS, [cb0, cb1] = camBand(), mh = cb1 - cb0;
   let camX = player.px + 8 - vw / 2, camY = player.py + 8 - vh / 2;
   camX = mw <= vw ? (mw - vw) / 2 : Math.max(0, Math.min(mw - vw, camX));
-  camY = mh <= vh ? (mh - vh) / 2 : Math.max(0, Math.min(mh - vh, camY));
+  camY = mh <= vh ? cb0 + (mh - vh) / 2 : Math.max(cb0, Math.min(cb1 - vh, camY));
   const tx = Math.floor((camX + (e.clientX - r.left) / scale) / TS), ty = Math.floor((camY + (e.clientY - r.top) / scale) / TS);
   const dx = tx - player.x, dy = ty - player.y;
   if (!player.moving && !busy && !fish && Math.abs(dx) + Math.abs(dy) === 1) player.dir = dx > 0 ? "right" : dx < 0 ? "left" : dy > 0 ? "down" : "up";
@@ -7302,6 +7324,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.29.4", date: "2026/10/23", title: "北の丘・パレスの裏口・いまオンラインの人", items: [
+    "こもれびパレスのすぐ左の道を上（北）へ進むと、木のすき間から「北の丘」に行けるようになった。家を建てられる広い土地で、160×128ドットのいちばん大きな家も建てられる",
+    "北の丘のいちばん下（木のすき間のとなり）に「こもれびパレスの裏口」を作った。北の丘の家から、すぐカジノに入れる",
+    "地図では、北の丘が村の上に並んで見える",
+    "いまオンラインの人を見られるようにした。左上の「オンライン◯人」を押すか、キーボードの O。どこにいるか（村・北の丘・パレスなど）と、「スロット中」のようなようすも出る",
+  ] },
   { v: "0.29.3", date: "2026/10/23", title: "家と壁紙に虹色", items: [
     "家の屋根と壁に「虹」と「ゲーミング」の色を追加。虹は屋根が虹の帯に、壁はパステルの虹。ゲーミングは色がずっと流れる",
     "建築タブに「自分の家を、この色に塗りかえる」を追加。いま選んでいる屋根と壁の色に、近くの自分の家を塗りかえられる（オンラインでもみんなに反映）",
@@ -9649,7 +9677,7 @@ function chooseAt35(id) {
   for (let r = 0; r <= 14; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; if (fits(px + dx, py + dy)) return [px + dx, py + dy]; }
   return [px, py];
 }
-const y35ok = (ax, ay, P) => ay - P.h + 1 >= 2 && ay <= village.h - 3;
+const y35ok = (ax, ay, P) => ay - P.h + 1 >= 2 && ay <= VH0 - 3;
 const foot35 = (id, at) => ({ x0: at[0], y0: at[1] - PROJ35[id].h + 1, x1: at[0] + PROJ35[id].w - 1, y1: at[1] });
 const doneProj35 = () => ORDER35.filter(id => world.projects?.[id]?.done && Array.isArray(world.projects[id].at));
 const _rebuildSolid35 = rebuildSolid;
@@ -10812,7 +10840,7 @@ function chooseLm41(id) {
   const L = LM41[id];
   let [px, py] = L.pref;
   if (id === "onsenst41" && world.projects?.onsen35?.at) { px = world.projects.onsen35.at[0] + 4; py = world.projects.onsen35.at[1] + 2; }
-  const fits = (ax, ay) => { if (ay - L.h + 1 < 2 || ay > village.h - 3) return false; for (let y = ay - L.h + 1; y <= ay; y++) for (let x = ax; x < ax + L.w; x++) if (!okTile35(x, y)) return false; if (player.x >= ax && player.x < ax + L.w && player.y >= ay - L.h + 1 && player.y <= ay) return false;
+  const fits = (ax, ay) => { if (ay - L.h + 1 < 2 || ay > VH0 - 3) return false; for (let y = ay - L.h + 1; y <= ay; y++) for (let x = ax; x < ax + L.w; x++) if (!okTile35(x, y)) return false; if (player.x >= ax && player.x < ax + L.w && player.y >= ay - L.h + 1 && player.y <= ay) return false;
     // 入り口の前が通れて、手前の木で隠れないところ
     for (let x = ax; x < ax + L.w; x++) if (!village.ground[ay + 1] || village.solid[ay + 1][x]) return false;
     for (let y = ay + 1; y <= ay + 2; y++) for (let x = ax - 1; x <= ax + L.w; x++) if (treeAt(x, y)) return false;
@@ -11796,6 +11824,79 @@ var F48 = {};
   });
 }
 F48.ready = true;
+var F49 = {};
+// ---------- v49: 北の丘（家を建てる土地）・パレスの裏口・いまオンラインの人 ----------
+const NBACK49 = [24, 60]; // 裏口のドア（北の丘のいちばん下、木のすき間のとなり）
+IMG.backdoor49 = pix13(48, 48, (set, rect) => {
+  rect(2, 10, 44, 37, C13["#4a2a6a"]); rect(2, 10, 44, 3, C13["#6a3a8a"]);
+  for (let x = 4; x < 44; x += 4) { set(x, 8, C13["#ff7ab8"]); set(x + 2, 8, C13["#ffe27a"]); }
+  rect(2, 6, 44, 2, C13["#2a1a3a"]); rect(1, 4, 46, 2, C13["#3a2250"]);
+  rect(16, 26, 16, 21, C13["#8a2a3a"]); rect(17, 27, 14, 20, C13["#c03a54"]); rect(24, 27, 1, 20, C13["#8a2a3a"]); set(22, 37, C13["#ffe27a"]); set(26, 37, C13["#ffe27a"]);
+  rect(14, 24, 20, 2, C13["#ffd86a"]);
+  rect(8, 15, 32, 7, C13["#1a1024"]); for (let x = 10; x < 38; x += 3) set(x, 18, C13["#ff7ab8"]); rect(22, 16, 4, 5, C13["#ffe27a"]);
+  for (const [x, y] of [[6, 30], [40, 30], [6, 40], [40, 40]]) { rect(x, y, 3, 3, C13["#ff7ab8"]); set(x + 1, y + 1, C13["#ffffff"]); }
+});
+ASSETS.backdoor49 = IMG.backdoor49.toDataURL();
+addObj(village, "backdoor49", (NBACK49[0] - 1) * TS, (NBACK49[1] - 2) * TS);
+solidRect(village, NBACK49[0] - 1, NBACK49[1] - 2, 3, 3);
+village.doors[NBACK49.join(",")] = { kind: "casino", col: NBACK49[0], row: NBACK49[1], back49: true };
+rebuildSolid();
+const inNorth49 = () => map === village && player.y >= NY0;
+// 木のすき間を通ると、村 ⇔ 北の丘
+const _tryMove49 = tryMove;
+tryMove = function (dir) {
+  if (map === village && !player.moving && NGAP.includes(player.x)) {
+    if (dir === "up" && player.y === 1) { placeAt(player, player.x, VH - 2, "up"); toast(null, "北の丘に来た。家を建てる広い土地があるよ（右下の紫の扉は、こもれびパレスの裏口）"); return; }
+    if (dir === "down" && player.y === VH - 2) { placeAt(player, player.x, 1, "down"); toast(null, "こもれび村にもどってきた"); return; }
+  }
+  return _tryMove49.apply(this, arguments);
+};
+// 地図：北の丘を村の上に並べて見せる
+const _openMap49 = openMap13;
+openMap13 = function () {
+  _openMap49();
+  if (village.h <= VH0) return;
+  const M = (map === village || map.isTown || (port && map === port)) ? map : village; if (M !== village) return;
+  const img = document.querySelector("#mapwrap13 img"); if (!img) return;
+  const src = new Image();
+  src.onload = () => {
+    const S = src.height / village.h, nH = (village.h - NY0) * S, c = document.createElement("canvas"); c.width = src.width; c.height = src.height; const x = c.getContext("2d");
+    x.drawImage(src, 0, NY0 * S, src.width, nH, 0, 0, src.width, nH); x.drawImage(src, 0, 0, src.width, NY0 * S, 0, nH, src.width, NY0 * S);
+    img.src = c.toDataURL();
+    const H = village.h * TS, nPx = (village.h - NY0) * TS;
+    document.querySelectorAll("#mapwrap13 .ml13, #mapwrap13 .mp13").forEach(el => {
+      const top = parseFloat(el.style.top) / 100 * H, ny = top >= NY0 * TS ? top - NY0 * TS : top + nPx;
+      el.style.top = (ny / H * 100).toFixed(2) + "%";
+    });
+    const L = document.createElement("span"); L.className = "ml13"; L.textContent = "北の丘（家を建てる土地）"; L.style.left = "50%"; L.style.top = (6 * TS / H * 100).toFixed(2) + "%"; img.parentNode.appendChild(L);
+    const B = document.createElement("span"); B.className = "ml13"; B.textContent = "パレスの裏口"; B.style.left = (((NBACK49[0] + .5) * TS) / (village.w * TS) * 100).toFixed(2) + "%"; B.style.top = (((NBACK49[1] - NY0 - 1) * TS) / H * 100).toFixed(2) + "%"; img.parentNode.appendChild(B);
+  };
+  src.src = img.src;
+};
+F13.openMap = openMap13;
+// ---------- いま、だれがオンラインか ----------
+const INT49 = { casino: "こもれびパレス", shop: "よろず屋", bank: "村の信用金庫", yami: "十日屋", ranch: "こもれび牧場", builder: "こもれび工務店" };
+function where49(e) {
+  const k = String(e.rmap || "");
+  if (k === "village") return e.y >= NY0 ? "北の丘" : "こもれび村";
+  if (k.startsWith("int:")) return INT49[k.slice(4)] || "お店の中";
+  if (k === "port") return "みなと町";
+  return "おでかけ中（街・洞窟・家の中など）";
+}
+function openOnline49() {
+  if (!F8.connected) { toast(null, "オンラインにつないでいないみたい"); return; }
+  const me = { name: onl.name || myName(), where: map === village ? (player.y >= NY0 ? "北の丘" : "こもれび村") : map.name || "", st: "" };
+  const list = [...remotes.values()].map(e => ({ name: e.name, where: where49(e), st: e.status44 || "" })).sort((a, b) => a.where.localeCompare(b.where, "ja") || a.name.localeCompare(b.name, "ja"));
+  openModal(`いまオンラインの人（${list.length + 1}人）`, "", body => {
+    body.innerHTML = `<div class="list">${[{ ...me, me: true }, ...list].map(p => `<div class="li on49"><span class="dot49${p.me ? " me" : ""}"></span><span class="nm">${esc(p.name)}${p.me ? "（あなた）" : ""}<span class="sub2">${esc(p.where)}${p.st ? `・${esc(p.st)}` : ""}</span></span></div>`).join("")}</div>
+      <p class="note">左上の「オンライン◯人」を押しても開けます。キーボードの O でも開けます。</p>`;
+  });
+}
+F49.openOnline = openOnline49;
+$("onl8").style.cursor = "pointer"; $("onl8").title = "押すと、いまオンラインの人が見られるよ";
+$("onl8").addEventListener("click", () => { if (F8.connected) openOnline49(); });
+addEventListener("keydown", e => { if ((e.key === "o" || e.key === "O") && !modalOpen && !e.repeat && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA" && !document.body.classList.contains("menu")) openOnline49(); });
+F49.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12193,7 +12294,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

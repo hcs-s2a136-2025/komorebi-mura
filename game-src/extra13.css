@@ -309,3 +309,9 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .pet46 .sub2 { display: block; font-size: .75rem; opacity: .7; }
 .modes46 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .modes46 .chip { font-size: .78rem; padding: 2px 8px; }
+
+/* v49 いまオンラインの人 */
+.on49 { gap: 10px; }
+.dot49 { width: 10px; height: 10px; border-radius: 50%; background: #5bc0f8; flex: none; box-shadow: 0 0 0 2px rgba(91, 192, 248, .25); }
+.dot49.me { background: #ff6b6b; box-shadow: 0 0 0 2px rgba(255, 107, 107, .25); }
+#onl8:hover { text-decoration: underline; }

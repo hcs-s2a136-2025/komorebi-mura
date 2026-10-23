@@ -95,7 +95,8 @@ public class GameSocketHandler extends TextWebSocketHandler {
     private void hello(PlayerSession s, JsonNode msg) throws IOException {
         Optional<Player> p = players.findByToken(msg.path("token").asText(null));
         if (p.isEmpty()) {
-            send(s, om.createObjectNode().put("type", "error").put("code", "auth").put("text", "もう一度参加してください"));
+            boolean gone = players.isDeletedToken(msg.path("token").asText(null));
+            send(s, om.createObjectNode().put("type", "error").put("code", gone ? "deleted" : "auth").put("text", gone ? "このキャラクターは削除されました" : "もう一度参加してください"));
             s.ws.close(CloseStatus.POLICY_VIOLATION);
             return;
         }
@@ -166,6 +167,19 @@ public class GameSocketHandler extends TextWebSocketHandler {
         } catch (Exception e) {
             log.debug("送信できなかった: {}", e.getMessage());
         }
+    }
+
+    /** 削除した人がつないでいたら、知らせて切る（その端末のデータも消してもらう） */
+    public void kickDeleted(Long playerId) {
+        String text = om.createObjectNode().put("type", "error").put("code", "deleted").put("text", "このキャラクターは削除されました").toString();
+        for (PlayerSession o : sessions.values()) {
+            if (!playerId.equals(o.playerId)) continue;
+            sendRaw(o, text);
+            o.playerId = null;
+            try { o.ws.close(CloseStatus.NORMAL); } catch (Exception e) { /* もう切れている */ }
+        }
+        ObjectNode m = om.createObjectNode().put("type", "leave").put("id", playerId);
+        broadcast(m, null);
     }
 
     public boolean isOnline(Long playerId) {

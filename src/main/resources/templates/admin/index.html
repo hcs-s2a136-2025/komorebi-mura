@@ -47,7 +47,7 @@
 
   <section class="card">
     <h2>プレイヤー（<span th:text="${#lists.size(players)}">0</span>人）</h2>
-    <p class="muted">なまえと合言葉で、どの端末からでも続きができます。合言葉を忘れた人がいたら「合言葉を消す」を押して、もう一度決めてもらってください。スロットのジャックポット：<b th:text="${jackpot}">3000</b> G</p>
+    <p class="muted">なまえと合言葉で、どの端末からでも続きができます。合言葉を忘れた人がいたら「合言葉を消す」を押して、もう一度決めてもらってください。「セーブを消す」はサーバーのセーブだけを消します（その人の端末に残っているデータから続きができます）。キャラクターをまるごと消すときは「プレイヤーを削除」を使ってください。一覧から消えて、その人の端末のデータも次にひらいたときに消え、同じなまえで入ると新しいキャラクターになります。スロットのジャックポット：<b th:text="${jackpot}">3000</b> G</p>
     <table class="players">
       <tr><th>ID</th><th>なまえ</th><th>合言葉</th><th>最後に来た</th><th>セーブ</th><th></th></tr>
       <tr th:each="p : ${players}">
@@ -59,6 +59,7 @@
         <td class="acts">
           <form method="post" th:action="@{/admin/players/{id}/pass/reset(id=${p.id()})}" th:if="${p.hasPass()}"><button class="btn ghost" type="submit">合言葉を消す</button></form>
           <form method="post" th:action="@{/admin/players/{id}/save/delete(id=${p.id()})}" th:if="${p.saveSize() > 0}"><input name="confirm" placeholder="「けす」" size="4" autocomplete="off"><button class="btn ghost" type="submit">セーブを消す</button></form>
+          <form method="post" th:action="@{/admin/players/{id}/delete(id=${p.id()})}"><input name="confirm" placeholder="「さくじょ」" size="6" autocomplete="off"><button class="btn danger" type="submit">プレイヤーを削除</button></form>
         </td>
       </tr>
     </table>

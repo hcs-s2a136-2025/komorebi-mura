@@ -159,6 +159,22 @@ public class AdminController {
         return "redirect:/admin";
     }
 
+    @PostMapping("/players/{id}/delete")
+    public String deletePlayer(@PathVariable Long id, @RequestParam(required = false) String confirm, RedirectAttributes ra) {
+        if (!"さくじょ".equals(confirm)) {
+            ra.addFlashAttribute("msg", "プレイヤーを削除するときは、確認の欄に「さくじょ」と入力してください");
+            return "redirect:/admin";
+        }
+        if (!players.delete(id)) {
+            ra.addFlashAttribute("msg", "そのプレイヤーは見つからなかった（もう削除してあるかも）");
+            return "redirect:/admin";
+        }
+        saves.delete(id);
+        socket.kickDeleted(id);
+        ra.addFlashAttribute("msg", "プレイヤーを削除しました。サーバーのセーブも消えて、その人の端末のデータも、次にひらいたときに消えます。同じなまえで入ると、新しいキャラクターになります");
+        return "redirect:/admin";
+    }
+
     @PostMapping("/announce")
     public String announce(@RequestParam String text, RedirectAttributes ra) {
         if (text != null && !text.isBlank()) {

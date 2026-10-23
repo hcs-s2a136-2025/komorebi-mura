@@ -5,7 +5,7 @@
 const http = require("http"), fs = require("fs"), crypto = require("crypto"), { WebSocketServer } = require("ws");
 const INDEX = process.argv[2], PORT = +process.argv[3] || 8099, VERSION = process.argv[4] || "0.8.0";
 const players = new Map(), threads = []; let pid = 1, tid = 1;
-const accounts = []; const saves = new Map(); let jackpot = 3000;
+const accounts = []; const saves = new Map(); let jackpot = 3000; const deletedTokens = new Set();
 // 建てた家の中身（HouseBook.java と同じ約束）
 const rooms = new Map(); const KEYRE = /^(\d{1,3},\d{1,3}|home)$/, ITEMRE = /^[\p{L}\p{N}_:\-]{1,32}$/u;
 const houseOf = k => k === "home" ? { open: true, ownerId: -1 } : (shared.houses || {})[k] || null;
@@ -81,11 +81,16 @@ const server = http.createServer(async (req, res) => {
     const b = await body(req); if (b.inviteCode !== "komorebi") return json(res, 403, { message: "招待コードがちがいます" });
     const name = (String(b.name || "").trim() || "たびびと").slice(0, 8), pass = String(b.pass || "").trim();
     if ([...pass].length < 4 || [...pass].length > 32) return json(res, 400, { message: "合言葉は4〜32文字で決めてね" });
-    const same = accounts.filter(a => a.name === name); let pl = same.find(a => a.pass === pass), created = false;
+    const same = accounts.filter(a => a.name === name && !a.deleted); let pl = same.find(a => a.pass === pass), created = false;
     if (!pl) { if (same.some(a => a.pass)) return json(res, 409, { message: "このなまえはもう使われているか、合言葉がちがいます" }); pl = same[0]; if (!pl) { pl = { id: pid++, name }; accounts.push(pl); created = true; } pl.pass = pass; }
     for (const [t, a] of players) if (a === pl) players.delete(t);
     const token = crypto.randomBytes(18).toString("base64url"); players.set(token, pl); return json(res, 200, { token, id: pl.id, name: pl.name, created });
   }
+  if (p === "/mock/delplayer") { const id = +u.searchParams.get("id"); const a = accounts.find(x => x.id === id && !x.deleted); if (!a) return json(res, 404, {}); a.deleted = true; a.pass = null; saves.delete(id);
+    for (const [t, x] of [...players]) if (x === a) { players.delete(t); deletedTokens.add(t); }
+    for (const o of sessions) if (o.pl && o.pl.id === id) { o.send(JSON.stringify({ type: "error", code: "deleted", text: "このキャラクターは削除されました" })); o.pl = null; o.close(); }
+    return json(res, 200, { ok: true }); }
+  if (p === "/mock/players") return json(res, 200, accounts.filter(a => !a.deleted).map(a => ({ id: a.id, name: a.name })));
   if (p === "/mock/saves") return json(res, 200, Object.fromEntries([...saves].map(([k, v]) => [k, { rev: v.rev, size: v.doc.length }])));
   if (p === "/mock/jackpot") return json(res, 200, { jackpot });
   if (p.startsWith("/mock/reply")) { const t = threads.find(t => t.id === +u.searchParams.get("id")); t.messages.push({ sender: "ADMIN", body: u.searchParams.get("body"), createdAt: new Date().toISOString() }); t.playerUnread = true; t.status = "WIP"; for (const s of sessions) if (s.pl && s.pl.id === t.player.id) s.send(JSON.stringify({ type: "feedbackReply", threadId: t.id, title: t.title })); return json(res, 200, {}); }
@@ -100,7 +105,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/rooms") return json(res, 200, Object.fromEntries([...rooms].map(([k, r]) => [k, r])));
   if (p === "/mock/reset") { for (const [k, r] of rooms) { if (!/,/.test(k)) continue; const o = (houseOf(k) || {}).ownerId; if (!(o > 0)) continue; const to = returns.get(o) || {}; for (const [id, n] of [...Object.entries(r.shared), ...Object.entries(r.priv)]) to[id] = (to[id] || 0) + n; returns.set(o, to); } shared = {}; for (const k of [...rooms.keys()]) if (/,/.test(k)) rooms.delete(k); epoch++; for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
   if (p === "/mock/notice") { for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "notice", text: u.searchParams.get("t") })); return json(res, 200, {}); }
-  const pl = who(req); if (p.startsWith("/api/") && !pl) return json(res, 401, { message: "もう一度参加してください" });
+  const pl = who(req); if (p.startsWith("/api/") && !pl) return deletedTokens.has(req.headers["x-player-token"]) ? json(res, 410, { message: "このキャラクターは削除されました" }) : json(res, 401, { message: "もう一度参加してください" });
   if (p === "/api/session") return json(res, 200, { id: pl.id, name: pl.name, version: VERSION, unread: threads.filter(t => t.player === pl && t.playerUnread).length, hasPass: !!pl.pass });
   if (p === "/api/save" && req.method === "GET") { const v = saves.get(pl.id); return v ? json(res, 200, v) : json(res, 204); }
   if (p === "/api/save" && req.method === "PUT") { const b = await body(req); if (typeof b.doc !== "string" || !b.doc.trim().startsWith("{") || b.doc.length > 900000) return json(res, 400, {}); saves.set(pl.id, { doc: b.doc, rev: +b.rev || 0, savedAt: new Date().toISOString() }); return json(res, 200, { savedAt: new Date().toISOString(), rev: +b.rev || 0 }); }
@@ -128,7 +133,7 @@ wss.on("connection", s => {
     let m; try { m = JSON.parse(raw); } catch (e) { return; }
     if (!s.pl) {
       if (m.type !== "hello") return;
-      const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: "auth" })); return s.close(); }
+      const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), raceResults }));
       mjPending.delete(pl.id); adminPending.delete(pl.id);

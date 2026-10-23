@@ -3809,7 +3809,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.27.0";
+const CLIENT_VERSION = "0.27.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5837,6 +5837,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.27.1", date: "2026/10/23", title: "削除したキャラクターが復活しないように", items: [
+    "管理人室で削除されたキャラクターは、その端末に残っていたデータも消えるようにした（前は、同じ端末でひらくと復活することがあった）",
+  ] },
   { v: "0.27.0", date: "2026/10/23", title: "村の新聞・村のレベル・競どんぐり", items: [
     "村の新聞（朝刊）：朝になると、きのう村で起きたことが新聞になって届く。オンラインでは、みんなのできごと（大物を釣った・大豊作・道具を鍛えた・共同プロジェクト完成など）が記事になる。天気・運勢・村の豆知識つき",
     "村のレベル：みんなの評判と、できた共同プロジェクトの数でこもれび村のレベルが上がり、村に建物がふえる（Lv2 図書館・Lv3 こもれび駅・Lv4 温泉街・Lv5 村の大桜）",
@@ -9554,6 +9557,38 @@ renderVillage = function () {
 };
 F41.ready = true;
 
+// =================== v42: 管理人室で削除されたキャラクターは、この端末からも消す ===================
+var F42 = {};
+// この端末に残っているキャラクターのデータ（設定・音量などは残す）
+const WIPE_KEYS42 = ["komorebi-world-v4", "komorebi-player", "komorebi-cloud", "komorebi-online", "komorebi-build", "komorebi-backups"];
+function wipeDeleted42() {
+  if (window.__komoWiped) return; window.__komoWiped = true;
+  try { for (const k of WIPE_KEYS42) localStorage.removeItem(k); } catch {}
+  // 消したあとに、閉じるときの自動保存で書きもどされないように
+  try { Storage.prototype.setItem = function () {}; } catch {}
+  try { F8.disconnect(); } catch {}
+  location.replace(location.pathname + "?deleted=1");
+}
+F42.wipe = wipeDeleted42;
+const _handle42 = handle8;
+handle8 = m => {
+  if (m && m.type === "error" && m.code === "deleted") { wipeDeleted42(); return; }
+  _handle42(m);
+};
+const _api42 = api;
+api = async function (path, opt) {
+  try { return await _api42(path, opt); }
+  catch (e) { if (e && e.status === 410) wipeDeleted42(); throw e; }
+};
+if (/[?&]deleted=1/.test(location.search)) {
+  try { history.replaceState(null, "", location.pathname); } catch {}
+  setTimeout(() => openModal("キャラクターが削除されました", "shop", body => {
+    body.innerHTML = `<p class="mtext">このキャラクターは、管理人によって削除されました。この端末に残っていたデータも消したので、新しいキャラクターで始められます。</p><p class="mtext small">オンラインで遊ぶときは、お便りボタンからもう一度参加してね（同じなまえでも、新しいキャラクターになります）。</p><div class="row2"><button class="btn" type="button" id="del42ok">はじめる</button></div>`;
+    body.querySelector("#del42ok").onclick = closeModal;
+  }), 1200);
+}
+F42.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -9577,5 +9612,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

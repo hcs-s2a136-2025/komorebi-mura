@@ -50,7 +50,7 @@ public class PlayerService {
         }
         String n = cleanName(name);
         String pw = checkPass(pass);
-        List<Player> same = players.findByNameOrderByLastSeenDesc(n);
+        List<Player> same = players.findByNameAndDeletedAtIsNullOrderByLastSeenDesc(n);
         Player p = null;
         for (Player c : same) if (c.hasPass() && encoder.matches(pw, c.getPassHash())) { p = c; break; }
         boolean created = false;
@@ -77,20 +77,28 @@ public class PlayerService {
     @Transactional
     public Optional<Player> findByToken(String token) {
         if (token == null || token.isBlank() || token.length() > 100) return Optional.empty();
-        Optional<Player> p = players.findByTokenHash(hash(token));
+        Optional<Player> p = players.findByTokenHash(hash(token)).filter(x -> !x.isDeleted());
         p.ifPresent(Player::touch);
         return p;
     }
 
+    /** そのトークンの人が、管理人室で削除された人か */
+    public boolean isDeletedToken(String token) {
+        if (token == null || token.isBlank() || token.length() > 100) return false;
+        return players.findByTokenHash(hash(token)).map(Player::isDeleted).orElse(false);
+    }
+
     public Player require(String token) {
-        return findByToken(token).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "もう一度参加してください"));
+        return findByToken(token).orElseThrow(() -> isDeletedToken(token)
+            ? new ResponseStatusException(HttpStatus.GONE, "このキャラクターは削除されました")
+            : new ResponseStatusException(HttpStatus.UNAUTHORIZED, "もう一度参加してください"));
     }
 
     @Transactional
     public Player rename(String token, String name) {
         Player p = require(token);
         String n = cleanName(name);
-        if (!n.equals(p.getName()) && players.findByNameOrderByLastSeenDesc(n).stream().anyMatch(c -> !c.getId().equals(p.getId()) && c.hasPass())) {
+        if (!n.equals(p.getName()) && players.findByNameAndDeletedAtIsNullOrderByLastSeenDesc(n).stream().anyMatch(c -> !c.getId().equals(p.getId()) && c.hasPass())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "そのなまえはほかの人が使っています");
         }
         p.setName(n);
@@ -102,7 +110,7 @@ public class PlayerService {
     public void setPass(String token, String pass) {
         Player p = require(token);
         String pw = checkPass(pass);
-        boolean taken = players.findByNameOrderByLastSeenDesc(p.getName()).stream()
+        boolean taken = players.findByNameAndDeletedAtIsNullOrderByLastSeenDesc(p.getName()).stream()
             .anyMatch(c -> !c.getId().equals(p.getId()) && c.hasPass() && encoder.matches(pw, c.getPassHash()));
         if (taken) throw new ResponseStatusException(HttpStatus.CONFLICT, "別の合言葉にしてね");
         p.setPassHash(encoder.encode(pw));
@@ -111,8 +119,18 @@ public class PlayerService {
 
     // ---------- 管理人室から ----------
 
+    /** 削除していない人の一覧 */
     public List<Player> listAll() {
-        return players.findAllByOrderByLastSeenDesc();
+        return players.findAllByDeletedAtIsNullOrderByLastSeenDesc();
+    }
+
+    /**
+     * プレイヤーを削除する。一覧から消えて、同じなまえで入ると新しいキャラクターになる。
+     * お便りなどの記録のために行は残し、削除した印をつける（合言葉も消す）。
+     */
+    @Transactional
+    public boolean delete(Long id) {
+        return players.findById(id).filter(p -> !p.isDeleted()).map(p -> { p.markDeleted(); players.save(p); return true; }).orElse(false);
     }
 
     /** 合言葉を忘れた人のために、合言葉を消す（次にそのなまえで入った人が新しい合言葉を決められる） */

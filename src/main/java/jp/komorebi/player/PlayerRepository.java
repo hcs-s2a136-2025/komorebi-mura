@@ -12,4 +12,9 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     List<Player> findByNameOrderByLastSeenDesc(String name);
 
     List<Player> findAllByOrderByLastSeenDesc();
+
+    /** 削除していない人だけ */
+    List<Player> findByNameAndDeletedAtIsNullOrderByLastSeenDesc(String name);
+
+    List<Player> findAllByDeletedAtIsNullOrderByLastSeenDesc();
 }

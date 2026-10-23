@@ -34,6 +34,10 @@ public class Player {
     @Column(name = "last_seen", nullable = false)
     private Instant lastSeen;
 
+    /** 管理人室で削除した日時（削除していなければ null） */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     protected Player() {
     }
 
@@ -55,4 +59,7 @@ public class Player {
     public Instant getCreatedAt() { return createdAt; }
     public Instant getLastSeen() { return lastSeen; }
     public void touch() { this.lastSeen = Instant.now(); }
+    public Instant getDeletedAt() { return deletedAt; }
+    public boolean isDeleted() { return deletedAt != null; }
+    public void markDeleted() { this.deletedAt = Instant.now(); this.passHash = null; }
 }

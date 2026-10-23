@@ -762,6 +762,15 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .k45res b { color: #ffd86a; margin-left: 3px; }
 .talk45 { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .talk45 .btn { text-align: left; justify-content: flex-start; }
+
+/* v46 ペットの管理 */
+.pets46 { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; max-height: 52vh; overflow-y: auto; }
+.pet46 { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; background: rgba(0, 0, 0, .05); }
+.pet46 img { width: 32px; height: 32px; image-rendering: pixelated; flex: none; }
+.pet46 .nm { flex: 1; min-width: 0; }
+.pet46 .sub2 { display: block; font-size: .75rem; opacity: .7; }
+.modes46 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.modes46 .chip { font-size: .78rem; padding: 2px 8px; }
 </style>
 
 <header>
@@ -888,7 +897,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.29.0";
+  const VER = "0.29.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -3391,11 +3400,11 @@ function trailInit(m, x, y, n) {
   }
   return out;
 }
-function trailStep(tr, m, x, y) {
-  if (!tr || Math.abs(tr[0][0] - x) + Math.abs(tr[0][1] - y) > 1) return trailInit(m, x, y, 10);
+function trailStep(tr, m, x, y, need = 10) {
+  if (!tr || Math.abs(tr[0][0] - x) + Math.abs(tr[0][1] - y) > 1) return trailInit(m, x, y, Math.max(10, need));
   if (tr[0][0] === x && tr[0][1] === y) return tr;
   const i = tr.findIndex(t => t[0] === x && t[1] === y); if (i >= 0) tr.splice(i, 1);
-  tr.unshift([x, y]); if (tr.length > 24) tr.length = 24;
+  tr.unshift([x, y]); if (tr.length > 40) tr.length = 40;
   return tr;
 }
 function followTrail(pets, lead, tr, dt, avoid) {
@@ -3425,7 +3434,7 @@ function followTrail(pets, lead, tr, dt, avoid) {
 }
 function updatePets(dt) {
   if (map !== village) { petTrail = null; return; }
-  petTrail = trailStep(petTrail, village, player.x, player.y);
+  petTrail = trailStep(petTrail, village, player.x, player.y, petEnts.length + 2);
   const sel = world.inv[world.sel], it = sel && ITEMS[sel.id], useful = it && (it.use || it.seed || it.place || it.plant || it.weapon);
   followTrail(petEnts, player, petTrail, dt, useful && !player.moving && !modalOpen ? front() : null);
 }
@@ -5218,7 +5227,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.29.0";
+const CLIENT_VERSION = "0.29.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7246,6 +7255,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.29.1", date: "2026/10/23", title: "ペットを20匹まで・ペットの管理", items: [
+    "いっしょに暮らせるペットを、8匹から20匹にふやした。ついてくる子は、全員が足あとをたどって一列で歩く",
+    "「ペットたち」の画面を追加。1匹ずつ「ついてくる・ここで待つ・小屋」を選べる。「みんな ついてきて」「みんな 小屋へ」のように、まとめても変えられる",
+    "開き方：キーボードの P、設定タブの「ペットの管理を開く」、ペット小屋の画面の「ペットを小屋に入れる・出す」",
+    "「小屋」にした子は、ペット小屋の中で休んで見えなくなる（前は小屋の前に集まっていた）。小屋がないときは選べない",
+    "オンラインでは、ついて歩いている子だけがほかの人の画面に出る（20匹まで）",
+  ] },
   { v: "0.29.0", date: "2026/10/23", title: "カラオケが音ゲーに・ラウンジで会話と贈り物", items: [
     "すすきのの「カラオケ うたかた」が音ゲーになった。落ちてくる音符が線に重なったら D・F・J・K（または矢印キー）、スマホは画面の4つの列をタップ。うまく押すとメロディが鳴って、歌になる",
     "曲は5曲、むずかしさは「かんたん・ふつう・むずかしい」の3つ。歌詞もカラオケみたいに色が変わっていく。95点以上で賞金、100点（全部PERFECT）で大きな賞金。曲とむずかしさごとにベストが残る",
@@ -11319,7 +11335,7 @@ loadSave = function (obj, label) {
   return _loadSave43.apply(this, arguments);
 };
 // ---------- ペットを何匹でも（同じ種類も） ----------
-const PET_MAX43 = 8;
+const PET_MAX43 = 20;
 const PET_NAME_POOL43 = { cat: ["こむぎ", "みかん", "しらたま", "くろまめ", "もなか", "きなこ", "おもち", "ちくわ"], dog: ["ポチ", "こたろう", "まる", "ハチ", "ココア", "むぎ", "あんず"], bird: ["ピーコ", "ぴよ", "そら", "レモン", "ミント", "ちゅん"], rabbit: ["しろたま", "だいふく", "あずき", "うさまる", "ミルク", "くるみ"], hamster: ["ひまわり", "ころ", "ぽてと", "ごま", "くるみ", "ちょこ"] };
 const PET_PRICE43 = { cat: 1000 };
 const petPrice43 = b => PET_PRICE43[b] ?? PETS[b].price;
@@ -11475,7 +11491,7 @@ F8.update = dt => {
   for (const [pid, ents] of rPets44) {
     const r = remotes.get(pid); if (!r) continue;
     if (r.rmap !== "village") { r.trail44 = null; continue; }
-    r.trail44 = trailStep(r.trail44, village, r.x, r.y);
+    r.trail44 = trailStep(r.trail44, village, r.x, r.y, ents.length + 2);
     followTrail(ents, r, r.trail44, dt, null);
   }
 };
@@ -11497,7 +11513,7 @@ let farmLast44 = "", farmAt44 = 0;
 function farmSnap44() {
   const crops = []; for (const [k, c] of Object.entries(world.crops || {})) { if (!c || c.dead) continue; const [x, y] = k.split(",").map(Number); crops.push([x, y, c.type, c.stage | 0]); if (crops.length >= 600) break; }
   const animals = (world.animals || []).slice(0, 40).map((a, i) => { const e = animalEnts.find(x => x.aid === a.id); return [a.type, String(a.name || "").slice(0, 12), e ? e.x : PADDOCK.x0 + (i % 6), e ? e.y : PADDOCK.y0 + Math.floor(i / 6) % 4]; });
-  const pets = (world.pets || []).slice(0, 8).map(id => [basePet43(id), petVar43(id), String(petNameOf43(id)).slice(0, 12)]);
+  const pets = (world.pets || []).slice(0, PET_MAX43).map(id => [basePet43(id), petVar43(id), String(petNameOf43(id)).slice(0, 12)]);
   return { crops, animals, pets };
 }
 setInterval(() => {
@@ -11588,6 +11604,66 @@ $("mcin44").addEventListener("keydown", e => e.stopPropagation());
 F44.farms = farms44; F44.rPets = rPets44; F44.rAnimals = rAnimals44;
 F44.ready = true;
 
+var F46 = {};
+// ---------- v46: ペットの管理（だれを連れて歩くか・小屋に入れるか） ----------
+// 「ペット小屋で待つ」にした子は、小屋の中に入って見えなくなる（小屋がないときは、その場で待つ）
+function inHouse46(p) { const st = petStay35()[p.ptype]; return !!(st && st.mode === "house" && mine32("pethouse32").length); }
+const _updatePets46 = updatePets;
+updatePets = function (dt) {
+  if (map !== village) return _updatePets46(dt);
+  const all = petEnts;
+  for (const p of all) {
+    const ih = inHouse46(p);
+    if (ih && !p.inHouse46) { p.inHouse46 = true; placeAt(p, -20, -20); }
+    else if (!ih && p.inHouse46) { p.inHouse46 = false; const ph = mine32("pethouse32")[0], [hx, hy] = ph ? ph.split(",").map(Number) : [player.x, player.y - 1], f = freeNear(village, hx, hy + 1); placeAt(p, f[0], f[1]); }
+  }
+  petEnts = all.filter(p => !p.inHouse46);
+  try { _updatePets46(dt); } finally { petEnts = all; }
+};
+const _enter46 = enter;
+enter = function (m, x, y, dir) { _enter46(m, x, y, dir); for (const p of petEnts) if (p.inHouse46) placeAt(p, -20, -20); };
+function petIcon46(p) { const k = p.sprite; if (k && !ASSETS[k] && IMG[k]) ASSETS[k] = IMG[k].toDataURL(); return ASSETS[k] || ""; }
+function openPets46(scroll = 0) {
+  const hasHouse = mine32("pethouse32").length > 0, stay = petStay35();
+  const modeOf = t => stay[t]?.mode || "follow";
+  const cnt = { follow: 0, here: 0, house: 0 }; world.pets.forEach(t => cnt[modeOf(t)]++);
+  openModal("ペットたち", "", body => {
+    body.innerHTML = `<p class="mtext">いっしょに暮らしているペット ${world.pets.length}匹（${PET_MAX43}匹まで）。<br>ついてくる <b>${cnt.follow}</b>匹・ここで待つ <b>${cnt.here}</b>匹・${hasHouse ? `小屋の中 <b>${cnt.house}</b>匹` : "小屋はまだない"}</p>
+      <div class="row2"><button class="btn light" type="button" data-all46="follow">みんな ついてきて</button><button class="btn light" type="button" data-all46="here">みんな ここで待って</button>${hasHouse ? `<button class="btn light" type="button" data-all46="house">みんな 小屋へ</button>` : ""}</div>
+      <div class="pets46">${world.pets.map(t => { const e = petEnts.find(p => p.ptype === t), cur = modeOf(t);
+        return `<div class="pet46"><img src="${e ? petIcon46(e) : ""}" alt=""><span class="nm">${esc(e?.name || PETS[basePet43(t)]?.name || "ペット")}<span class="sub2">${esc(PETS[basePet43(t)]?.name || "")}${world.petHearts[t] ? `・♥${world.petHearts[t]}` : ""}</span></span><span class="modes46">${Object.entries(PET_MODE35).filter(([m]) => m !== "house" || hasHouse).map(([m, l]) => `<button class="chip" type="button" data-pm46="${t}|${m}" aria-pressed="${cur === m}">${m === "follow" ? "ついてくる" : m === "here" ? "ここで待つ" : "小屋"}</button>`).join("")}</span></div>`; }).join("")}</div>
+      <p class="note">「ここで待つ」は、いまいる場所のまわりで待ちます。${hasHouse ? "「小屋」にすると、ペット小屋の中で休んで見えなくなります。ペット小屋の画面からも開けます。" : "ペット小屋を建てると、小屋の中で休ませられます。"}　キーボードの P でも開けます。</p>`;
+    const set = (t, m) => {
+      if (m === "house" && !hasHouse) return;
+      const e = petEnts.find(p => p.ptype === t);
+      // 小屋から出すときは、まず小屋の前に出してから（「ここで待つ」の場所が小屋の前になる）
+      if (e && e.inHouse46 && m !== "house") { e.inHouse46 = false; const ph = mine32("pethouse32")[0], [hx, hy] = ph ? ph.split(",").map(Number) : [player.x, player.y - 1], f = freeNear(village, hx, hy + 1); placeAt(e, f[0], f[1]); }
+      setPetMode35(t, m);
+    };
+    const L = body.querySelector(".pets46"); if (L) L.scrollTop = scroll;
+    body.querySelectorAll("[data-pm46]").forEach(b => b.onclick = () => { const [t, m] = b.dataset.pm46.split("|"), sc = L ? L.scrollTop : 0; set(t, m); closeModal(); openPets46(sc); });
+    body.querySelectorAll("[data-all46]").forEach(b => b.onclick = () => { const m = b.dataset.all46; world.pets.forEach(t => set(t, m)); closeModal(); openPets46(); toast(null, m === "follow" ? "みんな、ついてくる" : m === "here" ? "みんな、ここで待っている" : "みんな、小屋で休んでいる"); });
+  });
+}
+F46.open = openPets46;
+// 設定タブのペット欄は、数が多いと長くなるので「管理の画面を開く」ボタンにまとめる
+const _renderSettings46 = F7.renderSettings;
+F7.renderSettings = () => {
+  _renderSettings46();
+  const B = $("settingsBody"); if (!B || !world.pets.length) return;
+  const box = B.querySelector("[data-pm35]")?.closest(".opt"); if (!box) return;
+  box.innerHTML = `<h3>ペット</h3><p class="mtext">${world.pets.length}匹。だれを連れて歩くか、だれを待たせるか・小屋に入れるかを選べます。</p><div class="row2"><button class="btn" type="button" id="pets46open">ペットの管理を開く</button></div>`;
+  box.querySelector("#pets46open").onclick = () => openPets46();
+};
+// ペット小屋の画面に、管理のボタン
+const _extra46 = F32.extra, _wire46 = F32.wire;
+F32.extra = (d, k, mine) => (_extra46 ? _extra46(d, k, mine) : "") + (mine && d.id === "pethouse32" && world.pets.length ? `<div class="row2"><button class="btn" type="button" id="pets46h">ペットを小屋に入れる・出す</button></div>` : "");
+F32.wire = (body, d, k, mine) => { if (_wire46) _wire46(body, d, k, mine); body.querySelector("#pets46h")?.addEventListener("click", () => { closeModal(); openPets46(); }); };
+addEventListener("keydown", e => { if ((e.key === "p" || e.key === "P") && !modalOpen && !e.repeat && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA" && !document.body.classList.contains("menu") && world.pets.length) openPets46(); });
+// ほかの人の画面には、ついて歩いている子だけを出す
+const _farmSnap46 = farmSnap44;
+farmSnap44 = () => { const s = _farmSnap46(), stay = petStay35(); s.pets = (world.pets || []).filter(t => !stay[t]).slice(0, PET_MAX43).map(id => [basePet43(id), petVar43(id), String(petNameOf43(id)).slice(0, 12)]); return s; };
+F46.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -11985,7 +12061,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

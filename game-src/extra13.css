@@ -300,3 +300,12 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .k45res b { color: #ffd86a; margin-left: 3px; }
 .talk45 { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .talk45 .btn { text-align: left; justify-content: flex-start; }
+
+/* v46 ペットの管理 */
+.pets46 { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; max-height: 52vh; overflow-y: auto; }
+.pet46 { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; background: rgba(0, 0, 0, .05); }
+.pet46 img { width: 32px; height: 32px; image-rendering: pixelated; flex: none; }
+.pet46 .nm { flex: 1; min-width: 0; }
+.pet46 .sub2 { display: block; font-size: .75rem; opacity: .7; }
+.modes46 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.modes46 .chip { font-size: .78rem; padding: 2px 8px; }

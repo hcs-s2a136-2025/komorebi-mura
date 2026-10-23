@@ -115,7 +115,7 @@ public class FarmService implements WelcomeContributor {
         }
         ArrayNode pets = f.putArray("pets");
         for (JsonNode p : msg.path("pets")) {
-            if (pets.size() >= 8) break;
+            if (pets.size() >= 20) break;
             String b = p.path(0).asText("");
             if (!ID.matcher(b).matches()) continue;
             ArrayNode o = pets.addArray(); o.add(b); o.add(Math.max(0, Math.min(20, p.path(1).asInt(0)))); o.add(clean(p.path(2).asText(""), 12));

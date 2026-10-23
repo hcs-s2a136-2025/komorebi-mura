@@ -3804,7 +3804,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.25.2";
+const CLIENT_VERSION = "0.25.3";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5832,6 +5832,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.25.3", date: "2026/10/23", title: "スマホの長押しで文字が選ばれないように", items: [
+    "スマホでボタンや画面を長押ししたときに、文字が青く選ばれて「コピー」などのメニューが出てしまうのを止めた（名前や伝言の入力欄では、これまでどおり選べる）",
+  ] },
   { v: "0.25.2", date: "2026/10/23", title: "水槽の魚の見た目を直した", items: [
     "水槽にヌシのような大きな魚を入れると、半分だけ切れて、水槽の上にはみ出して見えていたのを直した。魚はぜんぶ水の中を泳ぐようになった",
   ] },
@@ -8710,6 +8713,10 @@ openShop = function (tab) { _openShop38(tab); if (tab === "build32") { $("mtitle
 function wireBuilderTabs38() { document.querySelectorAll("[data-b38]").forEach(b => b.onclick = () => { closeModal(); openBuilder38(b.dataset.b38); }); }
 F38.openBuilder = openBuilder38;
 F38.ready = true;
+
+// v38b：スマホの長押しで出るメニュー（コピーなど）を、ゲームの画面では出さない
+addEventListener("contextmenu", e => { const t = e.target; if (t && t.closest && !t.closest("input, textarea, [contenteditable='true'], #egText, .selectable")) e.preventDefault(); });
+addEventListener("selectstart", e => { const t = e.target; const el = t && (t.nodeType === 1 ? t : t.parentElement); if (el && el.closest && !el.closest("input, textarea, [contenteditable='true'], #egText, .selectable")) e.preventDefault(); });
 
 // =================== start ===================
 function animPreview(now) {

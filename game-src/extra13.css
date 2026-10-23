@@ -200,3 +200,7 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 .stat { grid-template-columns: fit-content(58%) minmax(0, 1fr); }
 .stat > span { min-width: 4em; }
 .stat > b { overflow-wrap: anywhere; }
+/* スマホで長押ししても、文字が選ばれて青くならないように（入力欄だけは選べる） */
+html, body, button, .btn, .chip, header, .board, .stage, .hud, .hotbar, .pad, .modal, .mbox { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+input, textarea, [contenteditable="true"], #egText, .selectable { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }

@@ -604,6 +604,7 @@ function settleRace(id, order, local) {
   const staked = mine.reduce((a, b) => a + b.amount, 0), paid = mine.reduce((a, b) => a + payoutOf(b, order), 0);
   K.gambleResult(staked, paid);
   R.stats = R.stats || { races: 0, best: 0 }; R.stats.races++; if (paid - staked > R.stats.best) R.stats.best = paid - staked;
+  if (mine.some(b => b.kind === "win" && b.odds >= 20 && payoutOf(b, order) > 0)) R.stats.longshot = true;
   if (paid > 0 && K.news41) { const st = RC.st && RC.st.id === id ? RC.st : null, nm = st ? st.runners[order[0]].name : ""; if (paid >= 3000 || paid >= staked * 8) K.news41.add("race", `競どんぐりで${nm ? nm + "に賭けて" : ""}${fmt(paid)}の払い戻し`, Math.min(90, 30 + Math.round(paid / 1000))); }
   K.saveWorld();
   return { staked, paid };

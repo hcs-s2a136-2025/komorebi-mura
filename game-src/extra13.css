@@ -251,3 +251,10 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .race41 .racts .btn { padding: 4px 10px; min-height: 0; }
 .race41 .mybets { background: rgba(255, 216, 106, .15); border-radius: 8px; padding: 6px 8px; font-size: .86rem; }
 @media (max-width: 560px) { .race41 .rrow { grid-template-columns: 26px minmax(0, 1fr) auto; } .race41 .racts { grid-column: 1 / -1; justify-content: flex-end; } }
+
+/* v42：画面の高さが低いPCでも、スロットのスピンボタンが見えるように（リールを小さくして、横にスピン） */
+@media (max-height: 860px) and (min-width: 641px) {
+  .slotrow12 .spin12 { display: block; min-width: 0; padding: 14px 12px; writing-mode: vertical-rl; letter-spacing: 4px; font-size: 1.1rem; }
+  .slotrow12 #slotcv { width: max(140px, min(300px, calc(100vh - 420px))); }
+  .slotbox { padding: 6px; }
+}

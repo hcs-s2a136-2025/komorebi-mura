@@ -713,6 +713,13 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .race41 .racts .btn { padding: 4px 10px; min-height: 0; }
 .race41 .mybets { background: rgba(255, 216, 106, .15); border-radius: 8px; padding: 6px 8px; font-size: .86rem; }
 @media (max-width: 560px) { .race41 .rrow { grid-template-columns: 26px minmax(0, 1fr) auto; } .race41 .racts { grid-column: 1 / -1; justify-content: flex-end; } }
+
+/* v42：画面の高さが低いPCでも、スロットのスピンボタンが見えるように（リールを小さくして、横にスピン） */
+@media (max-height: 860px) and (min-width: 641px) {
+  .slotrow12 .spin12 { display: block; min-width: 0; padding: 14px 12px; writing-mode: vertical-rl; letter-spacing: 4px; font-size: 1.1rem; }
+  .slotrow12 #slotcv { width: max(140px, min(300px, calc(100vh - 420px))); }
+  .slotbox { padding: 6px; }
+}
 </style>
 
 <header>
@@ -839,7 +846,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.27.3";
+  const VER = "0.27.4";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5127,7 +5134,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.27.3";
+const CLIENT_VERSION = "0.27.4";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7155,6 +7162,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.27.4", date: "2026/10/23", title: "ギャンブルの称号・新聞のバックナンバー・スロットの画面", items: [
+    "ギャンブル系の称号を10個追加：負け犬・大負け犬・連敗街道・ギャンブラー・カジノの住人・一攫千金・伝説の勝負師・借金王・雀鬼・大穴ハンター（一度取った称号は、あとで条件が変わっても使える）",
+    "新聞のバックナンバー：30日ぶん読み返せる。新聞の画面と村タブの「過去の新聞」から。オンラインなら、読みのがした号も7日前まで取り寄せられる",
+    "画面がせまいPCでも、スロットのスピンボタンがリールの横に出て押しやすくなった",
+  ] },
   { v: "0.27.3", date: "2026/10/23", title: "なまえを2回書かなくていいように", items: [
     "オンライン参加の「なまえ」と、着せ替えの「なまえ」が同じものになった。どちらに書いても、もう片方も同じになる",
   ] },
@@ -10778,7 +10790,8 @@ function rollNews41() {
   let achN = 0; for (let i = items.length - 1; i >= 0; i--) if (items[i].k === "ach") { achN++; } for (let i = items.length - 1; i >= 0 && achN > 2; i--) if (items[i].k === "ach") { items.splice(i, 1); achN--; }
   const rep = { name: myName(), items: items.slice(0, 10), sum: { harvest: h, fish: f, chop: c, mine: mi, cook: co, money: Math.max(0, money) } };
   N.reports[d] = rep;
-  for (const k of Object.keys(N.reports)) if (+k < d - 7) delete N.reports[k];
+  for (const k of Object.keys(N.reports)) if (+k < d - 30) delete N.reports[k];
+  N.wx = N.wx && typeof N.wx === "object" ? N.wx : {}; N.wx[world.day] = world.weather; for (const k of Object.keys(N.wx)) if (+k < world.day - 31) delete N.wx[k];
   N.items = []; N.base = now; N.pending = d;
   if (F8.connected) send8({ type: "news", act: "put", day: d, items: rep.items, sum: rep.sum });
   saveWorld();
@@ -10820,8 +10833,8 @@ function makePaper41(day, m) {
   let reports = m && Array.isArray(m.reports) ? m.reports.filter(r => r && typeof r.name === "string").map(r => ({ name: r.name, items: Array.isArray(r.items) ? r.items : [], sum: r.sum || {} })) : [];
   if (mine && !reports.some(r => r.name === mine.name)) reports.push(mine);
   if (!reports.length && mine) reports = [mine];
-  const P = { day, reports, race: m && m.race ? m.race : null, weather: world.weather, vlv: vLv41(), vp: vPoints41() };
-  N.papers = N.papers.filter(p => p.day !== day); N.papers.push(P); N.papers.sort((a, b) => a.day - b.day); while (N.papers.length > 7) N.papers.shift();
+  const P = { day, reports, race: m && m.race ? m.race : null, weather: day + 1 === world.day ? world.weather : (N.wx && N.wx[day + 1]) || "sun", vlv: vLv41(), vp: vPoints41() };
+  N.papers = N.papers.filter(p => p.day !== day); N.papers.push(P); N.papers.sort((a, b) => a.day - b.day); while (N.papers.length > 30) N.papers.shift();
   world.stats.papers41 = (world.stats.papers41 || 0) + 1; saveWorld();
   return P;
 }
@@ -10864,9 +10877,10 @@ function paperHtml41(P) {
 function showPaper41(P, back) {
   openModal("こもれび新聞", "paper41", body => {
     const N = news41();
-    body.innerHTML = paperHtml41(P) + `<div class="row2"><label class="ptog"><input type="checkbox" id="pauto41" ${N.auto ? "checked" : ""}> 毎朝、自動で開く</label><button class="btn" type="button" id="pclose41">${back ? "もどる" : "読み終わった"}</button></div>`;
+    body.innerHTML = paperHtml41(P) + `<div class="row2"><label class="ptog"><input type="checkbox" id="pauto41" ${N.auto ? "checked" : ""}> 毎朝、自動で開く</label><button class="btn light" type="button" id="parch41">過去の新聞</button><button class="btn" type="button" id="pclose41">${back ? "もどる" : "読み終わった"}</button></div>`;
+    body.querySelector("#parch41").onclick = () => { closeModal(); if (F42.archive) F42.archive(); };
     body.querySelector("#pauto41").onchange = e => { news41().auto = e.target.checked; saveWorld(); };
-    body.querySelector("#pclose41").onclick = () => { closeModal(); if (back) openLibrary41("paper"); };
+    body.querySelector("#pclose41").onclick = () => { closeModal(); if (typeof back === "function") back(); else if (back) openLibrary41("paper"); };
   });
 }
 // 村タブに「村のレベル」と「新聞を読む」
@@ -10877,8 +10891,9 @@ renderVillage = function () {
   const lv = vLv41(), p = vPoints41(), cur = VLV_T41[lv - 1], next = VLV_T41[lv];
   el.insertAdjacentHTML("afterbegin", `<div class="opt"><h3>こもれび村　Lv${lv}</h3>${bar7(next ? (p - cur) / (next - cur) * 100 : 100, "rep")}<p class="note">${next ? `次のLvまで あと ${next - p}pt` : "最高のLvです"}。${F8.connected ? "オンラインのみんなの評判" : "あなたの評判"}と、できた共同プロジェクトの数（1つ150pt）で上がります。</p>
     <div class="unl7">${Object.values(LM41).map(L => `<div class="${lv >= L.lv ? "on" : ""}"><b>Lv${L.lv}</b> ${esc(L.name)}：${esc(L.desc)}</div>`).join("")}</div>
-    <div class="row2"><button class="btn light" type="button" id="paper41btn">新聞を読む</button></div></div>`);
+    <div class="row2"><button class="btn light" type="button" id="paper41btn">新聞を読む</button><button class="btn light" type="button" id="parch41v">過去の新聞</button></div></div>`);
   $("paper41btn").onclick = () => openPaper41(null);
+  $("parch41v").onclick = () => { if (F42.archive) F42.archive(); };
 };
 F41.ready = true;
 
@@ -10943,6 +10958,68 @@ openJoin = function (after) {
   j.addEventListener("input", () => { if (nameEl.value !== j.value) { nameEl.value = j.value; changed(); updateHud(true); } });
 };
 nameEl.addEventListener("input", () => { const j = $("jName"); if (j && j.value !== nameEl.value.slice(0, 8)) j.value = nameEl.value.slice(0, 8); });
+// ---- 新聞のバックナンバー（30日ぶん）。オンラインなら、サーバーにある7日ぶんは取り寄せられる ----
+function openArchive42() {
+  const N = news41(), have = new Map(N.papers.map(p => [p.day, p])), rows = [];
+  for (let d = world.day - 1; d >= Math.max(1, world.day - 30); d--) {
+    const P = have.get(d), canFetch = F8.connected && d >= world.day - 7, local = N.reports[d];
+    if (!P && !canFetch && !local) continue;
+    rows.push({ d, P, how: P ? "read" : canFetch ? "fetch" : "local" });
+  }
+  openModal("こもれび新聞のバックナンバー", "shop", body => {
+    body.innerHTML = rows.length ? `<p class="mtext">読みたい号をえらんでね。${F8.connected ? "まだ読んでいない号も、7日前までならサーバーから取り寄せられます。" : ""}</p><div class="list">${rows.map(r => `<div class="li"><img src="${ASSETS.news41}" alt=""><span class="nm">第${r.d + 1}号（${seasonOf41(r.d + 1)} ${dayOf41(r.d + 1)}日目の朝刊）<span class="sub2">${r.P ? esc(headOf41(r.P)) : r.how === "fetch" ? "まだ読んでいない号" : "あなたの記録から作る号"}</span></span><span class="acts"><button class="btn light" type="button" data-arc="${r.d}">読む</button></span></div>`).join("")}</div>`
+      : `<p class="mtext">まだ新聞がありません。朝になると届くよ。</p>`;
+    body.querySelectorAll("[data-arc]").forEach(b => b.onclick = () => {
+      const d = +b.dataset.arc, r = rows.find(x => x.d === d); if (!r) return;
+      if (r.P) { showPaper41(r.P, openArchive42); return; }
+      if (r.how === "fetch") {
+        paperWait41 = d; F42.arcFetch = d; openModal("こもれび新聞", "paper41", bd => { bd.innerHTML = `<p class="mtext">新聞を取り寄せています…</p>`; });
+        send8({ type: "news", act: "get", day: d });
+        const t0 = setInterval(() => { const P = news41().papers.find(p => p.day === d); if (P && paperWait41 == null) { clearInterval(t0); showPaper41(P, openArchive42); } }, 200);
+        setTimeout(() => { clearInterval(t0); if (paperWait41 === d) { paperWait41 = null; showPaper41(makePaper41(d, null), openArchive42); } }, 4000);
+        return;
+      }
+      showPaper41(makePaper41(d, null), openArchive42);
+    });
+  });
+}
+F42.archive = openArchive42;
+// 届いた号を、取り寄せのときもふつうの朝刊のときも同じように表示する
+onNews41 = function (m) {
+  if (paperWait41 == null || +m.day !== paperWait41) return;
+  const d = paperWait41; paperWait41 = null;
+  const P = makePaper41(+m.day, m);
+  if (F42.arcFetch === d) { F42.arcFetch = null; return; }
+  if (d === world.day - 1 && $("mtitle").textContent === "こもれび新聞") showPaper41(P, false);
+};
+
+// ---- ギャンブル系の称号（一度取ったら、あとで条件が変わっても使える） ----
+const _gamble42 = gambleResult;
+gambleResult = function (staked, payout) {
+  const st = world.stats; st.gambles = (st.gambles || 0) + 1;
+  if (payout > staked) { st.gambleWins = (st.gambleWins || 0) + 1; st.loseStreak = 0; }
+  else if (payout < staked) { st.loseStreak = (st.loseStreak || 0) + 1; st.loseStreakMax = Math.max(st.loseStreakMax || 0, st.loseStreak); }
+  const r = _gamble42.apply(this, arguments); checkTitles42(); return r;
+};
+const GTITLES42 = [
+  ["負け犬", "カジノで通算10,000G負けこむ", () => (world.stats.gambleNet || 0) <= -10000],
+  ["大負け犬", "カジノで通算100,000G負けこむ", () => (world.stats.gambleNet || 0) <= -100000],
+  ["連敗街道", "賭けで10連敗する", () => (world.stats.loseStreakMax || 0) >= 10],
+  ["ギャンブラー", "賭けを100回する", () => (world.stats.gambles || 0) >= 100],
+  ["カジノの住人", "賭けを500回する", () => (world.stats.gambles || 0) >= 500],
+  ["一攫千金", "1回の賭けで10,000G以上勝つ", () => (world.stats.bigWin || 0) >= 10000],
+  ["伝説の勝負師", "1回の賭けで100,000G以上勝つ", () => (world.stats.bigWin || 0) >= 100000],
+  ["借金王", "借金が50,000G以上になる", () => totalDebt() >= 50000],
+  ["雀鬼", "賭け麻雀で5回トップをとる", () => (world.stats.mjTop || 0) >= 5],
+  ["大穴ハンター", "競どんぐりで単勝20倍以上を当てる", () => !!world.race41?.stats?.longshot],
+];
+const gotT42 = () => Array.isArray(world.titlesGot) ? world.titlesGot : (world.titlesGot = []);
+function checkTitles42() {
+  try { for (const [n, d, f] of GTITLES42) if (!gotT42().includes(n) && f()) { gotT42().push(n); F7.notify(`称号「${n}」を手に入れた（${d}）。村タブの称号から選べるよ`, null); } } catch {}
+}
+for (const [n, d, f] of GTITLES42) TITLES.push([n, d, () => gotT42().includes(n) || f()]);
+setInterval(checkTitles42, 5000);
+
 // タブを開いたときも、上の工夫（村のレベル・職業）が入った描き方を使う
 F7.renderVillage = () => renderVillage();
 F42.ready = true;
@@ -11581,6 +11658,7 @@ function settleRace(id, order, local) {
   const staked = mine.reduce((a, b) => a + b.amount, 0), paid = mine.reduce((a, b) => a + payoutOf(b, order), 0);
   K.gambleResult(staked, paid);
   R.stats = R.stats || { races: 0, best: 0 }; R.stats.races++; if (paid - staked > R.stats.best) R.stats.best = paid - staked;
+  if (mine.some(b => b.kind === "win" && b.odds >= 20 && payoutOf(b, order) > 0)) R.stats.longshot = true;
   if (paid > 0 && K.news41) { const st = RC.st && RC.st.id === id ? RC.st : null, nm = st ? st.runners[order[0]].name : ""; if (paid >= 3000 || paid >= staked * 8) K.news41.add("race", `競どんぐりで${nm ? nm + "に賭けて" : ""}${fmt(paid)}の払い戻し`, Math.min(90, 30 + Math.round(paid / 1000))); }
   K.saveWorld();
   return { staked, paid };

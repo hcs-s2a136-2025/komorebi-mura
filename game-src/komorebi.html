@@ -919,7 +919,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.30.1";
+  const VER = "0.30.2";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5312,7 +5312,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.30.1";
+const CLIENT_VERSION = "0.30.2";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7340,6 +7340,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.30.2", date: "2026/10/24", title: "取り立て屋が北の丘にも来る", items: [
+    "借金の期限が過ぎているとき、北の丘にいると取り立て屋が追いつけなかったのを直した。少しすると、木のすき間を通って追ってくる",
+  ] },
   { v: "0.30.1", date: "2026/10/23", title: "家の合鍵・パレスの裏口が見えないのを直した", items: [
     "オンラインで、北の丘の「こもれびパレスの裏口」（紫の扉）が見えなくなることがあったのを直した。木のすき間を抜けてすぐ右にある",
     "家の「入れる人」を切りかえても、うまく効かないことがあったのを直した",
@@ -12123,6 +12126,22 @@ function addBackdoor51() {
 const _restore51 = F7.restoreVillage;
 F7.restoreVillage = () => { _restore51(); addBackdoor51(); rebuildSolid(); };
 F51.ready = true;
+var F52 = {};
+// ---------- v52: 取り立て屋も北の丘まで追ってくる（木のすき間を通る） ----------
+const _updateCollector52 = updateCollector;
+updateCollector = function (dt) {
+  _updateCollector52(dt);
+  if (!collector.active || map !== village || modalOpen) { collector.gap52 = 0; return; }
+  const pn = player.y >= NY0, cn = collector.y >= NY0;
+  if (pn === cn) { collector.gap52 = 0; return; }
+  // ちがう側にいるときは、少しして木のすき間から出てくる
+  if ((collector.gap52 = (collector.gap52 || 0) + dt) > 2.5) {
+    collector.gap52 = 0; const x = NGAP[0];
+    placeAt(collector, x, pn ? VH - 2 : 2, pn ? "up" : "down");
+    if (pn) toast(null, "取り立て屋が、北の丘まで追ってきた！");
+  }
+};
+F52.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------

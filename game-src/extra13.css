@@ -204,3 +204,7 @@ body.drag21, body.drag21 * { cursor: grabbing !important; }
 html, body, button, .btn, .chip, header, .board, .stage, .hud, .hotbar, .pad, .modal, .mbox { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 input, textarea, [contenteditable="true"], #egText, .selectable { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
+.salonsum39 { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: .8rem; margin: 4px 0 8px; }
+.salonsum39 span { padding: 3px 8px; border-radius: 999px; background: rgba(0,0,0,.05); }
+.salonsum39 span.ch { background: #fbe8c0; }
+.salonsum39 small { margin-left: 4px; opacity: .75; }

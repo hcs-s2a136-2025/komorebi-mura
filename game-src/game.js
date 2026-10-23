@@ -3806,7 +3806,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.25.4";
+const CLIENT_VERSION = "0.25.5";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5834,6 +5834,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.25.5", date: "2026/10/23", title: "美容室でまとめてイメチェン", items: [
+    "美容室で、髪型・前髪・髪色をタブを切りかえながら選んでおいて、最後に「この髪にする」でまとめて変えられるようにした。合計の値段もいっしょに出る",
+    "まとめて変えた見た目も、ほかの人の画面にちゃんと反映される",
+  ] },
   { v: "0.25.4", date: "2026/10/23", title: "よろず屋の扉の位置を直した", items: [
     "よろず屋の絵の扉が、実際に入れるマスより右にずれていたのを直した。扉の前に立って上を押すと入れる",
   ] },
@@ -8722,6 +8726,73 @@ F38.ready = true;
 // v38b：スマホの長押しで出るメニュー（コピーなど）を、ゲームの画面では出さない
 addEventListener("contextmenu", e => { const t = e.target; if (t && t.closest && !t.closest("input, textarea, [contenteditable='true'], #egText, .selectable")) e.preventDefault(); });
 addEventListener("selectstart", e => { const t = e.target; const el = t && (t.nodeType === 1 ? t : t.parentElement); if (el && el.closest && !el.closest("input, textarea, [contenteditable='true'], #egText, .selectable")) e.preventDefault(); });
+
+// =================== v39: 美容室でまとめて変える・お金の調整を受け取る ===================
+var F39 = {};
+// ---- 美容室：髪型・前髪・髪色をえらんでから、まとめて変える ----
+openSalon26 = function () {
+  salon26 = { tab: salon26?.tab || "hair", picks: {} };
+  const KEYS = ["hair", "bangs", "hairc"], LABEL = { hair: "髪型", bangs: "前髪", hairc: "髪色" };
+  const poolOf = k => k === "hair" ? CHAR.HAIR : k === "bangs" ? BANGS34 : CHAR.HAIRC;
+  const priceOf = (k, v) => { const inf = WEAR26[k]?.[v]; return !inf || wearOwned26(k, v) ? 0 : (inf.salon || 0); };
+  openModal("Salon こもれび　─ OMOTESANDO ─", "salon26", body => {
+    const draw = msg => {
+      const key = salon26.tab, picks = salon26.picks, pool = poolOf(key);
+      const look = { ...cfg, ...picks };
+      const changes = KEYS.filter(k => picks[k] !== undefined && picks[k] !== cfg[k]);
+      const total = changes.reduce((a, k) => a + priceOf(k, picks[k]), 0);
+      const line = msg || (changes.length ? "いい組み合わせですね。ほかのメニューも、いっしょに選んでいいですよ" : key === "bangs" ? "前髪ひとつで、顔の印象がぐっと変わるんですよ" : key === "hair" ? "今日はどんな感じにしましょう？ 髪型・前髪・カラー、まとめて選んでくださいね" : "カラーで印象ってぜんぜん変わるんです。季節に合わせるのも素敵ですね");
+      const cur = look[key];
+      body.innerHTML = `<div class="salonhead26"><img src="${charIcon13(INT_NPC.stylist.cfg)}" alt=""><div><p class="salonname26">Stylist  MINATO</p><p>「${esc(line)}」</p></div></div>
+        <div class="mtabs">${KEYS.map(k => `<button class="chip" type="button" data-st="${k}" aria-pressed="${k === key}">${LABEL[k]}${changes.includes(k) ? " ●" : ""}</button>`).join("")}</div>
+        <div class="salonprev26">${["down", "left", "right", "up"].map(d => `<img src="${renderChar({ ...look, hat: "なし" }, d, 0).toDataURL()}" alt="">`).join("")}</div>
+        <div class="salonsum39">${KEYS.map(k => { const ch = changes.includes(k), v = ch ? picks[k] : cfg[k], p = ch ? priceOf(k, v) : 0;
+          return `<span class="${ch ? "ch" : ""}">${LABEL[k]}：<b>${esc(v)}</b>${ch ? `<small>${p ? fmt(p) : "無料"}</small>` : ""}</span>`; }).join("")}</div>
+        <div class="salongrid26">${Object.keys(pool).map(v => {
+          const inf = WEAR26[key]?.[v], o = wearOwned26(key, v);
+          const tag = !inf ? "着せ替えでも選べる" : o ? "お持ちのスタイル" : `${fmt(inf.salon)}・サロン限定`;
+          const ic = key === "hairc" ? null : renderChar({ ...look, [key]: v, hat: "なし" }, "down", 0).toDataURL();
+          const sw = key === "hairc" ? (typeof pool[v] === "string" ? SPECIAL_SWATCH[v] : `rgb(${pool[v][1].join(",")})`) : "";
+          return `<button type="button" class="salonopt26${v === cur ? " on" : ""}${inf && !o ? " ex" : ""}" data-sv="${esc(v)}">${ic ? `<img src="${ic}" alt="">` : `<i style="background:${sw}"></i>`}<span>${esc(v)}</span><small>${tag}</small></button>`;
+        }).join("")}</div>
+        <div class="row2"><button class="btn" type="button" id="salonGo" ${changes.length ? "" : "disabled"}>${changes.length ? `この髪にする（${total ? "合計 " + fmt(total) : "無料"}）` : "メニューを選んでください"}</button>
+          <button class="btn light" type="button" id="salonReset" ${changes.length ? "" : "disabled"}>えらび直す</button></div>
+        <p class="mtext small">髪型・前髪・髪色は、タブを切りかえても選んだままです。まとめて一度に変えられます。サロン限定のスタイルは、一度してもらうと着せ替えでもいつでも選べるようになります。所持金 ${fmt(world.money)}</p>`;
+      body.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { salon26.tab = b.dataset.st; draw(); });
+      body.querySelectorAll("[data-sv]").forEach(b => b.onclick = () => { const v = b.dataset.sv; if (v === cfg[key]) delete salon26.picks[key]; else salon26.picks[key] = v; draw(); });
+      body.querySelector("#salonReset").onclick = () => { salon26.picks = {}; draw("はい、いまのスタイルに戻しました"); };
+      body.querySelector("#salonGo").onclick = () => {
+        const ch = KEYS.filter(k => salon26.picks[k] !== undefined && salon26.picks[k] !== cfg[k]); if (!ch.length) return;
+        const sum = ch.reduce((a, k) => a + priceOf(k, salon26.picks[k]), 0);
+        if (sum && world.money < sum) { draw("ごめんなさい、お代が少し足りないみたいです"); return; }
+        if (sum) addMoney(-sum);
+        let paid = false;
+        for (const k of ch) { if (priceOf(k, salon26.picks[k])) { grantWear26(k, salon26.picks[k], true); paid = true; } cfg[k] = salon26.picks[k]; }
+        if (paid) world.stats.salon = (world.stats.salon || 0) + 1;
+        changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); saveWorld(); SFX.small();
+        salon26.picks = {};
+        draw(paid ? "とってもお似合いです！ このスタイル、いつでも選べるようにしておきますね" : "はい、できあがり。いい感じですよ");
+      };
+    };
+    draw();
+  });
+};
+// ---- お金の調整を受け取る ----
+function applyAdminPay39(money, text) {
+  money = Math.max(-10000000, Math.min(10000000, Math.floor(+money || 0)));
+  if (!money) return;
+  if (money > 0) addMoney(money); else addMoney(-Math.min(world.money, -money));
+  saveWorld(); updateHud(true);
+  const t = String(text || "").slice(0, 60);
+  if (t) F7.notify(`${t}（${money > 0 ? "+" : ""}${fmt(money)}）`, "coin");
+}
+const _handle39 = handle8;
+handle8 = m => {
+  if (m && m.type === "adminPay") { applyAdminPay39(m.money, m.text); return; }
+  _handle39(m);
+  if (m && m.type === "welcome" && m.adminPay && typeof m.adminPay === "object") applyAdminPay39(m.adminPay.money, m.adminPay.text);
+};
+F39.ready = true;
 
 // =================== start ===================
 function animPreview(now) {

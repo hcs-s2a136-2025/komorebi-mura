@@ -28,7 +28,7 @@ if (fs.existsSync(BJ_CP)) {
   process.on("exit", () => bj.kill()); process.on("SIGTERM", () => { bj.kill(); process.exit(0); }); process.on("SIGINT", () => { bj.kill(); process.exit(0); });
 }
 // みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
-let mj = null; const mjPending = new Map();
+let mj = null; const mjPending = new Map(), adminPending = new Map();
 // イベント（本物は EventService.java。ここでは同じ約束をメモリだけで）
 let ev = null; let evNext = 1; const evRewards = new Map(); // playerId -> [{id,name,rank,total,reward}]
 const evAct = e => ["easter", "halloween", "christmas"].includes(e.kind) ? "collect" : e.kind === "fishing" ? "fish" : e.scoring === "collect" ? "collect" : e.scoring === "none" ? "none" : "fish";
@@ -82,6 +82,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/event/start") { const q = u.searchParams; ev = { id: evNext++, name: q.get("name") || "テスト大会", kind: q.get("kind") || "fishing", scoring: q.get("scoring") || "points", rules: q.get("rules") || "", startsAt: Date.now(), endsAt: Date.now() + (+q.get("secs") || 60) * 1000, joinFee: +q.get("fee") || 0, minLevel: +q.get("lv") || 0, rewards: { r1: q.get("r1") || "", r2: q.get("r2") || "", r3: q.get("r3") || "", all: q.get("all") || "", goal: q.get("goal") || "", goalScore: q.get("goalScore") || "0" }, scores: new Map() };
     for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evState", event: evNode(ev, -1) })); return json(res, 200, { id: ev.id }); }
   if (p === "/mock/event/end") { evFinish(); return json(res, 200, {}); }
+  if (p === "/mock/adminpay") { const id = +u.searchParams.get("id"), money = +u.searchParams.get("money") || 0, text = u.searchParams.get("text") || ""; const on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "adminPay", money, text }))); else { const e = adminPending.get(id) || { money: 0 }; e.money += money; if (text) e.text = text; adminPending.set(id, e); } return json(res, 200, { now: on.length > 0 }); }
   if (p === "/mock/event") return json(res, 200, ev ? { ...ev, scores: Object.fromEntries(ev.scores) } : null);
   if (p === "/mock/event/rewards") return json(res, 200, Object.fromEntries(evRewards));
   if (p === "/mock/rooms") return json(res, 200, Object.fromEntries([...rooms].map(([k, r]) => [k, r])));
@@ -117,8 +118,8 @@ wss.on("connection", s => {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot }));
-      mjPending.delete(pl.id);
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot }));
+      mjPending.delete(pl.id); adminPending.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
     if (m.type === "move") { Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }

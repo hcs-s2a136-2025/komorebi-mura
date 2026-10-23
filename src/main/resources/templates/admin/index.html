@@ -34,6 +34,12 @@
   </section>
 
   <section class="card">
+    <h2>お金の調整</h2>
+    <p class="muted">プレイヤーの所持金を足したり減らしたりできます。</p>
+    <div class="row"><a class="btn" href="/admin/money">お金の調整を開く</a></div>
+  </section>
+
+  <section class="card">
     <h2>村の時計</h2>
     <p th:text="${clockText}">1日目</p>
     <form class="row" method="post" th:action="@{/admin/clock/morning}"><button class="btn ghost" type="submit">次の日の朝にする</button></form>

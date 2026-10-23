@@ -14,15 +14,19 @@
 <main class="wrap">
   <p class="flash" th:if="${msg}" th:text="${msg}"></p>
   <section class="card">
-    <h2>プレイヤーの所持金</h2>
-    <p class="muted">所持金は、その人が最後にサーバーへセーブしたときの金額です。足すか減らすかを選んで金額を入れると、つないでいる人にはすぐ、つないでいない人には次に村に来たときに反映されます。<br>
+    <h2>プレイヤーのお金</h2>
+    <p class="muted">金額は、その人が最後にサーバーへセーブしたときのものです（遊んでいる最中の人は、少しずれていることがあります）。「預金」は信用金庫の普通預金と定期預金、「借金」は返す額の合計、「合計」は所持金＋預金−借金です。ここで足したり減らしたりできるのは所持金だけです。足すか減らすかを選んで金額を入れると、つないでいる人にはすぐ、つないでいない人には次に村に来たときに反映されます。<br>
       「本人へのひとこと」を空のままにすると、本人の画面には何も出ずに、お金だけが変わります。書いたときは、その言葉といっしょにお知らせが出ます。</p>
     <table class="players">
-      <tr><th>なまえ</th><th>所持金</th><th>状態</th><th>調整</th></tr>
+      <tr><th>なまえ</th><th>所持金</th><th>預金</th><th>借金</th><th>合計</th><th>状態</th><th>調整</th></tr>
       <tr th:each="r : ${rows}">
         <td><b th:text="${r.name()}">name</b><br><span class="muted" th:text="|ID ${r.id()}|">ID</span></td>
         <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.money(), 1, 'COMMA')} + ' G' : 'セーブなし'">0 G</span>
           <br><span class="muted" th:if="${r.pending() != 0}" th:text="|届いていない分 ${r.pending() > 0 ? '+' : ''}${#numbers.formatInteger(r.pending(), 1, 'COMMA')} G|"></span></td>
+        <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.bank(), 1, 'COMMA')} + ' G' : '-'">0 G</span>
+          <br><span class="muted" th:if="${r.money() != null and r.bank() > 0}" th:text="|普通 ${#numbers.formatInteger(r.save(), 1, 'COMMA')}・定期 ${#numbers.formatInteger(r.fixed(), 1, 'COMMA')}|"></span></td>
+        <td th:text="${r.money() != null} ? ${#numbers.formatInteger(r.debt(), 1, 'COMMA')} + ' G' : '-'">0 G</td>
+        <td><b th:text="${r.money() != null} ? ${#numbers.formatInteger(r.net(), 1, 'COMMA')} + ' G' : '-'">0 G</b></td>
         <td th:text="${r.online()} ? 'つないでいる' : 'いない'">いない</td>
         <td>
           <form method="post" th:action="@{/admin/money/{id}(id=${r.id()})}" class="row">

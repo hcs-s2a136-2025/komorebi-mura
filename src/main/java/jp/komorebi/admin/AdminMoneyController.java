@@ -38,7 +38,10 @@ public class AdminMoneyController {
         this.om = om;
     }
 
-    public record Row(Long id, String name, Long money, Instant savedAt, boolean online, long pending) {
+    /** save=普通預金、fixed=定期預金の合計、debt=借金（返す額）の合計。セーブがなければ money は null */
+    public record Row(Long id, String name, Long money, long save, long fixed, long debt, Instant savedAt, boolean online, long pending) {
+        public long bank() { return save + fixed; }
+        public long net() { return (money == null ? 0 : money) + save + fixed - debt; }
     }
 
     @GetMapping
@@ -46,6 +49,7 @@ public class AdminMoneyController {
         var pend = gifts.pending();
         List<Row> rows = players.listAll().stream().map(p -> {
             Long money = null;
+            long save = 0, fixed = 0, debt = 0;
             Instant at = null;
             var s = saves.load(p.getId());
             if (s.isPresent()) {
@@ -54,11 +58,15 @@ public class AdminMoneyController {
                     JsonNode doc = om.readTree(s.get().doc());
                     JsonNode m = doc.path("world").path("money");
                     if (m.isNumber()) money = m.asLong();
+                    JsonNode bank = doc.path("world").path("bank");
+                    save = Math.max(0, bank.path("save").asLong(0));
+                    for (JsonNode f : bank.path("fixed")) fixed += Math.max(0, f.path("amt").asLong(0));
+                    for (JsonNode l : doc.path("world").path("loans")) debt += Math.max(0, l.path("owed").asLong(0));
                 } catch (Exception e) {
                     // こわれたセーブは、金額を出さない
                 }
             }
-            return new Row(p.getId(), p.getName(), money, at, socket.isOnline(p.getId()), pend.path(String.valueOf(p.getId())).path("money").asLong(0));
+            return new Row(p.getId(), p.getName(), money, save, fixed, debt, at, socket.isOnline(p.getId()), pend.path(String.valueOf(p.getId())).path("money").asLong(0));
         }).toList();
         model.addAttribute("rows", rows);
         return "admin/money";

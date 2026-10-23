@@ -3880,7 +3880,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.30.2";
+const CLIENT_VERSION = "0.30.3";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5908,6 +5908,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.30.3", date: "2026/10/24", title: "ピアノの音が鳴らないことがあったのを直した", items: [
+    "設定で効果音をオフにしていると、ピアノとカラオケの音まで鳴らなかったのを直した。楽器の音は、効果音とは別に鳴る",
+    "ピアノの画面に音量のつまみを追加",
+    "スマホで、最初の音が鳴らないことがあったのを直した",
+  ] },
   { v: "0.30.2", date: "2026/10/24", title: "取り立て屋が北の丘にも来る", items: [
     "借金の期限が過ぎているとき、北の丘にいると取り立て屋が追いつけなかったのを直した。少しすると、木のすき間を通って追ってくる",
   ] },
@@ -10553,7 +10558,7 @@ function pianoSongs50() {
   return out;
 }
 function pianoTone50(m) {
-  const A = typeof SFX !== "undefined" && SFX.audio ? SFX.audio() : null; if (!A) return;
+  const A = typeof SFX !== "undefined" && SFX.audio ? SFX.audio(true) : null; if (!A) return;
   const t = A.ac.currentTime + .003, f = A.hz(m);
   A.tone(t, f, 1.6, { type: "triangle", vol: .2, att: .003 }); A.tone(t, f * 2, .8, { type: "sine", vol: .07, att: .003 }); A.tone(t, f * 3, .35, { type: "sine", vol: .03, att: .003 });
   A.noise(t, .02, { vol: .05, lp: 2500 });
@@ -10570,7 +10575,8 @@ function openPiano50() {
       <div class="piano50" id="piano50">${whites.map((m, i) => `<button type="button" class="pw50" data-m="${m}" style="left:${i * wW}%;width:${wW}%"><span>${PKEYLBL50[m] || ""}</span>${m % 12 === 0 ? `<em>ド${m === 60 ? "" : m === 72 ? "↑" : "↑↑"}</em>` : ""}</button>`).join("")}
         ${whites.map((m, i) => isBlack(m + 1) && m + 1 <= PIANO_HI50 ? `<button type="button" class="pb50" data-m="${m + 1}" style="left:${(i + 1) * wW - wW * .32}%;width:${wW * .64}%"><span>${PKEYLBL50[m + 1] || ""}</span></button>` : "").join("")}</div>
       <div class="psong50"><span>お手本：</span><select id="psel50"><option value="">（自由に弾く）</option>${Object.keys(songs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}</select><span id="pprog50"></span></div>
-      <p class="note">お手本を選ぶと、次に押す鍵盤が光るよ。最後まで弾けたら拍手。</p>`;
+      <div class="psong50"><span>音量</span><input type="range" id="pvol50" min="0" max="1" step="0.05" value="${world.stats.pianoVol50 ?? .8}" style="flex:1;min-width:120px;accent-color:var(--lantern)"></div>
+      <p class="note">お手本を選ぶと、次に押す鍵盤が光るよ。最後まで弾けたら拍手。効果音をオフにしていても、ピアノの音は鳴るよ。</p>`;
     const P = body.querySelector("#piano50"), nowEl = body.querySelector("#pnow50"), prog = body.querySelector("#pprog50");
     const mark = () => {
       P.querySelectorAll(".next50").forEach(b => b.classList.remove("next50"));
@@ -10591,6 +10597,10 @@ function openPiano50() {
       mark();
     };
     P.addEventListener("pointerdown", e => { const b = e.target.closest("[data-m]"); if (!b) return; e.preventDefault(); hit(+b.dataset.m); });
+    // スマホは、指をはなしたときでないと音を出す許可がおりないことがあるので、そのときにも音の準備をする
+    P.addEventListener("touchend", () => { try { SFX.audio(true); } catch (e) { } }, { passive: true });
+    const vol = body.querySelector("#pvol50"); if (vol) vol.oninput = () => { world.stats.pianoVol50 = +vol.value; try { SFX.instVol(+vol.value); } catch (e) { } };
+    try { SFX.instVol(world.stats.pianoVol50 ?? .8); } catch (e) { }
     body.querySelector("#psel50").onchange = e => { song = e.target.value || null; idx = 0; mark(); nowEl.textContent = song ? `「${song}」 光った鍵盤を順番に` : "♪"; };
     const onKey = e => {
       if (!document.body.contains(P)) { removeEventListener("keydown", onKey, true); return; }
@@ -10810,7 +10820,7 @@ function openKaraoke45() {
 function sing45(name, diff) {
   const song = KSONGS45[name], D = KDIFF45[diff], P = parseSong45(song), notes = chart45(P, diff);
   const spb = 60 / song.bpm, lead = 4 * spb + .6, end = lead + P.beats * spb + 1.2;
-  const A = typeof SFX !== "undefined" && SFX.audio ? SFX.audio() : null;
+  const A = typeof SFX !== "undefined" && SFX.audio ? SFX.audio(true) : null;
   const lat = A ? (A.ac.outputLatency || A.ac.baseLatency || 0) : 0;
   const t0 = A ? A.ac.currentTime : performance.now() / 1000;
   const now = () => (A ? A.ac.currentTime - lat : performance.now() / 1000) - t0;

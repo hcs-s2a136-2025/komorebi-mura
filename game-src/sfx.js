@@ -3,15 +3,17 @@ const SFX = (() => {
   const KEY = "komorebi-se";
   let pref = { on: true, vol: .8 };
   try { Object.assign(pref, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
-  let ac = null, out = null, noiseBuf = null, spinT = 0, spinRate = 16, spinStopAt = 0;
+  let ac = null, out = null, inst = null, noiseBuf = null, spinT = 0, spinRate = 16, spinStopAt = 0;
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(pref)); } catch (e) {} };
-  function ctx() {
-    if (!pref.on) return null;
+  // force：ピアノやカラオケのような「楽器」は、効果音をオフにしていても鳴らす（音量も効果音とは別）
+  function ctx(force) {
+    if (!pref.on && !force) return null;
     if (!ac) {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
       ac = new AC();
       const comp = ac.createDynamicsCompressor(); comp.threshold.value = -12; comp.knee.value = 6; comp.ratio.value = 10; comp.attack.value = .003; comp.release.value = .2;
       out = ac.createGain(); out.gain.value = pref.vol * 2; out.connect(comp); comp.connect(ac.destination);
+      inst = ac.createGain(); inst.gain.value = 1.6; inst.connect(comp);
       noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
     if (ac.state === "suspended") ac.resume();
@@ -19,18 +21,18 @@ const SFX = (() => {
   }
   const hz = m => 440 * Math.pow(2, (m - 69) / 12);
   // one oscillator note with an envelope
-  function tone(t, f, dur, { type = "square", vol = .3, f2 = null, att = .004, filt = 0 } = {}) {
+  function tone(t, f, dur, { type = "square", vol = .3, f2 = null, att = .004, filt = 0, dest = null } = {}) {
     const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
     if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
     g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
     let node = o; if (filt) { const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = filt; o.connect(lp); node = lp; }
-    node.connect(g); g.connect(out); o.start(t); o.stop(t + dur + .02);
+    node.connect(g); g.connect(dest || out); o.start(t); o.stop(t + dur + .02);
   }
-  function noise(t, dur, { vol = .3, hp = 0, lp = 0 } = {}) {
+  function noise(t, dur, { vol = .3, hp = 0, lp = 0, dest = null } = {}) {
     const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = noiseBuf; let node = s;
     if (hp) { const f = ac.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; node.connect(f); node = f; }
     if (lp) { const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; node.connect(f); node = f; }
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); node.connect(g); g.connect(out); s.start(t); s.stop(t + dur + .02);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); node.connect(g); g.connect(dest || out); s.start(t); s.stop(t + dur + .02);
   }
   const coin = t => { tone(t, 2637, .09, { type: "square", vol: .12 }); tone(t + .05, 3520, .22, { type: "square", vol: .1 }); };
   const bell = (t, m, dur = .5, vol = .18) => { tone(t, hz(m), dur, { type: "triangle", vol }); tone(t, hz(m + 12), dur * .6, { type: "sine", vol: vol * .5 }); };
@@ -79,7 +81,12 @@ const SFX = (() => {
     },
     fishMiss() { if (!ctx()) return; const t = ac.currentTime; tone(t, 420, .22, { type: "triangle", vol: .08, f2: 240 }); },
     // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
-    audio() { if (!ctx()) return null; return { ac, out, tone, noise, hz }; },
+    audio(force) {
+      if (!ctx(force)) return null;
+      if (!force) return { ac, out, tone, noise, hz };
+      return { ac, out: inst, hz, tone: (t, f, d, o = {}) => tone(t, f, d, { ...o, dest: inst }), noise: (t, d, o = {}) => noise(t, d, { ...o, dest: inst }) };
+    },
+    instVol(v) { if (ctx(true) && inst) inst.gain.value = Math.max(0, Math.min(1, +v)) * 2; },
     get on() { return pref.on; }, get vol() { return pref.vol; },
     setOn(v) { pref.on = !!v; save(); if (!pref.on) api.spinStop(); },
     setVol(v) { pref.vol = Math.max(0, Math.min(1, +v)); save(); if (out) out.gain.value = pref.vol * 2; },

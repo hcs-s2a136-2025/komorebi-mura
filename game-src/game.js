@@ -3809,7 +3809,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.27.1";
+const CLIENT_VERSION = "0.27.2";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5837,6 +5837,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.27.2", date: "2026/10/23", title: "職業の選びなおし", items: [
+    "職業を変えた日のうちなら、変える前の職業にもどして取り消せるようにした（まちがえて押したとき用）",
+    "職業の欄に、今日は変えられるか・明日からかを書くようにした",
+  ] },
   { v: "0.27.1", date: "2026/10/23", title: "削除したキャラクターが復活しないように", items: [
     "管理人室で削除されたキャラクターは、その端末に残っていたデータも消えるようにした（前は、同じ端末でひらくと復活することがあった）",
   ] },
@@ -9587,6 +9591,28 @@ if (/[?&]deleted=1/.test(location.search)) {
     body.querySelector("#del42ok").onclick = closeModal;
   }), 1200);
 }
+// ---- 職業：その日のうちなら、変える前の職業にはもどせる（まちがえて押したとき用）。いまの状態も書いておく ----
+const _renderVillage42 = renderVillage;
+renderVillage = function () {
+  _renderVillage42.apply(this, arguments);
+  const chips = document.querySelectorAll("#villageBody [data-job]"); if (!chips.length) return;
+  const locked = world.jobDay === world.day, from = typeof world.jobFrom === "string" ? world.jobFrom : null;
+  chips.forEach(b => {
+    const k = b.dataset.job;
+    b.disabled = locked && world.job !== k && !(from !== null && k === from);
+    b.onclick = () => {
+      if (world.job === k) return;
+      if (world.jobDay === world.day) { if (k !== world.jobFrom) return; world.job = k; world.jobFrom = null; world.jobDay = 0; }
+      else { world.jobFrom = world.job || ""; world.job = k; world.jobDay = world.day; }
+      saveWorld(); renderVillage(); toast(null, world.job ? `職業を「${SKILL[world.job][1]}」にした` : "職業をなしにした");
+    };
+  });
+  const note = chips[0].closest(".opt")?.querySelector(".note");
+  if (note) note.textContent = "選んだ職業のスキルは経験値+25%・売値+10%。職業を変えられるのは1日1回まで（変えた日のうちなら、前の職業にもどして取り消せます）。" +
+    (locked ? (from !== null && from !== world.job ? `今日は「${from ? SKILL[from][1] : "なし"}」から変えたので、ほかの職業は明日から選べるよ。` : "今日はもう職業を変えたので、ほかの職業は明日から選べるよ。") : "今日は職業を変えられるよ。");
+};
+// タブを開いたときも、上の工夫（村のレベル・職業）が入った描き方を使う
+F7.renderVillage = () => renderVillage();
 F42.ready = true;
 
 // =================== start ===================

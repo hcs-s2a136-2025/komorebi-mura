@@ -783,7 +783,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.25.3";
+  const VER = "0.25.4";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -1625,12 +1625,14 @@ function buildingImg(b) {
     rect(1, 19, W - 2, 1, [70, 120, 74]);
     rect(3, 29, W - 6, H - 30, WOODC[1]);
     for (let y = 31; y < H - 1; y += 3) rect(3, y, W - 6, 1, WOODC[2]);
-    rect(6, 33, 30, 21, WOODC[3]); rect(7, 34, 28, 19, [176, 214, 232]);
-    for (const sy of [40, 47]) rect(7, sy, 28, 1, WOODC[2]);
+    rect(5, 33, 25, 21, WOODC[3]); rect(6, 34, 23, 19, [176, 214, 232]);
+    for (const sy of [40, 47]) rect(6, sy, 23, 1, WOODC[2]);
     const goods = [[226, 72, 64], [240, 140, 50], [120, 190, 90], [250, 220, 110], [170, 110, 190], [90, 150, 210]];
-    for (let i = 0; i < 9; i++) { const g = goods[i % 6]; rect(9 + i * 3, 37, 2, 3, g); rect(9 + i * 3, 44, 2, 3, goods[(i + 3) % 6]); rect(10 + i * 3, 50, 2, 3, goods[(i + 1) % 6]); }
-    set(8, 35, [240, 250, 255]); set(9, 35, [240, 250, 255]);
-    rect(45, 37, 16, H - 38, WOODC[3]); rect(46, 38, 14, H - 39, WOODC[2]); rect(48, 40, 10, 8, [176, 214, 232]); set(57, 52, [240, 200, 90]);
+    for (let i = 0; i < 7; i++) { const g = goods[i % 6]; rect(8 + i * 3, 37, 2, 3, g); rect(8 + i * 3, 44, 2, 3, goods[(i + 3) % 6]); rect(9 + i * 3, 50, 2, 3, goods[(i + 1) % 6]); }
+    set(7, 35, [240, 250, 255]); set(8, 35, [240, 250, 255]);
+    // 扉は、入口のマス（建物のまん中のマス）にぴったり合わせる
+    rect(32, 37, 16, H - 38, WOODC[3]); rect(33, 38, 14, H - 39, WOODC[2]); rect(35, 40, 10, 8, [176, 214, 232]); set(44, 52, [240, 200, 90]);
+    for (const x of [52, 56]) { rect(x, 34, 3, 3, [226, 72, 64]); rect(x, 37, 3, 1, [150, 50, 40]); }
     rect(64, 51, 11, 11, [176, 120, 70]); rect(64, 51, 11, 1, [210, 160, 100]); for (let i = 0; i < 11; i++) { set(64 + i, 51 + i, [130, 86, 50]); set(74 - i, 51 + i, [130, 86, 50]); }
     rect(66, 49, 3, 2, [226, 72, 64]); rect(70, 49, 3, 2, [250, 220, 110]);
   } else if (b.kind === "casino") {
@@ -5066,7 +5068,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.25.3";
+const CLIENT_VERSION = "0.25.4";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7094,6 +7096,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.25.4", date: "2026/10/23", title: "よろず屋の扉の位置を直した", items: [
+    "よろず屋の絵の扉が、実際に入れるマスより右にずれていたのを直した。扉の前に立って上を押すと入れる",
+  ] },
   { v: "0.25.3", date: "2026/10/23", title: "スマホの長押しで文字が選ばれないように", items: [
     "スマホでボタンや画面を長押ししたときに、文字が青く選ばれて「コピー」などのメニューが出てしまうのを止めた（名前や伝言の入力欄では、これまでどおり選べる）",
   ] },

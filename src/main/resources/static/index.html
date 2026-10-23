@@ -839,7 +839,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.27.2";
+  const VER = "0.27.3";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5127,7 +5127,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.27.2";
+const CLIENT_VERSION = "0.27.3";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7155,6 +7155,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.27.3", date: "2026/10/23", title: "なまえを2回書かなくていいように", items: [
+    "オンライン参加の「なまえ」と、着せ替えの「なまえ」が同じものになった。どちらに書いても、もう片方も同じになる",
+  ] },
   { v: "0.27.2", date: "2026/10/23", title: "職業の選びなおし", items: [
     "職業を変えた日のうちなら、変える前の職業にもどして取り消せるようにした（まちがえて押したとき用）",
     "職業の欄に、今日は変えられるか・明日からかを書くようにした",
@@ -10929,6 +10932,17 @@ renderVillage = function () {
   if (note) note.textContent = "選んだ職業のスキルは経験値+25%・売値+10%。職業を変えられるのは1日1回まで（変えた日のうちなら、前の職業にもどして取り消せます）。" +
     (locked ? (from !== null && from !== world.job ? `今日は「${from ? SKILL[from][1] : "なし"}」から変えたので、ほかの職業は明日から選べるよ。` : "今日はもう職業を変えたので、ほかの職業は明日から選べるよ。") : "今日は職業を変えられるよ。");
 };
+// ---- オンライン参加：なまえは右の「なまえ」と同じもの。どちらに書いても、もう片方も同じになる ----
+const _openJoin42 = openJoin;
+openJoin = function (after) {
+  _openJoin42(after);
+  const j = $("jName"); if (!j) return;
+  // 右の「なまえ」が最新（参加前に書きかえた人もいる）なら、それを使う
+  if (!onl.name && nameEl.value.trim()) j.value = nameEl.value.trim().slice(0, 8);
+  const lbl = document.querySelector('label[for="jName"]'); if (lbl) lbl.textContent = "なまえ（8文字まで・右の「なまえ」と同じ）";
+  j.addEventListener("input", () => { if (nameEl.value !== j.value) { nameEl.value = j.value; changed(); updateHud(true); } });
+};
+nameEl.addEventListener("input", () => { const j = $("jName"); if (j && j.value !== nameEl.value.slice(0, 8)) j.value = nameEl.value.slice(0, 8); });
 // タブを開いたときも、上の工夫（村のレベル・職業）が入った描き方を使う
 F7.renderVillage = () => renderVillage();
 F42.ready = true;

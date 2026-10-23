@@ -16,7 +16,7 @@ import jp.komorebi.ws.PlayerSession;
 
 /** みんなのどんぐりBJの卓を1つ持っていて、WebSocket とつなぐ係。ルールは {@link BjGame} */
 @Service
-public class BjTableService {
+public class BjTableService implements TableRoster {
 
     private final ObjectProvider<GameSocketHandler> hub;
     private final ObjectMapper om;
@@ -56,6 +56,16 @@ public class BjTableService {
     }
 
     /** 管理人室用：いま座っている人数 */
+    @Override
+    public String kind() {
+        return "bj";
+    }
+
+    @Override
+    public java.util.List<Long> mates(long playerId) {
+        return game.mates(playerId);
+    }
+
     public int seated() {
         Object seats = game.state(System.currentTimeMillis()).get("seats");
         return seats instanceof java.util.List<?> l ? l.size() : 0;

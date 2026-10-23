@@ -268,3 +268,10 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .mcform44 { display: flex; gap: 6px; }
 .mcform44 input { flex: 1; min-width: 0; font: inherit; padding: 4px 8px; border-radius: 6px; border: 2px solid #6a5a7a; background: #fffaf0; color: #2a2228; }
 .mcform44 .btn { padding: 4px 12px; min-height: 0; }
+.mcto44 { display: flex; flex: none; border-radius: 6px; overflow: hidden; border: 2px solid #6a5a7a; }
+.mcto44[hidden] { display: none; }
+.mcto44 button { font: inherit; font-size: .78rem; padding: 2px 8px; border: 0; background: #3a3040; color: #d8cce0; cursor: pointer; }
+.mcto44 button.on { background: #ffd86a; color: #2a2228; font-weight: bold; }
+.mclog44 i { font-style: normal; font-size: .7rem; background: #ffd86a; color: #2a2228; border-radius: 4px; padding: 0 4px; margin-right: 4px; }
+.mclog44 .t b { color: #ffb0c8; }
+.mclog44 .t.me b { color: #9fe0a0; }

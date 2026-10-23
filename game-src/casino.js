@@ -507,6 +507,12 @@ function setupBJMulti(cb, body) {
     const t = cb.querySelector("#bjLeft"); if (t) t.textContent = Math.max(0, Math.ceil((bjM.deadline - performance.now()) / 1000));
   }, 250);
 }
+// いま、みんなの卓（BJ・麻雀）についているか。卓の中だけのチャットで使う
+K.tableNow = () => {
+  if (bjM.cb && bjM.cb.isConnected && bjM.st && K.net && K.net.connected() && mySeat()) return "bj";
+  if (mjM.cb && mjM.cb.isConnected && mjM.st) return "mj";
+  return null;
+};
 function mySeat() { const st = bjM.st; return st ? st.seats.find(s => s.id === K.net.myId()) : null; }
 function renderBJM() {
   const cb = bjM.cb, body = bjM.body, st = bjM.st; if (!cb || !cb.isConnected || !st) return;

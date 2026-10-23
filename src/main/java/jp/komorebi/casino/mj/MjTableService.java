@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import jp.komorebi.casino.TableRoster;
 import jp.komorebi.world.SharedWorldService;
 import jp.komorebi.ws.GameSocketHandler;
 import jp.komorebi.ws.PlayerSession;
@@ -21,7 +22,7 @@ import jp.komorebi.ws.WelcomeContributor;
  * 精算は本人に mjPay で伝える。そのとき本人がつないでいなければ取っておいて、次の welcome で渡す（共有の村の "_mjpay"）。
  */
 @Service
-public class MjTableService implements WelcomeContributor {
+public class MjTableService implements WelcomeContributor, TableRoster {
 
     private static final String PENDING = "_mjpay";
 
@@ -67,6 +68,16 @@ public class MjTableService implements WelcomeContributor {
 
     public void command(PlayerSession from, JsonNode msg) {
         game.command(from.playerId(), from.name(), msg.path("act").asText(""), msg.path("a").asInt(0), msg.path("b").asInt(0), System.currentTimeMillis());
+    }
+
+    @Override
+    public String kind() {
+        return "mj";
+    }
+
+    @Override
+    public java.util.List<Long> mates(long playerId) {
+        return game.mates(playerId);
     }
 
     @Scheduled(fixedDelay = 400)

@@ -113,6 +113,16 @@ public final class MjGame {
     }
 
     /** 管理人室用：卓の数と座っている人数 */
+    /** 同じ卓についている人（CPUはのぞく、本人もふくむ）。卓にいなければ空 */
+    public synchronized List<Long> mates(long pid) {
+        Integer tid = where.get(pid);
+        Table t = tid == null ? null : tables.get(tid);
+        List<Long> out = new ArrayList<>();
+        if (t == null) return out;
+        for (Seat s : t.seats) if (s != null && !s.cpu && tid.equals(where.get(s.id))) out.add(s.id);
+        return out;
+    }
+
     public synchronized int[] stats() {
         int people = 0;
         for (Table t : tables.values()) people += t.humans();

@@ -730,6 +730,13 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .mcform44 { display: flex; gap: 6px; }
 .mcform44 input { flex: 1; min-width: 0; font: inherit; padding: 4px 8px; border-radius: 6px; border: 2px solid #6a5a7a; background: #fffaf0; color: #2a2228; }
 .mcform44 .btn { padding: 4px 12px; min-height: 0; }
+.mcto44 { display: flex; flex: none; border-radius: 6px; overflow: hidden; border: 2px solid #6a5a7a; }
+.mcto44[hidden] { display: none; }
+.mcto44 button { font: inherit; font-size: .78rem; padding: 2px 8px; border: 0; background: #3a3040; color: #d8cce0; cursor: pointer; }
+.mcto44 button.on { background: #ffd86a; color: #2a2228; font-weight: bold; }
+.mclog44 i { font-style: normal; font-size: .7rem; background: #ffd86a; color: #2a2228; border-radius: 4px; padding: 0 4px; margin-right: 4px; }
+.mclog44 .t b { color: #ffb0c8; }
+.mclog44 .t.me b { color: #9fe0a0; }
 </style>
 
 <header>
@@ -856,7 +863,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.28.1";
+  const VER = "0.28.2";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -3340,20 +3347,58 @@ function updateAnimals(dt) {
     updateEnt(e, dt);
   }
 }
-function updatePets(dt) {
-  if (map !== village) return;
-  let lead = player;
-  for (const p of petEnts) {
+// ペットは、主人が歩いたマス（足あと）を順番にたどってついてくる。
+// 前は「前のペットについていく」だけだったので、何匹もいると道をふさぎ合って、その場で上下にぷるぷるし続けることがあった
+let petTrail = null;
+function trailInit(m, x, y, n) {
+  const out = [[x, y]], seen = new Set([x + "," + y]), q = [[x, y]];
+  while (q.length && out.length < n) {
+    const [cx, cy] = q.shift();
+    for (const [dx, dy] of [[0, 1], [-1, 0], [1, 0], [0, -1]]) {
+      const nx = cx + dx, ny = cy + dy, k = nx + "," + ny; if (seen.has(k)) continue; seen.add(k);
+      if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h || m.solid[ny][nx]) continue;
+      out.push([nx, ny]); q.push([nx, ny]);
+    }
+  }
+  return out;
+}
+function trailStep(tr, m, x, y) {
+  if (!tr || Math.abs(tr[0][0] - x) + Math.abs(tr[0][1] - y) > 1) return trailInit(m, x, y, 10);
+  if (tr[0][0] === x && tr[0][1] === y) return tr;
+  const i = tr.findIndex(t => t[0] === x && t[1] === y); if (i >= 0) tr.splice(i, 1);
+  tr.unshift([x, y]); if (tr.length > 24) tr.length = 24;
+  return tr;
+}
+function followTrail(pets, lead, tr, dt, avoid) {
+  const m = village;
+  pets.forEach((p, i) => {
     if (!p.moving) {
-      const dist = Math.abs(p.x - lead.x) + Math.abs(p.y - lead.y);
-      if (dist > 1 + (lead === player ? 1 : 0)) {
-        const dx = lead.x - p.x, dy = lead.y - p.y;
-        const o = Math.abs(dx) > Math.abs(dy) ? [dx > 0 ? "right" : "left", dy > 0 ? "down" : "up"] : [dy > 0 ? "down" : "up", dx > 0 ? "right" : "left"];
-        if (!stepTo(p, o[0]) && !stepTo(p, o[1]) && dist > 8) { const s = freeNear(village, player.x, player.y); placeAt(p, s[0], s[1]); }
+      const t = tr[Math.min(i + 1, tr.length - 1)];
+      if (t && !(t[0] === lead.x && t[1] === lead.y) && !(avoid && t[0] === avoid[0] && t[1] === avoid[1])) {
+        const dx = t[0] - p.x, dy = t[1] - p.y, dist = Math.abs(dx) + Math.abs(dy);
+        if (dist > 7) { placeAt(p, t[0], t[1]); p.stuck = 0; }
+        else if (dist > 0) {
+          const h = dx ? (dx > 0 ? "right" : "left") : null, v = dy ? (dy > 0 ? "down" : "up") : null;
+          let moved = false;
+          // 近づく向きにしか歩かない（遠ざかる向きに逃げないので、行ったり来たりしない）
+          for (const d of Math.abs(dx) >= Math.abs(dy) ? [h, v] : [v, h]) {
+            if (!d) continue; const [sx, sy] = DIRS[d], nx = p.x + sx, ny = p.y + sy;
+            if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h || m.solid[ny][nx] || (avoid && nx === avoid[0] && ny === avoid[1])) continue;
+            p.dir = d; p.fx = nx; p.fy = ny; p.moving = true; p.prog = 0; moved = true; break;
+          }
+          if (moved) p.stuck = 0;
+          else if ((p.stuck = (p.stuck || 0) + dt) > 1.2) { placeAt(p, t[0], t[1]); p.stuck = 0; }
+        }
       }
     }
-    updateEnt(p, dt); lead = p;
-  }
+    updateEnt(p, dt);
+  });
+}
+function updatePets(dt) {
+  if (map !== village) { petTrail = null; return; }
+  petTrail = trailStep(petTrail, village, player.x, player.y);
+  const sel = world.inv[world.sel], it = sel && ITEMS[sel.id], useful = it && (it.use || it.seed || it.place || it.plant || it.weapon);
+  followTrail(petEnts, player, petTrail, dt, useful && !player.moving && !modalOpen ? front() : null);
 }
 function animalsNewDay() {
   for (const a of world.animals) {
@@ -5144,7 +5189,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.28.1";
+const CLIENT_VERSION = "0.28.2";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7172,6 +7217,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.28.2", date: "2026/10/23", title: "卓のチャット・ペットのぷるぷるを直した", items: [
+    "麻雀やBJの卓についているときは、カジノのチャット欄で「卓」と「みんな」を切りかえられるようになった。「卓」は同じ卓の人だけ、「みんな」はサーバーの全員に届く",
+    "ペットをたくさん連れていると、道をふさぎ合ってその場で上下にぷるぷる動き続けることがあったのを直した。ペットは主人が歩いた足あとをたどって、一列になってついてくる",
+    "ほかの人のペットが、一か所に重なって見えることがあったのを直した",
+  ] },
   { v: "0.28.1", date: "2026/10/23", title: "ほかの人の動き・ペット・畑が見える／カジノでもチャット", items: [
     "オンラインで、ほかの人がクワや斧をふる・水をまく・種をまく・釣りをする動きが見えるようになった。釣れた魚は吹き出しで出る",
     "ほかの人がスロット・麻雀・競どんぐりなどをしているときは、頭の上に「スロット中」のように出る",
@@ -11365,19 +11415,9 @@ F8.update = dt => {
   for (const e of rAnimals44.values()) updateEnt(e, dt);
   for (const [pid, ents] of rPets44) {
     const r = remotes.get(pid); if (!r) continue;
-    let lead = r;
-    for (const p of ents) {
-      if (!p.moving) {
-        const dist = Math.abs(p.x - lead.x) + Math.abs(p.y - lead.y);
-        const near44 = () => { const f = freeNear(village, lead.x, lead.y); return f[0] === r.x && f[1] === r.y ? [lead.x, lead.y + 1] : f; };
-        if (dist > 8 || r.rmap !== "village" || (p.x === r.x && p.y === r.y)) { const f = near44(); placeAt(p, f[0], f[1]); }
-        else if (dist > (lead === r ? 2 : 1)) {
-          const ddx = lead.x - p.x, ddy = lead.y - p.y, d = Math.abs(ddx) > Math.abs(ddy) ? (ddx > 0 ? "right" : "left") : (ddy > 0 ? "down" : "up"), [sx, sy] = DIRS[d], nx = p.x + sx, ny = p.y + sy;
-          if (village.solid[ny] && !village.solid[ny][nx] && !(nx === r.x && ny === r.y)) { p.dir = d; p.fx = nx; p.fy = ny; p.moving = true; p.prog = 0; } else if (dist > 4) { const f = near44(); placeAt(p, f[0], f[1]); }
-        }
-      }
-      updateEnt(p, dt); lead = p;
-    }
+    if (r.rmap !== "village") { r.trail44 = null; continue; }
+    r.trail44 = trailStep(r.trail44, village, r.x, r.y);
+    followTrail(ents, r, r.trail44, dt, null);
   }
 };
 const _atl44 = F7.addToList;
@@ -11433,29 +11473,50 @@ handle8 = m => {
   } catch (e) { if (window.__komoErr) window.__komoErr(e, "v44 net"); }
 };
 // ---------- カジノの中でもチャット ----------
-$("mbox").insertAdjacentHTML("beforeend", `<div class="mchat44" id="mchat44" hidden><div class="mclog44" id="mclog44"></div><form class="mcform44" id="mcform44"><input id="mcin44" type="text" maxlength="60" placeholder="みんなに話しかける" autocomplete="off"><button class="btn" type="submit">送る</button></form></div>`);
-let mcSig44 = "";
+$("mbox").insertAdjacentHTML("beforeend", `<div class="mchat44" id="mchat44" hidden><div class="mclog44" id="mclog44"></div><form class="mcform44" id="mcform44"><span class="mcto44" id="mcto44" hidden><button type="button" data-to44="all">みんな</button><button type="button" data-to44="table">卓</button></span><input id="mcin44" type="text" maxlength="60" placeholder="みんなに話しかける" autocomplete="off"><button class="btn" type="submit">送る</button></form></div>`);
+// 卓の中だけのチャット（麻雀・BJ）。サーバー全体のチャットとまとめて表示して、送る先だけ切りかえる
+const tchatLog44 = [];
+let mcSig44 = "", mcTo44 = "table", mcTable44 = null;
+function addTChat44(c) { tchatLog44.push(c); if (tchatLog44.length > 40) tchatLog44.shift(); mcSig44 = ""; }
 function renderMChat44() {
   const box = $("mchat44"), mb = $("mbox");
   const on = modalOpen && F8.connected && mb.classList.contains("dark");
-  box.hidden = !on; if (!on) return;
-  const now = Date.now(), lines = chatLog.filter(c => now - c.at < 15 * 60e3).slice(-5);
-  const sig = lines.map(c => c.at + c.text).join("|");
+  box.hidden = !on; if (!on) { mcTable44 = null; return; }
+  const tb = K.tableNow ? K.tableNow() : null;
+  if (tb !== mcTable44) { mcTable44 = tb; if (tb) mcTo44 = "table"; mcSig44 = ""; }
+  const to = tb ? mcTo44 : "all";
+  $("mcto44").hidden = !tb;
+  box.querySelectorAll("[data-to44]").forEach(b => b.classList.toggle("on", b.dataset.to44 === to));
+  const ph = to === "table" ? (tb === "mj" ? "同じ卓の人に話しかける" : "BJの卓の人に話しかける") : "サーバーのみんなに話しかける";
+  if ($("mcin44").placeholder !== ph) $("mcin44").placeholder = ph;
+  const now = Date.now();
+  const lines = [...chatLog.filter(c => now - c.at < 15 * 60e3), ...(tb ? tchatLog44.filter(c => now - c.at < 15 * 60e3) : [])].sort((a, b) => a.at - b.at).slice(-6);
+  const sig = to + "|" + lines.map(c => c.at + c.text).join("|");
   if (sig === mcSig44) return; mcSig44 = sig;
   const el = $("mclog44");
-  el.innerHTML = lines.length ? lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}"><b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("") : `<div class="sys">ここからチャットできるよ</div>`;
+  el.innerHTML = lines.length ? lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}${c.t ? " t" : ""}">${c.t ? `<i>卓</i>` : ""}<b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("") : `<div class="sys">${tb ? "「卓」は同じ卓の人だけ、「みんな」はサーバーの全員に届くよ" : "ここからチャットできるよ"}</div>`;
   el.scrollTop = el.scrollHeight;
 }
 setInterval(renderMChat44, 400);
+$("mcto44").addEventListener("click", e => { const b = e.target.closest("[data-to44]"); if (!b) return; mcTo44 = b.dataset.to44; mcSig44 = ""; renderMChat44(); $("mcin44").focus(); });
 $("mcform44").addEventListener("submit", e => {
   e.preventDefault(); const inp = $("mcin44"), t = inp.value.trim(); if (!t || !F8.connected) return;
   if (Date.now() - chatLast < 1200) { toast(null, "少し待ってから送ってね"); return; }
-  chatLast = Date.now(); send8({ type: "chat", text: t });
-  addChat({ name: onl.name || myName(), text: t, at: Date.now(), me: true }); player.say = { text: t.length > 22 ? t.slice(0, 21) + "…" : t, until: performance.now() + 4500 };
+  chatLast = Date.now();
+  const tb = K.tableNow ? K.tableNow() : null;
+  if (tb && mcTo44 === "table") { send8({ type: "tchat", text: t }); addTChat44({ name: onl.name || myName(), text: t, at: Date.now(), me: true, t: true }); }
+  else { send8({ type: "chat", text: t }); addChat({ name: onl.name || myName(), text: t, at: Date.now(), me: true }); player.say = { text: t.length > 22 ? t.slice(0, 21) + "…" : t, until: performance.now() + 4500 }; }
   inp.value = ""; mcSig44 = ""; renderMChat44();
 });
+const _handle44c = handle8;
+handle8 = m => {
+  _handle44c(m);
+  if (!m || typeof m.type !== "string") return;
+  if (m.type === "tchat" && typeof m.text === "string") { addTChat44({ name: String(m.name || "だれか").slice(0, 16), text: m.text.slice(0, 60), at: Date.now(), t: true }); renderMChat44(); }
+  else if (m.type === "tchatNg") { addTChat44({ name: "", text: "卓についていないので、卓のチャットは届かなかったよ", at: Date.now(), sys: true, t: true }); renderMChat44(); }
+};
 $("mcin44").addEventListener("keydown", e => e.stopPropagation());
-F44.farms = farms44;
+F44.farms = farms44; F44.rPets = rPets44; F44.rAnimals = rAnimals44;
 F44.ready = true;
 
 // =================== start ===================
@@ -11995,6 +12056,12 @@ function setupBJMulti(cb, body) {
     const t = cb.querySelector("#bjLeft"); if (t) t.textContent = Math.max(0, Math.ceil((bjM.deadline - performance.now()) / 1000));
   }, 250);
 }
+// いま、みんなの卓（BJ・麻雀）についているか。卓の中だけのチャットで使う
+K.tableNow = () => {
+  if (bjM.cb && bjM.cb.isConnected && bjM.st && K.net && K.net.connected() && mySeat()) return "bj";
+  if (mjM.cb && mjM.cb.isConnected && mjM.st) return "mj";
+  return null;
+};
 function mySeat() { const st = bjM.st; return st ? st.seats.find(s => s.id === K.net.myId()) : null; }
 function renderBJM() {
   const cb = bjM.cb, body = bjM.body, st = bjM.st; if (!cb || !cb.isConnected || !st) return;

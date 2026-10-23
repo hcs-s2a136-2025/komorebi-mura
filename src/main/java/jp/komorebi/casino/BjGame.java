@@ -127,6 +127,14 @@ public final class BjGame {
     }
 
     /** 0.5秒ごとくらいに呼ぶ。online はその人がいまつないでいるか */
+    /** 卓についている人（本人がいなければ空） */
+    public synchronized List<Long> mates(long pid) {
+        List<Long> out = new ArrayList<>();
+        if (seats.stream().noneMatch(x -> x.id == pid)) return out;
+        for (Seat s : seats) out.add(s.id);
+        return out;
+    }
+
     public synchronized void tick(long now, LongPredicate online) {
         boolean changed = false;
         for (Seat s : new ArrayList<>(seats)) {

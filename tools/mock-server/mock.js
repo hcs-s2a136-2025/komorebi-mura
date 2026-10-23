@@ -19,11 +19,19 @@ const toMap = (map, msg, ex) => { const t = JSON.stringify(msg); for (const o of
 const path = require("path"), { spawn } = require("child_process");
 const BJ_CP = process.env.BJ_CP || path.join(__dirname, "bj", "out");
 let bj = null;
+// 卓の中だけのチャット（本物は ws/TableChatHandler.java）。同じ卓の人は、麻雀とBJの橋渡しに聞く
+const tReq = new Map(); let tSeq = 1;
+function tchatDone(rid, ids, k) {
+  const r = tReq.get(rid); if (!r) return; r.left--;
+  const list = String(ids || "").split(",").filter(Boolean).map(Number);
+  if (!r.done && list.includes(r.from)) { r.done = true; for (const o of sessions) if (o.pl && o.pl.id !== r.from && list.includes(o.pl.id)) o.send(JSON.stringify({ ...r.msg, k })); }
+  if (r.left <= 0) { tReq.delete(rid); if (!r.done) r.s.send(JSON.stringify({ type: "tchatNg" })); }
+}
 if (fs.existsSync(BJ_CP)) {
   bj = spawn("java", ["-cp", BJ_CP, "BjBridge"], { stdio: ["pipe", "pipe", "ignore"] });
   let buf = "";
   bj.stdout.on("data", d => { buf += d.toString("utf8"); let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); const f = line.split("\t");
-    if (f[0] === "A") { for (const o of sessions) if (o.pl) o.send(f[1]); } else if (f[0] === "P") { for (const o of sessions) if (o.pl && o.pl.id === +f[1]) o.send(f[2]); } } });
+    if (f[0] === "A") { for (const o of sessions) if (o.pl) o.send(f[1]); } else if (f[0] === "P") { for (const o of sessions) if (o.pl && o.pl.id === +f[1]) o.send(f[2]); } else if (f[0] === "M") tchatDone(f[1], f[2], "bj"); } });
   setInterval(() => bj.stdin.write("T\t" + [...sessions].filter(o => o.pl).map(o => o.pl.id).join(",") + "\n"), 500);
   process.on("exit", () => bj.kill()); process.on("SIGTERM", () => { bj.kill(); process.exit(0); }); process.on("SIGINT", () => { bj.kill(); process.exit(0); });
 }
@@ -48,6 +56,7 @@ if (fs.existsSync(path.join(BJ_CP, "MjBridge.class"))) {
   let buf = "";
   mj.stdout.on("data", d => { buf += d.toString("utf8"); let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); const f = line.split("\t");
     if (f[0] === "A") { for (const o of sessions) if (o.pl) o.send(f[1]); } else if (f[0] === "P") { for (const o of sessions) if (o.pl && o.pl.id === +f[1]) o.send(f[2]); }
+    else if (f[0] === "M") tchatDone(f[1], f[2], "mj");
     else if (f[0] === "Y") { const id = +f[1], money = +f[2], on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "mjPay", money, text: f[3] }))); else if (money) mjPending.set(id, (mjPending.get(id) || 0) + money); } } });
   setInterval(() => mj.stdin.write("T\t" + [...sessions].filter(o => o.pl).map(o => o.pl.id).join(",") + "\n"), 400);
   process.on("exit", () => mj.kill());
@@ -196,6 +205,10 @@ wss.on("connection", s => {
       const mine = { type: "houseBox", key: k, ...hview(k, owner, me) }; delete mine.layout; s.send(JSON.stringify(mine));
       if (bk !== k) return;
       const oth = { type: "houseBox", key: k, ...hview(k, false) }; delete oth.layout; toMap("house:" + k, oth, s); }
+    if (m.type === "tchat") { const t = String(m.text || "").slice(0, 60).trim(); if (!t) return; const rid = String(tSeq++), bridges = [mj, bj].filter(Boolean);
+      if (!bridges.length) { s.send(JSON.stringify({ type: "tchatNg" })); return; }
+      tReq.set(rid, { from: s.pl.id, s, left: bridges.length, msg: { type: "tchat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() } });
+      for (const br of bridges) br.stdin.write(["M", s.pl.id, rid].join("\t") + "\n"); return; }
     if (m.type === "chat") { const t = String(m.text || "").slice(0, 60).trim(); if (!t) return; chat.push({ name: s.pl.name, text: t, at: Date.now() }); bc({ type: "chat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() }, s); }
   });
   s.on("close", () => { sessions.delete(s); if (s.pl) bc({ type: "leave", id: s.pl.id }); });

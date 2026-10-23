@@ -26,9 +26,9 @@ function warnIfBroke(body) {
 }
 
 // ======================= casino shell =======================
-const TABS = [["slot", "スロット"], ["chohan", "丁半"], ["chinchiro", "チンチロ"], ["bj", "どんぐりBJ"], ["mahjong", "賭け麻雀"]];
+const TABS = [["slot", "スロット"], ["chohan", "丁半"], ["chinchiro", "チンチロ"], ["bj", "どんぐりBJ"], ["mahjong", "賭け麻雀"], ["race", "競どんぐり"]];
 const ZASHIKI = [["chohan", "丁半"], ["chinchiro", "チンチロ"]];
-const GAME_TITLE = { slot: "スロット台", chohan: "丁半の座敷", chinchiro: "チンチロの座敷", bj: "どんぐりBJの卓", mahjong: "雀卓" };
+const GAME_TITLE = { slot: "スロット台", chohan: "丁半の座敷", chinchiro: "チンチロの座敷", bj: "どんぐりBJの卓", mahjong: "雀卓", race: "競どんぐり" };
 function openCasino(tab = "slot", single) {
   S.single = !!single; S.zashiki = single === "zashiki";
   const tabList = S.zashiki ? ZASHIKI : TABS;
@@ -37,7 +37,7 @@ function openCasino(tab = "slot", single) {
       <p class="mtext cz-money">${moneyLine()}</p><div id="czbody" class="czbody"></div>`;
     body.querySelectorAll("[data-ct]").forEach(b => b.onclick = () => { if (S.busy) return; const z = S.zashiki; K.closeModal(); openCasino(b.dataset.ct, z ? "zashiki" : undefined); });
     const cb = body.querySelector("#czbody");
-    ({ slot: setupSlot, chohan: setupChohan, chinchiro: setupChinchiro, bj: setupBJ, mahjong: setupMahjongLobby, bjc: setupBJChoice })[tab === "bj" ? "bjc" : tab](cb, body);
+    ({ slot: setupSlot, chohan: setupChohan, chinchiro: setupChinchiro, bj: setupBJ, mahjong: setupMahjongLobby, bjc: setupBJChoice, race: setupRace })[tab === "bj" ? "bjc" : tab](cb, body);
   });
 }
 K.openCasino = openCasino;
@@ -563,6 +563,179 @@ function renderBJM() {
   }; }
   cb.querySelectorAll("[data-bj]").forEach(b => b.onclick = () => { b.disabled = true; K.net.send({ type: "bj", act: b.dataset.bj }); });
 }
+
+// ======================= 競どんぐり =======================
+// オンライン：サーバーが進行を決めて、みんなで同じレースを見る。オフライン：自分で「出走！」を押す
+const RACE_COLORS = ["#e2404e", "#4a8ae0", "#f0c030", "#4aa860", "#a070e0", "#f08a3a"];
+const RACE_NAMES = ["クヌギ", "コナラ", "マテバシイ", "スダジイ", "ミズナラ", "カシワ", "ウバメガシ", "アラカシ", "シラカシ", "クリ"];
+const FORM_NAME = ["", "不調", "いまいち", "ふつう", "好調", "絶好調"];
+const RC = { st: null, at: 0, local: null, ui: null, lastSettled: 0, tab: "win" };
+const raceBets = () => { const w = K.world; if (!w.race41 || typeof w.race41 !== "object") w.race41 = { bets: [] }; if (!Array.isArray(w.race41.bets)) w.race41.bets = []; return w.race41; };
+// 走り方：seed と着順・タイムから、だれの画面でも同じ動きになる
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function raceCurves(st) {
+  if (st._curves && st._curves.seed === st.seed) return st._curves;
+  const c = { seed: st.seed, r: st.times.map((T, i) => { const R = mulberry((st.seed | 0) + i * 7919); return { T, a: .12 + R() * .1, f: .5 + R() * 1, ph: R() * Math.PI * 2, b: R() * .05 }; }) };
+  st._curves = c; return c;
+}
+function raceProg(st, i, t) {
+  const k = raceCurves(st).r[i]; const u = Math.max(0, Math.min(1, t / k.T));
+  return Math.max(0, Math.min(1, u + k.a * u * (1 - u) * Math.sin(Math.PI * 2 * k.f * u + k.ph)));
+}
+// オフラインのレース（サーバーの RaceGame と同じ決め方）
+function localRace(id) {
+  const pool = RACE_NAMES.slice(), runners = []; let total = 0;
+  for (let i = 0; i < 6; i++) { const s = .72 + Math.random() * .56, w = Math.pow(s, 6); total += w; runners.push({ name: pool.splice(rnd(pool.length), 1)[0] + "号", color: RACE_COLORS[i], w, form: Math.max(1, Math.min(5, Math.floor((s - .72) / .56 * 5) + 1)), pool: 0 }); }
+  for (const r of runners) { const p = r.w / total; let p2 = p; for (const o of runners) if (o !== r) p2 += (o.w / total) * r.w / (total - o.w); r.win = Math.max(1.3, Math.min(80, Math.round(.86 / p * 10) / 10)); r.place = Math.max(1.1, Math.min(20, Math.round(.86 / p2 * 10) / 10)); r.formName = FORM_NAME[r.form]; }
+  return { type: "race", id, phase: "bet", ms: 0, runners, bets: [], hist: (RC.local && RC.local.hist) || [], local: true };
+}
+function localRun(st) {
+  const left = [0, 1, 2, 3, 4, 5], order = [];
+  while (left.length) { let x = Math.random() * left.reduce((a, i) => a + st.runners[i].w, 0), pick = left[left.length - 1]; for (const i of left) { x -= st.runners[i].w; if (x < 0) { pick = i; break; } } order.push(pick); left.splice(left.indexOf(pick), 1); }
+  const times = []; let t = 15000 + rnd(3000); for (const i of order) { times[i] = t; t += 200 + rnd(1100); }
+  Object.assign(st, { phase: "run", order, times, seed: rnd(1e9), elapsed: 0, ms: t + 1200 }); RC.at = performance.now(); delete st._curves;
+}
+const payoutOf = (b, order) => { const hit = b.kind === "win" ? order[0] === b.runner : order[0] === b.runner || order[1] === b.runner; return hit ? Math.floor(b.amount * b.odds) : 0; };
+// 結果が出たら、自分の賭けを精算する（カジノにいなくても）
+function settleRace(id, order, local) {
+  const R = raceBets(), mine = R.bets.filter(b => b.id === id && !!b.local === !!local);
+  if (!mine.length) return null;
+  R.bets = R.bets.filter(b => !mine.includes(b));
+  const staked = mine.reduce((a, b) => a + b.amount, 0), paid = mine.reduce((a, b) => a + payoutOf(b, order), 0);
+  K.gambleResult(staked, paid);
+  R.stats = R.stats || { races: 0, best: 0 }; R.stats.races++; if (paid - staked > R.stats.best) R.stats.best = paid - staked;
+  if (paid > 0 && K.news41) { const st = RC.st && RC.st.id === id ? RC.st : null, nm = st ? st.runners[order[0]].name : ""; if (paid >= 3000 || paid >= staked * 8) K.news41.add("race", `競どんぐりで${nm ? nm + "に賭けて" : ""}${fmt(paid)}の払い戻し`, Math.min(90, 30 + Math.round(paid / 1000))); }
+  K.saveWorld();
+  return { staked, paid };
+}
+function settleOld(results) {
+  const R = raceBets(); if (!R.bets.length) return;
+  for (const r of results || []) if (r && Array.isArray(r.order) && r.order.length >= 2) { const res = settleRace(r.id, r.order, false); if (res && res.paid) K.toast("coin", `留守のあいだの競どんぐり：払い戻し +${fmt(res.paid)}`); }
+  // 10分たっても結果がわからない賭け（サーバーが入れかわったなど）は返す
+  const now = Date.now(), old = R.bets.filter(b => !b.local && now - (b.t || 0) > 10 * 60e3);
+  if (old.length) { const back = old.reduce((a, b) => a + b.amount, 0); R.bets = R.bets.filter(b => !old.includes(b)); K.addMoney(back); K.toast("coin", `取り消しになった競どんぐりの賭け金 ${fmt(back)} を返したよ`); K.saveWorld(); }
+}
+K.raceIn = m => {
+  if (m.type === "race") {
+    const prev = RC.st; RC.st = m; RC.at = performance.now();
+    if (m.phase === "result" && Array.isArray(m.order) && (!prev || prev.id !== m.id || prev.phase !== "result")) {
+      const res = settleRace(m.id, m.order, false);
+      if (res && !(RC.ui && RC.ui.cb.isConnected)) K.toast("coin", res.paid ? `競どんぐり：${m.runners[m.order[0]].name}が1着！ 払い戻し +${fmt(res.paid)}` : `競どんぐり：${m.runners[m.order[0]].name}が1着。はずれ…`);
+      if (res) RC.lastRes = { id: m.id, ...res };
+    }
+  } else if (m.type === "raceOk") {
+    const R = raceBets(); K.addMoney(-m.amount); R.bets.push({ id: m.id, runner: m.runner, kind: m.kind, amount: m.amount, odds: m.odds, t: Date.now() }); K.saveWorld();
+    if (RC.ui) { RC.ui.msg = `${m.runner + 1}番に${m.kind === "win" ? "単勝" : "複勝"} ${fmt(m.amount)}（${m.odds}倍）賭けた`; RC.ui.dirty = true; }
+  } else if (m.type === "raceNg") { if (RC.ui) { RC.ui.msg = String(m.text || "").slice(0, 60); RC.ui.dirty = true; } }
+  else if (m.type === "raceWelcome") { if (m.race) { RC.st = m.race; RC.at = performance.now(); } settleOld(m.raceResults); }
+  if (RC.ui) RC.ui.dirty = true;
+};
+const raceOnline = () => K.net && K.net.connected();
+function curRace() { if (raceOnline() && RC.st) return RC.st; if (!RC.local) RC.local = localRace(1); return RC.local; }
+const msLeft = st => Math.max(0, (st.ms || 0) - (performance.now() - RC.at));
+function setupRace(cb, body) {
+  if (raceOnline()) K.net.send({ type: "race", act: "look" });
+  RC.ui = { cb, body, msg: "", dirty: true, sig: "" };
+  cb.innerHTML = `<div class="race41">
+    <canvas id="raceCv" width="480" height="210"></canvas>
+    <div class="race-cap" id="raceCap"></div>
+    <div id="raceBody"></div>
+    <details class="paytable"><summary>競どんぐりのあそびかた</summary><p class="mtext small">6粒のどんぐりが走るレースに賭けます。<b>単勝</b>は1着を当てる賭け、<b>複勝</b>は2着までに入るかを当てる賭けで、当たると「賭け金×オッズ」がもどってきます。オッズはレースごとに決まっていて、調子がいいどんぐりほど低め（当たりやすいけど配当は少なめ）。${raceOnline() ? "オンラインでは、みんなで同じレースを見ます。受付は約50秒、1レースに12回まで賭けられます。カジノを出ていても、結果が出たら自動で精算されます。" : "ひとりのときは、賭けたあと「出走！」を押すとスタートします。"}</p></details></div>`;
+  const cv = cb.querySelector("#raceCv"), ctx = cv.getContext("2d"); ctx.imageSmoothingEnabled = false;
+  let lastLeader = -1, comment = "";
+  function draw() {
+    if (!cb.isConnected) {
+      RC.ui = null;
+      // ひとりのレースの途中で閉じたら：走っていれば結果で精算、まだなら賭け金を返す
+      const L = RC.local; if (L) { const loc = raceBets().bets.filter(b => b.local && b.id === L.id);
+        if (loc.length && L.order) { settleRace(L.id, L.order, true); L.phase = "result"; }
+        else if (loc.length) { const back = loc.reduce((a, b) => a + b.amount, 0); raceBets().bets = raceBets().bets.filter(b => !loc.includes(b)); K.addMoney(back); K.saveWorld(); } }
+      return;
+    }
+    const st = curRace(), now = performance.now();
+    // 背景：芝と土のコース
+    ctx.fillStyle = "#5aa850"; ctx.fillRect(0, 0, 480, 210);
+    ctx.fillStyle = "#c89a62"; ctx.fillRect(0, 18, 480, 180);
+    for (let i = 0; i <= 6; i++) { ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillRect(0, 18 + i * 30, 480, 1); }
+    ctx.fillStyle = "#fff"; for (let y = 18; y < 198; y += 6) { ctx.fillRect(36, y, 2, 3); }
+    for (let y = 18; y < 198; y += 6) for (let k = 0; k < 2; k++) { ctx.fillStyle = (Math.floor(y / 6) + k) % 2 ? "#222" : "#fff"; ctx.fillRect(446 + k * 3, y, 3, 6); }
+    ctx.fillStyle = "#3a7a3a"; for (let x = 0; x < 480; x += 24) { ctx.fillRect(x + 4, 6, 6, 6); ctx.fillRect(x + 14, 202, 6, 5); }
+    const running = st.phase === "run" || st.phase === "result";
+    const t = running ? (st.local ? now - RC.at : (st.elapsed || 0) + (now - RC.at)) : 0;
+    let leader = -1, best = -1;
+    st.runners.forEach((r, i) => {
+      const p = running && st.times ? raceProg(st, i, t) : 0;
+      if (p > best) { best = p; leader = i; }
+      const x = 40 + p * 400, y = 24 + i * 30, moving = running && p < 1, bob = moving ? Math.abs(Math.sin(now / 70 + i)) * 2 : 0;
+      acorn(ctx, Math.round(x - 12), Math.round(y + 2 - bob), r.color || RACE_COLORS[i], i + 1, moving, now + i * 40);
+      if (st.phase === "result" && st.order) { const pl = st.order.indexOf(i); if (pl >= 0 && pl < 3) { ctx.fillStyle = ["#f0c030", "#c8ccd8", "#d8905a"][pl]; ctx.fillRect(Math.round(x + 12), y + 6, 14, 12); ctx.fillStyle = "#222"; ctx.font = "10px sans-serif"; ctx.fillText(pl + 1, Math.round(x + 16), y + 16); } }
+    });
+    // 実況
+    if (st.phase === "bet") comment = st.local ? "賭けたら「出走！」を押してね" : `受付中　あと ${Math.ceil(msLeft(st) / 1000)} 秒`;
+    else if (st.phase === "run") {
+      const done = st.times && st.order && t >= st.times[st.order[0]];
+      if (done) comment = `ゴール！ 1着は ${st.order[0] + 1}番 ${st.runners[st.order[0]].name}！`;
+      else if (t < 1200) comment = "各どんぐり、いっせいにスタート！";
+      else if (leader !== lastLeader && leader >= 0) comment = `${leader + 1}番 ${st.runners[leader].name}が先頭に！`;
+      else if (best > .8 && !/最後/.test(comment)) comment = `最後の直線！ ${leader + 1}番 ${st.runners[leader].name}、逃げきれるか！`;
+      lastLeader = leader;
+      if (st.local && st.times && t > Math.max(...st.times) + 1200) { st.phase = "result"; const res = settleRace(st.id, st.order, true); if (res) RC.lastRes = { id: st.id, ...res }; RC.local.hist = [{ id: st.id, names: st.order.map(i => st.runners[i].name), winOdds: st.runners[st.order[0]].win }, ...(RC.local.hist || [])].slice(0, 6); st.hist = RC.local.hist; RC.ui.dirty = true; }
+    } else if (st.phase === "result" && st.order) comment = `1着 ${st.order[0] + 1}番 ${st.runners[st.order[0]].name}（単勝 ${st.runners[st.order[0]].win}倍）　2着 ${st.order[1] + 1}番 ${st.runners[st.order[1]].name}`;
+    const cap = cb.querySelector("#raceCap"); if (cap && cap.textContent !== comment) cap.textContent = comment;
+    const sig = [st.id, st.phase, (st.bets || []).length, raceBets().bets.length, RC.ui && RC.ui.msg, K.world.money, st.phase === "bet" && !st.local ? Math.ceil(msLeft(st) / 1000) > 0 : 0].join("|");
+    if (RC.ui && (RC.ui.dirty || RC.ui.sig !== sig)) { RC.ui.dirty = false; RC.ui.sig = sig; renderRaceBody(cb, body, st); }
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+}
+function acorn(ctx, x, y, col, n, moving, now) {
+  const P = (px, py, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + px, y + py, w, h); };
+  // 足
+  const lp = moving ? Math.floor(now / 90) % 2 : 0;
+  P(7 + lp * 2, 21, 2, 4, "#5a3a22"); P(14 - lp * 2, 21, 2, 4, "#5a3a22");
+  // 実
+  P(5, 9, 14, 11, "#b8742e"); P(6, 20, 12, 2, "#9a5e24"); P(7, 22, 10, 1, "#7a4a1c"); P(6, 10, 3, 6, "#d89a52");
+  // 帽子
+  P(3, 4, 18, 6, "#6a4626"); P(4, 3, 16, 1, "#7e5632"); for (let i = 5; i < 20; i += 3) P(i, 5, 1, 4, "#52341c"); P(11, 0, 2, 3, "#52341c");
+  // 目
+  P(9, 12, 2, 2, "#2a1a12"); P(14, 12, 2, 2, "#2a1a12");
+  // ゼッケン
+  P(7, 15, 10, 6, col); ctx.fillStyle = "#fff"; ctx.font = "bold 7px sans-serif"; ctx.fillText(n, x + 10, y + 21);
+}
+function renderRaceBody(cb, body, st) {
+  const el = cb.querySelector("#raceBody"); if (!el) return;
+  refreshMoney(body);
+  const keepBet = el.querySelector("#rbet")?.value;
+  const R = raceBets(), mine = R.bets.filter(b => b.id === st.id && !!b.local === !!st.local);
+  const open = st.phase === "bet" && (st.local || msLeft(st) > 500);
+  const rows = st.runners.map((r, i) => `<div class="rrow"><span class="rnum" style="background:${r.color}">${i + 1}</span><span class="rname">${esc(r.name)}<small>調子：${esc(r.formName || FORM_NAME[r.form] || "")}${st.local ? "" : `・みんなの賭け ${fmt(r.pool || 0)}`}</small></span>
+      <span class="rodds">単勝 <b>${r.win}</b>倍<br>複勝 <b>${r.place}</b>倍</span>
+      <span class="racts">${open ? `<button class="btn" type="button" data-rb="${i}:win">単勝</button><button class="btn light" type="button" data-rb="${i}:place">複勝</button>` : ""}</span></div>`).join("");
+  const myList = mine.length ? `<div class="mybets"><b>あなたの賭け</b>（合計 ${fmt(mine.reduce((a, b) => a + b.amount, 0))}）：${mine.map(b => `${b.runner + 1}番${b.kind === "win" ? "単勝" : "複勝"} ${fmt(b.amount)}`).join("・")}</div>` : "";
+  const last = RC.lastRes && (RC.lastRes.id === st.id || st.phase === "bet") ? `<div class="result ${RC.lastRes.paid ? "win" : ""}">${RC.lastRes.paid ? `当たり！ 払い戻し +${fmt(RC.lastRes.paid)}` : "はずれ…"}</div>` : "";
+  const others = !st.local && (st.bets || []).length ? `<p class="mtext small">みんなの賭け：${st.bets.slice(-6).map(b => `${esc(b.name)}が${b.runner + 1}番に${fmt(b.amount)}`).join("、")}</p>` : "";
+  const hist = (st.hist || []).length ? `<p class="mtext small">これまでの1着：${st.hist.slice(0, 6).map(h => `${esc((h.names || [])[0] || "")}（${h.winOdds}倍）`).join("・")}</p>` : "";
+  el.innerHTML = `<p class="mtext small">レース ${st.id}　${st.phase === "bet" ? "受付中" : st.phase === "run" ? "レース中" : "結果"}</p>
+    ${open ? betRow("rbet", "賭け金", Math.max(10, Math.min(S.lastBet || 100, K.world.money || 10))) : ""}
+    <div class="rlist">${rows}</div>${myList}${RC.ui && RC.ui.msg ? `<p class="mtext small">${esc(RC.ui.msg)}</p>` : ""}${last}${others}${hist}
+    ${st.local ? `<div class="row2">${st.phase === "bet" ? `<button class="btn" type="button" id="rGo">出走！</button>` : st.phase === "result" ? `<button class="btn" type="button" id="rNext">次のレースへ</button>` : ""}</div>` : ""}`;
+  wireBets(el);
+  if (keepBet && el.querySelector("#rbet")) el.querySelector("#rbet").value = keepBet;
+  el.querySelectorAll("[data-rb]").forEach(b => b.onclick = () => {
+    const [i, kind] = b.dataset.rb.split(":"), amt = readBet(el, "rbet", 10), r = st.runners[+i];
+    if (amt < 10 || amt > 50000) { RC.ui.msg = "賭け金は10〜50,000Gだよ"; RC.ui.dirty = true; return; }
+    if (amt > K.world.money) { RC.ui.msg = "所持金が足りないよ"; RC.ui.dirty = true; return; }
+    if (K.betAllowed && !K.betAllowed(amt)) { RC.ui.msg = K.betMsg(); RC.ui.dirty = true; return; }
+    if (mine.length >= 12) { RC.ui.msg = "1レースに賭けられるのは12回までだよ"; RC.ui.dirty = true; return; }
+    S.lastBet = amt;
+    if (st.local) { K.addMoney(-amt); R.bets.push({ id: st.id, runner: +i, kind, amount: amt, odds: kind === "win" ? r.win : r.place, local: true, t: Date.now() }); K.saveWorld(); RC.ui.msg = `${+i + 1}番に${kind === "win" ? "単勝" : "複勝"} ${fmt(amt)} 賭けた`; RC.ui.dirty = true; }
+    else K.net.send({ type: "race", act: "bet", runner: +i, kind, amount: amt });
+  });
+  const go = el.querySelector("#rGo"); if (go) go.onclick = () => { if (st.phase !== "bet") return; localRun(st); RC.ui.dirty = true; if (typeof SFX !== "undefined" && SFX.lever) SFX.lever(); };
+  const nx = el.querySelector("#rNext"); if (nx) nx.onclick = () => { RC.local = localRace(st.id + 1); RC.lastRes = null; RC.ui.msg = ""; RC.ui.dirty = true; };
+}
+// ひとりのときの賭けが残ったまま（レース中に閉じた・読みこみ直した）なら返す
+setTimeout(() => { try { const R = raceBets(), loc = R.bets.filter(b => b.local); if (loc.length) { const back = loc.reduce((a, b) => a + b.amount, 0); R.bets = R.bets.filter(b => !b.local); K.addMoney(back); K.saveWorld(); } } catch {} }, 1500);
 
 // ======================= MAHJONG =======================
 const RATES = [[10, "点1（1000点=10G）"], [50, "点5（1000点=50G）"], [100, "テンピン（1000点=100G）"], [500, "デカピン（1000点=500G）"]];

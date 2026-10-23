@@ -3809,7 +3809,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.26.1";
+const CLIENT_VERSION = "0.27.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5837,6 +5837,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.27.0", date: "2026/10/23", title: "村の新聞・村のレベル・競どんぐり", items: [
+    "村の新聞（朝刊）：朝になると、きのう村で起きたことが新聞になって届く。オンラインでは、みんなのできごと（大物を釣った・大豊作・道具を鍛えた・共同プロジェクト完成など）が記事になる。天気・運勢・村の豆知識つき",
+    "村のレベル：みんなの評判と、できた共同プロジェクトの数でこもれび村のレベルが上がり、村に建物がふえる（Lv2 図書館・Lv3 こもれび駅・Lv4 温泉街・Lv5 村の大桜）",
+    "図書館：1日1冊本を読むとスキルの経験がふえる。新聞のバックナンバーも読める。駅：電車ならバスの半額で街へ、駅弁も。温泉街：足湯とおみやげ屋。大桜：1日1回お花見",
+    "カジノに「競どんぐり」：6粒のどんぐりのレースに単勝・複勝で賭けられる。オンラインでは、みんなで同じレースを見て盛り上がれる（カジノの壁の大きな画面から）",
+    "村タブに「こもれび村のレベル」と「新聞を読む」ボタン",
+  ] },
   { v: "0.26.1", date: "2026/10/23", title: "麻雀：おまかせの直しと、はじめての人へのヒント", items: [
     "リーチ中の自動のツモ切りが「時間切れ」に数えられて、すぐCPUのおまかせになり、ロンやツモまで勝手にしてくれていたのを直した",
     "時間切れや切断のときの代わり打ちは、ツモ切りと見送りだけ（和了・鳴き・リーチはしない）。ツモ・ロンは自分で押してね",
@@ -8410,6 +8417,16 @@ ITEMS.bait_gold40 = { name: "金のルアー", icon: "bait_gold40", price: 300, 
 addSpr17("grow40", (s, r, e) => { r(4, 4, 8, 10, C17("#e8dcc0")); r(4, 4, 8, 1, C17("#fff4dc")); r(5, 2, 6, 2, C17("#c8a878")); r(4, 8, 8, 3, C17("#7ac060")); e(8, 9.5, 2, 1.2, C17("#c8f0a0")); s(6, 6, C17("#a8d878")); s(10, 12, C17("#a8d878")); s(3, 3, C17("#fff6c8")); s(13, 5, C17("#fff6c8")); });
 ITEMS.grow40 = { name: "成長の粉", icon: "grow40", price: 400, grow40: true };
 
+// =================== v41 データ：駅弁・温泉街のおみやげ（あずかり物の整理より前に置く） ===================
+addSpr17("ekiben41", (s, r, e) => { r(2, 5, 12, 9, C17("#c8402e")); r(2, 5, 12, 1, C17("#e86a50")); r(3, 6, 10, 7, C17("#f4ecd8")); r(4, 7, 4, 3, C17("#f2a0a8")); r(9, 7, 3, 2, C17("#f0c840")); r(9, 10, 3, 2, C17("#6aa848")); r(4, 11, 4, 1, C17("#3a2a1e")); r(1, 4, 14, 1, C17("#8a2a1e")); r(7, 2, 2, 3, C17("#f0d070")); });
+addSpr17("manju41", (s, r, e) => { e(8, 9, 6, 4.4, C17("#c88a50")); e(8, 8, 5, 3.2, C17("#e0a868")); e(6, 7, 2, 1, C17("#f4cc90")); r(6, 8, 4, 1, C17("#8a5a2e")); r(7, 7, 1, 3, C17("#8a5a2e")); });
+addSpr17("tamago41", (s, r, e) => { e(8, 11, 6, 3, C17("#6a8ad0")); e(8, 10, 5, 2, C17("#a8c4f0")); e(8, 8, 3.4, 4, C17("#f8f4ea")); e(8, 9, 2, 2, C17("#f0c040")); s(7, 6, C17("#ffffff")); });
+Object.assign(ITEMS, {
+  ekiben41: { name: "駅弁", icon: "ekiben41", price: 500, food: 60 },
+  manju41: { name: "温泉まんじゅう", icon: "manju41", price: 180, food: 30 },
+  tamago41: { name: "温泉たまご", icon: "tamago41", price: 90, food: 20 },
+});
+
 var F37 = {};
 function sanitize37() {
   const w = world; if (!w || typeof w !== "object") return;
@@ -9055,6 +9072,7 @@ function drawTools40(body, msg) {
     world.tools40 = world.tools40 && typeof world.tools40 === "object" ? world.tools40 : {};
     world.tools40[k] = lv + 1; saveWorld(); applyToolLooks40(); renderHotbar(); if (typeof SFX !== "undefined" && SFX.small) SFX.small();
     toast(k, `${ITEMS[k].name}に鍛え直した！ ${EFFECT40[k][lv + 1]}`);
+    if (K.news41) K.news41.add("tool", `道具を鍛え直して「${ITEMS[k].name}」にした`, 20 + (lv + 1) * 10);
     drawTools40(body, `<div class="ok40">${esc(ITEMS[k].name)}に鍛え直した！ ${esc(EFFECT40[k][lv + 1])}</div>`);
   });
   body.querySelectorAll("[data-g40]").forEach(b => b.onclick = () => {
@@ -9154,6 +9172,388 @@ F40.openWhereAll = openWhereAll40;
 syncUI();
 F40.ready = true;
 
+// =================== v41: 村の新聞（朝刊）・村のレベルと景観・競どんぐり ===================
+var F41 = {};
+K.notify = (t, icon) => F7.notify(t, icon);
+addSpr17("news41", (s, r) => { r(2, 3, 12, 11, C17("#f4efe2")); r(2, 3, 12, 1, C17("#ffffff")); r(3, 5, 10, 2, C17("#3a3430")); for (let y = 8; y <= 12; y += 2) { r(3, y, 5, 1, C17("#8a8278")); r(9, y, 4, 1, C17("#8a8278")); } r(9, 8, 4, 3, C17("#c8a070")); r(1, 4, 1, 10, C17("#d8d0c0")); });
+
+// ---------- 通信：競どんぐり・新聞 ----------
+const _handle41 = handle8;
+handle8 = m => {
+  _handle41(m);
+  if (!m || typeof m.type !== "string") return;
+  try {
+    if (m.type === "welcome" && K.raceIn) K.raceIn({ type: "raceWelcome", race: m.race || null, raceResults: Array.isArray(m.raceResults) ? m.raceResults : [] });
+    if ((m.type === "race" || m.type === "raceOk" || m.type === "raceNg") && K.raceIn) K.raceIn(m);
+    if (m.type === "news") onNews41(m);
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v41 net"); }
+};
+// カジノの壁に、競どんぐりの大きな画面
+const raceMon41 = pix13(32, 34, (set, rect) => {
+  rect(0, 0, 32, 24, C13["#2a2430"]); rect(2, 2, 28, 20, C13["#4aa04a"]); rect(2, 2, 28, 3, C13["#3a8a3a"]);
+  rect(2, 7, 28, 13, C13["#c89a62"]); for (const y of [11, 15]) rect(2, y, 28, 1, C13["#e8d8c0"]);
+  rect(25, 7, 1, 13, C13["#ffffff"]);
+  for (const [x, y, c] of [[8, 8, "#e2404e"], [14, 12, "#4a8ae0"], [19, 16, "#f0c030"]]) { rect(x, y, 3, 2, C13["#b8742e"]); rect(x, y - 1, 3, 1, C13["#6a4626"]); rect(x + 1, y + 1, 1, 1, C13[c]); }
+  rect(14, 24, 4, 7, C13["#3a3440"]); rect(9, 31, 14, 3, C13["#3a3440"]);
+});
+const _makeInterior41 = makeInterior;
+makeInterior = function (kind) {
+  const m = _makeInterior41(kind);
+  if (kind === "casino") {
+    m.objs.push({ cv: raceMon41, x: 7 * TS, y: 2 * TS - 18, sortY: 3 * TS - 1 }); m.base[2][7] = m.base[2][8] = true;
+    for (const k of ["7,2", "8,2"]) m.interact[k] = () => K.openCasino("race", true);
+    m.labels.push({ x: 8 * TS, y: 2 * TS - 22, text: "競どんぐり" });
+  }
+  return m;
+};
+
+// ---------- 村のレベルと景観 ----------
+const VLV_T41 = [0, 400, 1200, 2500, 4500];
+const LM41 = {
+  lib41: { lv: 2, name: "図書館", w: 3, h: 2, ih: 46, pref: [6, 29], desc: "1日1冊、本を読むとスキルの経験がふえる。新聞のバックナンバーも読める",
+    spr: (set, rect) => {
+      rect(2, 16, 44, 30, C13["#b8644a"]); for (let y = 18; y < 46; y += 4) rect(2, y, 44, 1, C13["#9a4e3a"]);
+      for (let y = 4; y < 16; y++) { const hw = (y - 4) * 22 / 12 + 2; rect(Math.round(24 - hw), y, Math.round(hw * 2), 1, C13["#e8dcc8"]); } rect(0, 15, 48, 2, C13["#cfc2ac"]);
+      for (const x of [6, 14, 30, 38]) { rect(x, 17, 4, 27, C13["#f2ece0"]); rect(x, 17, 1, 27, C13["#ffffff"]); }
+      rect(20, 28, 8, 16, C13["#5a3a24"]); rect(21, 29, 6, 15, C13["#7a5236"]); rect(23, 36, 1, 1, C13["#f0c840"]);
+      rect(19, 8, 10, 6, C13["#7a4a8a"]); rect(23, 8, 2, 6, C13["#f4ecd8"]); rect(20, 9, 3, 4, C13["#f4ecd8"]); rect(25, 9, 3, 4, C13["#f4ecd8"]);
+      rect(0, 44, 48, 2, C13["#a8a098"]);
+    } },
+  station41: { lv: 3, name: "こもれび駅", w: 4, h: 2, ih: 46, pref: [56, 6], desc: "電車で街へ（バスの半額）。駅弁も買える",
+    spr: (set, rect) => {
+      rect(2, 18, 60, 26, C13["#f0e4cc"]); rect(2, 18, 60, 2, C13["#ffffff"]); for (let y = 12; y < 18; y++) rect(Math.round(y - 12), y, 64 - Math.round(y - 12) * 2, 1, C13["#3a6a5a"]);
+      rect(0, 17, 64, 2, C13["#2a4a40"]); rect(26, 0, 12, 14, C13["#e8d8bc"]); rect(25, 0, 14, 2, C13["#3a6a5a"]);
+      ell13(set, 32, 7, 4.4, 4.4, C13["#ffffff"]); set(32, 4, C13["#2a2a2a"]); set(32, 5, C13["#2a2a2a"]); set(32, 6, C13["#2a2a2a"]); set(33, 7, C13["#2a2a2a"]); set(34, 7, C13["#2a2a2a"]);
+      rect(27, 26, 10, 18, C13["#5a7a8a"]); rect(28, 27, 8, 16, C13["#8ab0c4"]); rect(31, 27, 1, 16, C13["#5a7a8a"]);
+      for (const x of [6, 16, 42, 52]) { rect(x, 24, 7, 8, C13["#5a7a8a"]); rect(x + 1, 25, 5, 6, C13["#bfe0f0"]); }
+      rect(4, 34, 18, 4, C13["#c8402e"]); rect(42, 34, 18, 4, C13["#c8402e"]); rect(0, 44, 64, 2, C13["#a8a098"]);
+    } },
+  onsenst41: { lv: 4, name: "温泉街", w: 4, h: 2, ih: 46, pref: [45, 24], desc: "足湯で1日1回ひと休み。温泉まんじゅうや温泉たまごが買える",
+    spr: (set, rect) => {
+      rect(4, 20, 56, 24, C13["#8a5a3a"]); for (let x = 8; x < 60; x += 6) rect(x, 20, 1, 24, C13["#6a4228"]);
+      for (let y = 8; y < 20; y++) { const hw = 20 + (y - 8) * 14 / 12; rect(Math.round(32 - hw), y, Math.round(hw * 2), 1, y < 10 ? C13["#5a5a6a"] : C13["#40404e"]); }
+      rect(14, 2, 36, 6, C13["#40404e"]); rect(12, 7, 40, 1, C13["#2a2a36"]);
+      rect(22, 26, 20, 10, C13["#3a5aa0"]); rect(22, 26, 20, 2, C13["#2a4a8a"]); rect(31, 28, 2, 8, C13["#2a4a8a"]); rect(27, 29, 3, 3, C13["#f4ecd8"]); rect(34, 29, 3, 3, C13["#f4ecd8"]);
+      for (const x of [8, 52]) { ell13(set, x + 2, 26, 3, 4, C13["#e2404e"]); rect(x + 1, 21, 2, 1, C13["#2a2a2a"]); rect(x + 1, 30, 2, 1, C13["#2a2a2a"]); }
+      ell13(set, 52, 40, 9, 3, C13["#7a7a80"]); ell13(set, 52, 40, 7, 2, C13["#6ac0c8"]); rect(0, 44, 64, 2, C13["#a8a098"]);
+    } },
+  sakura41: { lv: 5, name: "村の大桜", w: 3, h: 3, ih: 58, pref: [30, 30], desc: "村のシンボルの大きな桜。1日1回お花見ができる",
+    spr: (set, rect) => {
+      rect(20, 34, 8, 22, C13["#6a4228"]); rect(21, 34, 2, 22, C13["#8a5a3a"]); rect(14, 52, 20, 4, C13["#5a3a24"]); rect(12, 38, 9, 3, C13["#6a4228"]); rect(27, 36, 9, 3, C13["#6a4228"]);
+      for (const [x, y, rx, ry, c] of [[24, 20, 22, 16, "#f2a8c0"], [12, 26, 11, 9, "#f6bcd0"], [36, 26, 11, 9, "#f6bcd0"], [24, 12, 15, 10, "#f8c8da"], [16, 16, 8, 6, "#fbd8e4"], [32, 16, 8, 6, "#fbd8e4"]]) ell13(set, x, y, rx, ry, C13[c]);
+      for (const [x, y] of [[10, 22], [18, 10], [30, 8], [38, 20], [22, 28], [34, 30], [14, 30], [28, 18]]) set(x, y, C13["#e07898"]);
+    } },
+};
+for (const [id, L] of Object.entries(LM41)) { IMG["lm_" + id] = pix13(L.w * 16, L.ih, L.spr); ASSETS["lm_" + id] = IMG["lm_" + id].toDataURL(); }
+const repSum41 = () => {
+  if (!F8.connected) return world.rep || 0;
+  const sm = world.sharedMeta || {}, me = F8.myId ? F8.myId() : 0; let sum = 0, mine = false;
+  for (const [k, v] of Object.entries(sm)) if (k.startsWith("rep:") && typeof v === "number" && v > 0) { sum += Math.min(5000, v); if (k === "rep:" + me) mine = true; }
+  if (!mine) sum += Math.min(5000, world.rep || 0);
+  return sum;
+};
+const projDone41 = () => Object.values(world.projects || {}).filter(p => p && p.done).length;
+const vPoints41 = () => Math.round(repSum41() + projDone41() * 150);
+function vLv41(p = vPoints41()) { let l = 1; for (let i = 1; i < VLV_T41.length; i++) if (p >= VLV_T41[i]) l = i + 1; return l; }
+F41.vLv = vLv41; F41.vPoints = vPoints41; F41.check = () => checkVlv41();
+function syncRep41() {
+  if (!F8.connected || !world.sharedMeta || !F8.myId) return;
+  const id = F8.myId(); if (!id) return;
+  const k = "rep:" + id, v = Math.min(5000, Math.round(world.rep || 0));
+  if (world.sharedMeta[k] !== v && v > 0) { world.sharedMeta[k] = v; saveWorld(); }
+}
+const lmAt41 = id => { const v = (world.sharedMeta || {})["lm:" + id]; return Array.isArray(v) && v.length === 2 && v.every(n => Number.isInteger(n) && n >= 0 && n < 100) ? v : null; };
+const lmFoot41 = (id, at) => ({ x0: at[0], y0: at[1] - LM41[id].h + 1, x1: at[0] + LM41[id].w - 1, y1: at[1] });
+const placedLm41 = () => Object.keys(LM41).filter(id => lmAt41(id));
+function chooseLm41(id) {
+  const L = LM41[id];
+  let [px, py] = L.pref;
+  if (id === "onsenst41" && world.projects?.onsen35?.at) { px = world.projects.onsen35.at[0] + 4; py = world.projects.onsen35.at[1] + 2; }
+  const fits = (ax, ay) => { if (ay - L.h + 1 < 2 || ay > village.h - 3) return false; for (let y = ay - L.h + 1; y <= ay; y++) for (let x = ax; x < ax + L.w; x++) if (!okTile35(x, y)) return false; if (player.x >= ax && player.x < ax + L.w && player.y >= ay - L.h + 1 && player.y <= ay) return false;
+    // 入り口の前が通れて、手前の木で隠れないところ
+    for (let x = ax; x < ax + L.w; x++) if (!village.ground[ay + 1] || village.solid[ay + 1][x]) return false;
+    for (let y = ay + 1; y <= ay + 2; y++) for (let x = ax - 1; x <= ax + L.w; x++) if (treeAt(x, y)) return false;
+    return true; };
+  for (let r = 0; r <= 18; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; if (fits(px + dx, py + dy)) return [px + dx, py + dy]; }
+  return null;
+}
+const _rebuildSolid41 = rebuildSolid;
+rebuildSolid = function () {
+  _rebuildSolid41();
+  if (!world.sharedMeta || typeof village === "undefined") return;
+  const lv = vLv41(); let placed = false; const S = village.solid;
+  for (const [id, L] of Object.entries(LM41)) {
+    let at = lmAt41(id);
+    if (!at && lv >= L.lv) { at = chooseLm41(id); if (at) { world.sharedMeta["lm:" + id] = at; placed = true; } }
+    if (!at) continue;
+    const f = lmFoot41(id, at); for (let y = f.y0; y <= f.y1; y++) for (let x = f.x0; x <= f.x1; x++) if (S[y] && x >= 0 && x < village.w) S[y][x] = true;
+  }
+  if (placed) { for (const pe of petEnts) if (village.solid[pe.y]?.[pe.x]) { const s = freeNear(village, player.x, player.y); placeAt(pe, s[0], s[1]); } saveWorld(); }
+};
+const _metaToProj41 = metaToProj14;
+metaToProj14 = function (k, v) { _metaToProj41(k, v); if (typeof k === "string" && k.startsWith("lm:")) rebuildSolid(); };
+// 村のレベルが上がったら知らせる
+function checkVlv41() {
+  try {
+    syncRep41();
+    const lv = vLv41();
+    if (Object.entries(LM41).some(([id, L]) => lv >= L.lv && !lmAt41(id))) rebuildSolid();
+    if (!Number.isInteger(world.vlv41)) { world.vlv41 = lv; return; }
+    if (lv > world.vlv41) {
+      const got = Object.values(LM41).filter(L => L.lv > world.vlv41 && L.lv <= lv).map(L => L.name);
+      world.vlv41 = lv; rebuildSolid(); saveWorld();
+      F7.notify(`こもれび村が Lv${lv} になった！${got.length ? `村に「${got.join("・")}」ができたよ` : ""}`, "news41");
+      K.news41.add("village", `こもれび村がLv${lv}に。${got.length ? got.join("・") + "がオープン" : ""}`, 85);
+    } else if (lv < world.vlv41) world.vlv41 = lv;
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "vlv41"); }
+}
+setInterval(checkVlv41, 4000);
+// 描く
+const _addToList41 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList41(list, now);
+  if (map !== village) return;
+  for (const id of placedLm41()) {
+    const at = lmAt41(id), im = IMG["lm_" + id], bx = at[0] * TS, by = (at[1] + 1) * TS - im.height;
+    list.push({ s: (at[1] + 1) * TS - 1, d: () => {
+      ctx.drawImage(im, bx, by);
+      if (id === "onsenst41") for (let i = 0; i < 4; i++) { const t = (now / 1500 + i / 4) % 1; ctx.fillStyle = `rgba(255,255,255,${.5 * (1 - t)})`; ctx.beginPath(); ctx.arc(bx + 48 + i * 3 + Math.sin(now / 600 + i) * 2, by + 38 - t * 18, 1.5 + t * 3, 0, 7); ctx.fill(); }
+      if (id === "onsenst41" && (world.time >= 1080 || world.time < 400)) { ctx.fillStyle = `rgba(255,200,120,${.25 + Math.sin(now / 200) * .05})`; for (const x of [10, 54]) { ctx.beginPath(); ctx.arc(bx + x, by + 26, 6, 0, 7); ctx.fill(); } }
+      if (id === "sakura41") { const n = season() === "春" ? 10 : 4; for (let i = 0; i < n; i++) { const t = (now / 5000 + i / n) % 1, x = bx + 6 + ((i * 37) % 40) + Math.sin(now / 700 + i) * 4, y = by + 14 + t * 46; ctx.fillStyle = `rgba(248,180,206,${1 - t * .7})`; ctx.fillRect(Math.round(x), Math.round(y), 2, 1); } }
+      if (id === "station41") { const a = (world.time % 60) / 60 * Math.PI * 2; ctx.strokeStyle = "#2a2a2a"; ctx.lineWidth = .7; ctx.beginPath(); ctx.moveTo(bx + 32.5, by + 7.5); ctx.lineTo(bx + 32.5 + Math.sin(a) * 3.4, by + 7.5 - Math.cos(a) * 3.4); ctx.stroke(); }
+    } });
+  }
+};
+// Aボタン
+const lmAtTile41 = (x, y) => placedLm41().find(id => { const f = lmFoot41(id, lmAt41(id)); return x >= f.x0 && x <= f.x1 && y >= f.y0 && y <= f.y1; });
+const _act41 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) { const [tx, ty] = front(), id = lmAtTile41(tx, ty); if (id) { useLm41(id); return; } }
+  _act41.apply(this, arguments);
+};
+const daily41 = () => world.daily41 && typeof world.daily41 === "object" ? world.daily41 : (world.daily41 = {});
+const BOOKS41 = { farm: ["畑のきほん", "作物は水をやって眠ると育つ。季節外れの作物は枯れてしまうので、種の「旬」をたしかめよう"], fish: ["釣り人の手帳", "雨の日・夜にしか出ない魚がいる。えさや強化した釣り竿で、釣れる魚が変わる"], gather: ["森と岩の図鑑", "木は2日で、岩は朝になるとまた生えてくる。強化した斧やつるはしなら、少ない回数でこわせる"], craft: ["台所の知恵", "料理は売っても、食べてもいい。腕前が上がると高く売れて、たまにおまけもできる"] };
+function useLm41(id) {
+  const d = daily41();
+  if (id === "lib41") { openLibrary41("read"); return; }
+  if (id === "station41") { openStation41(); return; }
+  if (id === "onsenst41") { openOnsenSt41(); return; }
+  if (id === "sakura41") {
+    if (d.hanami === world.day) { toast("lm_sakura41", "大きな桜が、風にゆれている"); return; }
+    d.hanami = world.day; addRep(1); world.stats.hanami41 = (world.stats.hanami41 || 0) + 1; saveWorld();
+    toast("lm_sakura41", season() === "春" ? ["満開の桜の下で、ひと休み。花びらが肩にのった（評判+1）", "見上げると、空が桜色にそまっていた（評判+1）"][rnd(2)] : ["桜の木の下で、ひと休み。春が待ち遠しい（評判+1）", "大きな幹にもたれて、深呼吸（評判+1）"][rnd(2)]);
+  }
+}
+function openLibrary41(tab) {
+  openModal("こもれび図書館", "shop", body => {
+    const d = daily41(), read = d.lib === world.day;
+    const tabs = `<div class="mtabs">${[["read", "本を読む"], ["paper", "新聞のバックナンバー"], ["rec", "村の記録"]].map(([k, l]) => `<button class="chip" type="button" data-lt="${k}" aria-pressed="${k === tab}">${l}</button>`).join("")}</div>`;
+    let html = tabs;
+    if (tab === "read") html += `<p class="mtext">${read ? "今日はもう本を読んだよ。また明日来てね。" : "1日1冊、好きな棚の本を読めます。読むとそのスキルの経験がふえるよ。"}</p><div class="list">${Object.entries(BOOKS41).map(([k, [t, tip]]) => `<div class="li"><img src="${ASSETS[SK_ICON[k]]}" alt=""><span class="nm">${t}<span class="sub2">${SKILL[k][0]}の棚・${esc(tip)}</span></span><span class="acts"><button class="btn" type="button" data-book="${k}" ${read ? "disabled" : ""}>読む</button></span></div>`).join("")}</div>`;
+    else if (tab === "paper") { const P = news41().papers.slice().sort((a, b) => b.day - a.day); html += P.length ? `<div class="list">${P.map(p => `<div class="li"><img src="${ASSETS.news41}" alt=""><span class="nm">こもれび新聞 第${p.day + 1}号<span class="sub2">${seasonOf41(p.day + 1)} ${dayOf41(p.day + 1)}日目の朝刊・${esc(headOf41(p))}</span></span><span class="acts"><button class="btn light" type="button" data-pp="${p.day}">読む</button></span></div>`).join("")}</div>` : `<p class="mtext">まだ新聞がありません。朝になると届くよ。</p>`; }
+    else { const lv = vLv41(), p = vPoints41(), next = VLV_T41[lv]; html += `<div class="stat"><span>村のレベル</span><b>Lv${lv}（${p}pt${next ? `・次まで ${next - p}` : ""}）</b><span>できた共同プロジェクト</span><b>${projDone41()}</b><span>村の建物</span><b>${placedLm41().map(id => LM41[id].name).join("・") || "まだない"}</b><span>お花見した回数</span><b>${world.stats.hanami41 || 0}回</b></div>`; }
+    body.innerHTML = html;
+    body.querySelectorAll("[data-lt]").forEach(b => b.onclick = () => { closeModal(); openLibrary41(b.dataset.lt); });
+    body.querySelectorAll("[data-book]").forEach(b => b.onclick = () => { if (daily41().lib === world.day) return; const k = b.dataset.book; daily41().lib = world.day; addXp(k, 40); world.stats.books41 = (world.stats.books41 || 0) + 1; saveWorld(); toast(SK_ICON[k], `「${BOOKS41[k][0]}」を読んだ。${SKILL[k][0]}の経験+40`); closeModal(); openLibrary41("read"); });
+    body.querySelectorAll("[data-pp]").forEach(b => b.onclick = () => { const p = news41().papers.find(x => x.day === +b.dataset.pp); if (p) showPaper41(p, true); });
+  });
+}
+function openStation41() {
+  openModal("こもれび駅", "shop", body => {
+    const dests = DEST13.filter(([id]) => id !== "village");
+    body.innerHTML = `<p class="mtext">電車ならバスの半額で街へ行けるよ。帰りは街のバス停から（無料）。所持金 <b>${fmt(world.money)}</b></p>
+      <div class="list">${dests.map(([id, nm, fare, desc]) => { const f = Math.floor(fare / 2); return `<div class="li"><img src="${ASSETS.lm_station41}" alt=""><span class="nm">${esc(nm)}<span class="sub2">${esc(desc)}</span></span><span class="acts"><button class="btn" type="button" data-tr="${id}" ${world.money < f ? "disabled" : ""}>${fmt(f)}</button></span></div>`; }).join("")}</div>
+      <h3 class="lbl">駅弁</h3><div class="list">${itemLi("ekiben41", `${fmt(ITEMS.ekiben41.price)}・食べると元気が出る`, `<button class="btn" type="button" id="eki41" ${world.money < ITEMS.ekiben41.price ? "disabled" : ""}>買う</button>`)}</div>`;
+    body.querySelectorAll("[data-tr]").forEach(b => b.onclick = () => { const d = DEST13.find(x => x[0] === b.dataset.tr); if (!d) return; const orig = d[2]; d[2] = Math.floor(orig / 2); try { goTo13(d[0]); } finally { d[2] = orig; } world.stats.train41 = (world.stats.train41 || 0) + 1; });
+    body.querySelector("#eki41").onclick = () => { if (world.money < ITEMS.ekiben41.price || !addItem("ekiben41")) return; addMoney(-ITEMS.ekiben41.price); closeModal(); openStation41(); };
+  });
+}
+function openOnsenSt41() {
+  openModal("温泉街", "shop", body => {
+    const d = daily41(), used = d.ashiyu === world.day;
+    body.innerHTML = `<p class="mtext">湯けむりの温泉街。所持金 <b>${fmt(world.money)}</b></p>
+      <div class="list"><div class="li"><img src="${ASSETS.lm_onsenst41}" alt=""><span class="nm">足湯<span class="sub2">1日1回・無料。HPが40回復して、評判が少し上がる</span></span><span class="acts"><button class="btn" type="button" id="ashi41" ${used ? "disabled" : ""}>${used ? "今日は入った" : "入る"}</button></span></div></div>
+      <h3 class="lbl">おみやげ屋</h3><div class="list">${["manju41", "tamago41"].map(id => itemLi(id, `${fmt(ITEMS[id].price)}・食べると元気が出る`, `<button class="btn" type="button" data-om="${id}" ${world.money < ITEMS[id].price ? "disabled" : ""}>買う</button>`)).join("")}</div>`;
+    body.querySelector("#ashi41").onclick = () => { if (daily41().ashiyu === world.day) return; daily41().ashiyu = world.day; world.hp = Math.min(100, (world.hp || 0) + 40); if (typeof updateHp === "function") updateHp(); addRep(1); saveWorld(); toast("lm_onsenst41", "足湯でぽかぽか。歩きつかれた足が軽くなった（HP+40）"); closeModal(); openOnsenSt41(); };
+    body.querySelectorAll("[data-om]").forEach(b => b.onclick = () => { const id = b.dataset.om; if (world.money < ITEMS[id].price || !addItem(id)) return; addMoney(-ITEMS[id].price); closeModal(); openOnsenSt41(); });
+  });
+}
+ACH.push(["にぎやかな村", "こもれび村をLv3にする", () => vLv41() >= 3], ["村の大桜", "こもれび村をLv5にする", () => vLv41() >= 5], ["新聞の常連", "朝刊を7回読む", () => (world.stats.papers41 || 0) >= 7]);
+ACH_REWARD["にぎやかな村"] = ["money", 3000]; ACH_REWARD["村の大桜"] = ["medal", 20]; ACH_REWARD["新聞の常連"] = ["medal", 5];
+
+// ---------- 村の新聞（朝刊） ----------
+const NEWS_KEYS41 = ["harvest", "fish", "chop", "mine", "cook"];
+function news41() {
+  if (!world.news41 || typeof world.news41 !== "object") world.news41 = {};
+  const N = world.news41;
+  if (!Array.isArray(N.items)) N.items = [];
+  if (!Array.isArray(N.papers)) N.papers = [];
+  if (!N.reports || typeof N.reports !== "object") N.reports = {};
+  if (N.auto === undefined) N.auto = true;
+  return N;
+}
+const myHouses41 = () => (world.houses || []).filter(h => !F8.online || !h.ownerId || h.ownerId === onl.id).length;
+function snap41() {
+  const s = world.stats || {}, o = { day: world.day, money: Math.round(world.money || 0), houses: myHouses41(), mjTop: s.mjTop || 0, salon: s.salon || 0 };
+  for (const k of NEWS_KEYS41) o[k] = s[k] || 0;
+  return o;
+}
+K.news41 = {
+  add(k, t, s) {
+    const N = news41(); t = String(t || "").slice(0, 80); if (!t || N.items.some(x => x.t === t)) return;
+    N.items.push({ k: String(k).slice(0, 12), t, s: Math.max(0, Math.min(999, Math.round(s || 0))) });
+    if (N.items.length > 30) { N.items.sort((a, b) => b.s - a.s); N.items.length = 30; }
+  },
+};
+F41.news = K.news41;
+if (!news41().base) news41().base = snap41();
+// できごとを拾う
+const _notify41 = F7.notify;
+F7.notify = (text, img) => {
+  _notify41(text, img);
+  try {
+    const t = String(text || ""); let m;
+    if ((m = t.match(/^実績「(.+?)」を達成/))) K.news41.add("ach", `実績「${m[1]}」を達成した`, 30);
+    else if ((m = t.match(/「(.+?)」が完成した/))) K.news41.add("proj", `みんなで力を合わせて「${m[1]}」を完成させた`, 75);
+    else if ((m = t.match(/^(農業|釣り|採集|クラフト)がLv(\d+)に上がった/)) && +m[2] >= 3) K.news41.add("skill", `${m[1]}の腕前がLv${m[2]}に上がった`, 14 + +m[2] * 3);
+  } catch {}
+};
+const _fishCaught41 = F6.fishCaught;
+F6.fishCaught = got => {
+  _fishCaught41(got);
+  try {
+    const f = FISH6.find(x => x.n === got), first = world.dex[got] === 1;
+    if (!f) return;
+    if (got === "ヌシ" || f.p >= 1000) K.news41.add("fish", `幻の${got}を釣り上げた`, first ? 90 : 70);
+    else if (first && (f.rod || f.p >= 150)) K.news41.add("fish", `${got}を初めて釣り上げた`, 30 + Math.min(40, Math.round(f.p / 20)));
+  } catch {}
+};
+if (K.jpWon) { const _jp41 = K.jpWon; K.jpWon = amount => { _jp41(amount); K.news41.add("jackpot", `スロットでジャックポット ${fmt(amount || 0)} を当てた`, 95); }; }
+function rollNews41() {
+  const N = news41(), b = N.base, now = snap41();
+  if (!b || !(b.day < world.day)) { N.base = now; return; }
+  const d = world.day - 1;
+  const diff = k => Math.max(0, (now[k] || 0) - (b[k] || 0));
+  const items = N.items.slice();
+  const h = diff("harvest"), f = diff("fish"), c = diff("chop"), mi = diff("mine"), co = diff("cook"), money = now.money - (b.money || 0);
+  if (h >= 30) items.push({ k: "farm", t: `畑で${h}個も収穫する大豊作`, s: 25 + Math.min(40, Math.round(h / 2)) }); else if (h >= 10) items.push({ k: "farm", t: `畑で${h}個収穫した`, s: 12 });
+  if (f >= 15) items.push({ k: "fish", t: `${f}匹も釣り上げる大漁`, s: 25 + Math.min(40, f) }); else if (f >= 5) items.push({ k: "fish", t: `${f}匹釣り上げた`, s: 10 });
+  if (c >= 10) items.push({ k: "wood", t: `木を${c}本切りたおした`, s: 10 });
+  if (mi >= 10) items.push({ k: "mine", t: `岩を${mi}個くだいた`, s: 10 });
+  if (co >= 5) items.push({ k: "cook", t: `料理を${co}品も作った`, s: 15 });
+  if (money >= 20000) items.push({ k: "money", t: `所持金を${fmt(money)}ふやした`, s: 25 + Math.min(40, Math.round(money / 5000)) });
+  if (diff("houses") > 0) items.push({ k: "house", t: "新しい家を建てた", s: 45 });
+  if (diff("mjTop") > 0) items.push({ k: "mj", t: "賭け麻雀でトップをとった", s: 35 });
+  if (diff("salon") > 0) items.push({ k: "style", t: "美容室でイメチェンした", s: 15 });
+  items.sort((x, y) => y.s - x.s);
+  // 実績は2つまで（ほかの話題が埋もれないように）
+  let achN = 0; for (let i = items.length - 1; i >= 0; i--) if (items[i].k === "ach") { achN++; } for (let i = items.length - 1; i >= 0 && achN > 2; i--) if (items[i].k === "ach") { items.splice(i, 1); achN--; }
+  const rep = { name: myName(), items: items.slice(0, 10), sum: { harvest: h, fish: f, chop: c, mine: mi, cook: co, money: Math.max(0, money) } };
+  N.reports[d] = rep;
+  for (const k of Object.keys(N.reports)) if (+k < d - 7) delete N.reports[k];
+  N.items = []; N.base = now; N.pending = d;
+  if (F8.connected) send8({ type: "news", act: "put", day: d, items: rep.items, sum: rep.sum });
+  saveWorld();
+  setTimeout(() => deliverNews41(0), 3500);
+}
+F41.roll = rollNews41;
+const _nd41 = F6.onNewDay;
+F6.onNewDay = function () { _nd41.apply(this, arguments); try { rollNews41(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "news41"); } };
+function deliverNews41(tries) {
+  const N = news41(); if (N.pending == null) return;
+  if (!N.auto) { F7.notify("朝刊が届いた。村タブの「新聞を読む」から読めるよ", "news41"); return; }
+  const busyNow = modalOpen || busy || fish || placing || (F7.pending && F7.pending.length) || document.body.classList.contains("menu") && matchMedia("(max-width: 820px)").matches;
+  if (busyNow) { if (tries < 20) setTimeout(() => deliverNews41(tries + 1), 2000); else F7.notify("朝刊が届いた。村タブの「新聞を読む」から読めるよ", "news41"); return; }
+  openPaper41(N.pending);
+}
+const seasonOf41 = day => SEASONS[Math.floor((day - 1) / 7) % 4];
+const dayOf41 = day => (day - 1) % 7 + 1;
+let paperWait41 = null;
+function openPaper41(day) {
+  const N = news41(); N.pending = null;
+  if (day == null || day < 1) { const last = N.papers.slice().sort((a, b) => b.day - a.day)[0]; if (last) showPaper41(last, true); else toast("news41", "まだ新聞がないよ。朝になると届くよ"); return; }
+  if (F8.connected) {
+    paperWait41 = day;
+    openModal("こもれび新聞", "paper41", body => { body.innerHTML = `<p class="mtext">新聞を刷っています…</p>`; });
+    send8({ type: "news", act: "get", day });
+    setTimeout(() => { if (paperWait41 === day) { paperWait41 = null; showPaper41(makePaper41(day, null), false); } }, 4000);
+    return;
+  }
+  showPaper41(makePaper41(day, null), false);
+}
+F41.openPaper = openPaper41;
+function onNews41(m) {
+  if (paperWait41 == null || +m.day !== paperWait41) return;
+  paperWait41 = null;
+  showPaper41(makePaper41(+m.day, m), false);
+}
+function makePaper41(day, m) {
+  const N = news41(), mine = N.reports[day];
+  let reports = m && Array.isArray(m.reports) ? m.reports.filter(r => r && typeof r.name === "string").map(r => ({ name: r.name, items: Array.isArray(r.items) ? r.items : [], sum: r.sum || {} })) : [];
+  if (mine && !reports.some(r => r.name === mine.name)) reports.push(mine);
+  if (!reports.length && mine) reports = [mine];
+  const P = { day, reports, race: m && m.race ? m.race : null, weather: world.weather, vlv: vLv41(), vp: vPoints41() };
+  N.papers = N.papers.filter(p => p.day !== day); N.papers.push(P); N.papers.sort((a, b) => a.day - b.day); while (N.papers.length > 7) N.papers.shift();
+  world.stats.papers41 = (world.stats.papers41 || 0) + 1; saveWorld();
+  return P;
+}
+const who41 = it => it.k === "village" ? "" : `${it.name}さん、`;
+const headOf41 = P => { const all = []; for (const r of P.reports || []) for (const it of r.items || []) all.push({ ...it, name: r.name }); all.sort((a, b) => b.s - a.s); return all[0] ? `${who41(all[0])}${all[0].t}` : "のんびり静かな一日"; };
+const WX_TIP41 = { sun: "晴れの日は、畑仕事と木こり日和。夕方のカジノもにぎわいそう", rain: "雨の日は、ナマズやドジョウが顔を出す。畑の水やりはお休みでOK", storm: "雷雨の日は、避雷針に電気がたまるかも。外を歩くときは気をつけて", snow: "雪の日は、雪だるまや雪合戦を。村のすみにかまくらができているかも" };
+const TIPS41 = ["道具はこもれび工務店で鍛え直せる。強い釣り竿でしか釣れない魚もいるらしい", "麻雀に自信がなければ、卓の「ヒント」をオンにしてみよう", "図書館では1日1冊、本を読むとスキルの経験がふえる", "着せ替えの「未入手」を押すと、どこで手に入るかがわかる", "カジノの競どんぐりは、複勝なら2着まででも当たり", "村のレベルは、みんなの評判と、共同プロジェクトの数で上がる"];
+const ADS41 = [["セレクトショップ ULU", "表参道で新作入荷中。あなただけの一着を"], ["こもれび工務店", "道具の強化、承ります。銅からはじめる道具づくり"], ["競どんぐり", "カジノ こもれびパレスで毎レース開催中。どんぐりたちの熱い走りを見に来てね"], ["Salon こもれび", "髪型・前髪・髪色をまとめてイメチェン。表参道でお待ちしています"], ["こもれび駅", "電車ならバスの半額。駅弁もどうぞ"], ["温泉街", "足湯でひと休み。名物の温泉まんじゅう、あります"]];
+const LUCK41 = ["大吉", "中吉", "小吉", "吉", "末吉"], LUCKY41 = ["トマト", "どんぐり", "釣り竿", "青い服", "温泉たまご", "ひまわり", "麦わら帽子", "アメジスト", "焼き魚", "ネックレス"];
+function hash41(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function paperHtml41(P) {
+  const all = []; for (const r of P.reports || []) for (const it of r.items || []) all.push({ ...it, name: r.name });
+  all.sort((a, b) => b.s - a.s);
+  // 村のレベルの話は、だれが送ってきても1つにまとめる
+  for (let i = all.length - 1; i >= 0; i--) if (all[i].k === "village" && all.findIndex(x => x.k === "village" && x.t === all[i].t) !== i) all.splice(i, 1);
+  const head = all[0], rest = all.slice(1, 9);
+  const tot = { harvest: 0, fish: 0, chop: 0, mine: 0, cook: 0 }; for (const r of P.reports || []) for (const k in tot) tot[k] += +(r.sum?.[k] || 0);
+  const issue = P.day + 1, h = hash41(myName() + ":" + issue), wx = WEATHER[P.weather] || WEATHER.sun;
+  const npcNames = Object.keys(NPCS || {}).filter(n => !npcLocked(n));
+  const gossip = npcNames.length ? `${npcNames[h % npcNames.length]}さんいわく「${["きのうは風が気持ちよかったねえ", "最近、村がにぎやかになってきた気がするよ", "カジノのどんぐり、走るの速いんだって", "温泉にでも入りたい気分だなあ", "新しいお店ができたらいいのにね"][h % 5]}」` : "";
+  const race = P.race && P.race.races ? `<div class="pbox"><h4>競どんぐり</h4><p>きのうは${P.race.races}レース${P.race.races >= 40 ? "以上" : ""}。${P.race.best ? `大当たりは<b>${esc(P.race.best.name)}さん</b>の ${fmt(P.race.best.payout)}（${esc(P.race.best.winner)}）。` : ""}${P.race.longshot ? `大穴は${esc(P.race.longshot.winner)}（単勝${P.race.longshot.odds}倍）。` : ""}</p></div>` : "";
+  const ad = ADS41[issue % ADS41.length], ad2 = ADS41[(issue + 3) % ADS41.length];
+  const next = VLV_T41[P.vlv];
+  return `<div class="paper41">
+    <div class="pmast"><span class="pno">第${issue}号</span><b>こもれび新聞</b><span class="pdate">${seasonOf41(issue)} ${dayOf41(issue)}日目　朝刊</span></div>
+    <div class="phead">${head ? `<h2>${esc(who41(head))}${esc(head.t)}</h2><p>きのう、こもれび村でいちばんの話題になったのはこのニュース。村のあちこちで「すごいね」の声が聞こえた。</p>` : `<h2>きのうのこもれび村は、のんびり静かな一日</h2><p>大きなニュースはなかったけれど、こんな日もいいものです。${esc(gossip)}</p>`}</div>
+    <div class="pcols"><div class="pmain">
+      ${rest.length ? `<h4>村のできごと</h4><ul>${rest.map(it => `<li>${it.k === "village" ? "" : `<b>${esc(it.name)}さん</b>　`}${esc(it.t)}</li>`).join("")}</ul>` : ""}
+      <h4>数字で見るきのうの村</h4><p class="pnum">収穫 <b>${tot.harvest}</b>個・釣り <b>${tot.fish}</b>匹・木 <b>${tot.chop}</b>本・岩 <b>${tot.mine}</b>個・料理 <b>${tot.cook}</b>品</p>
+      ${race}
+      ${head && gossip ? `<h4>村の声</h4><p>${esc(gossip)}</p>` : ""}
+      <h4>村の豆知識</h4><p>${esc(TIPS41[issue % TIPS41.length])}</p>
+    </div><div class="pside">
+      <div class="pbox"><h4>今日の天気</h4><p class="pwx">${wx[0]} ${wx[1]}</p><p>${esc(WX_TIP41[P.weather] || WX_TIP41.sun)}</p></div>
+      <div class="pbox"><h4>${esc(myName())}さんの運勢</h4><p class="pwx">${LUCK41[h % 5]}</p><p>ラッキーアイテム：${LUCKY41[(h >>> 3) % LUCKY41.length]}</p></div>
+      <div class="pbox"><h4>村のようす</h4><p>こもれび村 <b>Lv${P.vlv}</b>（${P.vp}pt）${next ? `<br>次のレベルまで あと${next - P.vp}pt` : "<br>最高のレベル"}</p></div>
+      <div class="pbox pad41"><b>${esc(ad[0])}</b><p>${esc(ad[1])}</p></div><div class="pbox pad41"><b>${esc(ad2[0])}</b><p>${esc(ad2[1])}</p></div>
+    </div></div></div>`;
+}
+function showPaper41(P, back) {
+  openModal("こもれび新聞", "paper41", body => {
+    const N = news41();
+    body.innerHTML = paperHtml41(P) + `<div class="row2"><label class="ptog"><input type="checkbox" id="pauto41" ${N.auto ? "checked" : ""}> 毎朝、自動で開く</label><button class="btn" type="button" id="pclose41">${back ? "もどる" : "読み終わった"}</button></div>`;
+    body.querySelector("#pauto41").onchange = e => { news41().auto = e.target.checked; saveWorld(); };
+    body.querySelector("#pclose41").onclick = () => { closeModal(); if (back) openLibrary41("paper"); };
+  });
+}
+// 村タブに「村のレベル」と「新聞を読む」
+const _renderVillage41 = renderVillage;
+renderVillage = function () {
+  _renderVillage41();
+  const el = $("villageBody"); if (!el) return;
+  const lv = vLv41(), p = vPoints41(), cur = VLV_T41[lv - 1], next = VLV_T41[lv];
+  el.insertAdjacentHTML("afterbegin", `<div class="opt"><h3>こもれび村　Lv${lv}</h3>${bar7(next ? (p - cur) / (next - cur) * 100 : 100, "rep")}<p class="note">${next ? `次のLvまで あと ${next - p}pt` : "最高のLvです"}。${F8.connected ? "オンラインのみんなの評判" : "あなたの評判"}と、できた共同プロジェクトの数（1つ150pt）で上がります。</p>
+    <div class="unl7">${Object.values(LM41).map(L => `<div class="${lv >= L.lv ? "on" : ""}"><b>Lv${L.lv}</b> ${esc(L.name)}：${esc(L.desc)}</div>`).join("")}</div>
+    <div class="row2"><button class="btn light" type="button" id="paper41btn">新聞を読む</button></div></div>`);
+  $("paper41btn").onclick = () => openPaper41(null);
+};
+F41.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -9177,5 +9577,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

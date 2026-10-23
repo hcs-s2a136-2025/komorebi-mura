@@ -1,7 +1,7 @@
 // Spring Boot サーバーと同じ約束（API・WebSocket）で動く、テスト用の模擬サーバー
 // 使い方: npm install && node mock.js ../../src/main/resources/static/index.html 8099 [版] [時間の速さ]
 // /mock/threads お便り一覧、/mock/reply?id=1&body=... 管理人の返事のまね、/mock/world 共有の村、/mock/reset 共有の村のリセット、/mock/saves セーブ一覧、/mock/jackpot ジャックポット、/mock/rooms 家の中と箱
-// みんなのBJと麻雀を試すとき: javac -d bj/out ../../src/main/java/jp/komorebi/casino/BjGame.java ../../src/main/java/jp/komorebi/casino/mj/MjRules.java ../../src/main/java/jp/komorebi/casino/mj/MjAi.java ../../src/main/java/jp/komorebi/casino/mj/MjGame.java bj/BjBridge.java bj/MjBridge.java（Javaが要ります。なければBJと麻雀の卓だけ動きません）
+// みんなのBJ・麻雀・競どんぐりを試すとき: javac -d bj/out ../../src/main/java/jp/komorebi/casino/BjGame.java ../../src/main/java/jp/komorebi/casino/mj/MjRules.java ../../src/main/java/jp/komorebi/casino/mj/MjAi.java ../../src/main/java/jp/komorebi/casino/mj/MjGame.java ../../src/main/java/jp/komorebi/casino/race/RaceGame.java bj/BjBridge.java bj/MjBridge.java bj/RaceBridge.java（Javaが要ります。なければBJ・麻雀・競どんぐりだけ動きません）
 const http = require("http"), fs = require("fs"), crypto = require("crypto"), { WebSocketServer } = require("ws");
 const INDEX = process.argv[2], PORT = +process.argv[3] || 8099, VERSION = process.argv[4] || "0.8.0";
 const players = new Map(), threads = []; let pid = 1, tid = 1;
@@ -51,6 +51,18 @@ if (fs.existsSync(path.join(BJ_CP, "MjBridge.class"))) {
     else if (f[0] === "Y") { const id = +f[1], money = +f[2], on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "mjPay", money, text: f[3] }))); else if (money) mjPending.set(id, (mjPending.get(id) || 0) + money); } } });
   setInterval(() => mj.stdin.write("T\t" + [...sessions].filter(o => o.pl).map(o => o.pl.id).join(",") + "\n"), 400);
   process.on("exit", () => mj.kill());
+}
+// 競どんぐり：本物と同じ casino/race/RaceGame.java を bj/RaceBridge.java で動かす。村の新聞（本物は NewsService.java）はここでメモリだけで
+let race = null, raceLast = null; const raceResults = [], news = {}, newsWait = new Map();
+if (fs.existsSync(path.join(BJ_CP, "RaceBridge.class"))) {
+  race = spawn("java", ["-cp", BJ_CP, "RaceBridge"], { stdio: ["pipe", "pipe", "ignore"] });
+  let buf = "";
+  race.stdout.on("data", d => { buf += d.toString("utf8"); let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); const f = line.split("\t");
+    if (f[0] === "A") { try { const m = JSON.parse(f[1]); if (m.type === "race") { raceLast = m; if (m.phase === "result" && !raceResults.some(r => r.id === m.id)) { raceResults.unshift({ id: m.id, order: m.order }); raceResults.length = Math.min(raceResults.length, 40); } } } catch (e) {} for (const o of sessions) if (o.pl) o.send(f[1]); }
+    else if (f[0] === "P") { for (const o of sessions) if (o.pl && o.pl.id === +f[1]) o.send(f[2]); }
+    else if (f[0] === "S") { const w = newsWait.get(f[1] + ":" + f[2]); newsWait.delete(f[1] + ":" + f[2]); if (w) { let sum = { races: 0 }; try { sum = JSON.parse(f[3]); } catch (e) {} w.s.send(JSON.stringify({ type: "news", day: +f[2], reports: w.reps, race: sum })); } } } });
+  setInterval(() => race.stdin.write("T\t" + clock.day + "\n"), 500);
+  process.on("exit", () => race.kill());
 }
 const RATE = +process.argv[5] || 1;
 const clock = { day: 1, start: Date.now(), weather: "sun" };
@@ -118,7 +130,7 @@ wss.on("connection", s => {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), raceResults }));
       mjPending.delete(pl.id); adminPending.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -146,6 +158,10 @@ wss.on("connection", s => {
       if (m.act === "fish" && act === "fish" && now - sc.last >= 2500) { sc.last = now; const size = Math.floor(+m.size || 0); if (size < 1 || size > 210) return; sc.points += 50; sc.count++; if (!sc.kinds.includes(m.fish)) sc.kinds.push(String(m.fish).slice(0, 16)); sc.best = Math.max(sc.best, size); ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
       if (m.act === "collect" && act === "collect" && now - sc.last >= 700) { sc.last = now; sc.collected++; ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
       return; }
+    if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); }
+    if (m.type === "news") { const day = Math.floor(+m.day || 0);
+      if (m.act === "put" && day >= clock.day - 2 && day <= clock.day && day >= 1) { (news[day] = news[day] || {})[s.pl.id] = { name: s.pl.name, items: (Array.isArray(m.items) ? m.items : []).slice(0, 12).map(it => ({ k: String(it.k || "").slice(0, 12), t: String(it.t || "").slice(0, 90), s: Math.max(0, Math.min(999, it.s | 0)) })).filter(it => it.t), sum: m.sum && typeof m.sum === "object" ? m.sum : {} }; }
+      else if (m.act === "get") { const reps = Object.entries(news[day] || {}).map(([id, r]) => ({ ...r, id })); if (race) { newsWait.set(s.pl.id + ":" + day, { s, reps }); race.stdin.write("S\t" + s.pl.id + "\t" + day + "\n"); } else s.send(JSON.stringify({ type: "news", day, reports: reps, race: { races: 0 } })); } }
     if (m.type === "mj" && mj) mj.stdin.write(["C", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.act || "").replace(/\W/g, ""), Math.floor(+m.a || 0), Math.floor(+m.b || 0)].join("\t") + "\n");
     if (m.type === "bj" && bj) bj.stdin.write(["C", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.act || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n");
     if (m.type === "house" && m.act === "returns") { const it = returns.get(s.pl.id); returns.delete(s.pl.id); if (it && Object.keys(it).length) s.send(JSON.stringify({ type: "houseReturn", items: Object.entries(it).map(([id, n]) => ({ id, n })) })); return; }

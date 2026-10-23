@@ -846,7 +846,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.27.4";
+  const VER = "0.28.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -4268,7 +4268,7 @@ function renderLog() {
     <div class="opt"><h3>お金</h3><div class="stat"><span>所持金</span><b>${fmt(world.money)}</b><span>借金</span><b>${fmt(totalDebt())}</b><span>預金</span><b>${fmt(bankTotal20())}</b>
       <span>ギャンブル収支</span><b>${s.gambleNet >= 0 ? "+" : ""}${fmt(s.gambleNet)}</b><span>返済した額</span><b>${fmt(s.repaid)}</b></div></div>
     <div class="opt"><h3>魚図鑑（${FISH6.filter(f => world.dex[f.n]).length} / ${FISH6.length}）</h3><div class="dex">${FISH6.map(f => `<div class="${world.dex[f.n] ? "" : "no"}" title="${fishHint(f)}"><img src="${ASSETS["fish_" + f.n]}" alt="" class="${f.n === "ヌシ" ? "wide" : ""}">${world.dex[f.n] ? f.n + "<br>×" + world.dex[f.n] : "？？？"}<br><small>${fishHint(f)}</small></div>`).join("")}</div></div>
-    <div class="opt"><h3>牧場とペット</h3><div class="stat">${world.animals.map(a => `<span>${esc(a.name)}（${ANIMALS[a.type].name}）</span><b>${"♥".repeat(a.hearts)}${"♡".repeat(10 - a.hearts)}</b>`).join("") || "<span>まだ動物がいません</span><b></b>"}${world.pets.map(t => `<span>${PETS[t].name}</span><b>${"♥".repeat(world.petHearts[t] || 0)}${"♡".repeat(10 - (world.petHearts[t] || 0))}</b>`).join("")}</div></div>
+    <div class="opt"><h3>牧場とペット</h3><div class="stat">${world.animals.map(a => `<span>${esc(a.name)}（${ANIMALS[a.type].name}）</span><b>${"♥".repeat(a.hearts)}${"♡".repeat(10 - a.hearts)}</b>`).join("") || "<span>まだ動物がいません</span><b></b>"}${world.pets.map(t => `<span>${esc(petEnts.find(p => p.ptype === t)?.name || PETS[t].name)}（${PETS[t].name}）</span><b>${"♥".repeat(world.petHearts[t] || 0)}${"♡".repeat(10 - (world.petHearts[t] || 0))}</b>`).join("")}</div></div>
     <div class="opt"><h3>冒険</h3><div class="stat"><span>HP</span><b>${Math.round(world.hp)} / 100</b><span>到達した階</span><b>地下${world.deepest}階</b><span>倒したモンスター</span><b>${s.kills}</b><span>洞窟の主</span><b>${world.bossDown ? "討伐済み" : "未討伐"}</b><span>達成した依頼</span><b>${s.quests || 0}</b></div></div>
     <div class="opt"><h3>なかま</h3><div class="stat">${Object.entries(world.npc).map(([n, v]) => `<span>${n}</span><b>${"♥".repeat(v.hearts)}${"♡".repeat(10 - v.hearts)}</b>`).join("")}</div></div>
     ${F7.logExtra()}<div class="opt"><h3>実績（${ACH.filter(a => a[2]()).length} / ${ACH.length}）</h3>${F7.achHtml()}</div>
@@ -5134,7 +5134,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.27.4";
+const CLIENT_VERSION = "0.28.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7162,6 +7162,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.28.0", date: "2026/10/23", title: "ペットがふえる・小さく可愛く・洞窟のはしご", items: [
+    "ペットの絵を描き直した。小さめで、頭の大きいちびっこ体型に",
+    "同じ種類のペットを何匹でも迎えられるようになった（全部で8匹まで）。柄と色はランダムで、ネコは茶トラ・黒・白・三毛・シャム・ハチワレなど8種類、イヌ・インコ・ウサギ・ハムスターも6〜7種類。名前もついてくる",
+    "手ぶらのときは、目の前のペットがよけなくなった。なでたり話しかけたりできる（道具や種を持っているときは、今までどおりよけてくれる）",
+    "洞窟：方向キーを押しっぱなしではしごを下りると、着いたとたんに昇りはしごへ歩いて地上に戻ってしまうことがあったのを直した（いちど離してから動ける）",
+    "洞窟：岩で下りはしごまでの道がふさがれることがあったのを直した。はしごに向かってⒶを押しても使える",
+  ] },
   { v: "0.27.4", date: "2026/10/23", title: "ギャンブルの称号・新聞のバックナンバー・スロットの画面", items: [
     "ギャンブル系の称号を10個追加：負け犬・大負け犬・連敗街道・ギャンブラー・カジノの住人・一攫千金・伝説の勝負師・借金王・雀鬼・大穴ハンター（一度取った称号は、あとで条件が変わっても使える）",
     "新聞のバックナンバー：30日ぶん読み返せる。新聞の画面と村タブの「過去の新聞」から。オンラインなら、読みのがした号も7日前まで取り寄せられる",
@@ -9374,8 +9381,9 @@ updatePets = function (dt) {
     }
     updateEnt(p, dt);
   }
-  // 目の前のマスにいるペットは、よける
-  if (!player.moving && !modalOpen) {
+  // 目の前のマスにいるペットは、よける（道具や種を持っているときだけ。手ぶらなら、なでたり話しかけたりできるように、そのまま）
+  const selD = world.inv[world.sel], itD = selD && ITEMS[selD.id], usefulD = itD && (itD.use || itD.seed || itD.place || itD.plant || itD.weapon);
+  if (!player.moving && !modalOpen && usefulD) {
     const [fx, fy] = front();
     for (const p of all) if (!p.moving && p.x === fx && p.y === fy) {
       const side = player.dir === "up" || player.dir === "down" ? ["left", "right"] : ["up", "down"];
@@ -9766,6 +9774,12 @@ Object.assign(ITEMS, {
   manju41: { name: "温泉まんじゅう", icon: "manju41", price: 180, food: 30 },
   tamago41: { name: "温泉たまご", icon: "tamago41", price: 90, food: 20 },
 });
+
+// =================== v43 データ：同じ種類のペットを何匹も（"cat#2" のような名前で区別する） ===================
+// （あずかり物の整理 sanitize37 より前に置く。2匹目からのペットが、読みこみのときに消えないように）
+const basePet43 = id => String(id).split("#")[0];
+function defPet43(id) { if (typeof id !== "string" || !id.includes("#") || PETS[id]) return; const b = PETS[basePet43(id)]; if (b) Object.defineProperty(PETS, id, { value: b, enumerable: false, configurable: true }); }
+try { for (const id of [...(world.pets || []), ...(world.lostPets37 || [])]) defPet43(id); } catch {}
 
 var F37 = {};
 function sanitize37() {
@@ -11024,6 +11038,226 @@ setInterval(checkTitles42, 5000);
 F7.renderVillage = () => renderVillage();
 F42.ready = true;
 
+// =================== v43: 洞窟のはしご・ペット（逃げない・何匹も・柄と色・小さく可愛く） ===================
+var F43 = {};
+// ---------- 洞窟のはしご ----------
+// はしごで別の階に着いたとき、押しっぱなしの方向キーでそのまま歩かないように（いちど離してから動ける）
+let guard43 = null;
+const armGuard43 = () => { guard43 = held.size ? { dirs: new Set(held), until: performance.now() + 8000 } : null; };
+const relGuard43 = () => { if (!guard43) return; for (const d of [...guard43.dirs]) if (!held.has(d)) guard43.dirs.delete(d); if (!guard43.dirs.size || performance.now() > guard43.until) guard43 = null; };
+setInterval(relGuard43, 40);
+addEventListener("keyup", () => setTimeout(relGuard43, 0));
+addEventListener("pointerup", () => setTimeout(relGuard43, 0), true);
+// 下りはしごまで、岩でふさがれずに歩いて行けるようにする
+function fixRocks43() {
+  if (!dg || !dg.map.down) return;
+  const m = dg.map, s = m.up, t = m.down, key = (x, y) => x + "," + y;
+  const reach = useRocks => { const prev = { [key(...s)]: null }, q = [s];
+    while (q.length) { const [x, y] = q.shift(); if (x === t[0] && y === t[1]) return prev;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, k = key(nx, ny); if (k in prev || nx < 0 || ny < 0 || nx >= m.w || ny >= m.h || m.base[ny][nx] || (useRocks && dg.rocks.has(k))) continue; prev[k] = [x, y]; q.push([nx, ny]); } }
+    return null; };
+  if (reach(true)) return;
+  const prev = reach(false); if (!prev) return;
+  let c = t; while (c) { dg.rocks.delete(key(...c)); dg.ore.delete(key(...c)); c = prev[key(...c)]; }
+  rebuildSolid();
+}
+const _enterCave43 = enterCave;
+enterCave = function (n) { _enterCave43(n); try { fixRocks43(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "fixRocks43"); } armGuard43(); };
+const _onStep43 = F6.onStep;
+F6.onStep = (nx, ny) => { const before = map; const r = _onStep43(nx, ny); if (r && map !== before) armGuard43(); return r; };
+const _tryMove43 = tryMove;
+tryMove = function (dir) {
+  relGuard43();
+  if (guard43 && guard43.dirs.has(dir)) { player.dir = dir; return; }
+  return _tryMove43(dir);
+};
+// はしごに向かって（またははしごの上で）Ⓐを押しても使える
+const _act43 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && dg && map === dg.map) {
+    const [tx, ty] = front();
+    for (const [x, y] of [[tx, ty], [player.x, player.y]]) { const g = dg.map.ground[y]?.[x]; if (g && g.startsWith("ladder")) { F6.onStep(x, y); return; } }
+  }
+  _act43.apply(this, arguments);
+};
+F43.fixRocks = fixRocks43;
+
+// ---------- ペットの絵 ----------
+// ---- ペットの絵（小さめ・ちびっこ体型）。柄と色の組み合わせ（variant）ごとに描く ----
+const PETV43 = {
+  cat: [
+    { n: "茶トラ", m: "#eaa252", l: "#fbdcae", d: "#c47a32", p: "tabby" },
+    { n: "黒ねこ", m: "#3c3644", l: "#5c5466", d: "#2a2430", eye: "#f2d040" },
+    { n: "白ねこ", m: "#f8f6f0", l: "#ffffff", d: "#dcd6ce", eye: "#5a9ae0" },
+    { n: "グレー", m: "#9ca2ac", l: "#cdd1d8", d: "#787e88", p: "tabby" },
+    { n: "三毛", m: "#f8f4ec", l: "#ffffff", d: "#dcd6ce", p: "calico" },
+    { n: "シャム", m: "#f2e6ce", l: "#fbf4e6", d: "#6a4a3a", p: "points", eye: "#4a8ae0" },
+    { n: "ハチワレ", m: "#3c3644", l: "#f8f6f0", d: "#2a2430", p: "tuxedo", eye: "#7ac060" },
+    { n: "キジトラ", m: "#8c6c4c", l: "#c8a888", d: "#5a4030", p: "tabby" },
+  ],
+  dog: [
+    { n: "柴", m: "#e2a252", l: "#fbf0dc", d: "#b87a36", p: "muzzle" },
+    { n: "黒柴", m: "#3c3644", l: "#fbf0dc", d: "#2a2430", p: "muzzle" },
+    { n: "白い犬", m: "#f8f6f0", l: "#ffffff", d: "#dcd6ce" },
+    { n: "茶色い犬", m: "#a46c42", l: "#d4a07a", d: "#7a4c2c" },
+    { n: "ぶち", m: "#f8f6f0", l: "#ffffff", d: "#3c3644", p: "spots" },
+    { n: "グレーの犬", m: "#9ca2ac", l: "#dcdfe4", d: "#6c727c", p: "muzzle" },
+    { n: "クリーム", m: "#f2daa8", l: "#fbf0dc", d: "#c8a470" },
+  ],
+  bird: [
+    { n: "グリーン", m: "#5ab05a", l: "#f2e050", d: "#3a8a3e" },
+    { n: "ブルー", m: "#5a8ae0", l: "#f4f6fa", d: "#3a62b0" },
+    { n: "イエロー", m: "#f2d040", l: "#fbf0a0", d: "#c8a020" },
+    { n: "ホワイト", m: "#f8f6f0", l: "#ffffff", d: "#cfd4dc" },
+    { n: "ピンク", m: "#f2a0c0", l: "#fbe0ea", d: "#d07098" },
+    { n: "ラベンダー", m: "#b8a0e8", l: "#ece4fb", d: "#8a72c0" },
+  ],
+  rabbit: [
+    { n: "白うさぎ", m: "#f8f6f0", l: "#ffffff", d: "#dcd6ce", eye: "#d84860" },
+    { n: "茶うさぎ", m: "#a8784e", l: "#dcc0a0", d: "#7a5434" },
+    { n: "グレー", m: "#a4a8b0", l: "#d4d7dc", d: "#7c8088" },
+    { n: "黒うさぎ", m: "#3c3644", l: "#5c5466", d: "#2a2430", eye: "#c8a040" },
+    { n: "ダッチ", m: "#f8f6f0", l: "#ffffff", d: "#3c3644", p: "dutch" },
+    { n: "クリーム", m: "#f2daa8", l: "#fbf0dc", d: "#c8a470" },
+  ],
+  hamster: [
+    { n: "ゴールデン", m: "#e8b070", l: "#fbf0dc", d: "#c08a48" },
+    { n: "白ハム", m: "#f8f6f0", l: "#ffffff", d: "#dcd6ce", eye: "#c84860" },
+    { n: "ジャンガリアン", m: "#a8acb4", l: "#f4f2ee", d: "#6c7078", p: "stripe" },
+    { n: "クリーム", m: "#f2daa8", l: "#fbf4e6", d: "#c8a470" },
+    { n: "パンダ", m: "#f8f6f0", l: "#ffffff", d: "#3c3644", p: "panda" },
+    { n: "チョコ", m: "#7a5434", l: "#c8a07a", d: "#54381e" },
+  ],
+};
+const PINK43 = "#f4a0b0", NOSE43 = "#e87890", INK43 = "#2a2228";
+function eye43(set, x, y, col, h = 2) { const c = C13[col || INK43]; for (let i = 0; i < h; i++) { set(x, y + i, c); set(x + 1, y + i, c); } set(x, y, C13["#ffffff"]); }
+function drawPet43(type, V) {
+  const M = C13[V.m], L = C13[V.l], D = C13[V.d], PK = C13[PINK43], NS = C13[NOSE43], K = C13[INK43];
+  return pix13(16, 16, (set, rect) => {
+    const ell = (cx, cy, rx, ry, c) => ell13(set, cx, cy, rx, ry, c);
+    const dot = (x, y, col) => set(x, y, C13[col || INK43]);
+    if (type === "cat" || type === "dog") {
+      const cat = type === "cat";
+      // しっぽ
+      const tc = V.p === "points" ? D : M;
+      if (cat) { rect(11, 12, 1, 2, tc); set(12, 11, tc); set(12, 10, tc); } else { rect(11, 11, 1, 2, M); set(12, 10, M); }
+      // からだ
+      rect(6, 12, 5, 3, M); if (V.p === "tuxedo" || V.p === "muzzle") rect(7, 12, 3, 3, L);
+      rect(6, 15, 2, 1, L); rect(9, 15, 2, 1, L);
+      // 頭
+      rect(5, 6, 6, 1, M); rect(4, 7, 8, 4, M); rect(5, 11, 6, 1, M);
+      if (cat) { rect(4, 5, 2, 1, V.p === "points" ? D : M); set(4, 4, V.p === "points" ? D : M); rect(10, 5, 2, 1, V.p === "points" ? D : M); set(11, 4, V.p === "points" ? D : M); }
+      else { set(4, 6, D); set(11, 6, D); rect(3, 7, 1, 3, D); rect(12, 7, 1, 3, D); }
+      if (V.p === "tabby") { set(6, 6, D); set(8, 6, D); set(10, 6, D); set(7, 13, D); set(9, 13, D); }
+      if (V.p === "calico") { rect(4, 7, 2, 2, C13["#e89848"]); set(5, 6, C13["#e89848"]); set(4, 5, C13["#e89848"]); rect(10, 7, 2, 1, C13["#3c3644"]); set(10, 6, C13["#3c3644"]); set(11, 5, C13["#3c3644"]); rect(9, 13, 2, 1, C13["#e89848"]); }
+      if (V.p === "spots") { set(5, 7, D); set(10, 10, D); set(7, 13, D); set(10, 12, D); }
+      if (V.p === "points") rect(6, 10, 4, 2, D);
+      if (V.p === "tuxedo") rect(6, 10, 4, 2, L);
+      if (!cat) rect(6, 9, 4, 3, V.p === "muzzle" || V.p === undefined ? L : L);
+      eye43(set, 5, 7, V.eye); eye43(set, 9, 7, V.eye);
+      if (cat) { set(7, 10, NS); set(8, 10, NS); } else { rect(7, 9, 2, 1, K); set(8, 11, NS); }
+      set(4, 10, PK); set(11, 10, PK);
+    } else if (type === "bird") {
+      rect(11, 13, 2, 1, D); set(12, 12, D);
+      ell(8, 12, 3.6, 3.4, M); ell(7, 9.2, 2.8, 2.6, V.l === V.m ? M : L); ell(8, 13.4, 2, 1.6, L);
+      ell(9.6, 12.2, 1.6, 2.2, D);
+      set(4, 9, C13["#f0a040"]); set(4, 10, C13["#d08030"]);
+      dot(6, 8); set(5, 10, PK);
+      set(7, 15, C13["#f0a040"]); set(9, 15, C13["#f0a040"]);
+    } else if (type === "rabbit") {
+      const ec = V.p === "dutch" ? D : M;
+      rect(5, 2, 2, 4, ec); rect(9, 2, 2, 4, ec); set(6, 3, PK); set(6, 4, PK); set(9, 3, PK); set(9, 4, PK);
+      rect(5, 6, 6, 1, M); rect(4, 7, 8, 3, M); rect(5, 10, 6, 1, M);
+      ell(8, 13, 3.6, 2.4, M); rect(11, 13, 2, 2, C13["#ffffff"]);
+      if (V.p === "dutch") { rect(4, 7, 2, 2, D); rect(10, 7, 2, 2, D); rect(9, 13, 2, 2, D); }
+      dot(6, 8, V.eye); dot(9, 8, V.eye); set(7, 9, NS); set(8, 9, NS); set(5, 9, PK); set(10, 9, PK);
+      rect(6, 15, 1, 1, L); rect(9, 15, 1, 1, L);
+    } else if (type === "hamster") {
+      ell(8, 12.2, 4.6, 3.4, M); set(5, 8, M); set(11, 8, M); set(5, 9, PK); set(11, 9, PK);
+      ell(8, 14, 2.6, 1.4, L); set(4, 12, L); set(12, 12, L);
+      if (V.p === "stripe") rect(8, 9, 1, 3, D);
+      if (V.p === "panda") { rect(5, 10, 2, 1, D); rect(10, 10, 2, 1, D); }
+      dot(6, 11, V.eye); dot(10, 11, V.eye); set(8, 12, NS); set(5, 12, PK); set(11, 12, PK);
+      set(6, 15, PK); set(10, 15, PK);
+    }
+  });
+}
+const petLook43 = () => world.petLook43 && typeof world.petLook43 === "object" ? world.petLook43 : (world.petLook43 = {});
+const petNames43 = () => world.petNames43 && typeof world.petNames43 === "object" ? world.petNames43 : (world.petNames43 = {});
+function petVar43(id) { const b = basePet43(id), L = PETV43[b]; if (!L) return 0; const v = petLook43()[id]; return Number.isInteger(v) && v >= 0 && v < L.length ? v : 0; }
+function petSprite43(id) {
+  const b = basePet43(id); if (!PETV43[b]) return b;
+  const v = petVar43(id), k = `pet43_${b}_${v}`;
+  if (!IMG[k]) { IMG[k] = drawPet43(b, PETV43[b][v]); ASSETS[k] = IMG[k].toDataURL(); }
+  return k;
+}
+F43.sprite = petSprite43;
+// 図鑑やお店で使う絵も、新しい絵にする
+for (const b of Object.keys(PETV43)) { if (!IMG[b] && b !== "cat") continue; const k = petSprite43(b + "#0"); IMG[b] = IMG[k]; ASSETS[b] = ASSETS[k]; }
+const _syncPets43 = syncPets;
+syncPets = function () {
+  _syncPets43.apply(this, arguments);
+  for (const e of petEnts) { e.sprite = petSprite43(e.ptype); const nm = petNames43()[e.ptype]; if (nm) e.name = nm; }
+};
+// 読みこむセーブにいる2匹目からのペットも、消えないように
+const _loadSave43 = loadSave;
+loadSave = function (obj, label) {
+  try { if (obj && obj.world) for (const id of [...(obj.world.pets || []), ...(obj.world.lostPets37 || [])]) defPet43(id); } catch {}
+  return _loadSave43.apply(this, arguments);
+};
+// ---------- ペットを何匹でも（同じ種類も） ----------
+const PET_MAX43 = 8;
+const PET_NAME_POOL43 = { cat: ["こむぎ", "みかん", "しらたま", "くろまめ", "もなか", "きなこ", "おもち", "ちくわ"], dog: ["ポチ", "こたろう", "まる", "ハチ", "ココア", "むぎ", "あんず"], bird: ["ピーコ", "ぴよ", "そら", "レモン", "ミント", "ちゅん"], rabbit: ["しろたま", "だいふく", "あずき", "うさまる", "ミルク", "くるみ"], hamster: ["ひまわり", "ころ", "ぽてと", "ごま", "くるみ", "ちょこ"] };
+const PET_PRICE43 = { cat: 1000 };
+const petPrice43 = b => PET_PRICE43[b] ?? PETS[b].price;
+function newPetId43(b) { if (!world.pets.includes(b)) return b; for (let n = 2; n < 100; n++) if (!world.pets.includes(`${b}#${n}`)) return `${b}#${n}`; return null; }
+function petNameOf43(id) { const e = petEnts.find(p => p.ptype === id); return (e && e.name) || petNames43()[id] || PETS[id]?.name || "ペット"; }
+F43.nameOf = petNameOf43;
+function buyPet43(b) {
+  const p = petPrice43(b);
+  if (world.pets.length >= PET_MAX43) { toast(null, `ペットは${PET_MAX43}匹までだよ`); return false; }
+  if (world.money < p) return false;
+  const id = newPetId43(b); if (!id) return false;
+  defPet43(id);
+  const L = PETV43[b] || [];
+  petLook43()[id] = L.length ? rnd(L.length) : 0;
+  const used = new Set(petEnts.map(e => e.name)), pool = (PET_NAME_POOL43[b] || ["ペット"]).filter(n => !used.has(n));
+  petNames43()[id] = pool.length ? pool[rnd(pool.length)] : `${PETS[b].name}${world.pets.length + 1}`;
+  world.pets.push(id); world.petHearts[id] = 0;
+  addMoney(-p); syncPets(); saveWorld();
+  toast(petSprite43(id), `${petNames43()[id]}（${L[petLook43()[id]]?.n || PETS[b].name}）がやってきた！`);
+  return true;
+}
+F43.buy = buyPet43;
+openAnimalShop = function () {
+  openModal("こもれび牧場", "shop", body => {
+    const cap = typeof F32 !== "undefined" && F32.cap ? F32.cap() : 8;
+    const animals = Object.entries(ANIMALS).map(([k, a]) => `<div class="li"><img src="${ASSETS[k]}" alt=""><span class="nm">${esc(a.name)}<span class="sub2">${fmt(a.price)}・${esc(a.desc || `牧場で飼う。エサをあげると${a.every ? a.every + "日に1回" : "毎日"}${ITEMS[a.prod].name}をくれる`)}</span></span><span class="acts"><button class="btn" type="button" data-ab43="animal:${k}" ${world.money < a.price ? "disabled" : ""}>買う</button></span></div>`).join("");
+    const full = world.pets.length >= PET_MAX43;
+    const pets = Object.keys(PETS).map(b => { const n = world.pets.filter(id => basePet43(id) === b).length, L = PETV43[b] || [];
+      return `<div class="li"><img src="${ASSETS[b]}" alt=""><span class="nm">${esc(PETS[b].name)}<span class="sub2">${fmt(petPrice43(b))}・いっしょに歩くペット。${L.length ? `柄と色は${L.length}種類の中から、どの子が来るかはお楽しみ` : ""}${n ? `（いま${n}匹）` : ""}</span></span><span class="acts"><button class="btn" type="button" data-ab43="pet:${b}" ${full || world.money < petPrice43(b) ? "disabled" : ""}>迎える</button></span></div>`; }).join("");
+    body.innerHTML = shopTabs13("animal") + `<p class="mtext">家畜は牧場（池の南）で暮らします（最大${cap}頭。家畜小屋を建てるとふえる）。ペットは同じ種類でも何匹でも迎えられます（全部で${PET_MAX43}匹まで・いま${world.pets.length}匹）。所持金 <b>${fmt(world.money)}</b></p>
+      <h3 class="lbl">家畜</h3><div class="list">${animals}</div><h3 class="lbl">ペット</h3><div class="list">${pets}</div>
+      <div class="list">${itemLi("feed", `${fmt(100)}・家畜のエサ×5`, `<button class="btn" type="button" data-ab43="item:feed" ${world.money < 100 ? "disabled" : ""}>買う</button>`)}</div>`;
+    body.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { closeModal(); openShop(b.dataset.t); });
+    body.querySelectorAll("[data-ab43]").forEach(b => b.onclick = () => {
+      const [kind, k] = b.dataset.ab43.split(":");
+      if (kind === "pet") { if (buyPet43(k)) { closeModal(); openAnimalShop(); } return; }
+      if (kind === "animal") {
+        const a = ANIMALS[k]; if (world.money < a.price) return;
+        if (world.animals.length >= cap) { toast(null, "牧場がいっぱい"); return; }
+        const names = (typeof ANIMAL_NAMES !== "undefined" && ANIMAL_NAMES[k]) || ["ナナ", "ポポ", "ルル"];
+        world.animals.push({ id: Date.now(), type: k, name: names[world.animals.length % names.length], hearts: 0, fed: false }); syncAnimals(); addMoney(-a.price);
+      } else { if (world.money < 100) return; addItem("feed", 5); addMoney(-100); }
+      saveWorld(); closeModal(); openAnimalShop();
+    });
+    const st = $("mtitle"); if (st) st.textContent = "こもれび牧場";
+  });
+};
+// 記録タブのペットの欄は、名前つきで
+syncPets();
+F43.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -11047,7 +11281,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

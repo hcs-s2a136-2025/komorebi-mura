@@ -10,7 +10,7 @@ const accounts = []; const saves = new Map(); let jackpot = 3000; const deletedT
 const rooms = new Map(); const KEYRE = /^(\d{1,3},\d{1,3}|home)$/, ITEMRE = /^[\p{L}\p{N}_:\-]{1,32}$/u;
 const houseOf = k => k === "home" ? { open: true, ownerId: -1 } : (shared.houses || {})[k] || null;
 const isOwner = (k, id) => { const h = houseOf(k); if (!h) return false; const o = h.ownerId == null ? -1 : +h.ownerId; return o < 0 || o === id; };
-const canEnter = (k, id) => { const h = houseOf(k); return !!h && (isOwner(k, id) || !!h.open); };
+const canEnter = (k, id) => { const h = houseOf(k); return !!h && (isOwner(k, id) || !!h.open || (Array.isArray(h.keys) && h.keys.some(x => x && x.id === id))); };
 const toList = m => Object.entries(m).map(([id, n]) => ({ id, n }));
 const hview = (k, owner, me) => { const r = rooms.get(k); const v = { layout: r && r.layout ? JSON.parse(r.layout) : null, storage: toList(r ? r.shared : {}) }; if (owner) { const pr = k === "home" ? rooms.get("me:" + me) : r; v.priv = toList(pr ? pr.priv : {}); } return v; };
 const addTo = (box, id, n) => { if (!ITEMRE.test(id) || !(n >= 1)) return -1; if (!(id in box) && Object.keys(box).length >= 60) return -1; box[id] = Math.min(99999, (box[id] || 0) + n); return box[id]; };

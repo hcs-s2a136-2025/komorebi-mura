@@ -919,7 +919,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.30.0";
+  const VER = "0.30.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5312,7 +5312,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.30.0";
+const CLIENT_VERSION = "0.30.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5804,7 +5804,7 @@ F8.myId = () => (F8.online && onl.id) || 0;
 F8.canEnter = key => {
   const h = world.houses.find(h => h.col + "," + h.row === key);
   if (!h || !h.ownerId || !F8.online || h.ownerId === onl.id) return true;
-  toast(null, `${h.owner || "だれか"}の家。鍵がかかっている`); return false;
+  toast(null, `${h.owner || "だれか"}の家。鍵がかかっている（持ち主が家の中の建築タブで「だれでも」か「合鍵」にすると入れるよ）`); return false;
 };
 F8.myHouseIndex = () => { for (let i = world.houses.length - 1; i >= 0; i--) { const h = world.houses[i]; if (!F8.online || !h.ownerId || h.ownerId === onl.id) return i; } return -1; };
 
@@ -7340,6 +7340,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.30.1", date: "2026/10/23", title: "家の合鍵・パレスの裏口が見えないのを直した", items: [
+    "オンラインで、北の丘の「こもれびパレスの裏口」（紫の扉）が見えなくなることがあったのを直した。木のすき間を抜けてすぐ右にある",
+    "家の「入れる人」を切りかえても、うまく効かないことがあったのを直した",
+    "家の合鍵：自分の家の中で建築タブを開くと「自分だけ・合鍵の人だけ・だれでも」を選べる。いまオンラインの人に合鍵をわたすと、その人はいつでも中に入れる（8人まで。あとで返してもらうこともできる）",
+    "合鍵をもらうと知らせが出る。鍵がかかっている家に入ろうとしたときに、入れるようにする方法も出るようにした",
+  ] },
   { v: "0.30.0", date: "2026/10/23", title: "ピアノ・魚の大きさ・みなと町の新しい魚・土の道", items: [
     "家の中のピアノの前でⒶを押すと、ピアノが弾けるようになった。鍵盤を押すか、キーボード（下の段 Z〜M・上の段 Q〜I、黒い鍵盤は S D G H J と 2 3 5 6 7）で、2オクターブ",
     "ピアノの「お手本」：きらきら星と、カラオケの5曲。次に押す鍵盤が光るので、順番に押していけば弾ける。最後まで弾くと実績「はじめての演奏」",
@@ -12061,6 +12067,62 @@ shovelAt = function (tx, ty, key) {
   return _shovelAt50.apply(this, arguments);
 };
 F50.ready = true;
+var F51 = {};
+// ---------- v51: 家の合鍵（えらんだ人だけ入れる）・パレスの裏口が消えないように ----------
+const hasKey51 = h => !!(h && Array.isArray(h.keys) && h.keys.some(k => k && k.id === onl.id));
+const _canEnter51 = F8.canEnter;
+F8.canEnter = key => {
+  const h = world.houses.find(h => h.col + "," + h.row === key);
+  if (F8.online && hasKey51(h)) return true;
+  return _canEnter51(key);
+};
+const _syncBuild51 = syncBuild;
+syncBuild = function () {
+  _syncBuild51.apply(this, arguments);
+  const box = $("access17"); if (!box || !(map === room && sharedHouse17(roomKey) && roomKey !== "home" && mineHouse17(roomKey))) return;
+  const h = houseOf17(roomKey); if (!h) return;
+  const keys = Array.isArray(h.keys) ? h.keys.filter(k => k && Number.isFinite(k.id)) : [];
+  const mode = h.open ? "all" : keys.length ? "keys" : "me";
+  const online = [...remotes.values()].filter(e => e.rid && !keys.some(k => k.id === e.rid));
+  box.innerHTML = `<h3>この家に入れる人</h3>
+    <div class="row"><button class="chip" type="button" data-acc51="me" aria-pressed="${mode === "me"}">自分だけ</button><button class="chip" type="button" data-acc51="keys" aria-pressed="${mode === "keys"}">合鍵の人だけ</button><button class="chip" type="button" data-acc51="all" aria-pressed="${mode === "all"}">だれでも</button></div>
+    <p class="mtext small" style="margin:8px 0 4px">合鍵をわたした人（${keys.length} / 8）</p>
+    <div class="row">${keys.length ? keys.map(k => `<button class="chip" type="button" data-unkey51="${k.id}" title="合鍵を返してもらう">${esc(k.name || "だれか")} ×</button>`).join("") : `<span class="note">まだだれにもわたしていない</span>`}</div>
+    ${keys.length < 8 ? `<p class="mtext small" style="margin:8px 0 4px">いまオンラインの人に合鍵をわたす</p><div class="row">${online.length ? online.map(e => `<button class="chip" type="button" data-key51="${e.rid}">＋ ${esc(e.name)}</button>`).join("") : `<span class="note">いまオンラインの人がいないよ</span>`}</div>` : ""}
+    <p class="note">「合鍵の人だけ」は、合鍵をわたした人だけが入れる。「だれでも」は、オンラインのみんなが入れる。どちらでも、鍵つきの箱はあなただけで、模様替えできるのも持ち主だけ。</p>`;
+  // 押したときに、いまの家のデータを取り直す（あとから届いた更新で、家のデータが入れかわっていても効くように）
+  const cur = () => houseOf17(roomKey);
+  const done = msg => { saveWorld(); syncBuild(); if (msg) toast(null, msg); };
+  box.querySelectorAll("[data-acc51]").forEach(b => b.onclick = () => { const x = cur(); if (!x) return; const m = b.dataset.acc51;
+    x.open = m === "all"; if (m === "me") delete x.keys;
+    done(m === "all" ? "この家を、だれでも入れるようにした" : m === "keys" ? (Array.isArray(x.keys) && x.keys.length ? "合鍵をわたした人だけ入れるようにした" : "合鍵の人だけ入れるようにした。下から、合鍵をわたす人をえらんでね") : "この家を、自分だけ入れるようにした（合鍵も返してもらった）"); });
+  box.querySelectorAll("[data-key51]").forEach(b => b.onclick = () => { const x = cur(); if (!x) return; const id = +b.dataset.key51, e = remotes.get(id); if (!e) return;
+    x.keys = (Array.isArray(x.keys) ? x.keys : []).filter(k => k && k.id !== id).concat([{ id, name: String(e.name || "").slice(0, 12) }]).slice(0, 8); x.open = false;
+    done(`${e.name}に合鍵をわたした`); });
+  box.querySelectorAll("[data-unkey51]").forEach(b => b.onclick = () => { const x = cur(); if (!x) return; const id = +b.dataset.unkey51, k = (x.keys || []).find(k => k.id === id);
+    x.keys = (x.keys || []).filter(k => k.id !== id); if (!x.keys.length) delete x.keys;
+    done(`${k?.name || "だれか"}から合鍵を返してもらった`); });
+};
+// 合鍵をもらったら、知らせる
+const _handle51 = handle8;
+let keySeen51 = null;
+handle8 = m => {
+  _handle51(m);
+  try {
+    if (!F8.connected) return;
+    const now = new Set(world.houses.filter(hasKey51).map(h => h.col + "," + h.row));
+    if (keySeen51) for (const k of now) if (!keySeen51.has(k)) { const h = world.houses.find(h => h.col + "," + h.row === k); toast(null, `${h?.owner || "だれか"}の家の合鍵をもらった！ いつでも中に入れるよ`); }
+    keySeen51 = now;
+  } catch (e) { }
+};
+// 村の地形を作り直したとき（オンラインで村のようすを読みこみ直したときなど）にも、パレスの裏口を置きなおす
+function addBackdoor51() {
+  if (!village.objs.some(o => o.img === "backdoor49")) addObj(village, "backdoor49", (NBACK49[0] - 1) * TS, (NBACK49[1] - 2) * TS);
+  solidRect(village, NBACK49[0] - 1, NBACK49[1] - 2, 3, 3);
+}
+const _restore51 = F7.restoreVillage;
+F7.restoreVillage = () => { _restore51(); addBackdoor51(); rebuildSolid(); };
+F51.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12458,7 +12520,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

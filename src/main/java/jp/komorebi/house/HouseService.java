@@ -86,12 +86,15 @@ public class HouseService {
         return world.layerValue("houses", key) != null;
     }
 
-    /** 中に入れるか（持ち主か、持ち主が「だれでも入れる」にしている） */
+    /** 中に入れるか（持ち主か、持ち主が「だれでも入れる」にしているか、合鍵をもらっている） */
     public boolean canEnter(String key, long playerId) {
         if (HOME.equals(key)) return true;
         JsonNode h = world.layerValue("houses", key);
         if (h == null) return false;
-        return isOwner(key, playerId) || h.path("open").asBoolean(false);
+        if (isOwner(key, playerId) || h.path("open").asBoolean(false)) return true;
+        // 合鍵：持ち主が「この人は入っていい」とえらんだ人（keys: [{id, name}]）
+        for (JsonNode k : h.path("keys")) if (k.path("id").asLong(-1) == playerId) return true;
+        return false;
     }
 
     public boolean isOpen(String key) {

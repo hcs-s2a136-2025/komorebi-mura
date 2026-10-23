@@ -101,3 +101,12 @@ details.paytable summary { cursor: pointer; font-family: var(--f-pixel); color: 
   .tl { width: 19px; height: 28px; border-radius: 3px; } .tl b { font-size: .74rem; } .tl.p b { font-size: .84rem; } .tl i { font-size: .46rem; }
   .tl.drawn { margin-left: 4px; } .mj-hand { gap: 1px; } .mbody { padding: 8px; } .mj-me, .mj-opp { padding: 4px; }
 }
+/* 麻雀のヒント */
+.tl.mjrec { box-shadow: inset 0 -4px 0 #d6c39b, 0 0 0 3px #f0b400, 0 0 10px 2px rgba(240, 180, 0, .7); transform: translateY(-4px); }
+.tl.mjten { position: relative; }
+.tl.mjten::after { content: "聴"; position: absolute; top: -9px; right: -5px; background: #2a8a4a; color: #fff; font-size: 10px; line-height: 14px; width: 14px; height: 14px; border-radius: 50%; text-align: center; font-weight: 700; font-style: normal; }
+.btn.mjrecbtn { box-shadow: 0 0 0 3px #f0b400, 0 0 10px 2px rgba(240, 180, 0, .7); }
+.mj-hint { margin-top: 6px; background: rgba(255, 248, 220, .95); color: #4a3a20; border: 2px solid #e8c060; border-radius: 8px; padding: 6px 10px; font-size: .86rem; line-height: 1.55; text-align: left; }
+.mj-hint b { color: #a06a00; }
+.mjtog { margin: 6px 0; }
+.mjguide .mtext p { margin: .3em 0; }

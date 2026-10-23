@@ -34,7 +34,7 @@ public final class MjGame {
     }
 
     public static final int MAX_TABLES = 6;
-    public static final long TURN_MS = 20_000, CLAIM_MS = 9_000, RESULT_MS = 15_000, END_MS = 40_000, CPU_MS = 650, RIICHI_AUTO_MS = 900, WAIT_OFFLINE_MS = 20_000;
+    public static final long TURN_MS = 20_000, CLAIM_MS = 9_000, RESULT_MS = 15_000, END_MS = 40_000, CPU_MS = 650, RIICHI_AUTO_MS = 900, WAIT_OFFLINE_MS = 20_000, ASSIST_MS = 1_300;
     public static final long[] RATES = { 0, 10, 50, 100, 500 };
     public static final String[] RATE_NAMES = { "ノーレート", "点1（1000点=10G）", "点5（1000点=50G）", "テンピン（1000点=100G）", "デカピン（1000点=500G）" };
     private static final String[] CPU_NAMES = { "銀次", "タツ", "ミドリ", "ゲン", "ハル", "ミナミ" };
@@ -163,6 +163,10 @@ public final class MjGame {
         long id;
         String name;
         boolean cpu, auto;
+        /** おまかせ打ち（ノーレートの卓だけ。CPUが代わりに打つのを、本人が選んだ） */
+        boolean assist;
+        /** ヒントを見る */
+        boolean hint;
         int timeouts;
         int score = 25000;
         final List<Integer> hand = new ArrayList<>();
@@ -192,7 +196,9 @@ public final class MjGame {
             return s;
         }
 
-        boolean bot() { return cpu || auto; }
+        boolean bot() { return cpu || auto || assist; }
+        /** 時間切れ・切断の代わり打ち。ツモ切りと見送りだけで、和了・鳴き・立直はしない */
+        boolean weak() { return auto && !cpu && !assist; }
 
         void resetRound() {
             hand.clear(); melds.clear(); river.clear(); discKinds.clear(); banned.clear();
@@ -325,7 +331,7 @@ public final class MjGame {
             s.banned.clear();
             boolean onlyDiscard = s.riichi && !canTsumo(seat) && kanOptions(seat).isEmpty();
             deadline = now + (onlyDiscard ? RIICHI_AUTO_MS : TURN_MS);
-            s.actAt = now + CPU_MS;
+            s.actAt = now + (s.assist ? ASSIST_MS : CPU_MS);
             broadcast(now);
         }
 
@@ -879,6 +885,14 @@ public final class MjGame {
             Seat s = seats[i];
             s.timeouts = 0;
             s.auto = false;
+            if ("assist".equals(act)) {
+                if (rate != 0 && a == 1) { ng(pid, "おまかせ打ちは、ノーレートの卓だけで使えるよ"); sendTo(pid, now); return; }
+                s.assist = a == 1;
+                s.actAt = now + ASSIST_MS;
+                broadcast(now);
+                return;
+            }
+            if ("hint".equals(act)) { s.hint = a == 1; sendTo(pid, now); return; }
             if ("next".equals(act)) {
                 if ("result".equals(phase) || "end".equals(phase)) { s.ready = true; if ("end".equals(phase)) s.back = true; checkReady(now); }
                 return;
@@ -973,7 +987,7 @@ public final class MjGame {
                     Seat s = seats[e.getKey()];
                     Claim c = e.getValue();
                     if (c.answer != null) continue;
-                    if (s.bot()) { c.answer = MjAi.claim(this, e.getKey(), c, lastTile); changed = true; }
+                    if (s.bot()) { c.answer = s.weak() ? "pass" : MjAi.claim(this, e.getKey(), c, lastTile); changed = true; }
                     else if (now >= deadline) { c.answer = "pass"; s.timeouts++; changed = true; }
                 }
                 if (changed && allAnswered()) resolve(now);
@@ -981,10 +995,11 @@ public final class MjGame {
             }
             Seat s = seats[turn];
             if (s.bot() ? now >= s.actAt : now >= deadline) {
-                if (!s.bot()) s.timeouts++;
-                if (!s.bot() && !s.riichi) {
-                    // 時間切れ：ツモれるならツモ、そうでなければツモ切り
-                    if (canTsumo(turn)) { agari(turn, -1, s.drawn, now); return; }
+                if (!s.bot() || s.weak()) {
+                    // 時間切れ・代わり打ち：ツモ切りだけ（和了・立直・カンはしない。和了は自分で押す）
+                    // 立直中の「ツモ切りしかできない番」は自動で進むだけなので、時間切れには数えない
+                    boolean only = s.riichi && !canTsumo(turn) && kanOptions(turn).isEmpty();
+                    if (!s.bot() && !only) s.timeouts++;
                     int t = s.drawn >= 0 ? s.drawn : MjAi.discardChoice(this, turn);
                     if (s.banned.contains(MjRules.kind(t))) t = MjAi.discardChoice(this, turn);
                     discard(turn, t, false, now);
@@ -1041,6 +1056,8 @@ public final class MjGame {
                 e.put("name", s.name);
                 e.put("cpu", s.cpu);
                 e.put("auto", s.auto && !s.cpu);
+                e.put("assist", s.assist && !s.cpu);
+                if (i == me) e.put("hint", s.hint);
                 e.put("score", s.score);
                 if (!"wait".equals(phase)) {
                     e.put("wind", wind(i));
@@ -1078,7 +1095,97 @@ public final class MjGame {
             }
             if (result != null) m.put("result", result);
             if (me >= 0 && "play".equals(phase)) m.put("actions", actions(me));
+            if (me >= 0 && "play".equals(phase) && seats[me].hint) m.put("hint", hint(me));
             out.toPlayer(pid, m);
+        }
+
+        /** ヒント：おすすめの牌・テンパイの待ち・役があるか。初めての人のための説明つき */
+        Map<String, Object> hint(int me) {
+            Map<String, Object> h = new LinkedHashMap<>();
+            Seat s = seats[me];
+            int melds = s.melds.size();
+            if ("claim".equals(sub)) {
+                Claim c = claims.get(me);
+                if (c == null || c.answer != null) return h;
+                if (c.ron) { h.put("rec", "ron"); h.put("msg", "ロンで和了れるよ！「ロン」を押そう"); return h; }
+                int keep = c.chiIdx;
+                String r = MjAi.claim(this, me, c, lastTile);
+                int idx = c.chiIdx;
+                c.chiIdx = keep;
+                h.put("rec", r);
+                if ("chi".equals(r)) h.put("chi", idx);
+                int k = MjRules.kind(lastTile);
+                boolean yakuhai = k >= 31 || k == 27 + wind(me) || k == 27 + (kyoku < 4 ? 0 : 1);
+                h.put("msg", switch (r) {
+                    case "pon" -> yakuhai ? "おすすめはポン。役牌（三元牌・自分の風・場の風）を3枚そろえると、それだけで役がつくよ" : "おすすめはポン。手が早く進むよ";
+                    case "chi" -> "おすすめはチー。手が早く進むよ（チーは左の人＝上家が捨てた牌だけ）";
+                    default -> s.menzen() ? "おすすめは見送り（パス）。鳴くと門前でなくなって、リーチができなくなるよ" : "おすすめは見送り（パス）。鳴いても手が進まないみたい";
+                });
+                return h;
+            }
+            if (turn == me && "turn".equals(sub)) {
+                if (canTsumo(me)) { h.put("rec", "tsumo"); h.put("msg", "ツモで和了れるよ！「ツモ」を押そう"); return h; }
+                if (s.riichi) { h.put("msg", "リーチ中は、引いた牌をそのまま切るだけ。和了れる牌が来たら「ツモ」、ほかの人が捨てたら「ロン」が出るよ"); return h; }
+                int rec = MjAi.discardChoice(this, me);
+                h.put("rec", rec);
+                Map<String, Object> ten = new LinkedHashMap<>();
+                Set<Integer> done = new HashSet<>();
+                for (int t : s.hand) {
+                    int k = MjRules.kind(t);
+                    if (!done.add(k)) continue;
+                    int[] c = s.closed();
+                    c[k]--;
+                    List<Integer> w = MjRules.waits(c, melds);
+                    if (!w.isEmpty()) ten.put(String.valueOf(k), w);
+                }
+                if (!ten.isEmpty()) h.put("tenpai", ten);
+                int rk = MjRules.kind(rec);
+                int[] after = s.closed();
+                after[rk]--;
+                List<Integer> w = MjRules.waits(after, melds);
+                boolean danger = false;
+                for (int i = 0; i < 4; i++) if (i != me && seats[i].riichi) danger = true;
+                StringBuilder msg = new StringBuilder("おすすめは「" + MjRules.name(rk) + "」を切ること。");
+                if (!w.isEmpty()) {
+                    msg.append("切るとテンパイ（").append(names(w)).append("待ち）。");
+                    if (!riichiTiles(me).isEmpty()) msg.append("「リーチ」をかけると役がつくよ。");
+                    else if (!hasYaku(me, after, w)) msg.append(s.menzen() ? "役がないので、リーチかツモで和了ろう。" : "ただ、役がないので、このままだと和了れないよ。");
+                } else {
+                    int sh = MjRules.shanten(after, melds);
+                    msg.append("あと").append(sh).append("回、いい牌が来ればテンパイ（あと1枚で和了れる形）。");
+                }
+                if (danger && w.isEmpty()) msg.append("リーチしている人がいるので、その人が捨てた牌など安全そうな牌を選んでいるよ。");
+                h.put("msg", msg.toString());
+                return h;
+            }
+            if (s.hand.size() % 3 == 1) {
+                List<Integer> w = MjRules.waits(s.closed(), melds);
+                if (!w.isEmpty()) {
+                    String m = "テンパイ中（" + names(w) + "待ち）。";
+                    if (furiten(me)) m += "フリテン（自分で捨てた牌で待っている）なので、ロンはできないよ。ツモなら和了れる";
+                    else if (!s.riichi && !hasYaku(me, s.closed(), w)) m += s.menzen() ? "役がないので、ロンするにはリーチが必要。ツモなら和了れるよ" : "役がないので、このままだと和了れないよ";
+                    h.put("msg", m);
+                    h.put("waits", w);
+                }
+            }
+            return h;
+        }
+
+        String names(List<Integer> kinds) {
+            StringBuilder b = new StringBuilder();
+            for (int k : kinds) { if (b.length() > 0) b.append("・"); b.append(MjRules.name(k)); }
+            return b.toString();
+        }
+
+        /** その待ちのどれかで、ロンでも和了れる役があるか */
+        boolean hasYaku(int me, int[] closed13, List<Integer> waits) {
+            Seat s = seats[me];
+            for (int w : waits) {
+                int[] c = closed13.clone();
+                c[w]++;
+                if (MjRules.evaluate(c, s.melds, w, ctx(me, false, w * 4 + 1)) != null) return true;
+            }
+            return false;
         }
 
         Map<String, Object> actions(int me) {

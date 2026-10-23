@@ -641,7 +641,19 @@ function mjCanAfford(rateG) {
   if (K.betAllowed && !K.betAllowed(need)) { mjM.err = K.betMsg() + "（このレートだと負けが大きくなるかも）"; return false; }
   return true;
 }
-const mjRules = `<details class="paytable"><summary>みんなの卓のルール</summary><p class="mtext small">25000点持ちの30000点返し、ウマ10-20（トップにオカ+20）。赤ドラ各1枚、喰いタン・後付けあり、ダブロンなし（頭ハネ）。途中流局は九種九牌・四風連打・四家立直。オーラスは親がトップなら和了りやめ、だれかの点数がマイナスになったら終了。<br>持ち時間は自分の番20秒・鳴き9秒。時間切れはツモ切り・見送りになり、2回続くか切断するとCPUがおまかせで打ちます（何か操作すると戻ります）。対局中に卓を離れると、ラス扱い（素点のプラスは無し）で精算して、CPUが代わりに打ちます。<br>役：立直・一発・門前清自摸和・断么九・平和・一盃口・役牌・嶺上開花・槍槓・海底・河底・ダブル立直・七対子・三色同順・一気通貫・混全帯么九・対々和・三暗刻・三色同刻・三槓子・小三元・混老頭・二盃口・純全帯么九・混一色・清一色。役満：天和・地和・国士無双・四暗刻・大三元・字一色・小四喜・大四喜・緑一色・清老頭・九蓮宝燈・四槓子。</p></details>`;
+const mjGuide = `<details class="paytable mjguide"><summary>はじめての人へ（かんたんな遊び方）</summary><div class="mtext small">
+  <p><b>目標</b>：手の牌14枚で「3枚のまとまり×4つ」と「同じ牌2枚×1つ」を作ると和了（あがり）。3枚のまとまりは、同じ牌3枚（例：東東東）か、同じ種類の続き番号（例：三四五萬）。</p>
+  <p><b>流れ</b>：自分の番に1枚引いて、いらない牌を1枚捨てる。これをくり返します。あと1枚で和了れる形を「テンパイ」といいます。</p>
+  <p><b>役がないと和了れない</b>：かんたんな役は、<b>リーチ</b>（鳴かずにテンパイしたら「リーチ」を押す）、<b>ツモ</b>（鳴かずに自分で引いて和了る）、<b>タンヤオ</b>（2〜8の数字だけで作る）、<b>役牌</b>（白・發・中や、自分の風・場の風を3枚）。</p>
+  <p><b>ツモとロン</b>：和了れる牌を自分で引いたら「ツモ」、ほかの人が捨てたら「ロン」。ただし自分で捨てたことのある牌で待っていると<b>フリテン</b>で、ロンはできません（ツモはOK）。</p>
+  <p><b>鳴き</b>：ほかの人の捨て牌をもらう。同じ牌2枚＋1枚で「ポン」、左の人（上家）の牌で続き番号を作る「チー」。鳴くと早くそろうけど、リーチはできなくなります。</p>
+  <p><b>こまったら</b>：「ヒント」をオンにすると、おすすめの牌が光って、テンパイの待ちや役があるかを教えてくれます。ノーレートの卓なら「おまかせ打ち」で、CPUが打つのを見て覚えることもできるよ。</p></div></details>`;
+const mjRules = `<details class="paytable"><summary>みんなの卓のルール</summary><p class="mtext small">25000点持ちの30000点返し、ウマ10-20（トップにオカ+20）。赤ドラ各1枚、喰いタン・後付けあり、ダブロンなし（頭ハネ）。途中流局は九種九牌・四風連打・四家立直。オーラスは親がトップなら和了りやめ、だれかの点数がマイナスになったら終了。<br>持ち時間は自分の番20秒・鳴き9秒。時間切れはツモ切り・見送りになります（和了れるときも自動では和了らないので、ツモ・ロンは自分で押してね）。時間切れが2回続くか切断すると、代わりにツモ切りと見送りだけで打ちます（何か操作すると戻ります。リーチ中の自動のツモ切りは時間切れに数えません）。ノーレートの卓では、CPUに打ってもらう「おまかせ打ち」が使えます。対局中に卓を離れると、ラス扱い（素点のプラスは無し）で精算して、CPUが代わりに打ちます。<br>役：立直・一発・門前清自摸和・断么九・平和・一盃口・役牌・嶺上開花・槍槓・海底・河底・ダブル立直・七対子・三色同順・一気通貫・混全帯么九・対々和・三暗刻・三色同刻・三槓子・小三元・混老頭・二盃口・純全帯么九・混一色・清一色。役満：天和・地和・国士無双・四暗刻・大三元・字一色・小四喜・大四喜・緑一色・清老頭・九蓮宝燈・四槓子。</p></details>`;
+function mjToggles(st) {
+  const my = st.seats[st.me] || {};
+  return `<div class="row2 mjtog"><button class="btn ${my.hint ? "" : "light"}" type="button" data-mjt="hint" data-on="${my.hint ? 0 : 1}">ヒント：${my.hint ? "オン" : "オフ"}</button>${st.rate === 0 ? `<button class="btn ${my.assist ? "" : "light"}" type="button" data-mjt="assist" data-on="${my.assist ? 0 : 1}">おまかせ打ち：${my.assist ? "オン" : "オフ"}</button>` : ""}</div>`;
+}
+function wireMjToggles(cb) { cb.querySelectorAll("[data-mjt]").forEach(b => b.onclick = () => { b.disabled = true; mjM.err = ""; K.net.send({ type: "mj", act: b.dataset.mjt, a: +b.dataset.on, b: 0 }); }); }
 function renderMJM() {
   const cb = mjM.cb, body = mjM.body, st = mjM.st; if (!cb || !cb.isConnected) return;
   refreshMoney(body);
@@ -651,7 +663,10 @@ function renderMJM() {
     cb.innerHTML = `<div class="mjlobby"><h3 class="lbl">卓${st.id}　${st.south ? "半荘戦" : "東風戦"}・${esc(st.rateName)}</h3>
       <div class="list">${st.seats.map((s, i) => `<div class="li"><span class="nm">${s ? esc(s.name) + (i === st.me ? "（あなた）" : "") : "空席"}</span></div>`).join("")}</div>
       <p class="mtext small">4人そろうと始まります。${st.owner ? "そろう前でも、空いた席にCPUを入れて始められるよ。" : "卓を立てた人が、CPUを入れて始めることもできます。"}</p>
-      ${err}<div class="row2">${st.owner ? `<button class="btn" type="button" id="mjStart">CPUを入れて始める</button>` : ""}<button class="btn light" type="button" id="mjLeaveW">卓を離れる</button></div>${mjRules}</div>`;
+      <p class="mtext small">麻雀にまだ自信がなければ、「ヒント」をオンにしておくと安心だよ。${st.rate === 0 ? "ノーレートの卓なので、最初から「おまかせ打ち」（CPUが代わりに打つ）にしておくこともできます。" : "おまかせ打ちは、ノーレートの卓だけで使えます。"}</p>
+      ${mjToggles(st)}
+      ${err}<div class="row2">${st.owner ? `<button class="btn" type="button" id="mjStart">CPUを入れて始める</button>` : ""}<button class="btn light" type="button" id="mjLeaveW">卓を離れる</button></div>${mjGuide}${mjRules}</div>`;
+    wireMjToggles(cb);
     const q = s => cb.querySelector(s);
     if (q("#mjStart")) q("#mjStart").onclick = () => K.net.send({ type: "mj", act: "start" });
     q("#mjLeaveW").onclick = () => { mjM.st = null; K.net.send({ type: "mj", act: "leave" }); };
@@ -661,28 +676,32 @@ function renderMJM() {
   const left = `<b id="mjLeft">${Math.max(0, Math.ceil((mjM.deadline - performance.now()) / 1000))}</b>秒`;
   const meldHtml = s => (s.melds || []).map(m => `<span class="mjmeld">${m.tiles.map((t, j) => m.type === "ankan" && (j === 0 || j === 3) ? `<span class="tl sm back"></span>` : tid(t, "sm" + (t === m.called ? " called" : ""))).join("")}</span>`).join("");
   const riverHtml = s => (s.river || []).map(([t, f]) => tid(t, "sm" + (f & 1 ? " rot" : "") + (f & 2 ? " taken" : "") + (st.last === t && st.sub === "claim" ? " mjhi" : ""))).join("");
-  const nameLine = (s, i, pos) => `<div class="mj-name"><span class="wind">${WIND[s.wind]}</span>${pos ? `<span class="pos">${pos}</span>` : ""}${esc(s.name)}${i === me ? "（あなた）" : ""}　<b>${s.score}</b>${s.riichi ? `<span class="rb">リーチ</span>` : ""}${s.auto ? `<span class="rb auto">おまかせ中</span>` : ""}${i === st.dealer ? `<span class="rb oya">親</span>` : ""}${st.turn === i && st.phase === "play" && st.sub === "turn" ? `<span class="thinking">◀ 番</span>` : ""}${i === me && my.furiten ? `<span class="rb">フリテン</span>` : ""}</div>`;
+  const nameLine = (s, i, pos) => `<div class="mj-name"><span class="wind">${WIND[s.wind]}</span>${pos ? `<span class="pos">${pos}</span>` : ""}${esc(s.name)}${i === me ? "（あなた）" : ""}　<b>${s.score}</b>${s.riichi ? `<span class="rb">リーチ</span>` : ""}${s.auto ? `<span class="rb auto">代わり打ち中</span>` : ""}${s.assist ? `<span class="rb auto">おまかせ打ち</span>` : ""}${i === st.dealer ? `<span class="rb oya">親</span>` : ""}${st.turn === i && st.phase === "play" && st.sub === "turn" ? `<span class="thinking">◀ 番</span>` : ""}${i === me && my.furiten ? `<span class="rb">フリテン</span>` : ""}</div>`;
   const opp = (i, pos) => { const s = st.seats[i]; return `<div class="mj-opp${st.turn === i && st.sub === "turn" ? " turn" : ""}">${nameLine(s, i, pos)}<div class="mjrow"><span class="backs">${"<i></i>".repeat(Math.min(14, s.count))}</span>${meldHtml(s)}</div><div class="mj-river">${riverHtml(s)}</div></div>`; };
   // 手牌
   const canDiscard = !!ac.discard;
   const banned = new Set(ac.banned || []);
   const rset = mjM.sel && ac.riichi ? new Set(ac.riichi.map(t => t >> 2)) : null;
   const okTile = t => canDiscard && !banned.has(t >> 2) && (ac.riichiOnly === undefined || t === ac.riichiOnly) && (!rset || rset.has(t >> 2));
-  const handTiles = (my.hand || []).map(t => tid(t, okTile(t) ? "can" + (rset ? " mjhi" : "") : "", okTile(t) ? `data-t="${t}" role="button" tabindex="0"` : "")).join("")
-    + (my.drawn >= 0 ? tid(my.drawn, "drawn" + (okTile(my.drawn) ? " can" + (rset ? " mjhi" : "") : ""), okTile(my.drawn) ? `data-t="${my.drawn}" role="button" tabindex="0"` : "") : "");
+  const hint = st.hint || null, recT = hint && typeof hint.rec === "number" ? hint.rec : -1, tenK = hint && hint.tenpai ? hint.tenpai : null;
+  const hcls = t => (t === recT ? " mjrec" : "") + (tenK && tenK[t >> 2] ? " mjten" : "");
+  const handTiles = (my.hand || []).map(t => tid(t, (okTile(t) ? "can" + (rset ? " mjhi" : "") : "") + hcls(t), okTile(t) ? `data-t="${t}" role="button" tabindex="0"` : "")).join("")
+    + (my.drawn >= 0 ? tid(my.drawn, "drawn" + (okTile(my.drawn) ? " can" + (rset ? " mjhi" : "") : "") + hcls(my.drawn), okTile(my.drawn) ? `data-t="${my.drawn}" role="button" tabindex="0"` : "") : "");
+  const hintHtml = hint && hint.msg ? `<div class="mj-hint"><b>ヒント</b>　${esc(hint.msg)}${tenK ? `<span class="small">（「聴」の印の牌は、切るとテンパイになる牌）</span>` : ""}</div>` : "";
   let ctl = "", info = "";
   if (st.phase === "play") {
     if (ac.pass) {
       const t = ac.tile;
       info = `${esc(st.seats[st.lastFrom]?.name || "")}が ${tid(t, "sm")} を${st.sub === "claim" && st.seats[st.lastFrom] && (st.seats[st.lastFrom].melds || []).some(m => m.type === "kakan" && m.tiles.includes(t)) ? "加槓" : "捨てた"}（残り ${left}）`;
-      if (ac.ron) ctl += `<button class="btn" type="button" data-mj="ron">ロン</button>`;
-      if (ac.pon) ctl += `<button class="btn" type="button" data-mj="pon">ポン</button>`;
+      const rc = (k, i) => hint && hint.rec === k && (k !== "chi" || hint.chi === i) ? " mjrecbtn" : "";
+      if (ac.ron) ctl += `<button class="btn${rc("ron")}" type="button" data-mj="ron">ロン</button>`;
+      if (ac.pon) ctl += `<button class="btn${rc("pon")}" type="button" data-mj="pon">ポン</button>`;
       if (ac.minkan) ctl += `<button class="btn" type="button" data-mj="minkan">カン</button>`;
-      (ac.chi || []).forEach((o, i) => { ctl += `<button class="btn" type="button" data-mj="chi" data-a="${i}">チー ${[...o, t].sort((a, b) => a - b).map(x => tid(x, "sm")).join("")}</button>`; });
-      ctl += `<button class="btn light" type="button" data-mj="pass">パス</button>`;
+      (ac.chi || []).forEach((o, i) => { ctl += `<button class="btn${rc("chi", i)}" type="button" data-mj="chi" data-a="${i}">チー ${[...o, t].sort((a, b) => a - b).map(x => tid(x, "sm")).join("")}</button>`; });
+      ctl += `<button class="btn light${rc("pass")}" type="button" data-mj="pass">パス</button>`;
     } else if (canDiscard) {
       info = mjM.sel ? `リーチ：捨てる牌をえらんでね（残り ${left}）` : ac.riichiOnly !== undefined ? `ツモ切りか、ツモ・カンをえらんでね（残り ${left}）` : `あなたの番。切る牌をえらんでね（残り ${left}）`;
-      if (ac.tsumo) ctl += `<button class="btn" type="button" data-mj="tsumo">ツモ</button>`;
+      if (ac.tsumo) ctl += `<button class="btn${hint && hint.rec === "tsumo" ? " mjrecbtn" : ""}" type="button" data-mj="tsumo">ツモ</button>`;
       if (ac.riichi) ctl += `<button class="btn ${mjM.sel ? "" : "light"}" type="button" id="mjRiichi">${mjM.sel ? "リーチをやめる" : "リーチ"}</button>`;
       (ac.kan || []).forEach(k => { ctl += `<button class="btn light" type="button" data-mj="kan" data-a="${k}">カン ${tileHtml(k, "sm")}</button>`; });
       if (ac.kyuushu) ctl += `<button class="btn light" type="button" data-mj="kyuushu">九種九牌で流す</button>`;
@@ -727,9 +746,11 @@ function renderMJM() {
     <div class="mj-me${st.turn === me && st.sub === "turn" ? " turn" : ""}">${nameLine(my, me, "")}
       <div class="mj-river">${riverHtml(my)}</div>
       <div class="mj-hand">${handTiles}${my.melds && my.melds.length ? `<span class="mjmelds">${meldHtml(my)}</span>` : ""}</div>
-      <div class="mj-msg">${info}</div><div class="row2 mjctl">${ctl}</div></div>
+      <div class="mj-msg">${info}</div><div class="row2 mjctl">${ctl}</div>${hintHtml}${my.assist ? `<div class="mj-hint"><b>おまかせ打ち中</b>　CPUが代わりに打っています。打ち方を見て覚えてね。自分で打つときは「おまかせ打ち：オン」を押してオフに</div>` : ""}</div>
     ${err}${overlay}
-    <div class="row2"><button class="btn ghost" type="button" id="mjLeave">${mjM.leaveArmed ? "もう一度押すと離れる（ラス扱いで精算）" : "卓を離れる"}</button></div>${mjRules}</div>`;
+    ${mjToggles(st)}
+    <div class="row2"><button class="btn ghost" type="button" id="mjLeave">${mjM.leaveArmed ? "もう一度押すと離れる（ラス扱いで精算）" : "卓を離れる"}</button></div>${mjGuide}${mjRules}</div>`;
+  wireMjToggles(cb);
   const send = (act, a = 0, b = 0) => { mjM.err = ""; K.net.send({ type: "mj", act, a, b }); };
   cb.querySelectorAll("[data-mj]").forEach(el => el.onclick = () => { el.disabled = true; send(el.dataset.mj, +(el.dataset.a || 0)); });
   cb.querySelectorAll(".tl[data-t]").forEach(el => {
@@ -755,7 +776,8 @@ function renderMJLobby(cb, err) {
     <h3 class="lbl">卓を立てる</h3>
     <div class="mtabs">${["東風戦", "半荘戦"].map((l, i) => `<button class="chip" type="button" data-len="${i}" aria-pressed="${mjM.len === i}">${l}</button>`).join("")}</div>
     <div class="mtabs">${MJ_RATES.map(([g, l], i) => `<button class="chip" type="button" data-rt="${i}" aria-pressed="${mjM.rate === i}">${l}${g ? `（1000点=${g}G）` : ""}</button>`).join("")}</div>
-    ${err}<div class="row2"><button class="btn" type="button" id="mjCreate">卓を立てる</button><button class="btn light" type="button" id="mjSoloGo">ひとりで打つ</button></div>${mjRules}</div>`;
+    <p class="mtext small">麻雀がはじめてなら、ノーレートの卓がおすすめ。卓では「ヒント」（おすすめの牌やテンパイを教えてくれる）と「おまかせ打ち」（CPUが代わりに打つ）が使えます。</p>
+    ${err}<div class="row2"><button class="btn" type="button" id="mjCreate">卓を立てる</button><button class="btn light" type="button" id="mjSoloGo">ひとりで打つ</button></div>${mjGuide}${mjRules}</div>`;
   cb.querySelectorAll("[data-len]").forEach(b => b.onclick = () => { mjM.len = +b.dataset.len; renderMJM(); });
   cb.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { mjM.rate = +b.dataset.rt; renderMJM(); });
   cb.querySelectorAll("[data-sit]").forEach(b => b.onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[+b.dataset.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "sit", a: +b.dataset.sit }); });

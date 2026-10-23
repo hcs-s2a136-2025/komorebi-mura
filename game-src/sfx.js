@@ -48,6 +48,36 @@ const SFX = (() => {
   }
 
   const api = {
+    // ---- 作業の音（木・岩・畑・水・釣り）。v は音量の倍率（ほかの人の音は小さめに） ----
+    swish(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .12, { vol: .1 * v, hp: 1400, lp: 5200 }); },
+    chop(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 190, .09, { type: "triangle", vol: .38 * v, f2: 85 }); noise(t, .06, { vol: .28 * v, lp: 1900 }); tone(t, 540, .04, { type: "square", vol: .05 * v, filt: 1500 }); },
+    fell(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; api.chop(v);
+      noise(t + .06, .16, { vol: .22 * v, hp: 2200 }); tone(t + .1, 300, .4, { type: "sawtooth", vol: .05 * v, f2: 110, filt: 700 });
+      tone(t + .55, 75, .35, { type: "sine", vol: .45 * v, f2: 38 }); noise(t + .55, .3, { vol: .3 * v, lp: 520 }); noise(t + .58, .45, { vol: .07 * v, hp: 3200 });
+    },
+    clink(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 1850, .13, { type: "square", vol: .06 * v, filt: 5200 }); tone(t, 2770, .09, { type: "sine", vol: .1 * v }); noise(t, .035, { vol: .24 * v, hp: 2600 }); },
+    rockBreak(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; api.clink(v);
+      noise(t + .03, .3, { vol: .36 * v, lp: 1200 }); tone(t + .03, 95, .22, { type: "sine", vol: .32 * v, f2: 45 });
+      for (let i = 0; i < 5; i++) noise(t + .14 + i * .05 + Math.random() * .03, .03, { vol: .09 * v, hp: 3000 });
+    },
+    dig(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .13, { vol: .32 * v, lp: 720 }); tone(t, 115, .1, { type: "sine", vol: .26 * v, f2: 60 }); noise(t + .02, .08, { vol: .06 * v, hp: 2500 }); },
+    water(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; noise(t, .42, { vol: .06 * v, hp: 1500, lp: 6000 });
+      for (let i = 0; i < 9; i++) { const d = t + i * .04 + Math.random() * .02, f = 900 + Math.random() * 900; tone(d, f, .05, { type: "sine", vol: .06 * v, f2: f * 1.7 }); }
+    },
+    plant(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 320, .07, { type: "sine", vol: .16 * v, f2: 540 }); noise(t, .05, { vol: .1 * v, lp: 900 }); },
+    harvest(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .05, { vol: .14 * v, lp: 1400 }); tone(t, 620, .06, { type: "triangle", vol: .15 * v, f2: 920 }); tone(t + .07, 1250, .09, { type: "sine", vol: .1 * v }); },
+    slash(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .1, { vol: .2 * v, hp: 2600 }); tone(t, 950, .09, { type: "triangle", vol: .06 * v, f2: 280 }); },
+    cast(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .2, { vol: .09 * v, hp: 1000, lp: 4500 }); for (let i = 0; i < 6; i++) tone(t + .05 + i * .035, 2400, .012, { type: "square", vol: .03 * v }); },
+    plop(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 520, .09, { type: "sine", vol: .2 * v, f2: 150 }); noise(t, .12, { vol: .1 * v, lp: 1500 }); },
+    bite() { if (!ctx()) return; const t = ac.currentTime; tone(t, 1320, .06, { type: "square", vol: .07 }); tone(t + .08, 1760, .09, { type: "square", vol: .07 }); },
+    catchFish(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; noise(t, .28, { vol: .26 * v, hp: 700, lp: 5000 });
+      [784, 988, 1175, 1568].forEach((f, i) => tone(t + .16 + i * .07, f, .14, { type: "triangle", vol: .1 * v }));
+    },
+    fishMiss() { if (!ctx()) return; const t = ac.currentTime; tone(t, 420, .22, { type: "triangle", vol: .08, f2: 240 }); },
     // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
     audio() { if (!ctx()) return null; return { ac, out, tone, noise, hz }; },
     get on() { return pref.on; }, get vol() { return pref.vol; },

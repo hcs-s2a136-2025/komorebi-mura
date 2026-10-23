@@ -897,7 +897,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.29.1";
+  const VER = "0.29.2";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -1294,6 +1294,36 @@ const SFX = (() => {
   }
 
   const api = {
+    // ---- 作業の音（木・岩・畑・水・釣り）。v は音量の倍率（ほかの人の音は小さめに） ----
+    swish(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .12, { vol: .1 * v, hp: 1400, lp: 5200 }); },
+    chop(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 190, .09, { type: "triangle", vol: .38 * v, f2: 85 }); noise(t, .06, { vol: .28 * v, lp: 1900 }); tone(t, 540, .04, { type: "square", vol: .05 * v, filt: 1500 }); },
+    fell(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; api.chop(v);
+      noise(t + .06, .16, { vol: .22 * v, hp: 2200 }); tone(t + .1, 300, .4, { type: "sawtooth", vol: .05 * v, f2: 110, filt: 700 });
+      tone(t + .55, 75, .35, { type: "sine", vol: .45 * v, f2: 38 }); noise(t + .55, .3, { vol: .3 * v, lp: 520 }); noise(t + .58, .45, { vol: .07 * v, hp: 3200 });
+    },
+    clink(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 1850, .13, { type: "square", vol: .06 * v, filt: 5200 }); tone(t, 2770, .09, { type: "sine", vol: .1 * v }); noise(t, .035, { vol: .24 * v, hp: 2600 }); },
+    rockBreak(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; api.clink(v);
+      noise(t + .03, .3, { vol: .36 * v, lp: 1200 }); tone(t + .03, 95, .22, { type: "sine", vol: .32 * v, f2: 45 });
+      for (let i = 0; i < 5; i++) noise(t + .14 + i * .05 + Math.random() * .03, .03, { vol: .09 * v, hp: 3000 });
+    },
+    dig(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .13, { vol: .32 * v, lp: 720 }); tone(t, 115, .1, { type: "sine", vol: .26 * v, f2: 60 }); noise(t + .02, .08, { vol: .06 * v, hp: 2500 }); },
+    water(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; noise(t, .42, { vol: .06 * v, hp: 1500, lp: 6000 });
+      for (let i = 0; i < 9; i++) { const d = t + i * .04 + Math.random() * .02, f = 900 + Math.random() * 900; tone(d, f, .05, { type: "sine", vol: .06 * v, f2: f * 1.7 }); }
+    },
+    plant(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 320, .07, { type: "sine", vol: .16 * v, f2: 540 }); noise(t, .05, { vol: .1 * v, lp: 900 }); },
+    harvest(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .05, { vol: .14 * v, lp: 1400 }); tone(t, 620, .06, { type: "triangle", vol: .15 * v, f2: 920 }); tone(t + .07, 1250, .09, { type: "sine", vol: .1 * v }); },
+    slash(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .1, { vol: .2 * v, hp: 2600 }); tone(t, 950, .09, { type: "triangle", vol: .06 * v, f2: 280 }); },
+    cast(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .2, { vol: .09 * v, hp: 1000, lp: 4500 }); for (let i = 0; i < 6; i++) tone(t + .05 + i * .035, 2400, .012, { type: "square", vol: .03 * v }); },
+    plop(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 520, .09, { type: "sine", vol: .2 * v, f2: 150 }); noise(t, .12, { vol: .1 * v, lp: 1500 }); },
+    bite() { if (!ctx()) return; const t = ac.currentTime; tone(t, 1320, .06, { type: "square", vol: .07 }); tone(t + .08, 1760, .09, { type: "square", vol: .07 }); },
+    catchFish(v = 1) {
+      if (!ctx()) return; const t = ac.currentTime; noise(t, .28, { vol: .26 * v, hp: 700, lp: 5000 });
+      [784, 988, 1175, 1568].forEach((f, i) => tone(t + .16 + i * .07, f, .14, { type: "triangle", vol: .1 * v }));
+    },
+    fishMiss() { if (!ctx()) return; const t = ac.currentTime; tone(t, 420, .22, { type: "triangle", vol: .08, f2: 240 }); },
     // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
     audio() { if (!ctx()) return null; return { ac, out, tone, noise, hz }; },
     get on() { return pref.on; }, get vol() { return pref.vol; },
@@ -5227,7 +5257,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.29.1";
+const CLIENT_VERSION = "0.29.2";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5559,7 +5589,7 @@ const _renderSettings9 = F7.renderSettings;
 F7.renderSettings = () => {
   _renderSettings9();
   const B = $("settingsBody");
-  B.insertAdjacentHTML("afterbegin", `<div class="opt"><h3>効果音（スロットなど）</h3>
+  B.insertAdjacentHTML("afterbegin", `<div class="opt"><h3>効果音（作業・スロットなど）</h3>
     <div class="row"><button class="chip" type="button" data-se="1" aria-pressed="${SFX.on}">ON</button><button class="chip" type="button" data-se="0" aria-pressed="${!SFX.on}">OFF</button>
       <input type="range" id="seVol" min="0" max="1" step="0.05" value="${SFX.vol}" aria-label="効果音の音量" style="flex:1;min-width:120px;accent-color:var(--lantern)"><button class="btn light" type="button" id="seTest">試しに鳴らす</button></div>
     <p class="note">BGMとは別に音量を決められます。スマホはマナーモードだと鳴らないことがあります。</p></div>`);
@@ -7255,6 +7285,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.29.2", date: "2026/10/23", title: "作業の音", items: [
+    "木を切る「コーン」、切り倒すと「メキメキ…ドスン」。岩を掘る「カキン」、砕くと「ガラガラ」",
+    "鍬で耕す・シャベルで掘る音、じょうろの水の音、種を植える音、収穫の音、剣をふる音",
+    "釣り：投げる・浮きが落ちる・魚がかかる・釣り上げる音。早すぎたり逃げられたりしたときの音も",
+    "空ぶりのときは「ヒュッ」とふる音だけ",
+    "オンラインでは、近くにいる人の作業の音も小さく聞こえる",
+    "音は設定タブの効果音のオン・オフ、音量にしたがう",
+  ] },
   { v: "0.29.1", date: "2026/10/23", title: "ペットを20匹まで・ペットの管理", items: [
     "いっしょに暮らせるペットを、8匹から20匹にふやした。ついてくる子は、全員が足あとをたどって一列で歩く",
     "「ペットたち」の画面を追加。1匹ずつ「ついてくる・ここで待つ・小屋」を選べる。「みんな ついてきて」「みんな 小屋へ」のように、まとめても変えられる",
@@ -11664,6 +11702,61 @@ addEventListener("keydown", e => { if ((e.key === "p" || e.key === "P") && !moda
 const _farmSnap46 = farmSnap44;
 farmSnap44 = () => { const s = _farmSnap46(), stay = petStay35(); s.pets = (world.pets || []).filter(t => !stay[t]).slice(0, PET_MAX43).map(id => [basePet43(id), petVar43(id), String(petNameOf43(id)).slice(0, 12)]); return s; };
 F46.ready = true;
+var F47 = {};
+// ---------- v47: 作業の音（木を切る・岩を掘る・耕す・水やり・植える・収穫・釣り） ----------
+const sfx47 = (n, v) => { try { if (typeof SFX !== "undefined" && SFX[n]) SFX[n](v); } catch (e) { } };
+function snap47() {
+  let th = 0, rh = 0, rn = 0;
+  for (const t of Object.values(world.trees || {})) th += Math.max(0, t.hp | 0);
+  for (const r of Object.values(world.rocks || {})) { rh += Math.max(0, r.hp | 0); rn++; }
+  return { chop: world.stats.chop | 0, mine: world.stats.mine | 0, th, rh, rn, dg: dg && dg.rocks ? dg.rocks.size : 0, lab: laborRocks ? laborRocks.size : 0,
+    till: Object.keys(world.tilled || {}).length, fence: Object.keys(world.fences || {}).length, path: Object.keys(world.paths || {}).length };
+}
+const _swing47 = swing;
+swing = function (kind, dur, done) {
+  return _swing47.call(this, kind, dur, function () {
+    const a = snap47(); const r = done.apply(this, arguments); const b = snap47();
+    if (kind === "axe") sfx47(b.chop > a.chop ? "fell" : b.th < a.th || b.fence < a.fence ? "chop" : "swish");
+    else if (kind === "pick") sfx47(b.mine > a.mine || b.rn < a.rn || b.dg < a.dg || b.lab < a.lab ? "rockBreak" : b.rh < a.rh || b.path < a.path || map === labor ? "clink" : "swish");
+    else if (kind === "hoe") sfx47(b.till !== a.till ? "dig" : "swish");
+    else if (kind === "shovel") sfx47("dig");
+    else if (kind === "can") sfx47("water");
+    else if (kind === "plant") sfx47("plant");
+    else if (kind === "sword") sfx47("slash");
+    else sfx47("swish");
+    return r;
+  });
+};
+const _act47 = act;
+act = function () {
+  const h = world.stats.harvest | 0, f0 = fish;
+  const r = _act47.apply(this, arguments);
+  if ((world.stats.harvest | 0) > h) sfx47("harvest");
+  if (!f0 && fish && fish.phase === "cast") sfx47("cast");
+  return r;
+};
+const _updateFish47 = updateFish;
+updateFish = function (dt) {
+  const ph = fish ? fish.phase : null, got = fish ? fish.got : null;
+  _updateFish47(dt);
+  const now = fish ? fish.phase : null;
+  if (ph === now) return;
+  if (ph === "cast" && now === "wait") sfx47("plop");
+  else if (now === "bite") sfx47("bite");
+  else if (ph === "reel" && !fish && got) sfx47("catchFish");
+  else if (now === "miss" && ph !== "miss") sfx47("fishMiss");
+};
+// ほかの人の作業の音も、近くにいるときは小さく聞こえる
+const _onMotion47 = onMotion44;
+onMotion44 = function (m) {
+  _onMotion47(m);
+  const e = remotes.get(m.id); if (!e || modalOpen || e.rmap !== mapKey()) return;
+  const d = Math.abs(e.x - player.x) + Math.abs(e.y - player.y); if (d > 8) return;
+  const v = .45 * (1 - d / 10);
+  const k = { hoe: "dig", shovel: "dig", axe: "chop", pick: "clink", can: "water", plant: "plant", sword: "slash", fish: "cast", catch: "catchFish" }[m.k];
+  if (k) sfx47(k, v);
+};
+F47.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------

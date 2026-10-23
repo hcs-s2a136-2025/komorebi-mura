@@ -315,3 +315,19 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .dot49 { width: 10px; height: 10px; border-radius: 50%; background: #5bc0f8; flex: none; box-shadow: 0 0 0 2px rgba(91, 192, 248, .25); }
 .dot49.me { background: #ff6b6b; box-shadow: 0 0 0 2px rgba(255, 107, 107, .25); }
 #onl8:hover { text-decoration: underline; }
+
+/* v50 ピアノ・図鑑の大きさ */
+.piano50 { position: relative; height: 150px; margin: 8px 0; user-select: none; touch-action: none; }
+.pw50, .pb50 { position: absolute; top: 0; border: 1px solid #4a3a30; border-radius: 0 0 6px 6px; padding: 0; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; font: inherit; }
+.pw50 { height: 100%; background: linear-gradient(#fffdf6, #efe6d6); color: #8a7a6a; z-index: 1; }
+.pb50 { height: 60%; background: linear-gradient(#3a3036, #1a1418); color: #c8bcc8; z-index: 2; }
+.pw50 span, .pb50 span { font-size: .65rem; margin-bottom: 4px; opacity: .8; }
+.pw50 em { font-style: normal; font-size: .62rem; color: #c05a5a; margin-bottom: 2px; }
+.pw50.on50 { background: linear-gradient(#ffe8a0, #ffd86a); }
+.pb50.on50 { background: linear-gradient(#8a6aa8, #5a3a78); }
+.pw50.next50 { box-shadow: inset 0 -10px 0 #7fd8ff; }
+.pb50.next50 { box-shadow: inset 0 -8px 0 #7fd8ff; }
+.pnow50 { text-align: center; font-size: 1.1rem; font-weight: bold; min-height: 1.6em; }
+.psong50 { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.psong50 select { font: inherit; padding: 2px 6px; }
+.dexsz50 { color: #c0704a; font-size: .85em; }

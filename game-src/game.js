@@ -1109,7 +1109,7 @@ function updateFish(dt) {
     const got = fish.got; fish = null;
     if (addItem("fish_" + got)) {
       const first = !world.dex[got]; world.dex[got] = (world.dex[got] || 0) + 1; world.stats.fish++; F6.fishCaught(got); saveWorld();
-      toast("fish_" + got, (got === "ヌシ" ? "ヌシを釣り上げた！！" : got + "が釣れた！") + (first ? "（図鑑に登録）" : ""));
+      toast("fish_" + got, (got === "ヌシ" ? "ヌシを釣り上げた！！" : got + "が釣れた！") + (typeof lastFishSize50 === "number" && lastFishSize50 ? `（${lastFishSize50}cm${lastFishRec50 ? "・自己ベスト！" : ""}）` : "") + (first ? "（図鑑に登録）" : ""));
     }
   } else if (fish.phase === "miss" && fish.t > .35) fish = null;
 }
@@ -3013,7 +3013,7 @@ function renderLog() {
   $("logBody").innerHTML = `
     <div class="opt"><h3>お金</h3><div class="stat"><span>所持金</span><b>${fmt(world.money)}</b><span>借金</span><b>${fmt(totalDebt())}</b><span>預金</span><b>${fmt(bankTotal20())}</b>
       <span>ギャンブル収支</span><b>${s.gambleNet >= 0 ? "+" : ""}${fmt(s.gambleNet)}</b><span>返済した額</span><b>${fmt(s.repaid)}</b></div></div>
-    <div class="opt"><h3>魚図鑑（${FISH6.filter(f => world.dex[f.n]).length} / ${FISH6.length}）</h3><div class="dex">${FISH6.map(f => `<div class="${world.dex[f.n] ? "" : "no"}" title="${fishHint(f)}"><img src="${ASSETS["fish_" + f.n]}" alt="" class="${f.n === "ヌシ" ? "wide" : ""}">${world.dex[f.n] ? f.n + "<br>×" + world.dex[f.n] : "？？？"}<br><small>${fishHint(f)}</small></div>`).join("")}</div></div>
+    <div class="opt"><h3>魚図鑑（${FISH6.filter(f => world.dex[f.n]).length} / ${FISH6.length}）</h3><div class="dex">${FISH6.map(f => `<div class="${world.dex[f.n] ? "" : "no"}" title="${fishHint(f)}"><img src="${ASSETS["fish_" + f.n]}" alt="" class="${f.n === "ヌシ" ? "wide" : ""}">${world.dex[f.n] ? f.n + "<br>×" + world.dex[f.n] + (world.dexSize && world.dexSize[f.n] ? `<br><b class="dexsz50">最大 ${world.dexSize[f.n]}cm</b>` : "") : "？？？"}<br><small>${fishHint(f)}</small></div>`).join("")}</div></div>
     <div class="opt"><h3>牧場とペット</h3><div class="stat">${world.animals.map(a => `<span>${esc(a.name)}（${ANIMALS[a.type].name}）</span><b>${"♥".repeat(a.hearts)}${"♡".repeat(10 - a.hearts)}</b>`).join("") || "<span>まだ動物がいません</span><b></b>"}${world.pets.map(t => `<span>${esc(petEnts.find(p => p.ptype === t)?.name || PETS[t].name)}（${PETS[t].name}）</span><b>${"♥".repeat(world.petHearts[t] || 0)}${"♡".repeat(10 - (world.petHearts[t] || 0))}</b>`).join("")}</div></div>
     <div class="opt"><h3>冒険</h3><div class="stat"><span>HP</span><b>${Math.round(world.hp)} / 100</b><span>到達した階</span><b>地下${world.deepest}階</b><span>倒したモンスター</span><b>${s.kills}</b><span>洞窟の主</span><b>${world.bossDown ? "討伐済み" : "未討伐"}</b><span>達成した依頼</span><b>${s.quests || 0}</b></div></div>
     <div class="opt"><h3>なかま</h3><div class="stat">${Object.entries(world.npc).map(([n, v]) => `<span>${n}</span><b>${"♥".repeat(v.hearts)}${"♡".repeat(10 - v.hearts)}</b>`).join("")}</div></div>
@@ -3880,7 +3880,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.29.4";
+const CLIENT_VERSION = "0.30.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5908,6 +5908,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.30.0", date: "2026/10/23", title: "ピアノ・魚の大きさ・みなと町の新しい魚・土の道", items: [
+    "家の中のピアノの前でⒶを押すと、ピアノが弾けるようになった。鍵盤を押すか、キーボード（下の段 Z〜M・上の段 Q〜I、黒い鍵盤は S D G H J と 2 3 5 6 7）で、2オクターブ",
+    "ピアノの「お手本」：きらきら星と、カラオケの5曲。次に押す鍵盤が光るので、順番に押していけば弾ける。最後まで弾くと実績「はじめての演奏」",
+    "釣った魚に大きさ（cm）がつくようになった。図鑑に、その魚でいちばん大きかった記録が残る。たまに大物がかかる。実績「大物ハンター」",
+    "みなと町の海に10種類の魚を追加。夏は南から暖かい潮が来て、チョウチョウウオ・カクレクマノミ・ハリセンボン・マンボウが釣れる。キス（夏）・ハタハタ（冬）・アオリイカ（春の夜）も",
+    "ヌシ級の魚：クエ（夜）、ナポレオンフィッシュ（夏）、そして雨の夜にだけ現れる「オオウミノヌシ」。どれもめったに釣れない。実績「大海の主」",
+    "茶色い土の道を、自分で作ったりけずったりできるようになった。シャベルで道をけずると草地にもどる（土の道が1つ手に入る）。「土の道」を草地に置くと道になる。土の道はクラフトで石1個から4つ作れる",
+  ] },
   { v: "0.29.4", date: "2026/10/23", title: "北の丘・パレスの裏口・いまオンラインの人", items: [
     "こもれびパレスのすぐ左の道を上（北）へ進むと、木のすき間から「北の丘」に行けるようになった。家を建てられる広い土地で、160×128ドットのいちばん大きな家も建てられる",
     "北の丘のいちばん下（木のすき間のとなり）に「こもれびパレスの裏口」を作った。北の丘の家から、すぐカジノに入れる",
@@ -7253,7 +7261,7 @@ F6.fishCaught = got => {
   _fishCaught28(got);
   const e = EV28.ev;
   if (!(evOn28() && e.joined && e.activity === "fish")) return;
-  const base = FISHBASE28[got] || 30, size = Math.max(1, Math.round(base * (.7 + Math.random() * .6)));
+  const base = FISHBASE28[got] || 30, size = typeof lastFishSize50 === "number" && lastFishSize50 ? lastFishSize50 : Math.max(1, Math.round(base * (.7 + Math.random() * .6)));
   send8({ type: "ev", act: "fish", fish: got, size });
   setTimeout(() => toast("fish_" + got, `大会の記録：${got} ${size}cm`), 900);
 };
@@ -8582,6 +8590,31 @@ const basePet43 = id => String(id).split("#")[0];
 function defPet43(id) { if (typeof id !== "string" || !id.includes("#") || PETS[id]) return; const b = PETS[basePet43(id)]; if (b) Object.defineProperty(PETS, id, { value: b, enumerable: false, configurable: true }); }
 try { for (const id of [...(world.pets || []), ...(world.lostPets37 || [])]) defPet43(id); } catch {}
 
+// =================== v50 データ：みなと町の新しい魚（暖かい海・ヌシ級）と「土の道」（あずかり物の整理より前に置く） ===================
+const SEA_FISH50 = [
+  { n: "キス", at: "sea", w: 16, p: 45, s: ["夏"], base: 20, spr: fishSpr17("#e8d8c0", "#fffaf0", "#c8b090", (s) => { s(7, 7, C17("#d8c0a0")); s(10, 7, C17("#d8c0a0")); }) },
+  { n: "ハタハタ", at: "sea", w: 14, p: 50, s: ["冬"], base: 20, spr: fishSpr17("#b8a890", "#f4ece0", "#8a7a60", (s, r) => { for (const [x, y] of [[6, 6], [8, 7], [10, 6], [11, 8]]) s(x, y, C17("#6a5a40")); }) },
+  { n: "アオリイカ", at: "sea", w: 10, p: 140, s: ["春"], time: "night", base: 40, spr: (s, r, e) => { e(8, 7, 3.6, 5.4, C17("#e8d8e8")); e(8, 7, 5, 4.2, C17("#d8c8e0")); e(8, 7, 2.6, 4.4, C17("#f4ecf4")); for (const x of [6, 8, 10]) r(x, 11, 1, 4, C17("#d8c8e0")); s(7, 9, C17("#1a1a2a")); s(9, 9, C17("#1a1a2a")); s(8, 4, C17("#a070c0")); } },
+  { n: "チョウチョウウオ", at: "sea", w: 12, p: 90, s: ["夏"], base: 15, warm: true, spr: (s, r, e) => { e(8, 8, 5, 4.6, C17("#f8e050")); e(8, 9, 3.6, 3, C17("#fff4a0")); r(6, 4, 1, 9, C17("#3a3a4a")); s(4, 8, C17("#1a1a2a")); r(13, 6, 2, 5, C17("#f0c030")); e(11, 7, 1.2, 1.2, C17("#2a2a4a")); } },
+  { n: "カクレクマノミ", at: "sea", w: 10, p: 120, s: ["夏"], base: 10, warm: true, spr: fishSpr17("#f07a30", "#f8a060", "#2a2a2a", (s, r) => { for (const x of [5, 9]) r(x, 5, 1, 7, C17("#ffffff")); r(12, 6, 1, 5, C17("#ffffff")); }) },
+  { n: "ハリセンボン", at: "sea", w: 8, p: 150, s: ["夏", "秋"], base: 25, warm: true, spr: (s, r, e) => { e(8, 8, 5, 5, C17("#d8c890")); e(8, 9.5, 3.8, 2.6, C17("#f4ecd0")); for (const [x, y] of [[3, 4], [8, 2], [13, 4], [2, 9], [14, 9], [4, 13], [12, 13], [8, 14]]) s(x, y, C17("#8a7a50")); for (const [x, y] of [[6, 6], [10, 7], [7, 10]]) s(x, y, C17("#6a5a3a")); s(5, 7, C17("#1a1a2a")); s(11, 7, C17("#1a1a2a")); } },
+  { n: "マンボウ", at: "sea", w: 3, p: 600, s: ["夏"], base: 200, warm: true, spr: (s, r, e) => { e(8, 8, 5.6, 5.2, C17("#a8b4c4")); e(8, 9, 4.4, 3.6, C17("#d8e0e8")); r(7, 0, 3, 4, C17("#8a96a8")); r(7, 12, 3, 4, C17("#8a96a8")); r(13, 6, 2, 5, C17("#8a96a8")); s(5, 7, C17("#1a1a2a")); s(4, 9, C17("#6a7488")); } },
+  { n: "クエ", at: "sea", w: 1, p: 900, time: "night", base: 100, nushi: true, spr: fishSpr17("#6a5a4a", "#a08a70", "#4a3a2a", (s, r) => { for (const [x, y] of [[6, 6], [9, 6], [7, 9], [11, 8], [10, 10]]) r(x, y, 2, 1, C17("#3a2a1a")); r(3, 9, 3, 1, C17("#3a2a1a")); }) },
+  { n: "ナポレオンフィッシュ", at: "sea", w: .8, p: 1200, s: ["夏"], base: 150, warm: true, nushi: true, spr: (s, r, e) => { e(8, 8, 6, 4, C17("#3aa08a")); e(8, 9, 4.6, 2.4, C17("#6ac8b0")); e(5, 5, 2.4, 2, C17("#3aa08a")); for (const [x, y] of [[7, 7], [9, 8], [11, 7], [8, 10]]) s(x, y, C17("#2a6a8a")); for (let i = 0; i < 4; i++) r(13 + Math.min(i, 2), 6 - i + 1, 1, 2 + i * 2 - 1, C17("#2a8a7a")); s(4, 7, C17("#1a1a2a")); } },
+  { n: "オオウミノヌシ", at: "sea", w: .4, p: 5000, wx: "rain", time: "night", base: 400, nushi: true, spr: (s, r, e) => {
+      e(8, 8, 7.4, 4, C17("#2a3a5a")); e(8, 9.4, 6, 1.8, C17("#5a7aa0")); for (let x = 3; x <= 12; x += 3) { s(x, 6, C17("#e8d070")); s(x + 1, 7, C17("#e8d070")); }
+      r(5, 2, 6, 2, C17("#1a2a4a")); r(6, 1, 3, 1, C17("#1a2a4a")); for (let i = 0; i < 4; i++) r(13 + Math.min(i, 2), 6 - i + 1, 1, 2 + i * 2 - 1, C17("#1a2a4a")); s(3, 7, C17("#ffe27a")); s(3, 8, C17("#c83a3a")); } },
+];
+for (const f of SEA_FISH50) {
+  addSpr17("fish_" + f.n, f.spr);
+  FISH6.push({ n: f.n, at: f.at, w: f.w, p: f.p, ...(f.s ? { s: f.s } : {}), ...(f.wx ? { wx: f.wx } : {}), ...(f.time ? { time: f.time } : {}), ...(f.warm ? { warm: true } : {}), ...(f.nushi ? { nushi: true } : {}) });
+  ITEMS["fish_" + f.n] = { name: f.n, icon: "fish_" + f.n, price: f.p, fish: true, food: 8 };
+  FISHBASE28[f.n] = f.base;
+}
+// 土の道：草地に置くと、茶色い道になる（シャベルで道をけずると草地にもどる）
+addSpr17("dirtpath50", (s, r, e) => { e(8, 9, 6.5, 4.6, C17("#b8946a")); e(8, 9, 5, 3.4, C17("#c8a47a")); for (const [x, y] of [[5, 8], [9, 10], [11, 7], [7, 11]]) s(x, y, C17("#9a7650")); r(4, 3, 3, 2, C17("#6aa85a")); r(10, 2, 2, 2, C17("#6aa85a")); });
+ITEMS.dirtpath50 = { name: "土の道", icon: "dirtpath50", price: 2, dirt50: true };
+RECIPES.push({ out: "dirtpath50", n: 4, need: { stone: 1 } });
 var F37 = {};
 function sanitize37() {
   const w = world; if (!w || typeof w !== "object") return;
@@ -10481,6 +10514,121 @@ $("onl8").style.cursor = "pointer"; $("onl8").title = "押すと、いまオン�
 $("onl8").addEventListener("click", () => { if (F8.connected) openOnline49(); });
 addEventListener("keydown", e => { if ((e.key === "o" || e.key === "O") && !modalOpen && !e.repeat && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA" && !document.body.classList.contains("menu")) openOnline49(); });
 F49.ready = true;
+var F50 = {};
+// ---------- v50: 釣った魚の大きさ・ピアノ・土の道 ----------
+// 魚の大きさ：ふつうは図鑑の基準の0.7〜1.3倍。たまに大物（〜1.7倍）。図鑑に、いちばん大きかった記録を残す
+var lastFishSize50 = 0, lastFishRec50 = false;
+function fishSize50(n) { const base = FISHBASE28[n] || 30, big = Math.random() < .06; return Math.max(1, Math.round(base * (big ? 1.3 + Math.random() * .4 : .7 + Math.random() * .6))); }
+const _fishCaught50 = F6.fishCaught;
+F6.fishCaught = got => {
+  const size = fishSize50(got); world.dexSize = world.dexSize || {};
+  lastFishRec50 = size > (world.dexSize[got] || 0); if (lastFishRec50) world.dexSize[got] = size;
+  lastFishSize50 = size;
+  try { _fishCaught50(got); } finally { setTimeout(() => { lastFishSize50 = 0; lastFishRec50 = false; }, 0); }
+  if (size >= Math.round((FISHBASE28[got] || 30) * 1.4)) K.news41 && K.news41.add && K.news41.add("bigfish", `${got} ${size}cm の大物を釣り上げた`, 60);
+};
+const _fishHint50 = fishHint;
+fishHint = f => _fishHint50(f) + (f.warm ? "／夏に南から来る暖かい潮にのって" : "") + (f.nushi ? "／ヌシ級・めったに釣れない" : "") + (f.n === "オオウミノヌシ" ? "（雨の夜だけ）" : "");
+ACH.push(["大海の主", "みなと町でオオウミノヌシを釣り上げる", () => !!world.dex["オオウミノヌシ"]], ["大物ハンター", "どれかの魚で、基準の1.5倍以上の大物を釣る", () => Object.entries(world.dexSize || {}).some(([n, v]) => v >= (FISHBASE28[n] || 30) * 1.5)]);
+ACH_REWARD["大海の主"] = ["money", 10000]; ACH_REWARD["大物ハンター"] = ["money", 2000];
+
+// ---------- ピアノ（家の中のピアノの前でⒶ） ----------
+const PIANO_LO50 = 60, PIANO_HI50 = 84;
+const PKEY50 = { z: 60, s: 61, x: 62, d: 63, c: 64, v: 65, g: 66, b: 67, h: 68, n: 69, j: 70, m: 71, q: 72, "2": 73, w: 74, "3": 75, e: 76, r: 77, "5": 78, t: 79, "6": 80, y: 81, "7": 82, u: 83, i: 84 };
+const PKEYLBL50 = Object.fromEntries(Object.entries(PKEY50).map(([k, m]) => [m, k.toUpperCase()]));
+const NOTE_NM50 = ["ド", "ド#", "レ", "レ#", "ミ", "ファ", "ファ#", "ソ", "ソ#", "ラ", "ラ#", "シ"];
+const PSONGS50 = { "きらきら星": "C4 C4 G4 G4 A4 A4 G4 F4 F4 E4 E4 D4 D4 C4 G4 G4 F4 F4 E4 E4 D4 G4 G4 F4 F4 E4 E4 D4 C4 C4 G4 G4 A4 A4 G4 F4 F4 E4 E4 D4 D4 C4" };
+function pianoSongs50() {
+  const out = { ...Object.fromEntries(Object.entries(PSONGS50).map(([n, s]) => [n, s.split(" ").map(midi45)])) };
+  for (const [n, so] of Object.entries(KSONGS45)) out[n] = parseSong45(so).notes.map(x => x.m).filter(m => m >= PIANO_LO50 && m <= PIANO_HI50);
+  return out;
+}
+function pianoTone50(m) {
+  const A = typeof SFX !== "undefined" && SFX.audio ? SFX.audio() : null; if (!A) return;
+  const t = A.ac.currentTime + .003, f = A.hz(m);
+  A.tone(t, f, 1.6, { type: "triangle", vol: .2, att: .003 }); A.tone(t, f * 2, .8, { type: "sine", vol: .07, att: .003 }); A.tone(t, f * 3, .35, { type: "sine", vol: .03, att: .003 });
+  A.noise(t, .02, { vol: .05, lp: 2500 });
+}
+function openPiano50() {
+  const songs = pianoSongs50();
+  let song = null, idx = 0, played = 0;
+  const isBlack = m => [1, 3, 6, 8, 10].includes(m % 12);
+  openModal("ピアノ", "", body => {
+    const whites = []; for (let m = PIANO_LO50; m <= PIANO_HI50; m++) if (!isBlack(m)) whites.push(m);
+    const wW = 100 / whites.length;
+    body.innerHTML = `<p class="mtext">鍵盤を押すか、キーボードで弾けるよ（下の段 Z〜M・上の段 Q〜I、黒い鍵盤は S D G H J と 2 3 5 6 7）。</p>
+      <div class="pnow50" id="pnow50">♪</div>
+      <div class="piano50" id="piano50">${whites.map((m, i) => `<button type="button" class="pw50" data-m="${m}" style="left:${i * wW}%;width:${wW}%"><span>${PKEYLBL50[m] || ""}</span>${m % 12 === 0 ? `<em>ド${m === 60 ? "" : m === 72 ? "↑" : "↑↑"}</em>` : ""}</button>`).join("")}
+        ${whites.map((m, i) => isBlack(m + 1) && m + 1 <= PIANO_HI50 ? `<button type="button" class="pb50" data-m="${m + 1}" style="left:${(i + 1) * wW - wW * .32}%;width:${wW * .64}%"><span>${PKEYLBL50[m + 1] || ""}</span></button>` : "").join("")}</div>
+      <div class="psong50"><span>お手本：</span><select id="psel50"><option value="">（自由に弾く）</option>${Object.keys(songs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}</select><span id="pprog50"></span></div>
+      <p class="note">お手本を選ぶと、次に押す鍵盤が光るよ。最後まで弾けたら拍手。</p>`;
+    const P = body.querySelector("#piano50"), nowEl = body.querySelector("#pnow50"), prog = body.querySelector("#pprog50");
+    const mark = () => {
+      P.querySelectorAll(".next50").forEach(b => b.classList.remove("next50"));
+      if (song && idx < songs[song].length) { const b = P.querySelector(`[data-m="${songs[song][idx]}"]`); if (b) b.classList.add("next50"); prog.textContent = `${idx} / ${songs[song].length}`; }
+      else prog.textContent = "";
+    };
+    const hit = m => {
+      pianoTone50(m); played++;
+      const b = P.querySelector(`[data-m="${m}"]`); if (b) { b.classList.add("on50"); setTimeout(() => b.classList.remove("on50"), 160); }
+      nowEl.textContent = `♪ ${NOTE_NM50[m % 12]}${m >= 84 ? "↑↑" : m >= 72 ? "↑" : ""}`;
+      if (song && songs[song][idx] === m) {
+        idx++;
+        if (idx >= songs[song].length) {
+          world.stats.pianoSongs50 = (world.stats.pianoSongs50 || 0) + 1; saveWorld();
+          nowEl.textContent = `「${song}」を弾ききった！ パチパチパチ…`; se13("win"); song = null; body.querySelector("#psel50").value = "";
+        }
+      }
+      mark();
+    };
+    P.addEventListener("pointerdown", e => { const b = e.target.closest("[data-m]"); if (!b) return; e.preventDefault(); hit(+b.dataset.m); });
+    body.querySelector("#psel50").onchange = e => { song = e.target.value || null; idx = 0; mark(); nowEl.textContent = song ? `「${song}」 光った鍵盤を順番に` : "♪"; };
+    const onKey = e => {
+      if (!document.body.contains(P)) { removeEventListener("keydown", onKey, true); return; }
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA")) return;
+      const m = PKEY50[e.key.toLowerCase()]; if (m === undefined) return;
+      e.preventDefault(); e.stopPropagation(); if (!e.repeat) hit(m);
+    };
+    addEventListener("keydown", onKey, true);
+    F50.piano = { hit, songs };
+  });
+}
+F50.openPiano = openPiano50;
+const _act50 = act;
+act = function () {
+  if (map === room && !decor && !modalOpen && !placing && !busy && !player.moving) {
+    const [tx, ty] = front(), f = furnAt(room.data, tx, ty, "obj");
+    if (f && f.id === "piano") { openPiano50(); return; }
+  }
+  return _act50.apply(this, arguments);
+};
+ACH.push(["はじめての演奏", "ピアノでお手本の曲を最後まで弾く", () => (world.stats.pianoSongs50 || 0) >= 1]);
+ACH_REWARD["はじめての演奏"] = ["money", 1000];
+
+// ---------- 土の道：置く・けずる ----------
+const noDig50 = (x, y) => (x >= BIGQ.x0 - 1 && x <= BIGQ.x1 + 1 && y >= BIGQ.y0 - 1 && y <= BIGQ.y1 + 1) || (NGAP.includes(x) && (y <= 1 || y >= VH - 2)) || (x >= 29 && x <= 38 && y >= 14 && y <= 16);
+const _f7act50 = F7.act;
+F7.act = (tx, ty, key, sel, item, other) => {
+  if (map === village && !other && item && item.dirt50) {
+    const g = village.ground[ty]?.[tx] || "";
+    if (/^path/.test(g)) { toast("dirtpath50", "もう道になっているよ"); return true; }
+    if (!/^(grass|flower)/.test(g) || village.solid[ty]?.[tx] || world.tilled[key] || world.crops[key] || world.paths[key] || world.fences[key] || (world.decor || {})[key] || village.noBuild.has(key) || inPaddock(tx, ty)) { toast("dirtpath50", "ここには道を作れないよ（空いている草地に）"); return true; }
+    world.terrain[key] = "path" + ((tx + ty) % 2); village.ground[ty][tx] = world.terrain[key]; village.base[ty][tx] = false; removeItem(sel.id, 1);
+    rebuildSolid(); dust(tx, ty, [184, 148, 106], 6); try { SFX.dig && SFX.dig(); } catch (e) { } saveWorld(); return true;
+  }
+  return _f7act50 ? _f7act50(tx, ty, key, sel, item, other) : false;
+};
+const _shovelAt50 = shovelAt;
+shovelAt = function (tx, ty, key) {
+  const g = village.ground[ty]?.[tx] || "";
+  if (map === village && /^path/.test(g) && !world.paths[key]) {
+    if (noDig50(tx, ty)) { toast("shovel", "ここの道は、けずれないよ"); return; }
+    world.terrain[key] = grassAt(tx, ty); village.ground[ty][tx] = world.terrain[key]; rebuildSolid(); dust(tx, ty, [96, 160, 80], 6);
+    addItem("dirtpath50", 1, true); saveWorld(); toast("dirtpath50", "道をけずって草地にもどした（土の道×1）"); return;
+  }
+  return _shovelAt50.apply(this, arguments);
+};
+F50.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -10878,5 +11026,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

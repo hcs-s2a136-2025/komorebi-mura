@@ -258,3 +258,13 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
   .slotrow12 #slotcv { width: max(140px, min(300px, calc(100vh - 420px))); }
   .slotbox { padding: 6px; }
 }
+
+/* v44：カジノの中のチャット */
+.mchat44 { margin: 4px 14px 10px; border-top: 1px dashed rgba(255, 255, 255, .25); padding-top: 6px; }
+.mclog44 { max-height: 84px; overflow-y: auto; font-size: .8rem; line-height: 1.5; margin-bottom: 4px; }
+.mclog44 b { margin-right: 6px; color: #ffd86a; }
+.mclog44 .me b { color: #9fe0a0; }
+.mclog44 .sys { opacity: .6; }
+.mcform44 { display: flex; gap: 6px; }
+.mcform44 input { flex: 1; min-width: 0; font: inherit; padding: 4px 8px; border-radius: 6px; border: 2px solid #6a5a7a; background: #fffaf0; color: #2a2228; }
+.mcform44 .btn { padding: 4px 12px; min-height: 0; }

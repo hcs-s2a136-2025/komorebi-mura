@@ -16,6 +16,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jp.komorebi.board.BoardService;
 import jp.komorebi.clock.ClockService;
 import jp.komorebi.config.KomorebiProperties;
+import jp.komorebi.farm.FarmService;
 import jp.komorebi.feedback.FeedbackService;
 import jp.komorebi.feedback.FeedbackThread.Status;
 import jp.komorebi.casino.JackpotService;
@@ -42,6 +43,7 @@ public class AdminController {
     private final SaveService saves;
     private final JackpotService jackpot;
     private final HouseService houses;
+    private final FarmService farms;
 
     /** 管理人室の「プレイヤー」一覧の1行 */
     public record PlayerRow(Long id, String name, boolean hasPass, Instant lastSeen, int saveSize) {
@@ -49,7 +51,8 @@ public class AdminController {
 
     public AdminController(FeedbackService feedback, GameSocketHandler socket, KomorebiProperties props,
                            SharedWorldService world, ChatHandler chat, BoardService board, ClockService clock,
-                           PlayerService players, SaveService saves, JackpotService jackpot, HouseService houses) {
+                           PlayerService players, SaveService saves, JackpotService jackpot, HouseService houses, FarmService farms) {
+        this.farms = farms;
         this.houses = houses;
         this.clock = clock;
         this.players = players;
@@ -170,6 +173,7 @@ public class AdminController {
             return "redirect:/admin";
         }
         saves.delete(id);
+        farms.forget(id);
         socket.kickDeleted(id);
         ra.addFlashAttribute("msg", "プレイヤーを削除しました。サーバーのセーブも消えて、その人の端末のデータも、次にひらいたときに消えます。同じなまえで入ると、新しいキャラクターになります");
         return "redirect:/admin";

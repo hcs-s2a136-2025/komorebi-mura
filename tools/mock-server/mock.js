@@ -5,7 +5,7 @@
 const http = require("http"), fs = require("fs"), crypto = require("crypto"), { WebSocketServer } = require("ws");
 const INDEX = process.argv[2], PORT = +process.argv[3] || 8099, VERSION = process.argv[4] || "0.8.0";
 const players = new Map(), threads = []; let pid = 1, tid = 1;
-const accounts = []; const saves = new Map(); let jackpot = 3000; const deletedTokens = new Set();
+const accounts = []; const saves = new Map(); let jackpot = 3000; const deletedTokens = new Set(); const farms = new Map();
 // 建てた家の中身（HouseBook.java と同じ約束）
 const rooms = new Map(); const KEYRE = /^(\d{1,3},\d{1,3}|home)$/, ITEMRE = /^[\p{L}\p{N}_:\-]{1,32}$/u;
 const houseOf = k => k === "home" ? { open: true, ownerId: -1 } : (shared.houses || {})[k] || null;
@@ -135,7 +135,7 @@ wss.on("connection", s => {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), raceResults }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id).map(([, f]) => f) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -163,6 +163,8 @@ wss.on("connection", s => {
       if (m.act === "fish" && act === "fish" && now - sc.last >= 2500) { sc.last = now; const size = Math.floor(+m.size || 0); if (size < 1 || size > 210) return; sc.points += 50; sc.count++; if (!sc.kinds.includes(m.fish)) sc.kinds.push(String(m.fish).slice(0, 16)); sc.best = Math.max(sc.best, size); ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
       if (m.act === "collect" && act === "collect" && now - sc.last >= 700) { sc.last = now; sc.collected++; ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
       return; }
+    if (m.type === "motion") { const ok = ["hoe", "axe", "pick", "can", "sword", "shovel", "plant", "fish", "catch", "status"]; if (!ok.includes(m.k)) return; const o = { type: "motion", id: s.pl.id, k: m.k }; if (m.k === "catch") o.f = String(m.f || "").slice(0, 16); if (m.k === "status") o.s = String(m.s || "").slice(0, 12); toMap(s.map, o, s); }
+    if (m.type === "farm") { const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 8) }; farms.set(s.pl.id, f); bc(f, s); }
     if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); }
     if (m.type === "news") { const day = Math.floor(+m.day || 0);
       if (m.act === "put" && day >= clock.day - 2 && day <= clock.day && day >= 1) { (news[day] = news[day] || {})[s.pl.id] = { name: s.pl.name, items: (Array.isArray(m.items) ? m.items : []).slice(0, 12).map(it => ({ k: String(it.k || "").slice(0, 12), t: String(it.t || "").slice(0, 90), s: Math.max(0, Math.min(999, it.s | 0)) })).filter(it => it.t), sum: m.sum && typeof m.sum === "object" ? m.sum : {} }; }

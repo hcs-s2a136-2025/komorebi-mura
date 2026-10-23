@@ -3809,7 +3809,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.28.0";
+const CLIENT_VERSION = "0.28.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5837,6 +5837,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.28.1", date: "2026/10/23", title: "ほかの人の動き・ペット・畑が見える／カジノでもチャット", items: [
+    "オンラインで、ほかの人がクワや斧をふる・水をまく・種をまく・釣りをする動きが見えるようになった。釣れた魚は吹き出しで出る",
+    "ほかの人がスロット・麻雀・競どんぐりなどをしているときは、頭の上に「スロット中」のように出る",
+    "ほかの人の畑の作物・家畜（牛やニワトリなど）・ペットが見えるようになった。ペットは飼い主のあとをついて歩く。見るだけで、さわったり収穫したりはできない",
+    "ほかの人のペットや作物、家畜の前でⒶを押すと、だれのものか教えてくれる",
+    "カジノ（スロット・麻雀・ブラックジャックなど）の画面の下にチャット欄がついた。遊びながら話せる",
+  ] },
   { v: "0.28.0", date: "2026/10/23", title: "ペットがふえる・小さく可愛く・洞窟のはしご", items: [
     "ペットの絵を描き直した。小さめで、頭の大きいちびっこ体型に",
     "同じ種類のペットを何匹でも迎えられるようになった（全部で8匹まで）。柄と色はランダムで、ネコは茶トラ・黒・白・三毛・シャム・ハチワレなど8種類、イヌ・インコ・ウサギ・ハムスターも6〜7種類。名前もついてくる",
@@ -9933,6 +9940,189 @@ openAnimalShop = function () {
 syncPets();
 F43.ready = true;
 
+// =================== v44: ほかの人の動き・ペット・畑・家畜が見える／カジノの中でもチャット ===================
+var F44 = {};
+// ---------- 自分の動きを知らせる ----------
+const MOT_OK44 = new Set(["hoe", "axe", "pick", "can", "sword", "shovel", "plant"]);
+let motLast44 = 0, fishSent44 = false, statusNow44 = "", statusAt44 = 0;
+const _swing44 = swing;
+swing = function (kind) {
+  if (F8.connected && MOT_OK44.has(kind) && performance.now() - motLast44 > 150) { motLast44 = performance.now(); send8({ type: "motion", k: kind }); }
+  return _swing44.apply(this, arguments);
+};
+const _fishCaught44 = F6.fishCaught;
+F6.fishCaught = got => { _fishCaught44(got); if (F8.connected) send8({ type: "motion", k: "catch", f: String(got).slice(0, 16) }); };
+const STATUS44 = { "スロット台": "スロット中", "雀卓": "麻雀中", "どんぐりBJの卓": "BJ中", "競どんぐり": "競どんぐり中", "丁半の座敷": "丁半中", "チンチロの座敷": "チンチロ中", "賭場の座敷（銀次）": "勝負中", "カジノ こもれびパレス": "カジノで遊び中", "こもれび新聞": "新聞を読み中", "Salon こもれび　─ OMOTESANDO ─": "美容室にいる" };
+setInterval(() => {
+  if (!F8.connected) { fishSent44 = false; statusNow44 = ""; return; }
+  if (fish && fish.phase === "cast" && !fishSent44) { fishSent44 = true; send8({ type: "motion", k: "fish" }); }
+  if (!fish) fishSent44 = false;
+  const s = modalOpen ? (STATUS44[$("mtitle").textContent] || "") : "";
+  const now = Date.now();
+  if (s !== statusNow44 || (s && now - statusAt44 > 10000)) { statusNow44 = s; statusAt44 = now; send8({ type: "motion", k: "status", s }); }
+}, 300);
+// ---------- ほかの人の動き ----------
+function onMotion44(m) {
+  const e = remotes.get(m.id); if (!e) return;
+  const now = performance.now();
+  if (m.k === "status") {
+    e.status44 = String(m.s || "").slice(0, 12);
+    if (e.status44) e.say = { text: e.status44, until: now + 13000, st44: true }; else if (e.say && e.say.st44) e.say = null;
+  } else if (m.k === "catch") { e.fish44 = 0; e.say = { text: `${String(m.f || "").slice(0, 16)}が釣れた！`, until: now + 3000 }; }
+  else if (m.k === "fish") e.fish44 = now;
+  else { e.mot44 = { k: m.k, t0: now }; e.fish44 = 0; }
+}
+const _drawEnt44 = drawEnt;
+drawEnt = function (e) {
+  _drawEnt44.apply(this, arguments);
+  if (!e || e.kind !== "remote") return;
+  const now = performance.now(), [dx, dy] = DIRS[e.dir] || [0, 1], flip = e.dir === "left" ? -1 : 1;
+  const cx = e.px + 8 + dx * 9, cy = e.py + 9 + dy * 7;
+  const m = e.mot44;
+  if (m && now - m.t0 < 380) {
+    const p = Math.min(1, (now - m.t0) / 330);
+    if (m.k === "can") { ctx.save(); ctx.translate(cx, cy - 6); if (flip < 0) ctx.scale(-1, 1); ctx.rotate(-.6 * Math.min(1, p * 3)); ctx.drawImage(IMG.can, -8, -8); ctx.restore(); }
+    else if (m.k !== "plant") { const im = IMG[m.k === "sword" ? "sword_wood" : m.k]; if (im) { ctx.save(); ctx.translate(cx, cy - 4); if (flip < 0) ctx.scale(-1, 1); ctx.rotate(-1.6 + p * 2.2); ctx.drawImage(im, -4, -12); ctx.restore(); } }
+  }
+  if (e.fish44 && now - e.fish44 < 9000) {
+    const hx = e.px + 8 + dx * 5, hy = e.py + 8, bx = e.px + 8 + dx * 26, by = e.py + 10 + dy * 22 + Math.sin(now / 300) * 1;
+    ctx.strokeStyle = "#5a3a22"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(hx, hy + 2); ctx.lineTo(hx + dx * 6, hy - 6); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = .5; ctx.beginPath(); ctx.moveTo(hx + dx * 6, hy - 6); ctx.quadraticCurveTo((hx + bx) / 2, hy - 8, bx, by); ctx.stroke();
+    ctx.fillStyle = "#e2404e"; ctx.fillRect(bx - 1, by - 1, 2, 1); ctx.fillStyle = "#fff"; ctx.fillRect(bx - 1, by, 2, 1);
+  }
+};
+// ---------- ほかの人の畑・家畜・ペット（見るだけ） ----------
+const farms44 = new Map(), rAnimals44 = new Map(), rPets44 = new Map();
+function petSpriteBV44(b, v) {
+  const L = PETV43[b]; if (!L) return IMG[b] ? b : null;
+  v = Math.max(0, Math.min(L.length - 1, v | 0)); const k = `pet43_${b}_${v}`;
+  if (!IMG[k]) { IMG[k] = drawPet43(b, L[v]); ASSETS[k] = IMG[k].toDataURL(); }
+  return k;
+}
+function onFarm44(f) {
+  if (!f || typeof f !== "object" || f.id === onl.id) return;
+  farms44.set(f.id, { name: String(f.name || "だれか").slice(0, 16), crops: new Map((Array.isArray(f.crops) ? f.crops : []).filter(c => Array.isArray(c)).map(c => [c[0] + "," + c[1], [String(c[2]), c[3] | 0]])), animals: Array.isArray(f.animals) ? f.animals : [], pets: Array.isArray(f.pets) ? f.pets : [] });
+  syncRemote44(f.id);
+}
+function syncRemote44(pid) {
+  const F = farms44.get(pid);
+  for (const k of [...rAnimals44.keys()]) if (k.startsWith(pid + ":") && !(F && F.animals[+k.split(":")[1]])) rAnimals44.delete(k);
+  if (F) F.animals.forEach((a, i) => {
+    if (!Array.isArray(a)) return;
+    const [t, n, x, y] = a, k = pid + ":" + i; if (!ANIMALS[t] || !IMG[t] || !Number.isInteger(x) || !Number.isInteger(y)) return;
+    let e = rAnimals44.get(k);
+    if (!e || e.sprite !== t) { e = entity(x, y, null, String(n || ""), "animal"); e.sprite = t; e.speed = .6; e.home = village; rAnimals44.set(k, e); }
+    else if (Math.abs(e.x - x) + Math.abs(e.y - y) === 1 && !e.moving) { e.dir = x > e.x ? "right" : x < e.x ? "left" : y > e.y ? "down" : "up"; e.fx = x; e.fy = y; e.moving = true; e.prog = 0; }
+    else if (e.x !== x || e.y !== y) placeAt(e, x, y);
+    e.name = String(n || ""); e.owner44 = F.name; e.atype44 = t;
+  });
+  const old = rPets44.get(pid) || [];
+  const ents = (F ? F.pets : []).map((p, i) => {
+    if (!Array.isArray(p)) return null; const [b, v, n] = p, sp = petSpriteBV44(String(b), v); if (!sp) return null;
+    let e = old[i]; if (!e) { const r = remotes.get(pid), f = r ? freeNear(village, r.x, r.y) : [0, 0]; e = entity(f[0], f[1], null, String(n || ""), "pet"); e.speed = 1.1; e.home = village; }
+    e.sprite = sp; e.name = String(n || ""); e.owner44 = F.name; e.pbase44 = String(b); return e;
+  }).filter(Boolean);
+  rPets44.set(pid, ents);
+}
+const _f8update44 = F8.update;
+F8.update = dt => {
+  _f8update44(dt);
+  for (const e of rAnimals44.values()) updateEnt(e, dt);
+  for (const [pid, ents] of rPets44) {
+    const r = remotes.get(pid); if (!r) continue;
+    let lead = r;
+    for (const p of ents) {
+      if (!p.moving) {
+        const dist = Math.abs(p.x - lead.x) + Math.abs(p.y - lead.y);
+        const near44 = () => { const f = freeNear(village, lead.x, lead.y); return f[0] === r.x && f[1] === r.y ? [lead.x, lead.y + 1] : f; };
+        if (dist > 8 || r.rmap !== "village" || (p.x === r.x && p.y === r.y)) { const f = near44(); placeAt(p, f[0], f[1]); }
+        else if (dist > (lead === r ? 2 : 1)) {
+          const ddx = lead.x - p.x, ddy = lead.y - p.y, d = Math.abs(ddx) > Math.abs(ddy) ? (ddx > 0 ? "right" : "left") : (ddy > 0 ? "down" : "up"), [sx, sy] = DIRS[d], nx = p.x + sx, ny = p.y + sy;
+          if (village.solid[ny] && !village.solid[ny][nx] && !(nx === r.x && ny === r.y)) { p.dir = d; p.fx = nx; p.fy = ny; p.moving = true; p.prog = 0; } else if (dist > 4) { const f = near44(); placeAt(p, f[0], f[1]); }
+        }
+      }
+      updateEnt(p, dt); lead = p;
+    }
+  }
+};
+const _atl44 = F7.addToList;
+F7.addToList = (list, now) => {
+  _atl44(list, now);
+  if (map !== village || !F8.connected) return;
+  for (const F of farms44.values()) for (const [k, [t, st]] of F.crops) {
+    if (world.crops[k] || !world.tilled[k]) continue;
+    const [x, y] = k.split(",").map(Number), img = st === 0 ? "sprout" : st === 1 ? "young_" + t : t;
+    if (!IMG[img]) continue;
+    list.push({ s: y * TS + 8, d: () => ctx.drawImage(IMG[img], x * TS, y * TS - (st === 2 ? 3 : 1)) });
+  }
+  for (const [k, e] of rAnimals44) if (remotes.has(+k.split(":")[0]) || farms44.has(+k.split(":")[0])) list.push({ s: e.py + 15, d: () => drawEnt(e) });
+  for (const [pid, ents] of rPets44) { const r = remotes.get(pid); if (!r || r.rmap !== "village") continue; for (const e of ents) list.push({ s: e.py + 15, d: () => drawEnt(e) }); }
+};
+// 自分の畑・家畜・ペットのようすを送る（変わったときと、ときどき）
+let farmLast44 = "", farmAt44 = 0;
+function farmSnap44() {
+  const crops = []; for (const [k, c] of Object.entries(world.crops || {})) { if (!c || c.dead) continue; const [x, y] = k.split(",").map(Number); crops.push([x, y, c.type, c.stage | 0]); if (crops.length >= 600) break; }
+  const animals = (world.animals || []).slice(0, 40).map(a => { const e = animalEnts.find(x => x.aid === a.id); return [a.type, String(a.name || "").slice(0, 12), e ? e.x : PADDOCK.x0, e ? e.y : PADDOCK.y0]; });
+  const pets = (world.pets || []).slice(0, 8).map(id => [basePet43(id), petVar43(id), String(petNameOf43(id)).slice(0, 12)]);
+  return { crops, animals, pets };
+}
+setInterval(() => {
+  if (!F8.connected) { farmLast44 = ""; return; }
+  const s = farmSnap44(), j = JSON.stringify(s), now = Date.now();
+  if ((j !== farmLast44 && now - farmAt44 > 2500) || now - farmAt44 > 30000) { farmLast44 = j; farmAt44 = now; send8({ type: "farm", ...s }); }
+}, 1000);
+// Ⓐで、ほかの人の作物・家畜・ペットを見る
+const _act44 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village && F8.connected) {
+    const [tx, ty] = front(), key = tx + "," + ty, sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+    const pe = [...rPets44.values()].flat().find(e => e.x === tx && e.y === ty);
+    if (pe) { pe.say = { text: (PETS[pe.pbase44]?.say || "♪") + " ♥", until: performance.now() + 1800 }; toast(null, `${pe.owner44}さんの${pe.name}（${PETS[pe.pbase44]?.name || "ペット"}）`); return; }
+    const an = [...rAnimals44.values()].find(e => e.x === tx && e.y === ty);
+    if (an && !animalEnts.some(e => e.x === tx && e.y === ty)) { an.say = { text: ANIMALS[an.atype44]?.say || "♪", until: performance.now() + 1500 }; toast(an.atype44, `${an.owner44}さんの${ANIMALS[an.atype44]?.name || "家畜"}「${an.name}」`); return; }
+    if (!world.crops[key] && !(it && (it.seed || it.use === "hoe" || it.use === "can"))) {
+      for (const F of farms44.values()) { const c = F.crops.get(key); if (!c) continue; const [t, st] = c; toast(st === 0 ? "sprout" : st === 1 ? "young_" + t : t, `${F.name}さんの${ITEMS[t]?.name || "作物"}（${st === 2 ? "収穫どき" : st === 1 ? "育ってきた" : "芽が出たところ"}）`); return; }
+    }
+  }
+  _act44.apply(this, arguments);
+};
+const _handle44 = handle8;
+handle8 = m => {
+  _handle44(m);
+  if (!m || typeof m.type !== "string") return;
+  try {
+    if (m.type === "motion") onMotion44(m);
+    else if (m.type === "farm") onFarm44(m);
+    else if (m.type === "welcome") { farms44.clear(); rAnimals44.clear(); rPets44.clear(); (Array.isArray(m.farms) ? m.farms : []).forEach(onFarm44); farmLast44 = ""; }
+    else if (m.type === "join") { const f = farms44.get(m.player?.id); if (f) syncRemote44(m.player.id); }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v44 net"); }
+};
+// ---------- カジノの中でもチャット ----------
+$("mbox").insertAdjacentHTML("beforeend", `<div class="mchat44" id="mchat44" hidden><div class="mclog44" id="mclog44"></div><form class="mcform44" id="mcform44"><input id="mcin44" type="text" maxlength="60" placeholder="みんなに話しかける" autocomplete="off"><button class="btn" type="submit">送る</button></form></div>`);
+let mcSig44 = "";
+function renderMChat44() {
+  const box = $("mchat44"), mb = $("mbox");
+  const on = modalOpen && F8.connected && mb.classList.contains("dark");
+  box.hidden = !on; if (!on) return;
+  const now = Date.now(), lines = chatLog.filter(c => now - c.at < 15 * 60e3).slice(-5);
+  const sig = lines.map(c => c.at + c.text).join("|");
+  if (sig === mcSig44) return; mcSig44 = sig;
+  const el = $("mclog44");
+  el.innerHTML = lines.length ? lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}"><b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("") : `<div class="sys">ここからチャットできるよ</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+setInterval(renderMChat44, 400);
+$("mcform44").addEventListener("submit", e => {
+  e.preventDefault(); const inp = $("mcin44"), t = inp.value.trim(); if (!t || !F8.connected) return;
+  if (Date.now() - chatLast < 1200) { toast(null, "少し待ってから送ってね"); return; }
+  chatLast = Date.now(); send8({ type: "chat", text: t });
+  addChat({ name: onl.name || myName(), text: t, at: Date.now(), me: true }); player.say = { text: t.length > 22 ? t.slice(0, 21) + "…" : t, until: performance.now() + 4500 };
+  inp.value = ""; mcSig44 = ""; renderMChat44();
+});
+$("mcin44").addEventListener("keydown", e => e.stopPropagation());
+F44.farms = farms44;
+F44.ready = true;
+
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
@@ -9956,5 +10146,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

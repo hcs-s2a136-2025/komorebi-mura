@@ -177,11 +177,13 @@ RECIPES.push(
   { out: "f_bookshelf", n: 1, need: { wood: 12 } }, { out: "f_bed", n: 1, need: { wood: 15 } }, { out: "f_counter", n: 1, need: { wood: 6, stone: 2 } },
   { out: "f_stove", n: 1, need: { stone: 10, ore: 2 } },
 );
-const WALLPAPERS = ["クリーム", "水玉", "チェック", "木の板", "レンガ", "夜空"];
-const FLOORS = ["木", "寄木", "石", "畳", "タイル", "じゅうたん"];
+const WALLPAPERS = ["クリーム", "水玉", "チェック", "木の板", "レンガ", "夜空", "虹", "ゲーミング"];
+const FLOORS = ["木", "寄木", "石", "畳", "タイル", "じゅうたん", "虹"];
 const decoCache = new Map();
 function decoTile(kind, style) {
-  const key = kind + style; if (decoCache.has(key)) return decoCache.get(key);
+  // ゲーミングの壁紙は、色が流れる（12段階を作っておいて、時間で切りかえる）
+  const gsh = style === "ゲーミング" ? gamingShift : 0;
+  const key = kind + style + (gsh ? ":" + gsh : ""); if (decoCache.has(key)) return decoCache.get(key);
   const c = document.createElement("canvas"); c.width = c.height = 16; const x = c.getContext("2d");
   const R = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
   if (kind === "wall") {
@@ -191,6 +193,8 @@ function decoTile(kind, style) {
       if (style === "チェック") { R("#f6d6dc", 0, 0, 16, 13); for (let a = 0; a < 16; a += 8) for (let b = 0; b < 13; b += 8) R("#eebcc6", a, b, 4, 4), R("#eebcc6", a + 4, b + 4, 4, 4); }
       if (style === "木の板") { R("#c9935e", 0, 0, 16, 13); for (let a = 0; a < 16; a += 4) R("#a87443", a, 0, 1, 13); R("#d9a874", 2, 3, 1, 2); R("#d9a874", 10, 8, 1, 2); }
       if (style === "レンガ") { R("#b5654c", 0, 0, 16, 13); for (let b = 0; b < 13; b += 4) { R("#8e4a37", 0, b, 16, 1); for (let a = (b / 4 % 2) * 4; a < 16; a += 8) R("#8e4a37", a, b, 1, 4); } }
+      if (style === "虹") { for (let b = 0; b < 13; b++) for (let a = 0; a < 16; a++) { const c = hsl(((a + b) % 16) * 22.5, 78, 84 - (b % 2) * 3); R(`rgb(${c.join(",")})`, a, b, 1, 1); } for (const [a, b] of [[3, 3], [11, 9]]) R("#ffffff", a, b, 1, 1); }
+      if (style === "ゲーミング") { R("#16121f", 0, 0, 16, 13); for (let a = 0; a < 16; a++) { const c = hsl((a * 22.5 + gsh * 30) % 360, 95, 58); R(`rgb(${c.join(",")})`, a, 5, 1, 2); const d = hsl((a * 22.5 + 180 + gsh * 30) % 360, 95, 62); R(`rgb(${d.join(",")})`, a, 11, 1, 1); } R("#2a2238", 0, 0, 16, 1); }
       if (style === "夜空") { R("#2b2f5c", 0, 0, 16, 13); for (const [a, b] of [[3, 2], [11, 4], [7, 8], [14, 10], [1, 10]]) R("#fff7c2", a, b, 1, 1); R("#f0bd4f", 12, 1, 2, 2); }
       R("#cf9a5e", 0, 13, 16, 1); R("#a66e42", 0, 14, 16, 1); R("#704628", 0, 15, 16, 1);
     }
@@ -200,6 +204,7 @@ function decoTile(kind, style) {
     if (style === "石") { R("#a9a6a0", 0, 0, 16, 16); R("#8d8a85", 0, 7, 16, 1); R("#8d8a85", 7, 0, 1, 7); R("#8d8a85", 11, 8, 1, 8); R("#c2bfb8", 2, 2, 2, 1); R("#c2bfb8", 13, 11, 2, 1); }
     if (style === "畳") { R("#b9c27a", 0, 0, 16, 16); for (let b = 0; b < 16; b += 2) R("#a8b26a", 0, b, 16, 1); R("#5a6b3a", 0, 0, 16, 1); R("#5a6b3a", 0, 15, 16, 1); }
     if (style === "タイル") { R("#eef2f4", 0, 0, 16, 16); R("#9ec3d6", 0, 0, 8, 8); R("#9ec3d6", 8, 8, 8, 8); }
+    if (style === "虹") { for (let b = 0; b < 16; b++) for (let a = 0; a < 16; a++) { const c = hsl(((a - b + 32) % 16) * 22.5, 60, a % 8 === 0 || b % 8 === 0 ? 70 : 80); R(`rgb(${c.join(",")})`, a, b, 1, 1); } }
     if (style === "じゅうたん") { R("#b8434a", 0, 0, 16, 16); R("#d9a14a", 0, 0, 16, 1); R("#d9a14a", 7, 7, 2, 2); R("#9a333a", 3, 11, 2, 2); R("#9a333a", 11, 3, 2, 2); }
   }
   decoCache.set(key, c); return c;
@@ -270,16 +275,21 @@ if (!world.rooms) world.rooms = { home: defaultHomeRoom() };
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const rampOf = c => [mix(c, [255, 252, 236], .55), mix(c, [255, 252, 236], .22), c, mix(c, [46, 26, 70], .38)];
 const WOODC = [[238, 194, 134], [208, 152, 94], [166, 110, 66], [112, 70, 46]];
-const ROOFS = { "赤": [200, 84, 76], "青": [80, 120, 184], "緑": [96, 160, 100], "黄": [222, 176, 70], "紫": [140, 100, 170], "茶": [140, 96, 64], "灰": [110, 114, 128], "桃": [226, 130, 160] };
-const WALLS = { "生成り": [240, 226, 196], "白": [244, 242, 236], "木": [204, 150, 96], "桃": [246, 206, 206], "水色": [196, 222, 236], "灰": [196, 196, 200], "レンガ": [190, 110, 84] };
+const ROOFS = { "赤": [200, 84, 76], "青": [80, 120, 184], "緑": [96, 160, 100], "黄": [222, 176, 70], "紫": [140, 100, 170], "茶": [140, 96, 64], "灰": [110, 114, 128], "桃": [226, 130, 160], "虹": "rainbow", "ゲーミング": "gaming" };
+const WALLS = { "生成り": [240, 226, 196], "白": [244, 242, 236], "木": [204, 150, 96], "桃": [246, 206, 206], "水色": [196, 222, 236], "灰": [196, 196, 200], "レンガ": [190, 110, 84], "虹": "rainbow", "ゲーミング": "gaming" };
+// 地図などで1色だけ使うとき（虹・ゲーミングは代わりの色）
+const solidOf = (pool, name, def) => { const v = pool[name]; return Array.isArray(v) ? v : typeof v === "string" ? [220, 120, 200] : pool[def]; };
 const houseCache = new Map();
 function makeHouse(W, H, roofC, wallC) {
-  const key = [W, H, roofC, wallC].join();
+  // 虹・ゲーミング：いったん目印の色で描いて、あとで場所ごとの色に塗りかえる（ゲーミングは時間で色が流れる）
+  const rS = ROOFS[roofC], wS = WALLS[wallC], gsh = rS === "gaming" || wS === "gaming" ? gamingShift : 0;
+  const key = [W, H, roofC, wallC, gsh].join();
   if (houseCache.has(key)) return houseCache.get(key);
   const px = new Array(W * H).fill(null);
   const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) px[y * W + x] = c; };
   const rect = (x, y, w, h, c) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, c); };
-  const R = rampOf(ROOFS[roofC] || ROOFS["赤"]), Wl = rampOf(WALLS[wallC] || WALLS["生成り"]);
+  const mark = () => [[1, 0, 0], [2, 0, 0], [3, 0, 0], [4, 0, 0]];
+  const R = typeof rS === "string" ? mark() : rampOf(rS || ROOFS["赤"]), Wl = typeof wS === "string" ? mark() : rampOf(wS || WALLS["生成り"]);
   const rh = Math.min(Math.floor(H * 11 / 20), Math.max(18, Math.round(W * .42)), 40);
   if (W >= 60) { rect(W - 14, 1, 6, 8, [170, 110, 96]); rect(W - 15, 1, 8, 2, [130, 80, 72]); }
   rect(1, 3, W - 2, rh - 3, R[2]);
@@ -312,6 +322,13 @@ function makeHouse(W, H, roofC, wallC) {
         win(cx, wy2);
       }
     }
+  }
+  for (let i = 0; i < px.length; i++) {
+    const c = px[i]; if (!c) continue; const x = i % W, y = (i / W) | 0;
+    let j = typeof rS === "string" ? R.indexOf(c) : -1;
+    if (j >= 0) { px[i] = rS === "gaming" ? hsl((x * 6 + y * 4 + gsh * 30) % 360, 92, [70, 58, 46, 26][j]) : hsl(((y - 3) / Math.max(1, rh - 3)) * 300 % 360, 80, [80, 66, 54, 32][j]); continue; }
+    j = typeof wS === "string" ? Wl.indexOf(c) : -1;
+    if (j >= 0) px[i] = wS === "gaming" ? (j === 2 ? [34, 28, 48] : hsl((x * 8 + gsh * 30) % 360, 95, [70, 60, 50, 30][j])) : hsl((x / Math.max(1, W)) * 330 % 360, 70, [92, 86, 80, 52][j]);
   }
   const out = px.slice();
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!px[y * W + x]) {
@@ -3847,7 +3864,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.29.2";
+const CLIENT_VERSION = "0.29.3";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5318,7 +5335,7 @@ function openMap13() {
     for (const k of [...(village.fenceS || []), ...Object.keys(world.fences)]) { const [tx, ty] = k.split(",").map(Number); dot(tx, ty, "#8a5a30", 1, 1, 3); }
     for (const k in world.crops) { const [tx, ty] = k.split(",").map(Number); dot(tx, ty, "#5aa040", 1, 1, 2); }
     for (const b of BUILDINGS) { const r = houseRect(b); x.fillStyle = { shop: "#d8a060", casino: "#c060c0", bank: "#6a8ac8", yami: "#7a3a40", home: "#c8604c" }[b.kind] || "#b08060"; x.fillRect(r.x0 / TS * S, r.y0 / TS * S + S, b.W / TS * S, b.H / TS * S - S); }
-    for (const h of world.houses) { const r = houseRect(h); x.fillStyle = `rgb(${(ROOFS[h.roof] || ROOFS["赤"]).join(",")})`; x.fillRect(r.x0 / TS * S, r.y0 / TS * S + S, h.W / TS * S, h.H / TS * S - S); }
+    for (const h of world.houses) { const r = houseRect(h); x.fillStyle = `rgb(${solidOf(ROOFS, h.roof, "赤").join(",")})`; x.fillRect(r.x0 / TS * S, r.y0 / TS * S + S, h.W / TS * S, h.H / TS * S - S); }
     dot(BUS_AT[0], BUS_AT[1], "#f2f2f2"); dot(BOARD_AT[0], BOARD_AT[1], "#a07040");
   } else {
     for (const o of M.objs) { if (o.sortY < 0) continue; const im = o.cv || IMG[o.img]; x.drawImage(im, o.x / TS * S, o.y / TS * S, im.width / TS * S, im.height / TS * S); }
@@ -5875,6 +5892,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.29.3", date: "2026/10/23", title: "家と壁紙に虹色", items: [
+    "家の屋根と壁に「虹」と「ゲーミング」の色を追加。虹は屋根が虹の帯に、壁はパステルの虹。ゲーミングは色がずっと流れる",
+    "建築タブに「自分の家を、この色に塗りかえる」を追加。いま選んでいる屋根と壁の色に、近くの自分の家を塗りかえられる（オンラインでもみんなに反映）",
+    "部屋の壁紙に「虹」と「ゲーミング」、床に「虹」を追加",
+  ] },
   { v: "0.29.2", date: "2026/10/23", title: "作業の音", items: [
     "木を切る「コーン」、切り倒すと「メキメキ…ドスン」。岩を掘る「カキン」、砕くと「ガラガラ」",
     "鍬で耕す・シャベルで掘る音、じょうろの水の音、種を植える音、収穫の音、剣をふる音",
@@ -10347,6 +10369,23 @@ onMotion44 = function (m) {
   if (k) sfx47(k, v);
 };
 F47.ready = true;
+var F48 = {};
+// ---------- v48: 建てた家の色を、あとから塗りかえる ----------
+{
+  const rp = document.createElement("button"); rp.className = "btn ghost"; rp.id = "repaint48"; rp.type = "button"; rp.textContent = "自分の家を、この色に塗りかえる";
+  $("undoHouse").insertAdjacentElement("beforebegin", rp);
+  rp.addEventListener("click", () => {
+    const mine = world.houses.map((h, i) => [h, i]).filter(([h]) => h && (!F8.online || !h.ownerId || h.ownerId === onl.id));
+    if (!mine.length) { toast(null, "塗りかえられる自分の家がないよ"); return; }
+    // いちばん近い自分の家（村にいないときは、最後に建てた家）
+    const d = ([h]) => map === village ? Math.abs(h.col - player.x) + Math.abs(h.row - player.y) : -mine.indexOf(mine.find(m => m[0] === h));
+    const [h] = mine.slice().sort((a, b) => d(a) - d(b))[0];
+    if (h.roof === build.roof && h.wall === build.wall) { toast(null, "もうこの色だよ"); return; }
+    h.roof = build.roof; h.wall = build.wall; saveWorld(); syncBuild();
+    toast(null, `家を塗りかえた（屋根：${build.roof}・壁：${build.wall}）`);
+  });
+}
+F48.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------

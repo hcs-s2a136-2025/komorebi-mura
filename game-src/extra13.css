@@ -353,3 +353,46 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .dv55bar i { flex: 1; height: 12px; background: rgba(255, 255, 255, .15); border-radius: 6px; overflow: hidden; }
 .dv55bar b { display: block; height: 100%; width: 100%; background: #7fd8ff; transition: width .1s; }
 .dv55bar .btn { padding: 4px 14px; min-height: 0; }
+
+/* v56 タロット */
+.tar56 { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin: 10px 0; justify-items: center; }
+.tar56.res { grid-template-columns: repeat(3, 1fr); }
+.tc56 { border: 0; background: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font: inherit; color: inherit; transition: transform .18s; }
+.tc56 img { width: 64px; height: 88px; image-rendering: pixelated; border-radius: 4px; box-shadow: 0 2px 6px rgba(0, 0, 0, .4); }
+.tc56:not(:disabled):hover img { transform: translateY(-4px); }
+.tc56.fl56 { transform: rotateY(180deg); }
+.tc56.fl56 img, .tc56.fl56 span { transform: rotateY(180deg); }
+.tc56.rv56 img { transform: rotate(180deg); }
+.tc56.fl56.rv56 img { transform: rotateY(180deg) rotate(180deg); }
+.tc56 span { font-size: .72rem; text-align: center; line-height: 1.3; }
+.tarb56 { background: rgba(255, 216, 106, .15); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+.tarb56 div { margin: 3px 0; }
+
+/* v57 ヌシとの綱引き */
+.tug57 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#tug57cv { width: min(100%, 520px); aspect-ratio: 300 / 120; image-rendering: pixelated; border-radius: 8px; border: 2px solid #2a4a6a; touch-action: none; }
+.tug57g { display: flex; align-items: center; gap: 8px; width: min(100%, 520px); font-size: .82rem; }
+.tug57g span { width: 6em; flex: none; }
+.tug57g i { position: relative; flex: 1; height: 14px; background: rgba(255, 255, 255, .12); border-radius: 7px; overflow: hidden; }
+.tug57g i b { position: absolute; left: 0; top: 0; bottom: 0; background: #7ae07a; z-index: 1; }
+.tug57g i b.p { background: #ffd86a; }
+.tug57g i em { position: absolute; top: 0; bottom: 0; background: rgba(122, 224, 122, .25); border-left: 2px solid #7ae07a; border-right: 2px solid #7ae07a; z-index: 2; pointer-events: none; }
+#tug57btn { min-width: 60%; touch-action: none; user-select: none; }
+#tug57btn.on57 { filter: brightness(1.15); transform: translateY(1px); }
+
+/* v58 雪合戦 */
+.sw58hud { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: none; background: rgba(20, 30, 50, .78); color: #fff; padding: 4px 14px; border-radius: 14px; font-size: .9rem; white-space: nowrap; }
+.sw58hud .r { color: #ff8a8a; } .sw58hud .w { color: #e8ecf4; }
+.sw58t { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.sw58t > div { border-radius: 8px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
+.sw58t .t0 { background: rgba(232, 90, 90, .15); } .sw58t .t1 { background: rgba(200, 205, 220, .3); }
+.sd59hud { position: absolute; top: 38px; left: 50%; transform: translateX(-50%); z-index: 4; background: rgba(60, 30, 30, .82); color: #fff; padding: 4px 14px; border-radius: 14px; font-size: .86rem; border: 1px solid rgba(255, 255, 255, .35); cursor: pointer; text-align: center; max-width: calc(100% - 24px); line-height: 1.5; font-family: inherit; }
+.sd59hud .r { color: #ff8a8a; } .sd59hud .w { color: #e8ecf4; } .sd59hud u { color: #ffe27a; }
+.sd59hud img { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: -3px; margin-right: 2px; }
+.sd59g { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#sd59cv { width: min(100%, 520px); image-rendering: pixelated; border-radius: 8px; border: 2px solid #4a3a2a; touch-action: none; }
+#sd59btn { min-width: 60%; touch-action: none; user-select: none; }
+#sd59btn:active { transform: translateY(1px); filter: brightness(1.15); }
+.sd59tb { border-collapse: collapse; margin: 6px auto; font-size: .85rem; }
+.sd59tb th, .sd59tb td { padding: 2px 8px; border-bottom: 1px solid rgba(0, 0, 0, .12); text-align: center; }
+.sd59tb tr.t0 th { color: #c83a3a; } .sd59tb tr.t1 th { color: #6a7088; }

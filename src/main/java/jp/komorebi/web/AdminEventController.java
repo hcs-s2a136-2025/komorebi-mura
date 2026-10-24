@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jp.komorebi.event.EventRules;
 import jp.komorebi.event.EventService;
+import jp.komorebi.sports.SportsDayService;
 
 /**
  * 管理人室のイベント画面（/admin/events）。/admin/** は SecurityConfig で管理人だけが入れるので、
@@ -32,9 +33,11 @@ public class AdminEventController {
     private static final DateTimeFormatter SHOW = DateTimeFormatter.ofPattern("M/d HH:mm").withZone(JST);
 
     private final EventService events;
+    private final SportsDayService sports;
 
-    public AdminEventController(EventService events) {
+    public AdminEventController(EventService events, SportsDayService sports) {
         this.events = events;
+        this.sports = sports;
     }
 
     @GetMapping
@@ -51,6 +54,7 @@ public class AdminEventController {
         LocalDateTime now = LocalDateTime.now(JST).withSecond(0).withNano(0);
         model.addAttribute("defStart", now.plusMinutes(5).format(IN));
         model.addAttribute("defEnd", now.plusMinutes(35).format(IN));
+        model.addAttribute("sd", sports.summary());
         return "admin/events";
     }
 
@@ -104,6 +108,28 @@ public class AdminEventController {
     public String delete(@PathVariable long id, RedirectAttributes ra) {
         String err = events.delete(id);
         ra.addFlashAttribute("msg", err != null ? err : "イベントを消しました");
+        return "redirect:/admin/events";
+    }
+
+    // ---------- 村の運動会 ----------
+
+    @PostMapping("/sports/open")
+    public String sportsOpen(RedirectAttributes ra) {
+        ra.addFlashAttribute("msg", sports.open() ? "運動会の参加受付を始めました（3分後に始まります）" : "運動会はもう開いています");
+        return "redirect:/admin/events";
+    }
+
+    @PostMapping("/sports/start")
+    public String sportsStart(RedirectAttributes ra) {
+        String err = sports.startNow();
+        ra.addFlashAttribute("msg", err != null ? err : "運動会を始めました");
+        return "redirect:/admin/events";
+    }
+
+    @PostMapping("/sports/stop")
+    public String sportsStop(RedirectAttributes ra) {
+        sports.stop();
+        ra.addFlashAttribute("msg", "運動会を中止しました");
         return "redirect:/admin/events";
     }
 }

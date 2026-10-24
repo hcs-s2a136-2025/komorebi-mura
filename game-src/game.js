@@ -3880,7 +3880,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.31.0";
+const CLIENT_VERSION = "0.32.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5908,6 +5908,15 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.32.0", date: "2026/10/24", title: "ミニゲームがいっぱい", items: [
+    "カラオケの音ゲーに、いちばん難しい「げきむず」を追加。2つ同時のノーツや、長いノーツの細かい連打が出てくる。判定もきびしめ",
+    "カラオケの曲が5曲ふえて10曲に（どんぐりロックンロール・夜明けのハイウェイ・スターダスト・カジノ・ひまわり畑でダンス・こもれび村のアンセム）",
+    "すすきのの占いの館で「タロット」が引けるように（500G）。9枚から3枚めくって、その日の運勢が決まる。いい結果だと、釣り・カジノ・売り値に少しだけおまけがつく",
+    "ヌシ級の魚がかかると「ヌシとの綱引き」が始まるように。糸の張りを緑のはんいに保ちながら、Space か Z でリールをまいて釣り上げよう",
+    "冬のあいだ、北の丘で「雪合戦の陣取り」が遊べるように（オンライン）。赤と白に分かれて、相手の旗を自分の陣地に持ち帰ろう",
+    "管理人がひらく「村の運動会」を追加（オンライン）。赤組と白組で、かけっこ（連打）・玉入れ（タイミング）・借り物競走（村でさがし物）のチーム対抗",
+    "実績4つと、てびきの章を追加",
+  ] },
   { v: "0.31.0", date: "2026/10/24", title: "みなと町で素潜り", items: [
     "みなと町に「海女 ナギ」が来た。ウェットスーツを買うと、海に潜って海の幸をとるミニゲームが遊べる（1回HP15）",
     "矢印キーで泳いで、Space か Z でつかむ（スマホは長押しで泳いで「つかむ」）。息がなくなる前に水面にもどれば成功、息切れすると半分落とす",
@@ -11128,6 +11137,544 @@ GUIDE54.splice(5, 0, ["素潜り（みなと町）", "sea_hotate55", `
   <li>めったに出ないもの：虹色の真珠、宝箱、ヌシ級の「オオダコ」（3回つかむ）</li>
   <li>とった物は「海の幸図鑑」に残る。売ったり、料理（わかめスープ・ホタテのバター焼き・海鮮焼き）にしたりできる</li></ul>`]);
 F55.ready = true;
+var F56 = {};
+// ---------- v56: 占いの館のタロット（3枚めくって、今日の運勢とちょっとしたごほうび） ----------
+// [名前, 運気（fish 釣り / casino 勝負 / sell 商売）, 正位置の言葉, 逆位置の言葉, 絵]
+const TAROT56 = [
+  ["太陽", { casino: 1, sell: 1 }, "明るい光があなたを照らす。思いきって動くといい日", "雲がかかっても、太陽はそこにある。焦らずに", (set, rect) => { ell13(set, 16, 22, 8, 8, C13["#f8c840"]); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; ell13(set, 16 + Math.cos(a) * 12, 22 + Math.sin(a) * 12, 1.6, 1.6, C13["#f8a030"]); } }],
+  ["月", { fish: 1 }, "夜の水辺に、不思議な縁がある", "見えないものに、まどわされないで", (set, rect) => { ell13(set, 16, 22, 9, 9, C13["#f0e8b0"]); ell13(set, 20, 19, 8, 8, C13["#2a2448"]); }],
+  ["星", { fish: 1, sell: 1 }, "願いごとが、そっと届く日", "願いは少し先。でも消えてはいない", (set, rect) => { for (const [x, y, r] of [[16, 20, 4], [8, 12, 1.6], [24, 30, 2], [10, 32, 1.4], [25, 12, 1.4]]) ell13(set, x, y, r, r, C13["#fff4a0"]); rect(15, 13, 2, 14, C13["#fff4a0"]); rect(9, 19, 14, 2, C13["#fff4a0"]); }],
+  ["運命の輪", { casino: 2 }, "回る輪が、あなたに味方する。勝負運が高まっている", "輪はまた回る。今日は見送るのも手", (set, rect) => { ell13(set, 16, 22, 10, 10, C13["#c89a40"]); ell13(set, 16, 22, 7, 7, C13["#2a2448"]); ell13(set, 16, 22, 2.4, 2.4, C13["#f8d860"]); rect(15, 12, 2, 20, C13["#c89a40"]); rect(6, 21, 20, 2, C13["#c89a40"]); }],
+  ["恋人", { sell: 1 }, "人とのつながりが、いい流れを運ぶ", "すれちがいに注意。言葉をていねいに", (set, rect) => { ell13(set, 12, 20, 4.4, 4.4, C13["#f07a9a"]); ell13(set, 20, 20, 4.4, 4.4, C13["#f07a9a"]); for (let y = 0; y < 8; y++) rect(8 + y, 22 + y, 16 - y * 2, 1, C13["#f07a9a"]); }],
+  ["力", { fish: 1 }, "ねばり強さが実を結ぶ。大物との勝負にも負けない", "力みすぎず、肩の力をぬいて", (set, rect) => { ell13(set, 16, 22, 9, 7, C13["#e8a040"]); ell13(set, 16, 22, 6, 4.6, C13["#f8c870"]); for (const x of [12, 20]) ell13(set, x, 20, 1.2, 1.2, C13["#2a2228"]); rect(14, 25, 4, 1, C13["#8a4a2a"]); }],
+  ["塔", {}, "思いがけない変化の日。用心深くね", "危ないところは、もう過ぎたみたい", (set, rect) => { rect(11, 12, 10, 22, C13["#8a8090"]); rect(9, 10, 14, 3, C13["#6a6070"]); for (const [x, y] of [[13, 16], [17, 22], [13, 28]]) rect(x, y, 2, 3, C13["#f8d860"]); for (let i = 0; i < 6; i++) rect(22 + i, 6 + i * 2, 1, 2, C13["#f8e870"]); }],
+  ["魔術師", { sell: 1, casino: 1 }, "手の中に、必要な道具はぜんぶそろっている", "器用さが空回りしやすい日", (set, rect) => { rect(15, 10, 2, 22, C13["#c8b8e8"]); ell13(set, 16, 9, 3, 3, C13["#f8f0ff"]); for (const [x, y] of [[9, 18], [23, 18], [9, 28], [23, 28]]) ell13(set, x, y, 1.6, 1.6, C13["#a080e0"]); }],
+  ["女帝", { sell: 2 }, "実りの日。育てたものが、いい値で売れる", "ほどほどが一番。欲ばりすぎないで", (set, rect) => { for (let i = 0; i < 5; i++) rect(9 + i * 3, 12 - (i % 2) * 3, 2, 5, C13["#f8c840"]); rect(9, 16, 14, 3, C13["#f8c840"]); ell13(set, 16, 26, 7, 6, C13["#7ac06a"]); }],
+  ["隠者", { fish: 2 }, "ひとりで静かにすごす時間に、宝がある。水辺が吉", "閉じこもらず、たまには外へ", (set, rect) => { rect(14, 14, 4, 18, C13["#7a6a5a"]); ell13(set, 16, 12, 4, 4, C13["#7a6a5a"]); ell13(set, 22, 20, 2.4, 2.4, C13["#f8e070"]); rect(21, 16, 1, 3, C13["#c8b090"]); }],
+  ["世界", { fish: 1, casino: 1, sell: 1 }, "すべてがまるく、うまくまわる日", "あと少しで完成。最後まで気をぬかないで", (set, rect) => { ell13(set, 16, 22, 10, 10, C13["#5ab0e0"]); ell13(set, 13, 19, 4, 3, C13["#6ac06a"]); ell13(set, 20, 26, 3, 2.4, C13["#6ac06a"]); }],
+  ["愚者", { casino: 1 }, "こわいもの知らずの一歩が、思わぬ幸運に", "足もとに気をつけて。勢いだけでは転ぶ", (set, rect) => { ell13(set, 16, 14, 4, 4, C13["#f8d8b8"]); rect(13, 18, 6, 10, C13["#e05a5a"]); rect(11, 9, 10, 3, C13["#5a8ae0"]); rect(19, 6, 2, 4, C13["#f8d860"]); rect(12, 28, 2, 5, C13["#5a4a3a"]); rect(18, 28, 2, 5, C13["#5a4a3a"]); }],
+];
+const TAROT_POS56 = ["過去", "現在", "未来"];
+TAROT56.forEach(([n, , , , spr], i) => { IMG["tarot56_" + i] = pix13(32, 44, (set, rect) => { rect(0, 0, 32, 44, C13["#2a2448"]); rect(1, 1, 30, 42, C13["#3a3060"]); rect(2, 2, 28, 40, C13["#2a2448"]); spr(set, rect); }); ASSETS["tarot56_" + i] = IMG["tarot56_" + i].toDataURL(); });
+IMG.tarot56_back = pix13(32, 44, (set, rect) => { rect(0, 0, 32, 44, C13["#4a2a6a"]); rect(2, 2, 28, 40, C13["#6a3a8a"]); for (let y = 6; y < 40; y += 6) for (let x = 6; x < 28; x += 6) set(x, y, C13["#f8d860"]); ell13(set, 16, 22, 5, 5, C13["#f8d860"]); ell13(set, 16, 22, 3, 3, C13["#6a3a8a"]); }); ASSETS.tarot56_back = IMG.tarot56_back.toDataURL();
+const tarotToday56 = () => world.tarot56 && world.tarot56.day === world.day ? world.tarot56 : null;
+const tarotBuff56 = k => { const t = tarotToday56(); return t ? (t.buffs[k] || 0) : 0; };
+function tarotReadText56(t) {
+  const b = t.buffs, parts = [];
+  if (b.fish) parts.push(`釣り運 ${"★".repeat(b.fish)}（ときどき、もう1匹かかる）`);
+  if (b.casino) parts.push(`勝負運 ${"★".repeat(b.casino)}（カジノで負けたとき、賭け金の${b.casino * 10}%がもどる・今日は${fmt(b.casino * 3000)}まで）`);
+  if (b.sell) parts.push(`商売運 ${"★".repeat(b.sell)}（売るときの値段が${b.sell * 5}%上がる）`);
+  return parts.length ? parts : ["今日は、いつもどおりの一日になりそう"];
+}
+function openTarot56() {
+  const done = tarotToday56();
+  if (done) { showTarot56(done); return; }
+  const deck = TAROT56.map((_, i) => i).sort(() => Math.random() - .5).slice(0, 9), picks = [];
+  openModal("占いの館　タロット", "yami", body => {
+    body.innerHTML = staffSay13(charIcon13(STAFF13.fortune), "心を静かにして…気になるカードを、3枚えらんで。過去・現在・未来を見てあげる") +
+      `<div class="tar56" id="tar56">${deck.map((c, i) => `<button type="button" class="tc56" data-tc="${i}"><img src="${ASSETS.tarot56_back}" alt="カード"></button>`).join("")}</div><p class="mtext" id="tar56m">あと3枚</p>`;
+    body.querySelectorAll("[data-tc]").forEach(b => b.onclick = () => {
+      if (picks.length >= 3 || b.disabled) return; b.disabled = true;
+      const card = deck[+b.dataset.tc], rev = Math.random() < .3; picks.push([card, rev]);
+      b.classList.add("fl56"); setTimeout(() => { b.querySelector("img").src = ASSETS["tarot56_" + card]; if (rev) b.classList.add("rv56"); b.insertAdjacentHTML("beforeend", `<span>${TAROT_POS56[picks.length - 1] || ""}<br>${TAROT56[card][0]}${rev ? "（逆）" : ""}</span>`); }, 180);
+      body.querySelector("#tar56m").textContent = picks.length < 3 ? `あと${3 - picks.length}枚` : "…出たわ";
+      if (picks.length === 3) setTimeout(() => {
+        const buffs = { fish: 0, casino: 0, sell: 0 };
+        for (const [c, rev] of picks) if (!rev) for (const [k, v] of Object.entries(TAROT56[c][1])) buffs[k] += v;
+        for (const k in buffs) buffs[k] = Math.min(2, buffs[k]);
+        world.tarot56 = { day: world.day, cards: picks, buffs, refund: 0 }; world.stats.tarot56 = (world.stats.tarot56 || 0) + 1; saveWorld();
+        closeModal(); showTarot56(world.tarot56);
+      }, 900);
+    });
+  });
+}
+function showTarot56(t) {
+  openModal("占いの館　今日の運勢", "yami", body => {
+    body.innerHTML = `<div class="tar56 res">${t.cards.map(([c, rev], i) => `<div class="tc56 open${rev ? " rv56" : ""}"><img src="${ASSETS["tarot56_" + c]}" alt=""><span>${TAROT_POS56[i]}<br>${TAROT56[c][0]}${rev ? "（逆）" : ""}</span></div>`).join("")}</div>
+      ${t.cards.map(([c, rev], i) => `<p class="mtext"><b>${TAROT_POS56[i]}・${TAROT56[c][0]}${rev ? "（逆位置）" : ""}</b>　${esc(rev ? TAROT56[c][3] : TAROT56[c][2])}</p>`).join("")}
+      <div class="tarb56">${tarotReadText56(t).map(x => `<div>${esc(x)}</div>`).join("")}</div>
+      <p class="mtext small">タロットは1日1回。明日になると、また占える</p>`;
+  });
+}
+// 占いの館の画面に、タロットのボタンを足す
+const _openFortune56 = openFortune13;
+openFortune13 = function () {
+  _openFortune56();
+  const row = document.querySelector("#mbody .row2"); if (!row) return;
+  const t = tarotToday56();
+  row.insertAdjacentHTML("beforeend", `<button class="btn" type="button" id="tarGo56" ${!t && world.money < 500 ? "disabled" : ""}>${t ? "今日のタロットを見る" : "タロット（500G）"}</button>`);
+  $("tarGo56").onclick = () => { if (!tarotToday56()) { if (world.money < 500) return; addMoney(-500); } closeModal(); openTarot56(); };
+};
+// ごほうび：釣りでもう1匹・カジノの負けが少しもどる・売値アップ
+const _fishCaught56 = F6.fishCaught;
+F6.fishCaught = got => { _fishCaught56(got); const b = tarotBuff56("fish"); if (b && Math.random() < b * .1) { if (addItem("fish_" + got, 1, true)) setTimeout(() => toast("fish_" + got, `タロットの導き…${got}がもう1匹かかった！`), 1200); } };
+const _gamble56 = gambleResult;
+gambleResult = function (staked, payout) {
+  const r = _gamble56.apply(this, arguments);
+  const b = tarotBuff56("casino"), t = tarotToday56();
+  if (b && t && payout < staked) { const cap = b * 3000 - (t.refund || 0), back = Math.min(cap, Math.floor((staked - payout) * b * .1)); if (back > 0) { t.refund = (t.refund || 0) + back; addMoney(back); setTimeout(() => toast("coin", `運命の導き…負けの一部 ${fmt(back)} がもどった`), 600); } }
+  return r;
+};
+const _sellMul56 = F7.sellMul;
+F7.sellMul = id => _sellMul56(id) + tarotBuff56("sell") * .05;
+ACH.push(["星読み", "占いの館でタロットを5回めくる", () => (world.stats.tarot56 || 0) >= 5]);
+ACH_REWARD["星読み"] = ["money", 1500];
+GUIDE54.forEach(g => { if (g[0] === "バスで行ける街") g[2] = g[2].replace("ラーメン・占い", "ラーメン・占い（水晶とタロット。タロットは3枚めくると、その日だけ釣り・勝負・商売に小さなごほうび）"); });
+F56.open = openTarot56; F56.buff = tarotBuff56;
+F56.ready = true;
+var F57 = {};
+// ---------- v57: ヌシとの綱引き（ヌシ級の魚がかかったときだけ） ----------
+const NUSHI57 = new Set(["ヌシ", "クエ", "ナポレオンフィッシュ", "オオウミノヌシ", "イトウ", "リュウグウノツカイ", "シーラカンス", "ナナイロウオ", "チョウザメ", "カジキ", "マンボウ"]);
+const _pullFish57 = pullFish;
+pullFish = function () {
+  _pullFish57.apply(this, arguments);
+  if (fish && fish.phase === "reel" && NUSHI57.has(fish.got)) { const f = fish; fish = null; player.say = null; tug57(f); }
+};
+function tug57(f) {
+  const W = 300, H = 120, base = FISHBASE28[f.got] || 100, power = Math.min(1.6, .7 + base / 300), rod = tlv40("rod");
+  const zone = [32 - rod * 3, 74 + rod * 3];
+  let result57 = null, tension = 45, prog = 20, holding = false, low = 0, t = 0, ended = false, run = 0, runT = 1.5, last = performance.now(), msg = "", shake = 0;
+  try { SFX.bite(); } catch (e) { }
+  openModal(`${f.got}との綱引き！`, "dark", body => {
+    body.innerHTML = `<div class="tug57"><canvas id="tug57cv" width="${W}" height="${H}"></canvas>
+      <div class="tug57g"><span>糸の張り</span><i id="tug57z"><b id="tug57t"></b><em></em></i></div>
+      <div class="tug57g"><span>たぐりよせ</span><i><b id="tug57p" class="p"></b></i></div>
+      <button class="btn" type="button" id="tug57btn">押しているあいだ、リールをまく</button>
+      <p class="mtext small">Space か Z を押しているあいだ、リールをまく（スマホはボタンを長押し）。<br>糸の張りを緑のはんいに保つと、魚が近づいてくる。張りすぎると糸が切れて、ゆるめすぎると針が外れる。魚があばれたら、少しゆるめよう</p></div>`;
+  }, () => stop(result57 === true));
+  const cv = $("tug57cv"), g = cv.getContext("2d"), zEl = $("tug57z");
+  zEl.querySelector("em").style.cssText = `left:${zone[0]}%;width:${zone[1] - zone[0]}%`;
+  const onKey = e => { if (e.key === " " || e.key === "z" || e.key === "Z") { e.preventDefault(); e.stopPropagation(); holding = e.type === "keydown"; } };
+  addEventListener("keydown", onKey, true); addEventListener("keyup", onKey, true);
+  const btn = $("tug57btn");
+  const dn = e => { e.preventDefault(); holding = true; }, upf = () => { holding = false; };
+  btn.addEventListener("pointerdown", dn); btn.addEventListener("pointerup", upf); btn.addEventListener("pointerleave", upf); btn.addEventListener("pointercancel", upf);
+  cv.addEventListener("pointerdown", dn); cv.addEventListener("pointerup", upf); cv.addEventListener("pointerleave", upf);
+  let stopped = false;
+  function stop(win) {
+    if (stopped) return; stopped = true; removeEventListener("keydown", onKey, true); removeEventListener("keyup", onKey, true);
+    if (ended) return; ended = true;
+    if (win) { fish = { ...f, phase: "reel", t: .69 }; world.stats.tugWin57 = (world.stats.tugWin57 || 0) + 1; }
+    else { toast(null, msg || `${f.got}に逃げられた…`); try { SFX.fishMiss(); } catch (e) { } world.stats.tugLose57 = (world.stats.tugLose57 || 0) + 1; }
+    saveWorld();
+  }
+  const end = (win, m) => { msg = m; result57 = win; setTimeout(() => { if (!stopped) { stop(win); closeModal(); } }, win ? 600 : 900); ended2 = true; };
+  let ended2 = false;
+  const loop = now => {
+    if (stopped || !cv.isConnected) { stop(false); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+    if (!ended2) {
+      // 魚の動き：ときどきあばれる（強い魚ほど長く、強く）
+      runT -= dt; if (runT <= 0) { run = run ? 0 : 1; runT = run ? (.8 + Math.random() * 1.4) * power : 1 + Math.random() * 1.6; if (run) { shake = .4; try { SFX.splash ? SFX.splash() : SFX.dig(.5); } catch (e) { } } }
+      const pull = run ? 38 * power : 10 * power;
+      tension += (holding ? 34 : -42) * dt + pull * dt * (holding ? 1 : .4);
+      tension = Math.max(0, tension);
+      const inZone = tension >= zone[0] && tension <= zone[1];
+      if (inZone) prog += (holding ? (run ? 6 : 18) : (run ? -2 * power : 4)) * dt; else prog -= (run ? 5 * power : 2) * dt;
+      prog = Math.max(0, Math.min(100, prog));
+      if (tension < 8) low += dt; else low = 0;
+      if (tension >= 100) end(false, "プツン！ 糸が切れてしまった…");
+      else if (low > 1.6) end(false, "糸がゆるんで、針が外れてしまった…");
+      else if (prog >= 100) end(true, `${f.got}を釣り上げた！`);
+      else if (t > 45) end(false, `${f.got}は、深みへ帰っていった…`);
+    }
+    shake = Math.max(0, shake - dt);
+    // 絵
+    const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#3a7ab8"); sky.addColorStop(1, "#163a6a"); g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    g.fillStyle = "rgba(255,255,255,.35)"; for (let x = 0; x < W; x += 10) g.fillRect(x, 14 + Math.round(Math.sin(now / 250 + x / 18) * 2), 6, 1);
+    const fx = 30 + (100 - prog) / 100 * (W - 80) + (shake ? Math.sin(now / 20) * 4 : 0), fy = 60 + Math.sin(now / (run ? 90 : 400)) * (run ? 16 : 8);
+    g.strokeStyle = tension > zone[1] ? "#ff8080" : "rgba(255,255,255,.85)"; g.lineWidth = tension > zone[1] ? 1.6 : 1; g.beginPath(); g.moveTo(8, 6); g.quadraticCurveTo((8 + fx) / 2, 10 + (100 - tension) * .5, fx, fy); g.stroke();
+    g.fillStyle = "rgba(10,20,40,.75)"; g.beginPath(); g.ellipse(fx + 14, fy, 22 * Math.min(1.4, power), 8, 0, 0, 7); g.fill(); g.beginPath(); g.moveTo(fx + 30 * Math.min(1.4, power), fy); g.lineTo(fx + 44 * Math.min(1.4, power), fy - 9); g.lineTo(fx + 44 * Math.min(1.4, power), fy + 9); g.fill();
+    if (run && !ended2) { g.fillStyle = "rgba(255,255,255,.7)"; for (let i = 0; i < 4; i++) g.fillRect(fx + 10 + Math.random() * 30, fy - 12 - Math.random() * 8, 2, 2); }
+    if (msg) { g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.fillStyle = "#fff"; g.fillText(msg, W / 2, H - 10); }
+    else if (run) { g.font = "bold 12px sans-serif"; g.textAlign = "center"; g.fillStyle = "#ffe27a"; g.fillText("あばれている！", W / 2, H - 10); }
+    const tb = $("tug57t"); if (tb) { tb.style.width = Math.min(100, tension) + "%"; tb.style.background = tension > zone[1] ? "#ff6b6b" : tension < zone[0] ? "#7fa8d8" : "#7ae07a"; }
+    const pb = $("tug57p"); if (pb) pb.style.width = prog + "%";
+    btn.classList.toggle("on57", holding);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F57.t = { get tension() { return tension; }, set tension(v) { tension = v; }, get prog() { return prog; }, set prog(v) { prog = v; }, setHold: v => { holding = v; }, zone };
+}
+ACH.push(["ヌシとの死闘", "ヌシ級の魚との綱引きに勝つ", () => (world.stats.tugWin57 || 0) >= 1]);
+ACH_REWARD["ヌシとの死闘"] = ["money", 3000];
+GUIDE54.forEach(g => { if (g[0] === "釣り") g[2] = g[2].replace("<li>夏のみなと町は", "<li><b>ヌシとの綱引き</b>：ヌシ級の魚がかかると綱引きが始まる。Space か Z（スマホはボタン長押し）でリールをまき、糸の張りを緑のはんいに保つと近づいてくる。張りすぎると糸が切れ、ゆるめすぎると針が外れる。強い釣り竿ほど緑のはんいが広い</li><li>夏のみなと町は"); });
+F57.tug = tug57;
+F57.ready = true;
+var F58 = {};
+// ---------- v58: 雪合戦の陣取り（冬・北の丘・オンライン） ----------
+const SW_BASE58 = [[6, 53], [57, 53]], SW_SIGN58 = [32, 48], SW_TEAM58 = ["赤", "白"], SW_COL58 = ["#e85a5a", "#f4f4f8"];
+let sw58 = null, swFrozen58 = 0, swSent58 = 0, swThrow58 = 0, swFrozeShown58 = 0;
+IMG.swsign58 = pix13(32, 32, (set, rect) => { rect(14, 16, 4, 16, C13["#7a5a3a"]); rect(2, 4, 28, 16, C13["#8a6a44"]); rect(4, 6, 24, 12, C13["#f4ecdc"]); rect(6, 9, 8, 6, C13["#e85a5a"]); rect(18, 9, 8, 6, C13["#d8dde8"]); ell13(set, 16, 12, 2, 2, C13["#7fc8f0"]); });
+ASSETS.swsign58 = IMG.swsign58.toDataURL();
+function addSwObjs58() {
+  if (!village.objs.some(o => o.img === "swsign58")) addObj(village, "swsign58", (SW_SIGN58[0] - .5) * TS, (SW_SIGN58[1] - 1) * TS);
+  solidRect(village, SW_SIGN58[0], SW_SIGN58[1], 1, 1);
+  for (const [bx, by] of [...SW_BASE58, SW_SIGN58]) for (let y = by - 1; y <= by + 1; y++) for (let x = bx - 1; x <= bx + 1; x++) village.noBuild.add(x + "," + y);
+}
+addSwObjs58(); rebuildSolid();
+const _restore58 = F7.restoreVillage;
+F7.restoreVillage = () => { _restore58(); addSwObjs58(); rebuildSolid(); };
+const swMe58 = () => sw58 && Array.isArray(sw58.players) ? sw58.players.find(p => p.id === onl.id) : null;
+const swActive58 = () => !!(sw58 && sw58.phase && sw58.phase !== "idle");
+const winter58 = () => season() === "冬";
+function openSW58() {
+  if (!F8.connected) { toast(null, "雪合戦は、オンラインで遊べるよ"); return; }
+  send8({ type: "sw", act: "look" });
+  openModal("雪合戦の陣取り", "", body => {
+    const st = sw58 || { phase: "idle", players: [] }, me = swMe58(), ph = st.phase;
+    const team = i => st.players.filter(p => p.team === i);
+    const sec = Math.ceil((st.left || 0) / 1000);
+    body.innerHTML = `<p class="mtext">赤と白に分かれて、相手の陣地の旗を自分の陣地に持ち帰ると1点。先に3点か、4分たったときに多いほうの勝ち。<br>A（Space）で雪玉を投げる（雪玉はいらない）。当たると3秒ひえて、自分の陣地にもどされる。旗を持っていたら、旗は相手の陣地にもどる。<br>赤の陣地は北の丘の左、白の陣地は右。旗の上に立つと持てる。</p>
+      <p class="mtext">${ph === "idle" ? (winter58() ? "いまは、だれも遊んでいない。参加すると、45秒の受付が始まるよ" : "雪合戦は、冬のあいだだけ遊べるよ") : ph === "recruit" ? `受付中（あと${sec}秒）。赤と白に1人ずつ以上いれば始まる` : ph === "play" ? `試合中　赤 <b>${st.score[0]}</b> - <b>${st.score[1]}</b> 白（のこり ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}）` : `結果発表：${st.winner === 2 ? "引き分け" : SW_TEAM58[st.winner] + "の勝ち"}`}</p>
+      <div class="sw58t">${[0, 1].map(i => `<div class="t${i}"><b>${SW_TEAM58[i]}</b>${team(i).map(p => `<span>${esc(p.name)}${p.id === onl.id ? "（あなた）" : ""}</span>`).join("") || `<span class="note">まだいない</span>`}</div>`).join("")}</div>
+      <div class="row2">${me ? `<button class="btn light" type="button" id="swLeave">ぬける</button>${ph === "recruit" ? `<button class="btn" type="button" id="swStart">いますぐ始める</button>` : ""}` : `<button class="btn" type="button" id="swJoin" ${ph === "result" || (!winter58() && ph === "idle") ? "disabled" : ""}>参加する</button>`}</div>
+      <p class="note">勝つと${fmt(1000)}、引き分けで${fmt(500)}、負けても${fmt(300)}もらえる。</p>`;
+    body.querySelector("#swJoin")?.addEventListener("click", () => { send8({ type: "sw", act: "join" }); setTimeout(() => { if (modalOpen && $("mtitle").textContent === "雪合戦の陣取り") { closeModal(); openSW58(); } }, 500); });
+    body.querySelector("#swLeave")?.addEventListener("click", () => { send8({ type: "sw", act: "leave" }); closeModal(); });
+    body.querySelector("#swStart")?.addEventListener("click", () => send8({ type: "sw", act: "start" }));
+  });
+}
+// 看板の前でⒶ／試合中はⒶで雪玉
+const _act58 = act;
+act = function () {
+  if (map === village && !modalOpen && !placing && !fish && !busy && !player.moving) {
+    const [tx, ty] = front();
+    if (tx === SW_SIGN58[0] && ty === SW_SIGN58[1]) { openSW58(); return; }
+    const me = swMe58();
+    if (me && sw58.phase === "play") {
+      if (performance.now() < swFrozen58) return;
+      if (performance.now() - swThrow58 < 350) return; swThrow58 = performance.now();
+      const { hitE } = throw36(player.x, player.y, player.dir);
+      send8({ type: "snow", x: player.x, y: player.y, dir: player.dir, m: mapKey(), ...(hitE?.rid ? { to: hitE.rid } : {}) });
+      try { SFX.swish(.8); } catch (e) { }
+      const t = hitE?.rid && sw58.players.find(p => p.id === hitE.rid);
+      if (t && t.team !== me.team) { send8({ type: "sw", act: "hit", to: hitE.rid }); setTimeout(() => { splats36.push({ x: hitE.x, y: hitE.y, until: performance.now() + 700 }); toast("snowball35", `${hitE.name}に当てた！`); world.stats.swHits58 = (world.stats.swHits58 || 0) + 1; }, 200); }
+      return;
+    }
+  }
+  return _act58.apply(this, arguments);
+};
+// ひえているあいだは動けない
+const _tryMove58 = tryMove;
+tryMove = function () { if (performance.now() < swFrozen58) { player.say = { text: "ひえひえ…", until: performance.now() + 400 }; return; } return _tryMove58.apply(this, arguments); };
+// 旗を持つ・持ち帰る（立った場所で自動）
+setInterval(() => {
+  const me = swMe58(); if (!me || !sw58 || sw58.phase !== "play" || map !== village || performance.now() < swFrozen58) return;
+  if (performance.now() - swSent58 < 700) return;
+  const enemy = 1 - me.team, near = b => Math.abs(player.x - b[0]) <= 1 && Math.abs(player.y - b[1]) <= 1;
+  if (!sw58.carrier[enemy] && near(SW_BASE58[enemy])) { swSent58 = performance.now(); send8({ type: "sw", act: "grab" }); }
+  else if (sw58.carrier[enemy] === onl.id && !sw58.carrier[me.team] && near(SW_BASE58[me.team])) { swSent58 = performance.now(); send8({ type: "sw", act: "cap" }); }
+}, 150);
+// 陣地・旗・チームの印を描く
+function drawFlag58(x, y, team, now) {
+  ctx.fillStyle = "#6a4a2a"; ctx.fillRect(x, y - 18, 1, 18);
+  const w = Math.round(Math.sin(now / 180) * 1.5); ctx.fillStyle = SW_COL58[team]; ctx.fillRect(x + 1, y - 18, 8, 5 + w); ctx.fillStyle = team ? "#9aa0b0" : "#a83a3a"; ctx.fillRect(x + 1, y - 13 + w, 8, 1);
+}
+const _atl58 = F7.addToList;
+F7.addToList = (list, now) => {
+  _atl58(list, now);
+  if (map !== village || (!swActive58() && !winter58())) return;
+  [0, 1].forEach(i => {
+    const [bx, by] = SW_BASE58[i];
+    list.push({ s: (by - 1) * TS, d: () => { ctx.globalAlpha = .35; ctx.fillStyle = SW_COL58[i]; ctx.fillRect((bx - 1) * TS, (by - 1) * TS, 3 * TS, 3 * TS); ctx.globalAlpha = 1; ctx.strokeStyle = i ? "#c8ccd8" : "#c84a4a"; ctx.lineWidth = 1; ctx.strokeRect((bx - 1) * TS + .5, (by - 1) * TS + .5, 3 * TS - 1, 3 * TS - 1); } });
+    if (swActive58() && !(sw58.carrier || [])[i]) list.push({ s: (by + 1) * TS, d: () => drawFlag58(bx * TS + 7, by * TS + 12, i, now) });
+  });
+  if (!swActive58()) return;
+  for (const p of sw58.players || []) {
+    const e = p.id === onl.id ? player : remotes.get(p.id); if (!e || (e !== player && e.rmap !== "village")) continue;
+    list.push({ s: e.py + 17, d: () => {
+      ctx.fillStyle = SW_COL58[p.team]; ctx.fillRect(Math.round(e.px) + 6, Math.round(e.py) - 4, 4, 3); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.strokeRect(Math.round(e.px) + 5.5, Math.round(e.py) - 4.5, 5, 4);
+      const carr = (sw58.carrier || []).indexOf(p.id); if (carr >= 0) drawFlag58(Math.round(e.px) + 12, Math.round(e.py) + 4, carr, now);
+      if (p.frozen > 0) { ctx.globalAlpha = .35; ctx.fillStyle = "#bfe8ff"; ctx.fillRect(Math.round(e.px), Math.round(e.py), 16, 16); ctx.globalAlpha = 1; }
+    } });
+  }
+};
+// 画面の上の得点板
+($("rep").closest(".hud")?.parentElement || document.querySelector(".stage")).insertAdjacentHTML("beforeend", `<div class="sw58hud" id="sw58hud" hidden></div>`);
+setInterval(() => {
+  const el = $("sw58hud"); if (!el) return;
+  const show = swActive58() && (swMe58() || (map === village && player.y >= NY0));
+  el.hidden = !show; if (!show) return;
+  const sec = Math.max(0, Math.ceil(((sw58.left || 0) - (performance.now() - (sw58.at58 || performance.now()))) / 1000));
+  el.innerHTML = sw58.phase === "recruit" ? `雪合戦 受付中　あと${sec}秒（${sw58.players.length}人）` : sw58.phase === "play" ? `雪合戦　<b class="r">赤 ${sw58.score[0]}</b> - <b class="w">${sw58.score[1]} 白</b>　のこり ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}${swMe58() ? `　あなたは${SW_TEAM58[swMe58().team]}` : ""}` : `雪合戦　${sw58.winner === 2 ? "引き分け" : SW_TEAM58[sw58.winner] + "の勝ち！"}`;
+}, 250);
+// メッセージ
+const _handle58 = handle8;
+handle8 = m => {
+  _handle58(m);
+  if (!m || typeof m.type !== "string") return;
+  if (m.type === "sw" || (m.type === "welcome" && m.sw)) {
+    const prev = swMe58(), st = m.type === "sw" ? m : m.sw; sw58 = { ...st, at58: performance.now() };
+    if (m.type === "welcome" && !m.sw) sw58 = null;
+    const me = swMe58();
+    if (me && !prev) toast(null, `雪合戦に参加した。あなたは${SW_TEAM58[me.team]}チーム`);
+    if (me && st.phase === "play" && prev && sw58 && prev.frozen === undefined) { }
+    if (modalOpen && $("mtitle").textContent === "雪合戦の陣取り" && st.phase !== (prev ? prev.phase : null)) { /* 開いている画面はそのまま */ }
+  } else if (m.type === "welcome") sw58 = null;
+  else if (m.type === "swHit") {
+    swFrozen58 = performance.now() + (m.until || 3000); const me = swMe58();
+    toast("snowball35", `${m.by || "だれか"}の雪玉が当たった！ ひえひえ…（3秒）`);
+    if (me && map === village) { const [bx, by] = SW_BASE58[me.team], f = freeNear(village, bx, by); placeAt(player, f[0], f[1], "down"); }
+  } else if (m.type === "swCap") toast(null, `${m.name}（${SW_TEAM58[m.team]}）が旗を持ち帰った！`);
+  else if (m.type === "swEnd") {
+    addMoney(m.money || 0); world.stats.swGames58 = (world.stats.swGames58 || 0) + 1; if (m.result === 2) world.stats.swWins58 = (world.stats.swWins58 || 0) + 1; saveWorld();
+    const sc = Array.isArray(m.score) ? m.score : [0, 0];
+    setTimeout(() => toast("snowball35", `雪合戦 ${m.result === 2 ? "勝った！" : m.result === 1 ? "引き分け" : "負けちゃった…"}（赤 ${sc[0]} - ${sc[1]} 白）　${fmt(m.money || 0)}もらった`), 300);
+    if (m.result === 2) se13("win");
+  } else if (m.type === "swNg") toast(null, String(m.text || "").slice(0, 60));
+};
+ACH.push(["雪合戦チャンピオン", "雪合戦の陣取りで勝つ", () => (world.stats.swWins58 || 0) >= 1]);
+ACH_REWARD["雪合戦チャンピオン"] = ["item", "crystal36", 3];
+GUIDE54.splice(GUIDE54.length - 1, 0, ["雪合戦の陣取り（冬・オンライン）", "snowball35", `
+  <ul>
+  <li>冬のあいだ、北の丘の真ん中にある看板で参加できる。だれかが参加すると45秒の受付が始まり、赤と白に1人ずつ以上いれば試合開始</li>
+  <li>相手の陣地（赤は北の丘の左、白は右）の旗の上に立つと旗を持てる。自分の陣地に持ち帰ると1点（自分の旗が陣地にあるときだけ）</li>
+  <li>A（Space）で雪玉を投げる。試合中は雪玉を持っていなくても投げられる。当たると3秒ひえて自分の陣地にもどされ、持っていた旗は相手の陣地にもどる</li>
+  <li>先に3点か、4分たったときに多いほうの勝ち。勝つと1,000G、引き分け500G、負けても300G</li></ul>`]);
+F58.open = openSW58; F58.state = () => sw58;
+F58.ready = true;
+var F59 = {};
+// ---------- v59: 村の運動会（管理人がひらく・赤白のチーム対抗・オンライン） ----------
+const SD_TEAM59 = ["赤組", "白組"], SD_COL59 = ["#e85a5a", "#f4f4f8"], SD_GAME59 = ["かけっこ", "玉入れ", "借り物競走"];
+let sd59 = null, sdDone59 = [false, false, false], kari59 = null, sdPick59 = 0;
+const sdMe59 = () => sd59 && Array.isArray(sd59.players) ? sd59.players.find(p => p.id === onl.id) : null;
+const sdActive59 = () => !!(sd59 && sd59.phase && sd59.phase !== "idle");
+const sdLeft59 = () => sd59 ? Math.max(0, (sd59.left || 0) - (performance.now() - (sd59.at59 || performance.now()))) : 0;
+const sdSec59 = () => Math.ceil(sdLeft59() / 1000);
+const sdNeeds59 = () => { const me = sdMe59(); return !!(me && sd59.phase === "play" && sd59.round >= 0 && sd59.round < 2 && !sdDone59[sd59.round] && me.score[sd59.round] < 0); };
+// 競技の画面を開く（ほかの画面が開いていたら、上の帯から）
+function sdPlay59() {
+  if (!sdNeeds59()) return;
+  if (modalOpen) closeModal();
+  if (sd59.round === 0) kake59(); else tama59();
+}
+function sdSend59(round, value) { sdDone59[round] = round < 2 ? true : sdDone59[round]; send8({ type: "sd", act: "score", round, value }); }
+// 3・2・1のカウントダウンつきの、競技の画面の型
+function sdModal59(round, title, html, setup) {
+  const avail = sdLeft59() - 1500, runSec = Math.min(round === 0 ? 10 : 25, Math.floor((avail - 3000) / 1000));
+  if (runSec < 3) { toast(null, "もう時間がないみたい…"); return; }
+  let st = { phase: "count", t0: performance.now(), runSec, score: 0, done: false, closed: false };
+  openModal(title, "dark", body => { body.innerHTML = html; }, () => { st.closed = true; finish(); });
+  function finish() { if (st.done) return; st.done = true; if (st.phase !== "count") sdSend59(round, st.score); st.cleanup && st.cleanup(); }
+  st.finish = () => { finish(); setTimeout(() => { if (!st.closed && modalOpen && $("mtitle").textContent === title) closeModal(); }, 1600); };
+  setup(st);
+  return st;
+}
+// --- かけっこ：連打 ---
+function kake59() {
+  const W = 300, H = 110;
+  const st = sdModal59(0, "かけっこ", `<div class="sd59g"><canvas id="sd59cv" width="${W}" height="${H}"></canvas>
+    <button class="btn" type="button" id="sd59btn">はしる！（連打）</button>
+    <p class="mtext small">Space か Z を、とにかく連打！（スマホはボタンを連打）。押した回数が、そのまま組の点になるよ</p></div>`, st => {
+    const cv = $("sd59cv"), g = cv.getContext("2d"), me = sdMe59();
+    let step = 0, lastTap = 0;
+    const tap = () => { if (st.phase !== "run") return; st.score++; step++; lastTap = performance.now(); if (st.score % 10 === 0) se13("small"); };
+    const onKey = e => { if (e.key === " " || e.key === "z" || e.key === "Z" || e.key === "x" || e.key === "X") { e.preventDefault(); e.stopPropagation(); if (e.type === "keydown" && !e.repeat) tap(); } };
+    addEventListener("keydown", onKey, true); addEventListener("keyup", onKey, true);
+    const dn = e => { e.preventDefault(); tap(); };
+    $("sd59btn").addEventListener("pointerdown", dn); cv.addEventListener("pointerdown", dn);
+    st.cleanup = () => { removeEventListener("keydown", onKey, true); removeEventListener("keyup", onKey, true); };
+    const loop = now => {
+      if (st.done || !cv.isConnected) return;
+      const el = (now - st.t0) / 1000;
+      if (st.phase === "count" && el >= 3) { st.phase = "run"; st.t1 = now; se13("small"); }
+      if (st.phase === "run" && (now - st.t1) / 1000 >= st.runSec) { st.phase = "end"; st.finish(); }
+      g.fillStyle = "#6ab04c"; g.fillRect(0, 0, W, H); g.fillStyle = "#c8885a"; g.fillRect(0, 30, W, 60);
+      g.fillStyle = "rgba(255,255,255,.7)"; for (let i = 0; i < 3; i++) g.fillRect(0, 30 + i * 20 + 19, W, 1);
+      g.fillStyle = "#fff"; g.fillRect(W - 24, 30, 3, 60);
+      // 自分（連打した分だけ進む・100回でゴール）
+      const x = 12 + Math.min(1, st.score / 100) * (W - 50), bob = st.phase === "run" && now - lastTap < 200 ? (step % 2 ? -2 : 0) : 0;
+      g.fillStyle = me ? SD_COL59[me.team] : "#fff"; g.fillRect(x, 54 + bob, 12, 12); g.fillStyle = "#3a2a1a"; g.fillRect(x + 2, 66 + bob, 3, 4 - bob); g.fillRect(x + 7, 66 + bob, 3, 4 + bob);
+      g.fillStyle = "#ffe0c0"; g.fillRect(x + 2, 46 + bob, 8, 8);
+      g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillStyle = "#fff";
+      if (st.phase === "count") g.fillText(String(3 - Math.floor(el)), W / 2, 22);
+      else if (st.phase === "run") g.fillText(`${st.score}回　のこり ${Math.max(0, st.runSec - (now - st.t1) / 1000).toFixed(1)}秒`, W / 2, 22);
+      else g.fillText(`ゴール！ ${st.score}回`, W / 2, 22);
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+    F59.k = st;
+  });
+  return st;
+}
+// --- 玉入れ：タイミング ---
+function tama59() {
+  const W = 300, H = 150;
+  const st = sdModal59(1, "玉入れ", `<div class="sd59g"><canvas id="sd59cv" width="${W}" height="${H}"></canvas>
+    <button class="btn" type="button" id="sd59btn">なげる！</button>
+    <p class="mtext small">下のゲージの針が、緑のところに来たときに Space か Z（スマホはボタン）。入った玉の数 ×10 が組の点。入るたびに、針が少しずつ速くなるよ</p></div>`, st => {
+    const cv = $("sd59cv"), g = cv.getContext("2d"), me = sdMe59();
+    let needle = 0, dir = 1, speed = 70, zone = 50, zw = 14, cool = 0, balls = [], miss = 0, last = performance.now(), msg = "", msgT = 0;
+    const newZone = () => { zone = 12 + Math.random() * 76; };
+    newZone();
+    const throwIt = () => {
+      if (st.phase !== "run" || performance.now() < cool) return;
+      cool = performance.now() + 420;
+      const ok = Math.abs(needle - zone) <= zw / 2;
+      balls.push({ t: 0, ok, off: ok ? 0 : (needle < zone ? -1 : 1) * (14 + Math.random() * 16) });
+      try { SFX.swish(.5); } catch (e) { }
+      if (ok) { st.score++; speed = Math.min(170, speed + 6); zw = Math.max(9, zw - .3); newZone(); setTimeout(() => se13("small"), 380); msg = "入った！"; }
+      else { miss++; msg = "おしい…"; }
+      msgT = performance.now() + 500;
+    };
+    const onKey = e => { if (e.key === " " || e.key === "z" || e.key === "Z") { e.preventDefault(); e.stopPropagation(); if (e.type === "keydown" && !e.repeat) throwIt(); } };
+    addEventListener("keydown", onKey, true); addEventListener("keyup", onKey, true);
+    const dn = e => { e.preventDefault(); throwIt(); };
+    $("sd59btn").addEventListener("pointerdown", dn); cv.addEventListener("pointerdown", dn);
+    st.cleanup = () => { removeEventListener("keydown", onKey, true); removeEventListener("keyup", onKey, true); };
+    const loop = now => {
+      if (st.done || !cv.isConnected) return;
+      const dt = Math.min(.05, (now - last) / 1000); last = now;
+      const el = (now - st.t0) / 1000;
+      if (st.phase === "count" && el >= 3) { st.phase = "run"; st.t1 = now; se13("small"); }
+      if (st.phase === "run" && (now - st.t1) / 1000 >= st.runSec) { st.phase = "end"; st.finish(); }
+      if (st.phase === "run") { needle += dir * speed * dt; if (needle >= 100) { needle = 100; dir = -1; } if (needle <= 0) { needle = 0; dir = 1; } }
+      g.fillStyle = "#86c46a"; g.fillRect(0, 0, W, H); g.fillStyle = "#a8d8f0"; g.fillRect(0, 0, W, 50);
+      // かご
+      const bx = W / 2, by = 30;
+      g.fillStyle = "#8a6a44"; g.fillRect(bx - 1, by + 8, 3, 80);
+      g.fillStyle = me ? (me.team ? "#d8dde8" : "#e85a5a") : "#d8a860"; g.fillRect(bx - 14, by - 4, 28, 12); g.fillStyle = "rgba(0,0,0,.25)"; for (let i = 0; i < 28; i += 4) g.fillRect(bx - 14 + i, by - 4, 1, 12);
+      // 玉
+      balls = balls.filter(b => b.t < 1);
+      for (const b of balls) { b.t += dt * 2.2; const sx = bx + b.off * b.t, sy = 128 - Math.sin(Math.min(1, b.t) * Math.PI * .5) * 100 + (b.ok ? 0 : Math.max(0, b.t - .7) * 60); g.fillStyle = me ? SD_COL59[me.team] : "#fff"; g.beginPath(); g.arc(sx, sy, 3, 0, 7); g.fill(); g.strokeStyle = "rgba(0,0,0,.4)"; g.stroke(); }
+      // ゲージ
+      g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(20, 132, W - 40, 10);
+      g.fillStyle = "#7ae07a"; g.fillRect(20 + (zone - zw / 2) / 100 * (W - 40), 132, zw / 100 * (W - 40), 10);
+      g.fillStyle = "#fff"; g.fillRect(20 + needle / 100 * (W - 40) - 1, 128, 3, 18);
+      g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillStyle = "#234";
+      if (st.phase === "count") g.fillText(String(3 - Math.floor(el)), W / 2, 72);
+      else if (st.phase === "run") g.fillText(`入った ${st.score}個　のこり ${Math.max(0, st.runSec - (now - st.t1) / 1000).toFixed(1)}秒`, W / 2, 72);
+      else g.fillText(`おしまい！ ${st.score}個`, W / 2, 72);
+      if (msg && now < msgT) { g.font = "bold 12px sans-serif"; g.fillStyle = "#fff"; g.fillText(msg, W / 2, 112); }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+    F59.t = { st, get needle() { return needle; }, get zone() { return zone; }, get zw() { return zw; }, throwIt };
+  });
+  return st;
+}
+// --- 借り物競走：言われた物を村でさがして拾う ---
+const KARI59 = ["can", "hoe", "axe", "pick", "rod", "shovel", "tomato", "carrot", "cabbage", "egg", "milk", "acorn_normal"];
+function kariSpot59(band, near) {
+  for (let i = 0; i < 300; i++) {
+    const r = 3 + Math.random() * 14, a = Math.random() * Math.PI * 2;
+    const x = Math.round(near[0] + Math.cos(a) * r), y = Math.round(near[1] + Math.sin(a) * r);
+    if (x < 1 || x >= village.w - 1 || y < band[0] + 1 || y > band[1] - 1) continue;
+    if (village.solid[y][x] || blocked(village, x, y, player) || village.ground[y]?.[x] === "tilled" || world.crops[x + "," + y]) continue;
+    if (kari59.items.some(it => Math.abs(it.x - x) + Math.abs(it.y - y) < 2)) continue;
+    return [x, y];
+  }
+  return null;
+}
+function kariInit59() {
+  if (!kari59 || kari59.items.length || map !== village) return;
+  const band = player.y >= NY0 ? [NY0, VH - 1] : [0, NY0 - 1];
+  for (const id of KARI59) { if (!ITEMS[id]) continue; const s = kariSpot59(band, [player.x, player.y]); if (s) kari59.items.push({ id, x: s[0], y: s[1] }); }
+  kari59.band = band;
+}
+const kariTarget59 = () => kari59 && sd59 && Array.isArray(sd59.tasks) ? sd59.tasks[kari59.idx] : null;
+setInterval(() => {
+  const me = sdMe59();
+  if (!me || !sd59 || sd59.phase !== "play" || sd59.round !== 2) { if (kari59 && (!sd59 || sd59.round !== 2 || sd59.phase !== "play")) kari59 = null; return; }
+  if (!kari59) { kari59 = { idx: Math.max(0, me.score[2] || 0), items: [] }; toast(null, "借り物競走スタート！ 上の帯に出ている物を、村でさがして拾おう（上を歩くと拾える）"); }
+  if (map !== village) return;
+  kariInit59();
+  const tgt = kariTarget59(); if (!tgt) return;
+  const it = kari59.items.find(o => o.x === player.x && o.y === player.y); if (!it) return;
+  if (it.id === tgt) {
+    kari59.idx++; sdSend59(2, kari59.idx); se13("small");
+    toast(ASSETS[ITEMS[it.id].icon] && IMG[ITEMS[it.id].icon] ? ITEMS[it.id].icon : null, `${ITEMS[it.id].name}をみつけた！（${kari59.idx}個め）`);
+    const s = kariSpot59(kari59.band, [player.x, player.y]); if (s) { it.x = s[0]; it.y = s[1]; }
+  } else if (performance.now() - sdPick59 > 1500) { sdPick59 = performance.now(); player.say = { text: `${ITEMS[it.id].name}じゃないなぁ`, until: performance.now() + 1200 }; }
+}, 100);
+const _atl59 = F7.addToList;
+F7.addToList = (list, now) => {
+  _atl59(list, now);
+  if (map !== village || !kari59) return;
+  for (const it of kari59.items) {
+    const im = IMG[ITEMS[it.id]?.icon]; if (!im) continue;
+    list.push({ s: it.y * TS + 13, d: () => {
+      const b = Math.sin(now / 220 + it.x) * 1.2;
+      ctx.fillStyle = "rgba(255,240,150,.35)"; ctx.beginPath(); ctx.ellipse(it.x * TS + 8, it.y * TS + 13, 6, 2.5, 0, 0, 7); ctx.fill();
+      ctx.drawImage(im, 0, 0, 16, 16, it.x * TS + 2, it.y * TS + 1 + b, 12, 12);
+    } });
+  }
+};
+// 運動会の受付と結果の画面
+function openSD59() {
+  if (!F8.connected) { toast(null, "運動会は、オンラインのときに参加できるよ"); return; }
+  send8({ type: "sd", act: "look" });
+  if (sdNeeds59()) { sdPlay59(); return; }
+  openModal("村の運動会", "", body => {
+    const st = sd59 || { phase: "idle", players: [], points: [[0, 0], [0, 0], [0, 0]], total: [0, 0] }, me = sdMe59(), ph = st.phase;
+    const team = i => st.players.filter(p => p.team === i);
+    const sc = (p, r) => p.score[r] < 0 ? "-" : String(p.score[r]);
+    body.innerHTML = `<p class="mtext">管理人がひらく、赤組と白組のチーム対抗戦。<br>①かけっこ（連打）②玉入れ（タイミング）③借り物競走（村でさがし物）の順に、みんな同時にあそぶ。組の点は、その組の参加者の平均で決まるから、人数が少なくても大丈夫。</p>
+      <p class="mtext">${ph === "idle" ? "いまは運動会をしていない。管理人がひらくと、ここから参加できるよ" : ph === "recruit" ? `参加受付中（あと${sdSec59()}秒）` : ph === "result" ? `結果発表：${st.winner === 2 ? "引き分け" : SD_TEAM59[st.winner] + "の勝ち！"}` : ph === "break" ? `ひと休み。次は「${SD_GAME59[st.round + 1]}」` : `いまは「${SD_GAME59[st.round]}」（のこり${sdSec59()}秒）`}</p>
+      <table class="sd59tb"><tr><th></th>${SD_GAME59.map(n => `<th>${n}</th>`).join("")}<th>合計</th></tr>
+      ${[0, 1].map(i => `<tr class="t${i}"><th>${SD_TEAM59[i]}</th>${[0, 1, 2].map(r => `<td>${(st.points[r] || [0, 0])[i]}</td>`).join("")}<td><b>${(st.total || [0, 0])[i]}</b></td></tr>`).join("")}</table>
+      <div class="sw58t">${[0, 1].map(i => `<div class="t${i}"><b>${SD_TEAM59[i]}</b>${team(i).map(p => `<span>${esc(p.name)}${p.id === onl.id ? "（あなた）" : ""} <small>${[0, 1, 2].map(r => sc(p, r)).join("・")}</small></span>`).join("") || `<span class="note">まだいない</span>`}</div>`).join("")}</div>
+      <div class="row2">${me ? (ph === "recruit" ? `<button class="btn light" type="button" id="sdLeave">参加をやめる</button>` : "") : `<button class="btn" type="button" id="sdJoin" ${ph !== "recruit" ? "disabled" : ""}>参加する</button>`}</div>
+      <p class="note">勝った組は${fmt(1500)}、引き分け${fmt(1000)}、負けた組も${fmt(500)}もらえる。</p>`;
+    body.querySelector("#sdJoin")?.addEventListener("click", () => { send8({ type: "sd", act: "join" }); setTimeout(() => { if (modalOpen && $("mtitle").textContent === "村の運動会") { closeModal(); openSD59(); } }, 500); });
+    body.querySelector("#sdLeave")?.addEventListener("click", () => { send8({ type: "sd", act: "leave" }); closeModal(); });
+  });
+}
+// 画面の上の帯（クリックで受付・競技の画面）
+($("rep").closest(".hud")?.parentElement || document.querySelector(".stage")).insertAdjacentHTML("beforeend", `<button class="sd59hud" id="sd59hud" type="button" hidden></button>`);
+$("sd59hud").addEventListener("click", e => { e.stopPropagation(); openSD59(); });
+setInterval(() => {
+  const el = $("sd59hud"); if (!el) return;
+  el.hidden = !sdActive59(); if (el.hidden) return;
+  const me = sdMe59(), sec = sdSec59(), tot = sd59.total || [0, 0];
+  const score = `<b class="r">赤 ${tot[0]}</b> - <b class="w">${tot[1]} 白</b>`;
+  let h;
+  if (sd59.phase === "recruit") h = `村の運動会　参加受付中 あと${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}（${sd59.players.length}人）${me ? `　あなたは${SD_TEAM59[me.team]}` : `　<u>タップして参加</u>`}`;
+  else if (sd59.phase === "break") h = `運動会　${score}　つぎは「${SD_GAME59[sd59.round + 1]}」`;
+  else if (sd59.phase === "result") h = `運動会　${score}　${sd59.winner === 2 ? "引き分け" : SD_TEAM59[sd59.winner] + "の勝ち！"}`;
+  else {
+    h = `運動会「${SD_GAME59[sd59.round]}」のこり${sec}秒　${score}`;
+    if (sdNeeds59()) h += `　<u>タップして出場</u>`;
+    const tgt = me && sd59.round === 2 ? kariTarget59() : null;
+    if (tgt && ITEMS[tgt]) h += `<br><img src="${ASSETS[ITEMS[tgt].icon]}" alt="">「${esc(ITEMS[tgt].name)}」をさがそう（${kari59 ? kari59.idx : 0}個）${map !== village ? "　※村にもどってね" : ""}`;
+  }
+  if (el.innerHTML !== h) el.innerHTML = h;
+}, 250);
+// メッセージ
+const _handle59 = handle8;
+handle8 = m => {
+  _handle59(m);
+  if (!m || typeof m.type !== "string") return;
+  if (m.type === "sd" || m.type === "welcome") {
+    const st = m.type === "sd" ? m : m.sd;
+    const prev = sd59, prevMe = sdMe59();
+    sd59 = st && st.phase !== "idle" ? { ...st, at59: performance.now() } : null;
+    if (!sd59 || sd59.phase === "recruit") sdDone59 = [false, false, false];
+    if (m.type === "sd" && sd59 && sd59.phase === "recruit" && (!prev || prev.phase !== "recruit")) toast(null, "管理人が「村の運動会」をひらいた！ 画面の上の帯から参加できるよ");
+    const me = sdMe59();
+    if (me && !prevMe) toast(null, `運動会に参加した。あなたは${SD_TEAM59[me.team]}`);
+    if (me && sd59.phase === "play" && (!prev || prev.phase !== "play" || prev.round !== sd59.round)) {
+      if (sd59.round < 2) { if (!modalOpen) setTimeout(sdPlay59, 300); else toast(null, `運動会「${SD_GAME59[sd59.round]}」が始まった！ 上の帯をタップして出場しよう`); }
+    }
+    if (prev && prev.phase === "play" && prev.round === 2 && (!sd59 || sd59.round !== 2 || sd59.phase !== "play")) kari59 = null;
+  } else if (m.type === "sdEnd") {
+    addMoney(m.money || 0); world.stats.sdGames59 = (world.stats.sdGames59 || 0) + 1; if (m.result === 2) world.stats.sdWins59 = (world.stats.sdWins59 || 0) + 1; saveWorld();
+    const t = Array.isArray(m.total) ? m.total : [0, 0];
+    setTimeout(() => toast(null, `運動会 ${m.result === 2 ? SD_TEAM59[m.team] + "の勝ち！" : m.result === 1 ? "引き分け" : "負けちゃった…"}（赤 ${t[0]} - ${t[1]} 白）　${fmt(m.money || 0)}もらった`), 300);
+    if (m.result === 2) se13("win");
+  } else if (m.type === "sdNg") toast(null, String(m.text || "").slice(0, 60));
+};
+ACH.push(["運動会の主役", "村の運動会で勝つ", () => (world.stats.sdWins59 || 0) >= 1]);
+ACH_REWARD["運動会の主役"] = ["money", 2000];
+GUIDE54.splice(GUIDE54.length - 1, 0, ["村の運動会（オンライン）", ITEMS.f_trophy ? ITEMS.f_trophy.icon : null, `
+  <ul>
+  <li>管理人がひらくイベント。始まると画面の上に帯が出るので、タップすると参加できる（受付は3分）</li>
+  <li>赤組と白組に分かれて、<b>かけっこ</b>（Space・Zかボタンを10秒連打）、<b>玉入れ</b>（ゲージの針が緑に来たときに投げる・25秒）、<b>借り物競走</b>（帯に出た物を村でさがして、上を歩いて拾う・約90秒）の順にあそぶ</li>
+  <li>組の点は、その組の参加者の平均。かけっこは連打の回数、玉入れは入った数×10、借り物は見つけた数×40</li>
+  <li>勝った組は1,500G、引き分け1,000G、負けた組も500G</li></ul>`]);
+F59.open = openSD59; F59.send = m => send8(m); F59.state = () => sd59; F59.kari = () => kari59; F59.play = sdPlay59;
+F59.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -11173,6 +11720,56 @@ const KSONGS45 = {
     ["つかまえて つかまえて", "C D", "D5 .5 D5 .5 E5 1 D5 .5 D5 .5 E5 1 G5 .5 E5 .5 D5 1 B4 2"],
     ["しゅうかく びより", "D G", "A4 1 B4 1 A4 1 F#4 1 G4 4"],
   ] },
+  "どんぐりロックンロール": { bpm: 160, star: 3, ph: [
+    ["ころがれ ころがれ どんぐり", "Em C", "E5 .5 E5 .5 G5 .5 E5 .5 D5 .5 B4 .5 D5 1 E5 .5 E5 .5 G5 .5 A5 .5 G5 1 E5 1"],
+    ["さかみち いっきに", "D B", "F#5 .5 F#5 .5 A5 .5 F#5 .5 E5 .5 D5 .5 E5 1 F#5 1 D5 1 B4 2"],
+    ["ころがれ ころがれ どんぐり", "Em C", "E5 .5 E5 .5 G5 .5 E5 .5 D5 .5 B4 .5 D5 1 E5 .5 E5 .5 G5 .5 A5 .5 G5 1 E5 1"],
+    ["とまらない", "D B", "A5 .5 G5 .5 F#5 .5 E5 .5 D5 1 F#5 1 E5 4"],
+    ["ロックンロール どんぐり", "C D", "G5 .5 G5 .5 G5 .5 A5 .5 B5 1 A5 1 G5 .5 F#5 .5 E5 .5 D5 .5 E5 2"],
+    ["もりじゅう おどりだす", "Em B", "E5 .5 F#5 .5 G5 .5 A5 .5 B5 .5 A5 .5 G5 1 F#5 1 D#5 1 B4 2"],
+    ["ロックンロール どんぐり", "C D", "G5 .5 G5 .5 G5 .5 A5 .5 B5 1 A5 1 G5 .5 A5 .5 B5 .5 D6 .5 E6 2"],
+    ["どこまでも", "Am Em", "C6 1 B5 1 A5 1 F#5 1 E5 4"],
+  ] },
+  "夜明けのハイウェイ": { bpm: 150, star: 3, ph: [
+    ["まだ くらい みちを はしる", "D A", "D5 .5 E5 .5 F#5 .5 A5 .5 A5 1 F#5 1 E5 .5 F#5 .5 E5 .5 D5 .5 B4 2"],
+    ["ヘッドライト ひとつだけ", "Bm G", "B4 .5 D5 .5 F#5 .5 B5 .5 A5 1 F#5 1 G5 .5 F#5 .5 E5 .5 D5 .5 E5 2"],
+    ["ラジオから ながれる", "D A", "D5 .5 E5 .5 F#5 .5 A5 .5 D6 1 C#6 1 B5 .5 A5 .5 F#5 .5 E5 .5 F#5 2"],
+    ["なつかしい うた", "G A", "G5 1 F#5 1 E5 1 A4 1 D5 4"],
+    ["よあけまで あと すこし", "Bm G", "F#5 .5 F#5 .5 F#5 .5 E5 .5 F#5 1 A5 1 B5 .5 A5 .5 F#5 .5 E5 .5 D5 2"],
+    ["そらが しろく なる", "D A", "E5 .5 F#5 .5 G5 .5 A5 .5 B5 1 A5 1 G5 1 F#5 1 E5 2"],
+    ["よあけまで あと すこし", "Bm G", "F#5 .5 F#5 .5 F#5 .5 E5 .5 F#5 1 A5 1 D6 .5 C#6 .5 B5 .5 A5 .5 B5 2"],
+    ["はしりつづける", "G A", "A5 1 G5 1 F#5 1 E5 1 D5 4"],
+  ] },
+  "スターダスト・カジノ": { bpm: 140, star: 3, ph: [
+    ["ネオンの ほしが ふる よるは", "Am Dm", "A4 .5 C5 .5 E5 .5 A5 .5 G5 .5 E5 .5 C5 1 D5 .5 F5 .5 A5 .5 C6 .5 B5 1 A5 1"],
+    ["コインの おとが ひびく", "G C", "G5 .5 F5 .5 E5 .5 D5 .5 E5 1 G5 1 C5 .5 D5 .5 E5 .5 G5 .5 C6 2"],
+    ["いちか ばちかの かけで", "Am Dm", "A5 .5 G5 .5 A5 .5 C6 .5 B5 .5 A5 .5 G5 1 F5 .5 E5 .5 F5 .5 A5 .5 G5 2"],
+    ["こころ ふるわせて", "E Am", "G#5 1 B5 1 E6 1 D6 .5 C6 .5 B5 1 A5 3"],
+    ["スターダスト スターダスト", "F G", "C6 .5 C6 .5 C6 .5 B5 .5 A5 1 G5 1 C6 .5 C6 .5 C6 .5 D6 .5 E6 2"],
+    ["きらめく ゆめを みせて", "Am Dm", "E6 .5 D6 .5 C6 .5 B5 .5 A5 .5 G5 .5 A5 1 F5 .5 G5 .5 A5 .5 B5 .5 C6 2"],
+    ["スターダスト スターダスト", "F G", "C6 .5 C6 .5 C6 .5 B5 .5 A5 1 G5 1 E5 .5 G5 .5 B5 .5 D6 .5 E6 2"],
+    ["こよいも", "E Am", "D6 1 C6 1 B5 1 G#5 1 A5 4"],
+  ] },
+  "ひまわり畑でダンス": { bpm: 170, star: 3, ph: [
+    ["ひまわり ゆれる なつのひ", "C G", "C5 .5 E5 .5 G5 .5 E5 .5 C6 .5 G5 .5 E5 1 D5 .5 F5 .5 A5 .5 G5 .5 F5 1 E5 1"],
+    ["おひさま わらってる", "F C", "F5 .5 A5 .5 C6 .5 A5 .5 G5 1 E5 1 D5 .5 E5 .5 F5 .5 D5 .5 C5 2"],
+    ["くるくる まわって", "C G", "E5 .5 E5 .5 G5 .5 G5 .5 C6 1 C6 1 B5 .5 A5 .5 G5 .5 F5 .5 G5 2"],
+    ["ステップ ふもう", "F G", "A5 .5 G5 .5 F5 .5 E5 .5 D5 1 G5 1 C5 4"],
+    ["ダンス ダンス ひまわり", "Am F", "A5 .5 A5 .5 C6 .5 A5 .5 G5 .5 E5 .5 G5 1 F5 .5 F5 .5 A5 .5 F5 .5 E5 .5 C5 .5 E5 1"],
+    ["そらまで とどけ", "G C", "D5 .5 E5 .5 G5 .5 B5 .5 D6 1 B5 1 C6 .5 B5 .5 A5 .5 G5 .5 E5 2"],
+    ["ダンス ダンス ひまわり", "Am F", "A5 .5 A5 .5 C6 .5 A5 .5 G5 .5 E5 .5 G5 1 F5 .5 F5 .5 A5 .5 F5 .5 E5 .5 C5 .5 E5 1"],
+    ["なつは おわらない", "G C", "G5 .5 A5 .5 B5 .5 D6 .5 C6 1 B5 1 C6 4"],
+  ] },
+  "こもれび村のアンセム": { bpm: 132, star: 2, ph: [
+    ["あさひが のぼる むらに", "G D", "G4 1 B4 1 D5 1 G5 1 F#5 1 E5 .5 D5 .5 E5 2"],
+    ["きょうも かぜが ふく", "C G", "E5 1 G5 1 C5 1 E5 1 D5 3 r 1"],
+    ["はたけと うみと もりと", "G D", "G4 1 B4 1 D5 1 G5 1 A5 1 G5 .5 F#5 .5 G5 2"],
+    ["みんなの こえが する", "C D", "E5 1 C5 1 D5 1 F#5 1 G5 3 r 1"],
+    ["こもれび こもれび", "Em C", "B5 1.5 A5 .5 G5 1 E5 1 C6 1.5 B5 .5 A5 2"],
+    ["ひかりの なかで", "D G", "D5 .5 E5 .5 F#5 .5 G5 .5 A5 1 B5 1 G5 4"],
+    ["こもれび こもれび", "Em C", "B5 1.5 A5 .5 G5 1 E5 1 C6 1.5 D6 .5 E6 2"],
+    ["ずっと いっしょに", "D G", "D6 1 B5 1 A5 1 F#5 1 G5 4"],
+  ] },
   "十日目の夜": { bpm: 72, star: 1, ph: [
     ["とおかめの よるに ほしが", "F C", "C5 1 A4 1 F4 1 A4 1 Bb4 1 A4 1 G4 2"],
     ["そっと ふってきた", "Bb F", "A4 1 Bb4 1 C5 1 D5 1 C5 3 r 1"],
@@ -11188,6 +11785,7 @@ const KDIFF45 = {
   easy: { name: "かんたん", speed: 150, prize: [300, 1500] },
   normal: { name: "ふつう", speed: 190, prize: [800, 5000] },
   hard: { name: "むずかしい", speed: 250, prize: [1500, 10000] },
+  oni: { name: "げきむず", speed: 330, prize: [3000, 30000], win: [.04, .08, .12] },
 };
 const KLANE_COL45 = ["#ff8fb8", "#ffd86a", "#7fd8ff", "#9fe89a"];
 const KKEY45 = { d: 0, f: 1, j: 2, k: 3, D: 0, F: 1, J: 2, K: 3, ArrowLeft: 0, ArrowDown: 1, ArrowUp: 2, ArrowRight: 3 };
@@ -11209,6 +11807,16 @@ function chart45(parsed, diff) {
   let list = parsed.notes.map(n => ({ ...n, lane: lane(n.m) }));
   if (diff === "easy") list = list.filter(n => Math.abs(n.t - Math.round(n.t)) < 1e-6);
   if (diff === "hard") list = list.concat(list.filter(n => n.d >= 2).map(n => ({ ...n, lane: (n.lane + 2) % 4, twin: true })));
+  if (diff === "oni") {
+    // げきむず：拍の頭は同時押し、1拍以上の音のあいだに裏拍の音、長い音はトリル
+    const extra = [];
+    list.forEach((n, i) => {
+      if (Math.abs(n.t % 2) < 1e-6) extra.push({ ...n, lane: (n.lane + 2) % 4, twin: true });
+      if (n.d >= 2) { for (let k = 1; k < n.d * 2; k++) extra.push({ ...n, t: n.t + k * .5, lane: (n.lane + (k % 2 ? 1 : 3)) % 4, twin: true }); }
+      else if (n.d >= 1) extra.push({ ...n, t: n.t + n.d / 2, lane: (n.lane + 1 + (i % 2) * 2) % 4, twin: true });
+    });
+    const seen = new Set(); list = list.concat(extra).filter(n => { const k = n.t.toFixed(3) + "|" + n.lane; if (seen.has(k)) return false; seen.add(k); return true; });
+  }
   return list.sort((a, b) => a.t - b.t || a.lane - b.lane);
 }
 function kBest45() { world.stats.kBest45 = world.stats.kBest45 || {}; return world.stats.kBest45; }
@@ -11227,6 +11835,7 @@ function openKaraoke45() {
 }
 function sing45(name, diff) {
   const song = KSONGS45[name], D = KDIFF45[diff], P = parseSong45(song), notes = chart45(P, diff);
+  const WIN = D.win || [.06, .11, .16];
   const spb = 60 / song.bpm, lead = 4 * spb + .6, end = lead + P.beats * spb + 1.2;
   const A = typeof SFX !== "undefined" && SFX.audio ? SFX.audio(true) : null;
   const lat = A ? (A.ac.outputLatency || A.ac.baseLatency || 0) : 0;
@@ -11269,9 +11878,9 @@ function sing45(name, diff) {
   const cv = $("k45cv"), g = cv.getContext("2d"), W = 240, JY = 282, LW = 50, LX = i => 20 + i * LW;
   const press = lane => {
     if (st.done) return; const t = now(); st.flash[lane] = t;
-    let best = null; for (const n of notes) { if (n.j || n.lane !== lane) continue; const dt = Math.abs(t - n.time); if (dt <= .16 && (!best || dt < Math.abs(t - best.time))) best = n; if (n.time > t + .2) break; }
+    let best = null; for (const n of notes) { if (n.j || n.lane !== lane) continue; const dt = Math.abs(t - n.time); if (dt <= WIN[2] && (!best || dt < Math.abs(t - best.time))) best = n; if (n.time > t + .2) break; }
     if (!best) return;
-    const dt = Math.abs(t - best.time); best.j = dt <= .06 ? "perfect" : dt <= .11 ? "great" : "good";
+    const dt = Math.abs(t - best.time); best.j = dt <= WIN[0] ? "perfect" : dt <= WIN[1] ? "great" : "good";
     st[best.j]++; st.combo++; st.maxCombo = Math.max(st.maxCombo, st.combo); st.judge = best.j; st.judgeAt = t;
     if (!best.twin) sing(best.m, best.d);
   };
@@ -11321,7 +11930,7 @@ function sing45(name, diff) {
     if (stopped || !cv.isConnected) { stop(); return; }
     const t = now();
     if (A) { const lim = A.ac.currentTime - t0 + .3; while (evI < ev.length && ev[evI][0] < lim) { const e = ev[evI++]; play(e, t0 + e[0]); } }
-    for (const n of notes) { if (n.j) continue; if (n.time > t - .16) break; n.j = "miss"; st.miss++; st.combo = 0; st.judge = "miss"; st.judgeAt = t; }
+    for (const n of notes) { if (n.j) continue; if (n.time > t - WIN[2]) break; n.j = "miss"; st.miss++; st.combo = 0; st.judge = "miss"; st.judgeAt = t; }
     lyrics(t); draw(t);
     const sc = $("k45sc"); if (sc) sc.textContent = scoreNow() + "点";
     if (t >= end) { finish(); return; }
@@ -11525,5 +12134,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

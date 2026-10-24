@@ -35,6 +35,20 @@
   </section>
 
   <section class="card">
+    <h2>村の運動会</h2>
+    <p class="muted">赤組と白組に分かれて、かけっこ（連打）・玉入れ（タイミング）・借り物競走をします。受付を始めると村のみんなにお知らせが出て、3分後に始まります（赤と白に1人ずつそろえば「すぐ始める」もできます）。勝った組には 1,500 G、負けた組にも 500 G が渡ります。</p>
+    <p th:with="ph=${sd[0]}">
+      状態：<b th:text="${ph == 'idle' ? 'お休み' : (ph == 'recruit' ? '参加受付中' : (ph == 'result' ? '結果発表' : '競技中'))}">お休み</b>
+      <span th:if="${sd[0] != 'idle'}" th:text="|・参加 ${sd[1]}人・赤 ${sd[2]}点 / 白 ${sd[3]}点|"></span>
+    </p>
+    <div class="row">
+      <form method="post" th:action="@{/admin/events/sports/open}" th:if="${sd[0] == 'idle'}"><button class="btn" type="submit">参加受付を始める</button></form>
+      <form method="post" th:action="@{/admin/events/sports/start}" th:if="${sd[0] == 'recruit'}"><button class="btn" type="submit">すぐ始める</button></form>
+      <form method="post" th:action="@{/admin/events/sports/stop}" th:if="${sd[0] != 'idle'}"><button class="btn ghost" type="submit">中止する</button></form>
+    </div>
+  </section>
+
+  <section class="card">
     <h2>イベントを開く</h2>
     <p class="muted">開催中のイベントは1つだけです。時間が重なったら、先に始まる方から順に開きます。終了すると、順位と達成ラインに応じてごほうびが自動で渡ります（同じ人に二度は渡りません。つないでいない人には、次につないだときに届きます）。</p>
     <form class="evform" method="post" th:action="@{/admin/events}">

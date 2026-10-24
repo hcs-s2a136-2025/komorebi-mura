@@ -3912,7 +3912,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.33.0";
+const CLIENT_VERSION = "0.33.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -3948,7 +3948,7 @@ function cleanCfg(c) {
 function setStatus() {
   const el = $("onl8"); el.hidden = !F8.online;
   if (!F8.online) return;
-  el.textContent = !onl.token ? "オンライン：未参加（お便りボタンから参加）" : F8.connected ? `オンライン　${remotes.size + 1}人　${matchMedia("(pointer: coarse)").matches ? "♪でスタンプ・話で会話" : "［T］スタンプ［C］話す"}` : "オンライン：つなぎ直しています…";
+  el.textContent = !onl.token ? "オンライン：未参加（お便りボタンから参加）" : F8.connected ? `オンライン　${remotes.size + 1}人　${matchMedia("(pointer: coarse)").matches ? "動でスタンプ・話で会話" : "［T］スタンプ［C］話す"}` : "オンライン：つなぎ直しています…";
   $("ebtn8").hidden = !F8.connected;
 }
 const send8 = m => { if (ws8 && ws8.readyState === 1) ws8.send(JSON.stringify(m)); };
@@ -5950,6 +5950,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.33.1", date: "2026/10/24", title: "スマホの画面をすっきり", items: [
+    "スマホの右の丸ボタンを「動・話・A」の3つにまとめた。スタンプは「動」のエモートの輪の中に、地図は上のメニューに移したよ",
+    "雪合戦の陣地の四角は、試合中だけ出るようにした（ふだんの北の丘はすっきり）",
+  ] },
   { v: "0.33.0", date: "2026/10/24", title: "レア度とエモート", items: [
     "釣った魚と、素潜りでとった海の幸に「レア度」がついた。★2（レア）は1.5倍、★3（激レア）は3倍の値段で売れる。魚は大きいほどレア",
     "レア度がちがっても、同じ種類は持ち物の1マスにまとまるので、持ち物がいっぱいにならない。★のマークがレア入りのしるし（料理などに使うときは★1から先に使う）",
@@ -11426,7 +11430,7 @@ function drawFlag58(x, y, team, now) {
 const _atl58 = F7.addToList;
 F7.addToList = (list, now) => {
   _atl58(list, now);
-  if (map !== village || (!swActive58() && !winter58())) return;
+  if (map !== village || !swActive58()) return;
   [0, 1].forEach(i => {
     const [bx, by] = SW_BASE58[i];
     list.push({ s: (by - 1) * TS, d: () => { ctx.globalAlpha = .35; ctx.fillStyle = SW_COL58[i]; ctx.fillRect((bx - 1) * TS, (by - 1) * TS, 3 * TS, 3 * TS); ctx.globalAlpha = 1; ctx.strokeStyle = i ? "#c8ccd8" : "#c84a4a"; ctx.lineWidth = 1; ctx.strokeRect((bx - 1) * TS + .5, (by - 1) * TS + .5, 3 * TS - 1, 3 * TS - 1); } });
@@ -11960,6 +11964,14 @@ GUIDE54.splice(GUIDE54.length - 1, 0, ["エモート", null, `
   <li>手をつなぐと、申しこんだ人が先頭になって、相手はうしろをついて歩く。うしろの人が自分で動くか、輪の「手をはなす」で、手をはなす。別の場所に入ると自然にはなれる</li></ul>`]);
 F60.emote = doEmote60; F60.ask = askPair60; F60.hand = () => hand60; F60.pairs = handPairs60; F60.toggle = toggleEmo60; F60.askState = () => ask60;
 F60.ready = true;
+var F61 = {};
+// ---------- v61: スマホの右の丸ボタンを「動・話・A」の3つにまとめる（スタンプはエモートの輪の中へ、地図は上のメニューへ） ----------
+["mapPad13", "guidePad54"].forEach(id => { const el = $(id); if (el) el.remove(); });
+$("emo60w").querySelector(".emo60p").insertAdjacentHTML("beforebegin", `<div class="emo60s" id="emo60s">${STAMPS.map(s => `<button type="button" class="btn light" data-st61="${esc(s)}">${esc(s)}</button>`).join("")}</div>`);
+$("emo60s").addEventListener("click", e => { const b = e.target.closest("[data-st61]"); if (!b) return; e.stopPropagation(); stamp(b.dataset.st61); toggleEmo60(false); });
+const _toggleEmo61 = toggleEmo60;
+toggleEmo60 = function (v) { _toggleEmo61(v); const st = $("emo60s"); if (st) st.hidden = !F8.connected; };
+F61.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12419,5 +12431,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

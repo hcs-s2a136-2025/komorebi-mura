@@ -412,3 +412,9 @@ b.rare2 { color: #3a78d8; } b.rare3 { color: #d88a00; }
 .pair60ask { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 8px; background: rgba(255, 246, 228, .96); color: var(--ink, #3b2a21); padding: 8px 12px; border-radius: 14px; border: 2px solid #e8a0b8; box-shadow: 0 3px 10px rgba(0, 0, 0, .3); font-size: .86rem; max-width: calc(100% - 24px); }
 .pair60ask .btn { padding: 4px 12px; font-size: .82rem; }
 @media (max-width: 520px) { .emo60r { width: 260px; height: 260px; } .emo60b { width: 64px; height: 36px; margin: -18px 0 0 -32px; font-size: .74rem; transform: rotate(var(--a)) translateY(-96px) rotate(calc(-1 * var(--a))); } }
+/* v61: スマホの右の丸ボタンは「動・話・A」だけ。スタンプはエモートの輪の中、地図は上のメニュー */
+#ebtn8 { display: none !important; }
+.emo60s { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 340px; }
+.emo60s .btn { font-size: .82rem; padding: 4px 10px; }
+@media (max-width: 560px) { #mapBtn13 { display: inline-block; } }
+@media (orientation: landscape) and (max-height: 540px) { header #mapBtn13 { display: inline-block !important; } }

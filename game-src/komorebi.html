@@ -807,6 +807,14 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .g54body li { margin: 3px 0; }
 .g54body .gtip { background: rgba(255, 216, 106, .25); border-radius: 8px; padding: 6px 10px; }
 .g54body a { color: #8a5a32; font-weight: bold; }
+
+/* v55 素潜り */
+.dv55 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#dv55cv { width: min(100%, 560px); aspect-ratio: 320 / 200; image-rendering: pixelated; border-radius: 8px; border: 2px solid #2a4a6a; touch-action: none; cursor: pointer; }
+.dv55bar { display: flex; align-items: center; gap: 8px; width: min(100%, 560px); }
+.dv55bar i { flex: 1; height: 12px; background: rgba(255, 255, 255, .15); border-radius: 6px; overflow: hidden; }
+.dv55bar b { display: block; height: 100%; width: 100%; background: #7fd8ff; transition: width .1s; }
+.dv55bar .btn { padding: 4px 14px; min-height: 0; }
 </style>
 
 <header>
@@ -933,7 +941,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.30.5";
+  const VER = "0.31.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5333,7 +5341,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.30.5";
+const CLIENT_VERSION = "0.31.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7361,6 +7369,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.31.0", date: "2026/10/24", title: "みなと町で素潜り", items: [
+    "みなと町に「海女 ナギ」が来た。ウェットスーツを買うと、海に潜って海の幸をとるミニゲームが遊べる（1回HP15）",
+    "矢印キーで泳いで、Space か Z でつかむ（スマホは長押しで泳いで「つかむ」）。息がなくなる前に水面にもどれば成功、息切れすると半分落とす",
+    "とれるもの：ワカメ・ホタテ・サザエ・ウニ・ナマコ・イイダコ・アワビ・伊勢えび・真珠、夏はサンゴのかけら、冬はズワイガニ。めったに出ない虹色の真珠・宝箱・ヌシ級のオオダコ",
+    "クラゲにさわると息がへる。真珠貝は開いているときだけ取れる。伊勢えびやカニはすばやく逃げる",
+    "海の幸図鑑・新しい料理（わかめスープ・ホタテのバター焼き・海鮮焼き）・実績3つを追加。てびきにも「素潜り」の章を足した",
+  ] },
   { v: "0.30.5", date: "2026/10/24", title: "こもれび村のてびき", items: [
     "遊び方とルールをまとめた「こもれび村のてびき」を追加。上の「てびき」ボタンか、キーボードの H で開ける",
     "はじめに・道具の使い方（シャベルの役割など）・畑・道や柵の作り方・釣り・牧場とペット・クラフト・家づくり・村と職業・お金と借金・カジノ・街・着せ替え・洞窟・オンラインの15章",
@@ -10092,6 +10107,29 @@ for (const f of SEA_FISH50) {
 addSpr17("dirtpath50", (s, r, e) => { e(8, 9, 6.5, 4.6, C17("#b8946a")); e(8, 9, 5, 3.4, C17("#c8a47a")); for (const [x, y] of [[5, 8], [9, 10], [11, 7], [7, 11]]) s(x, y, C17("#9a7650")); r(4, 3, 3, 2, C17("#6aa85a")); r(10, 2, 2, 2, C17("#6aa85a")); });
 ITEMS.dirtpath50 = { name: "土の道", icon: "dirtpath50", price: 2, dirt50: true };
 RECIPES.push({ out: "dirtpath50", n: 4, need: { stone: 1 } });
+// =================== v55 データ：素潜りでとれる海の幸と、その料理（あずかり物の整理より前に置く） ===================
+// [id, 名前, 値段, 出やすさ, 動き方, 季節]。動き方：static 動かない／slow ゆっくり／move うろうろ／fast すばやい／clam 開いたときだけ取れる
+const DIVE55 = [
+  ["sea_wakame55", "ワカメ", 30, 26, "static", null, (s, r) => { for (const [x, h] of [[5, 11], [8, 13], [11, 10]]) for (let y = 15 - h; y < 15; y++) s(x + (y % 3 === 0 ? 1 : 0), y, C17(y % 2 ? "#3a8a4a" : "#4aa05a")); }],
+  ["sea_hotate55", "ホタテ", 90, 20, "static", null, (s, r, e) => { e(8, 9, 6, 4.6, C17("#e8b8a0")); for (let x = 3; x <= 13; x += 2) r(x, 6, 1, 6, C17("#c88a70")); r(6, 12, 4, 3, C17("#d8a088")); } ],
+  ["sea_sazae55", "サザエ", 100, 18, "static", null, (s, r, e) => { e(8, 9, 5, 5, C17("#7a6a5a")); e(8, 9, 3.4, 3.4, C17("#9a8a70")); for (const [x, y] of [[3, 6], [13, 6], [3, 12], [13, 12], [8, 3]]) r(x, y, 1, 2, C17("#5a4a3a")); s(8, 9, C17("#e8d8b0")); } ],
+  ["sea_uni55", "ウニ", 120, 16, "static", null, (s, r, e) => { e(8, 9, 4.6, 4.2, C17("#3a2a4a")); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; s(Math.round(8 + Math.cos(a) * 6.5), Math.round(9 + Math.sin(a) * 6), C17("#5a3a6a")); } s(8, 9, C17("#f0a040")); } ],
+  ["sea_namako55", "ナマコ", 150, 12, "slow", null, (s, r, e) => { e(8, 10, 6.4, 2.6, C17("#5a4a3a")); for (let x = 3; x <= 13; x += 2) s(x, 8, C17("#7a6a52")); s(2, 10, C17("#3a2a1a")); } ],
+  ["sea_iidako55", "イイダコ", 160, 10, "move", null, (s, r, e) => { e(8, 6, 4, 3.8, C17("#c86a7a")); for (const x of [4, 6, 8, 10, 12]) r(x, 9, 1, 5, C17("#b85a6a")); s(6, 6, C17("#ffffff")); s(10, 6, C17("#ffffff")); s(6, 7, C17("#1a1a2a")); s(10, 7, C17("#1a1a2a")); } ],
+  ["sea_awabi55", "アワビ", 300, 7, "static", null, (s, r, e) => { e(8, 9, 6, 4, C17("#6a7a6a")); e(8, 9, 4.6, 2.8, C17("#8aa0b0")); e(8, 9, 2.4, 1.4, C17("#c8d8e8")); for (const x of [4, 6, 8, 10, 12]) s(x, 6, C17("#3a4a3a")); } ],
+  ["sea_ebi55", "伊勢えび", 400, 5, "fast", null, (s, r, e) => { e(8, 9, 5.6, 2.2, C17("#c83a2a")); for (let x = 4; x <= 11; x += 2) r(x, 8, 1, 3, C17("#e85a3a")); r(13, 8, 3, 3, C17("#a82a1a")); r(1, 5, 4, 1, C17("#c83a2a")); r(1, 12, 4, 1, C17("#c83a2a")); s(4, 8, C17("#1a1a2a")); } ],
+  ["sea_pearl55", "真珠", 500, 6, "clam", null, (s, r, e) => { e(8, 9, 3.4, 3.4, C17("#f4f0f8")); e(7, 8, 1.6, 1.6, C17("#ffffff")); s(10, 11, C17("#d8d0e8")); } ],
+  ["sea_coral55", "サンゴのかけら", 200, 10, "static", ["夏"], (s, r) => { r(7, 6, 2, 9, C17("#f06a7a")); r(4, 4, 2, 6, C17("#f06a7a")); r(11, 3, 2, 7, C17("#f06a7a")); r(5, 9, 3, 2, C17("#f06a7a")); r(9, 8, 3, 2, C17("#f06a7a")); s(4, 4, C17("#ffa0b0")); s(11, 3, C17("#ffa0b0")); } ],
+  ["sea_kani55", "ズワイガニ", 350, 10, "fast", ["冬"], (s, r, e) => { e(8, 9, 4.6, 3, C17("#e0702a")); for (const [x, y] of [[2, 8], [2, 11], [13, 8], [13, 11]]) r(x, y, 2, 1, C17("#c05a1a")); e(3, 5, 1.6, 1.4, C17("#e0702a")); e(13, 5, 1.6, 1.4, C17("#e0702a")); s(7, 7, C17("#1a1a2a")); s(9, 7, C17("#1a1a2a")); } ],
+  ["sea_rainbow55", "虹色の真珠", 5000, .6, "clam", null, (s, r, e) => { const RB = ["#f05a5a", "#f0a040", "#f0e050", "#70d070", "#50b0f0", "#a070e0"]; for (let y = 5; y <= 13; y++) for (let x = 4; x <= 12; x++) { const dx = x + .5 - 8.5, dy = y + .5 - 9; if (dx * dx + dy * dy <= 16) s(x, y, C17(RB[(x + y) % 6])); } s(7, 7, C17("#ffffff")); } ],
+  ["sea_odako55", "オオダコ", 2000, 0, "boss", null, (s, r, e) => { e(8, 6, 6, 5, C17("#a03a4a")); for (const x of [2, 4, 6, 8, 10, 12, 14]) r(x, 10, 1, 5, C17("#8a2a3a")); e(5, 6, 1.6, 1.6, C17("#ffffff")); e(11, 6, 1.6, 1.6, C17("#ffffff")); s(5, 7, C17("#1a1a2a")); s(11, 7, C17("#1a1a2a")); } ],
+];
+for (const [id, name, price, , , , spr] of DIVE55) { addSpr17(id, spr); ITEMS[id] = { name, icon: id, price, sea55: true, food: 8 }; }
+for (const [id, name, need, food, price, fn] of [
+  ["dish_wakame55", "わかめスープ", { sea_wakame55: 2 }, 25, 120, (s, r, e) => { bowl17(s, r, e, "#d8c890"); for (const [x, y] of [[6, 8], [9, 9], [10, 8]]) s(x, y, C17("#3a7a3a")); }],
+  ["dish_hotate55", "ホタテのバター焼き", { sea_hotate55: 2 }, 45, 360, (s, r, e) => { plate17(s, r, e); e(6, 9, 2.6, 2, C17("#f0d8b0")); e(10, 9, 2.6, 2, C17("#f0d8b0")); r(8, 7, 2, 2, C17("#f8e870")); }],
+  ["dish_seafood55", "海鮮焼き", { sea_sazae55: 1, sea_awabi55: 1 }, 60, 900, (s, r, e) => { plate17(s, r, e); e(6, 9, 2.6, 2.2, C17("#8a7a6a")); e(10, 9, 2.6, 2, C17("#8aa0b0")); s(8, 7, C17("#3a8a3a")); }],
+]) { addSpr17("i55_" + id, fn); ITEMS[id] = { name, icon: "i55_" + id, price, food }; RECIPES.push({ out: id, n: 1, need, cook: true }); }
 var F37 = {};
 function sanitize37() {
   const w = world; if (!w || typeof w !== "object") return;
@@ -12367,6 +12405,190 @@ if ($("rpad8")) $("mapPad13").insertAdjacentHTML("afterend", `<button class="ebt
 $("guidePad54")?.addEventListener("click", () => { if (!modalOpen) openGuide54(world.stats.guide54 || 0); });
 addEventListener("keydown", e => { if ((e.key === "h" || e.key === "H") && !e.repeat && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA" && !document.body.classList.contains("menu")) { if (!modalOpen) openGuide54(world.stats.guide54 || 0); else if ($("mtitle").textContent === "こもれび村のてびき") closeModal(); } });
 F54.ready = true;
+var F55 = {};
+// ---------- v55: みなと町の素潜り（ミニゲーム） ----------
+const DIVE_HP55 = 15, WETSUIT_P55 = 3000;
+const diveDex55 = () => (world.diveDex55 = world.diveDex55 || {});
+const _makePort55 = makePort;
+makePort = function () {
+  const m = _makePort55();
+  const e = entity(17, 9, { skin: "小麦色", hair: "ポニーテール", hairc: "黒", top: "Tシャツ", topc: "水色", bottom: "パンツ", bottomc: "青" }, "海女 ナギ", "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
+  m.interact["17,9"] = () => openDive55();
+  m.labels.push({ x: 17 * TS + 8, y: 8 * TS - 6, text: "素潜り" });
+  return m;
+};
+function openDive55() {
+  const has = !!world.wetsuit55, dex = diveDex55(), got = DIVE55.filter(d => dex[d[0]]).length;
+  openModal("海女 ナギの素潜り", "shop", body => {
+    body.innerHTML = staffSay13(charIcon13({ skin: "小麦色", hair: "ポニーテール", hairc: "黒", top: "Tシャツ", topc: "水色" }), has ? "息が続くうちに、海の底の宝物をとっておいで。苦しくなる前に、水面にもどるんだよ" : "潜ってみたいのかい？ まずはウェットスーツがいるね")
+      + `<p class="mtext">海に潜って、海の幸をつかまえるミニゲーム。<br>・矢印キー（WASD）で泳ぐ。スマホは、行きたい方を長押し<br>・つかむ：Space か Z（スマホは「つかむ」）<br>・息がなくなる前に、いちばん上の水面にもどれば成功。息切れすると、とった物を半分落としてしまう<br>・クラゲにさわると息がへる。真珠貝は、開いているときだけ取れる</p>
+      <p class="mtext">1回潜ると HP を ${DIVE_HP55} 使う（いま ${Math.round(world.hp)}）。海の幸図鑑 ${got} / ${DIVE55.length}</p>
+      <div class="row2">${has ? `<button class="btn" type="button" id="dvGo" ${world.hp < DIVE_HP55 ? "disabled" : ""}>潜る</button>` : `<button class="btn" type="button" id="dvBuy" ${world.money < WETSUIT_P55 ? "disabled" : ""}>ウェットスーツを買う（${fmt(WETSUIT_P55)}）</button>`}<button class="btn light" type="button" id="dvDex">海の幸図鑑</button></div>
+      ${world.hp < DIVE_HP55 && has ? `<p class="mtext small">HPが足りないよ。ごはんを食べるか、少し休んでから</p>` : ""}`;
+    body.querySelector("#dvBuy")?.addEventListener("click", () => { if (world.money < WETSUIT_P55) return; addMoney(-WETSUIT_P55); world.wetsuit55 = true; saveWorld(); toast(null, "ウェットスーツを手に入れた！"); closeModal(); openDive55(); });
+    body.querySelector("#dvGo")?.addEventListener("click", () => { if (world.hp < DIVE_HP55) return; world.hp -= DIVE_HP55; updateHp(); closeModal(); dive55(); });
+    body.querySelector("#dvDex").onclick = () => { closeModal(); openDiveDex55(); };
+  });
+}
+function openDiveDex55() {
+  const dex = diveDex55();
+  openModal("海の幸図鑑", "", body => {
+    body.innerHTML = `<div class="dex">${DIVE55.map(([id, name, price, , kind, ss]) => `<div class="${dex[id] ? "" : "no"}"><img src="${ASSETS[id]}" alt="">${dex[id] ? `${name}<br>×${dex[id]}` : "？？？"}<br><small>${kind === "boss" ? "ヌシ級・めったに出ない" : id === "sea_rainbow55" ? "真珠貝の中に、ごくまれに" : kind === "clam" ? "開いた真珠貝の中" : ss ? ss.join("・") + "だけ" : kind === "fast" ? "すばやく逃げる" : kind === "move" ? "うろうろ動く" : "海の底"}</small></div>`).join("")}</div>
+      <div class="row2"><button class="btn light" type="button" id="dxBack">もどる</button></div>`;
+    body.querySelector("#dxBack").onclick = () => { closeModal(); openDive55(); };
+  });
+}
+function dive55() {
+  const W = 320, H = 200, SURF = 22, BED = 168;
+  const pool = DIVE55.filter(d => d[3] > 0 && (!d[5] || d[5].includes(season())));
+  const pick = () => { const tot = pool.reduce((a, d) => a + d[3], 0); let r = Math.random() * tot; for (const d of pool) if ((r -= d[3]) < 0) return d; return pool[0]; };
+  const items = [];
+  for (let i = 0; i < 9; i++) {
+    let d = pick(); if (d[4] === "clam") d = Math.random() < .03 ? DIVE55.find(x => x[0] === "sea_rainbow55") : DIVE55.find(x => x[0] === "sea_pearl55");
+    const kind = d[4], x = 20 + Math.random() * (W - 40), y = kind === "move" ? 110 + Math.random() * 50 : BED + 6 + Math.random() * 18;
+    items.push({ d, kind, x, y, vx: kind === "fast" ? (Math.random() < .5 ? -1 : 1) * 46 : kind === "move" ? 22 : kind === "slow" ? 6 : 0, ph: Math.random() * 6, open: false });
+  }
+  if (Math.random() < .08) items.push({ d: DIVE55.find(x => x[0] === "sea_odako55"), kind: "boss", x: 40 + Math.random() * (W - 80), y: BED + 4, vx: 14, ph: 0, hp: 3, cool: 0 });
+  if (Math.random() < .12) items.push({ d: null, kind: "chest", x: 30 + Math.random() * (W - 60), y: BED + 10, vx: 0, ph: 0 });
+  const jellies = Array.from({ length: 2 + (Math.random() < .5 ? 1 : 0) }, () => ({ x: 40 + Math.random() * (W - 80), y: 50 + Math.random() * 80, ph: Math.random() * 6, hit: 0 }));
+  const dv = { x: W / 2, y: SURF - 6, vx: 0, vy: 0, dir: "down" }, keys = new Set(), haul = [], bubbles = [];
+  let breath = 100, dove = false, msg = "", msgT = 0, ended = false, money = 0, t0 = performance.now(), last = t0, target = null;
+  const say = m => { msg = m; msgT = 1.6; };
+  openModal("素潜り", "dark", body => {
+    body.innerHTML = `<div class="dv55"><canvas id="dv55cv" width="${W}" height="${H}"></canvas>
+      <div class="dv55bar"><span>息</span><i><b id="dv55br"></b></i><span id="dv55h">0こ</span><button class="btn" type="button" id="dv55grab">つかむ</button></div>
+      <p class="mtext small">矢印キーで泳ぐ・Space か Z でつかむ。息がなくなる前に、水面（いちばん上）にもどろう</p></div>`;
+  }, () => stop());
+  const cv = $("dv55cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const KM = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d", A: "l", D: "r", W: "u", S: "d" };
+  const onKey = e => { if (e.target && e.target.tagName === "INPUT") return; const k = KM[e.key]; if (k) { e.preventDefault(); e.stopPropagation(); if (e.type === "keydown") keys.add(k); else keys.delete(k); return; } if (e.type === "keydown" && (e.key === " " || e.key === "z" || e.key === "Z")) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) grab(); } };
+  addEventListener("keydown", onKey, true); addEventListener("keyup", onKey, true);
+  const toCv = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); target = toCv(e); cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove", e => { if (target) target = toCv(e); });
+  const up = () => { target = null; }; cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+  $("dv55grab").addEventListener("click", () => grab());
+  let stopped = false;
+  function stop() { if (stopped) return; stopped = true; removeEventListener("keydown", onKey, true); removeEventListener("keyup", onKey, true); }
+  function grab() {
+    if (ended || dv.y < SURF) return;
+    let best = null, bd = 18;
+    for (const it of items) { if (it.gone) continue; const d = Math.hypot(it.x - dv.x, it.y - dv.y); if (d < bd) { bd = d; best = it; } }
+    if (!best) { say("なにもない…"); return; }
+    if (best.kind === "clam" && !best.open) { breath = Math.max(0, breath - 12); say("パクッ！ 貝にはさまれた（息-12）"); se13("small"); return; }
+    if (best.kind === "boss") {
+      if (best.cool > 0) return; best.hp--; best.cool = .8; best.x = Math.max(20, Math.min(W - 20, best.x + (Math.random() < .5 ? -1 : 1) * 50));
+      if (best.hp > 0) { say(`オオダコがあばれた！ あと${best.hp}回`); try { SFX.splash ? SFX.splash() : SFX.dig(); } catch (e) { } return; }
+    }
+    best.gone = true;
+    if (best.kind === "chest") { money += 500 + Math.floor(Math.random() * 26) * 100; say(`宝箱だ！ 中に ${fmt(money)} 入っていた`); se13("win"); return; }
+    haul.push(best.d[0]); say(`${best.d[1]}をとった！`); try { SFX.harvest(); } catch (e) { }
+    if (best.d[0] === "sea_rainbow55" || best.kind === "boss") se13("jackpot");
+  }
+  function finish(lost) {
+    if (ended) return; ended = true; stop();
+    let lostList = [];
+    if (lost) { const n = Math.floor(haul.length / 2); for (let i = 0; i < n; i++) lostList.push(haul.splice(Math.floor(Math.random() * haul.length), 1)[0]); }
+    const dex = diveDex55(), cnt = {};
+    for (const id of haul) { cnt[id] = (cnt[id] || 0) + 1; dex[id] = (dex[id] || 0) + 1; }
+    let full = false; for (const [id, n] of Object.entries(cnt)) if (!addItem(id, n, true)) full = true;
+    if (money) addMoney(money);
+    world.stats.dives55 = (world.stats.dives55 || 0) + 1; if (haul.length) addXp("fish", haul.length * 2);
+    if (cnt.sea_rainbow55 || cnt.sea_odako55) K.news41 && K.news41.add && K.news41.add("dive", `素潜りで${cnt.sea_rainbow55 ? "虹色の真珠" : "オオダコ"}をとった`, 85);
+    saveWorld();
+    const val = haul.reduce((a, id) => a + ITEMS[id].price, 0);
+    closeModal();
+    openModal("素潜りの成果", "shop", body => {
+      body.innerHTML = `<p class="mtext">${lost ? "息が続かなくて、あわてて浮上した…。とった物を半分落としてしまった" : "ぷはっ！ 無事に水面にもどった"}</p>
+        ${haul.length ? `<div class="list">${Object.entries(cnt).map(([id, n]) => itemLi(id, `${n}こ・1こ ${fmt(ITEMS[id].price)}`, "")).join("")}</div><p class="mtext">ぜんぶで ${fmt(val)} ぶん${money ? `・宝箱から ${fmt(money)}` : ""}${full ? "（持ち物がいっぱいで、入りきらなかった物がある）" : ""}</p>` : `<p class="mtext">今回は、なにもとれなかった${money ? `（宝箱から ${fmt(money)}）` : ""}</p>`}
+        ${lostList.length ? `<p class="mtext small">落とした物：${lostList.map(id => esc(ITEMS[id].name)).join("・")}</p>` : ""}
+        <div class="row2"><button class="btn" type="button" id="dvAgain" ${world.hp < DIVE_HP55 ? "disabled" : ""}>もう一度潜る（HP-${DIVE_HP55}）</button><button class="btn light" type="button" id="dvEnd">陸にあがる</button></div>`;
+      body.querySelector("#dvAgain").onclick = () => { if (world.hp < DIVE_HP55) return; world.hp -= DIVE_HP55; updateHp(); closeModal(); dive55(); };
+      body.querySelector("#dvEnd").onclick = () => closeModal();
+    });
+  }
+  function step(dt, now) {
+    // 泳ぐ
+    let ax = (keys.has("r") ? 1 : 0) - (keys.has("l") ? 1 : 0), ay = (keys.has("d") ? 1 : 0) - (keys.has("u") ? 1 : 0);
+    if (target) { const dx = target[0] - dv.x, dy = target[1] - dv.y, d = Math.hypot(dx, dy); if (d > 4) { ax = dx / d; ay = dy / d; } }
+    dv.vx += ax * 260 * dt; dv.vy += ay * 260 * dt; dv.vx *= Math.pow(.04, dt); dv.vy *= Math.pow(.04, dt);
+    const sp = Math.hypot(dv.vx, dv.vy); if (sp > 80) { dv.vx *= 80 / sp; dv.vy *= 80 / sp; }
+    dv.x = Math.max(8, Math.min(W - 8, dv.x + dv.vx * dt)); dv.y = Math.max(SURF - 8, Math.min(BED + 22, dv.y + dv.vy * dt));
+    if (Math.abs(dv.vx) > 6) dv.dir = dv.vx > 0 ? "right" : "left";
+    const under = dv.y > SURF;
+    if (under) { dove = true; breath -= (dv.y > 120 ? 7.5 : 6) * dt; if (Math.random() < dt * 3) bubbles.push({ x: dv.x, y: dv.y - 6, t: 0 }); }
+    else if (dove) { finish(false); return; }
+    if (breath <= 0) { breath = 0; finish(true); return; }
+    // 生きもの
+    for (const it of items) {
+      if (it.gone) continue; it.ph += dt;
+      if (it.kind === "clam") it.open = Math.sin(it.ph * 2.2) > .2;
+      if (it.kind === "fast" || it.kind === "slow") { it.x += it.vx * dt; if (it.x < 12 || it.x > W - 12) it.vx *= -1; if (it.kind === "fast" && Math.hypot(it.x - dv.x, it.y - dv.y) < 30) it.vx = (it.x > dv.x ? 1 : -1) * 70; else if (it.kind === "fast" && Math.random() < dt * .5) it.vx = (Math.random() < .5 ? -1 : 1) * 46; }
+      if (it.kind === "move") { it.x += Math.cos(it.ph * .9) * it.vx * dt; it.y += Math.sin(it.ph * 1.3) * 10 * dt; it.x = Math.max(12, Math.min(W - 12, it.x)); }
+      if (it.kind === "boss") { it.cool = Math.max(0, it.cool - dt); it.x += Math.sin(it.ph * .7) * it.vx * dt; it.x = Math.max(16, Math.min(W - 16, it.x)); }
+    }
+    for (const j of jellies) {
+      j.ph += dt; j.x += Math.cos(j.ph * .6) * 12 * dt; j.y = Math.max(40, Math.min(150, j.y + Math.sin(j.ph * 1.1) * 14 * dt)); j.hit = Math.max(0, j.hit - dt);
+      if (!j.hit && Math.hypot(j.x - dv.x, j.y - dv.y) < 12) { j.hit = 1.2; breath = Math.max(0, breath - 15); say("クラゲにさされた！（息-15）"); dv.vx = (dv.x - j.x) * 4; dv.vy = (dv.y - j.y) * 4; }
+    }
+    for (const b of bubbles) { b.t += dt; b.y -= 26 * dt; b.x += Math.sin(b.t * 6) * .3; }
+    for (let i = bubbles.length - 1; i >= 0; i--) if (bubbles[i].y < SURF || bubbles[i].t > 3) bubbles.splice(i, 1);
+    msgT = Math.max(0, msgT - dt);
+  }
+  function draw(now) {
+    const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#9ad8f0"); sky.addColorStop(.12, "#5ab8e0"); sky.addColorStop(.6, "#2a6aa8"); sky.addColorStop(1, "#163a6a");
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    g.fillStyle = "rgba(255,255,255,.55)"; for (let x = 0; x < W; x += 8) g.fillRect(x, SURF - 2 + Math.round(Math.sin(now / 300 + x / 20) * 1.5), 5, 1);
+    for (let i = 0; i < 5; i++) { g.fillStyle = "rgba(255,255,255,.06)"; const x = ((now / 40 + i * 70) % (W + 60)) - 30; g.beginPath(); g.moveTo(x, SURF); g.lineTo(x + 18, SURF); g.lineTo(x + 50, H); g.lineTo(x + 26, H); g.fill(); }
+    g.fillStyle = "#c8b080"; g.fillRect(0, BED + 18, W, H - BED - 18); g.fillStyle = "#b09a68"; for (let x = 0; x < W; x += 6) g.fillRect(x, BED + 18 + ((x * 7) % 5), 3, 1);
+    for (const [x, h] of [[18, 40], [64, 30], [150, 46], [232, 34], [298, 42]]) { g.fillStyle = "#2a7a4a"; for (let y = 0; y < h; y += 2) g.fillRect(x + Math.round(Math.sin(now / 500 + y / 6 + x) * 2), BED + 18 - y, 2, 2); }
+    for (const it of items) {
+      if (it.gone) continue; const x = Math.round(it.x - 8), y = Math.round(it.y - 8);
+      if (it.kind === "clam") { g.fillStyle = "#9a8aa8"; g.fillRect(x, y + 6, 16, 6); if (it.open) { g.fillStyle = "#c8b8d8"; g.fillRect(x, y, 16, 4); g.drawImage(IMG[it.d[0]], x + 4, y + 2, 8, 8); } else { g.fillStyle = "#b8a8c8"; g.fillRect(x, y + 4, 16, 3); } continue; }
+      if (it.kind === "chest") { g.fillStyle = "#7a4a2a"; g.fillRect(x, y + 4, 16, 10); g.fillStyle = "#e8c050"; g.fillRect(x, y + 7, 16, 1); g.fillRect(x + 7, y + 6, 2, 3); continue; }
+      const im = IMG[it.d[0]]; if (it.kind === "boss") g.drawImage(im, x - 8, y - 16, 32, 32); else { const fl = it.vx < 0; if (fl) { g.save(); g.translate(x + 16, 0); g.scale(-1, 1); g.drawImage(im, 0, y); g.restore(); } else g.drawImage(im, x, y); }
+    }
+    for (const j of jellies) { g.globalAlpha = j.hit ? .5 : .85; g.fillStyle = "#f0c8f0"; g.beginPath(); g.arc(j.x, j.y, 6, Math.PI, 0); g.fill(); g.fillStyle = "#e0a8e8"; for (let k = -4; k <= 4; k += 2) g.fillRect(j.x + k, j.y, 1, 5 + Math.round(Math.sin(now / 200 + k) * 2)); g.globalAlpha = 1; }
+    for (const b of bubbles) { g.strokeStyle = "rgba(255,255,255,.7)"; g.beginPath(); g.arc(b.x, b.y, 1.5, 0, 7); g.stroke(); }
+    const ch = renderChar(cfg, dv.y < SURF ? "down" : dv.dir === "left" ? "left" : dv.dir === "right" ? "right" : "down", Math.floor(now / 180) % 4 === 1 ? 1 : 0);
+    g.drawImage(ch, Math.round(dv.x - 8), Math.round(dv.y - 10)); g.fillStyle = "#5ad8f0"; g.fillRect(Math.round(dv.x - 4), Math.round(dv.y - 6), 8, 2);
+    if (msgT > 0 && msg) { g.font = "10px sans-serif"; g.textAlign = "center"; g.fillStyle = "rgba(0,0,0,.45)"; const w = g.measureText(msg).width + 10; g.fillRect(W / 2 - w / 2, 28, w, 14); g.fillStyle = "#fff"; g.fillText(msg, W / 2, 38); }
+    if (!dove) { g.font = "10px sans-serif"; g.textAlign = "center"; g.fillStyle = "#fff"; g.fillText("↓ で潜ろう", W / 2, 54); }
+    const br = $("dv55br"); if (br) { br.style.width = Math.max(0, breath) + "%"; br.style.background = breath < 30 ? "#ff6b6b" : breath < 60 ? "#ffd86a" : "#7fd8ff"; }
+    const hh = $("dv55h"); if (hh) hh.textContent = `${haul.length}こ`;
+  }
+  const loop = now => {
+    if (ended || stopped || !cv.isConnected) { stop(); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    step(dt, now); if (ended) return; draw(now);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F55.d = { dv, items, get breath() { return breath; }, set breath(v) { breath = v; }, grab, haul, jellies };
+}
+F55.open = openDive55; F55.dive = dive55;
+// 桟橋から、釣り竿を持たずに海に向かってⒶでも、素潜りの画面を開く
+const _act55 = act;
+act = function () {
+  if (port && map === port && !modalOpen && !placing && !fish && !busy && !player.moving) {
+    const [tx, ty] = front(), sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+    if (port.ground[ty]?.[tx] === "sea" && !(it && it.use === "rod") && port.ground[player.y]?.[player.x] === "pier") { openDive55(); return; }
+  }
+  return _act55.apply(this, arguments);
+};
+ACH.push(["海女さんデビュー", "みなと町で素潜りをする", () => (world.stats.dives55 || 0) >= 1], ["真珠とり", "素潜りで虹色の真珠をとる", () => !!(world.diveDex55 || {}).sea_rainbow55], ["大ダコ退治", "素潜りでオオダコをとる", () => !!(world.diveDex55 || {}).sea_odako55]);
+ACH_REWARD["海女さんデビュー"] = ["money", 500]; ACH_REWARD["真珠とり"] = ["money", 5000]; ACH_REWARD["大ダコ退治"] = ["money", 5000];
+// てびきにも書いておく
+GUIDE54.splice(5, 0, ["素潜り（みなと町）", "sea_hotate55", `
+  <ul>
+  <li>みなと町の桟橋の入口にいる「海女 ナギ」に話しかける。最初にウェットスーツ（${fmt(WETSUIT_P55)}）を買う</li>
+  <li>1回潜るとHPを${DIVE_HP55}使う。桟橋から、釣り竿を持たずに海に向かってⒶでも始められる</li>
+  <li>矢印キー（WASD）で泳ぐ。スマホは行きたい方を長押し。つかむのは Space か Z（スマホは「つかむ」）</li>
+  <li>息がなくなる前に、いちばん上の水面にもどれば成功。息切れすると、とった物を半分落とす。深いところほど息が早くへる</li>
+  <li>クラゲにさわると息がへる。真珠貝は開いているときだけ取れる（閉じているとはさまれる）。伊勢えびやカニはすばやく逃げる</li>
+  <li>めったに出ないもの：虹色の真珠、宝箱、ヌシ級の「オオダコ」（3回つかむ）</li>
+  <li>とった物は「海の幸図鑑」に残る。売ったり、料理（わかめスープ・ホタテのバター焼き・海鮮焼き）にしたりできる</li></ul>`]);
+F55.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12764,7 +12986,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

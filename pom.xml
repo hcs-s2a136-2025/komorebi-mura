@@ -12,7 +12,7 @@
 
   <groupId>jp.komorebi</groupId>
   <artifactId>komorebi-server</artifactId>
-  <version>0.30.5</version>
+  <version>0.31.0</version>
   <name>komorebi-server</name>
   <description>こもれび村 オンライン試作サーバー</description>
 

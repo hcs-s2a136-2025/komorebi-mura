@@ -345,3 +345,11 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .g54body li { margin: 3px 0; }
 .g54body .gtip { background: rgba(255, 216, 106, .25); border-radius: 8px; padding: 6px 10px; }
 .g54body a { color: #8a5a32; font-weight: bold; }
+
+/* v55 素潜り */
+.dv55 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#dv55cv { width: min(100%, 560px); aspect-ratio: 320 / 200; image-rendering: pixelated; border-radius: 8px; border: 2px solid #2a4a6a; touch-action: none; cursor: pointer; }
+.dv55bar { display: flex; align-items: center; gap: 8px; width: min(100%, 560px); }
+.dv55bar i { flex: 1; height: 12px; background: rgba(255, 255, 255, .15); border-radius: 6px; overflow: hidden; }
+.dv55bar b { display: block; height: 100%; width: 100%; background: #7fd8ff; transition: width .1s; }
+.dv55bar .btn { padding: 4px 14px; min-height: 0; }

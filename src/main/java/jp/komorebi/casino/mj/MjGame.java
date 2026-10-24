@@ -156,6 +156,136 @@ public final class MjGame {
         return m;
     }
 
+    // =====================================================================
+    //  サーバーを再起動しても、対局を続けられるように（卓のようすを保存・復元）
+    //  中身は Map / List / 数 / 文字 / 真偽 だけ（JSONにそのまま変えられる形）
+    // =====================================================================
+
+    public synchronized Map<String, Object> snapshot(long now) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("v", 1);
+        m.put("at", now);
+        m.put("nextId", nextId);
+        List<Object> ts = new ArrayList<>();
+        for (Table t : tables.values()) ts.add(saveTable(t));
+        m.put("tables", ts);
+        return m;
+    }
+
+    /** 保存しておいた卓を戻す。時間切れまでの残り時間は、止まっていたあいだの分だけ先へずらす。戻せた卓の数を返す */
+    public synchronized int restore(Map<?, ?> m, long now) {
+        if (m == null) return 0;
+        long at = num(m.get("at")), shift = at > 0 ? Math.max(0, now - at) : 0;
+        int n = 0;
+        for (Object o : list(m.get("tables"))) {
+            try {
+                Table t = loadTable(map(o), shift);
+                if (t == null || tables.containsKey(t.id)) continue;
+                tables.put(t.id, t);
+                for (Seat s : t.seats) if (s != null && !s.cpu) where.put(s.id, t.id);
+                nextId = Math.max(nextId, t.id + 1);
+                n++;
+            } catch (RuntimeException e) {
+                // こわれた卓は戻さない
+            }
+        }
+        nextId = Math.max(nextId, (int) num(m.get("nextId")));
+        return n;
+    }
+
+    private Map<String, Object> saveTable(Table t) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", t.id); m.put("owner", t.owner); m.put("south", t.south); m.put("rate", t.rate);
+        m.put("phase", t.phase); m.put("deadline", t.deadline); m.put("msg", t.msg);
+        List<Object> seats = new ArrayList<>(); for (Seat s : t.seats) seats.add(saveSeat(s)); m.put("seats", seats);
+        m.put("kyoku", t.kyoku); m.put("honba", t.honba); m.put("sticks", t.sticks);
+        m.put("live", new ArrayList<>(t.live)); m.put("dead", ints(t.dead));
+        m.put("drawPos", t.drawPos); m.put("liveEnd", t.liveEnd); m.put("kans", t.kans); m.put("turn", t.turn); m.put("sub", t.sub);
+        m.put("afterCall", t.afterCall); m.put("rinshan", t.rinshan); m.put("noCalls", t.noCalls); m.put("chankanClaim", t.chankanClaim);
+        m.put("lastTile", t.lastTile); m.put("lastFrom", t.lastFrom); m.put("discards", t.discards);
+        m.put("firstWinds", new ArrayList<>(t.firstWinds)); m.put("kanBy", new ArrayList<>(t.kanBy));
+        m.put("kakanSeat", t.kakanSeat); m.put("lastRenchan", t.lastRenchan);
+        if (t.result != null) m.put("result", t.result);
+        Map<String, Object> cl = new LinkedHashMap<>();
+        for (Map.Entry<Integer, Claim> e : t.claims.entrySet()) {
+            Claim c = e.getValue(); Map<String, Object> cm = new LinkedHashMap<>();
+            cm.put("ron", c.ron); cm.put("pon", c.pon); cm.put("minkan", c.minkan); cm.put("answer", c.answer); cm.put("chiIdx", c.chiIdx);
+            List<Object> chi = new ArrayList<>(); for (int[] a : c.chi) chi.add(ints(a)); cm.put("chi", chi);
+            cl.put(String.valueOf(e.getKey()), cm);
+        }
+        m.put("claims", cl);
+        return m;
+    }
+
+    private Table loadTable(Map<?, ?> m, long shift) {
+        if (m == null) return null;
+        Table t = new Table((int) num(m.get("id")), num(m.get("owner")), bool(m.get("south")), (int) num(m.get("rate")));
+        t.phase = str(m.get("phase"), "wait"); t.deadline = num(m.get("deadline")); if (t.deadline > 0) t.deadline += shift; t.msg = str(m.get("msg"), "");
+        List<?> seats = list(m.get("seats"));
+        for (int i = 0; i < 4 && i < seats.size(); i++) t.seats[i] = loadSeat(map(seats.get(i)), shift);
+        t.kyoku = (int) num(m.get("kyoku")); t.honba = (int) num(m.get("honba")); t.sticks = (int) num(m.get("sticks"));
+        t.live.addAll(intList(m.get("live")));
+        int[] dead = intArr(m.get("dead")); System.arraycopy(dead, 0, t.dead, 0, Math.min(14, dead.length));
+        t.drawPos = (int) num(m.get("drawPos")); t.liveEnd = (int) num(m.get("liveEnd")); t.kans = (int) num(m.get("kans")); t.turn = (int) num(m.get("turn")); t.sub = str(m.get("sub"), "turn");
+        t.afterCall = bool(m.get("afterCall")); t.rinshan = bool(m.get("rinshan")); t.noCalls = bool(m.get("noCalls")); t.chankanClaim = bool(m.get("chankanClaim"));
+        t.lastTile = (int) num(m.get("lastTile"), -1); t.lastFrom = (int) num(m.get("lastFrom"), -1); t.discards = (int) num(m.get("discards"));
+        t.firstWinds.addAll(intList(m.get("firstWinds"))); t.kanBy.addAll(intList(m.get("kanBy")));
+        t.kakanSeat = (int) num(m.get("kakanSeat"), -1); t.lastRenchan = bool(m.get("lastRenchan"));
+        if (m.get("result") instanceof Map<?, ?> r) { Map<String, Object> res = new LinkedHashMap<>(); r.forEach((k, v) -> res.put(String.valueOf(k), v)); t.result = res; }
+        for (Map.Entry<?, ?> e : map(m.get("claims")).entrySet()) {
+            Map<?, ?> cm = map(e.getValue()); Claim c = new Claim();
+            c.ron = bool(cm.get("ron")); c.pon = bool(cm.get("pon")); c.minkan = bool(cm.get("minkan")); c.answer = cm.get("answer") == null ? null : String.valueOf(cm.get("answer")); c.chiIdx = (int) num(cm.get("chiIdx"));
+            for (Object a : list(cm.get("chi"))) c.chi.add(intArr(a));
+            t.claims.put(Integer.parseInt(String.valueOf(e.getKey())), c);
+        }
+        for (Seat s : t.seats) if (s == null && !"wait".equals(t.phase)) return null;
+        return t;
+    }
+
+    private static Map<String, Object> saveSeat(Seat s) {
+        if (s == null) return null;
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", s.id); m.put("name", s.name); m.put("cpu", s.cpu); m.put("auto", s.auto); m.put("assist", s.assist); m.put("hint", s.hint);
+        m.put("timeouts", s.timeouts); m.put("score", s.score);
+        m.put("hand", new ArrayList<>(s.hand));
+        List<Object> melds = new ArrayList<>();
+        for (Meld md : s.melds) { Map<String, Object> mm = new LinkedHashMap<>(); mm.put("type", md.type); mm.put("tiles", ints(md.tiles)); mm.put("from", md.from); mm.put("called", md.called); melds.add(mm); }
+        m.put("melds", melds);
+        List<Object> river = new ArrayList<>(); for (River r : s.river) river.add(List.of(r.tile, r.riichi, r.taken)); m.put("river", river);
+        m.put("discKinds", new ArrayList<>(s.discKinds)); m.put("banned", new ArrayList<>(s.banned));
+        m.put("riichi", s.riichi); m.put("doubleRiichi", s.doubleRiichi); m.put("ippatsu", s.ippatsu); m.put("pendingRiichi", s.pendingRiichi); m.put("pendingDouble", s.pendingDouble);
+        m.put("furitenTemp", s.furitenTemp); m.put("furitenRiichi", s.furitenRiichi); m.put("discarded", s.discarded); m.put("ready", s.ready); m.put("back", s.back);
+        m.put("offSince", s.offSince); m.put("drawn", s.drawn); m.put("actAt", s.actAt);
+        return m;
+    }
+
+    private static Seat loadSeat(Map<?, ?> m, long shift) {
+        if (m == null || m.isEmpty()) return null;
+        Seat s = new Seat();
+        s.id = num(m.get("id")); s.name = str(m.get("name"), "？"); s.cpu = bool(m.get("cpu")); s.auto = bool(m.get("auto")); s.assist = bool(m.get("assist")); s.hint = bool(m.get("hint"));
+        s.timeouts = (int) num(m.get("timeouts")); s.score = (int) num(m.get("score"), 25000);
+        s.hand.addAll(intList(m.get("hand")));
+        for (Object o : list(m.get("melds"))) { Map<?, ?> mm = map(o); s.melds.add(new Meld(str(mm.get("type"), "pon"), intArr(mm.get("tiles")), (int) num(mm.get("from"), -1), (int) num(mm.get("called"), -1))); }
+        for (Object o : list(m.get("river"))) { List<?> r = list(o); if (r.isEmpty()) continue; River rv = new River((int) num(r.get(0))); rv.riichi = r.size() > 1 && bool(r.get(1)); rv.taken = r.size() > 2 && bool(r.get(2)); s.river.add(rv); }
+        s.discKinds.addAll(intList(m.get("discKinds"))); s.banned.addAll(intList(m.get("banned")));
+        s.riichi = bool(m.get("riichi")); s.doubleRiichi = bool(m.get("doubleRiichi")); s.ippatsu = bool(m.get("ippatsu")); s.pendingRiichi = bool(m.get("pendingRiichi")); s.pendingDouble = bool(m.get("pendingDouble"));
+        s.furitenTemp = bool(m.get("furitenTemp")); s.furitenRiichi = bool(m.get("furitenRiichi")); s.discarded = bool(m.get("discarded")); s.ready = bool(m.get("ready")); s.back = bool(m.get("back"));
+        s.offSince = num(m.get("offSince")); if (s.offSince > 0) s.offSince += shift;
+        s.drawn = (int) num(m.get("drawn"), -1);
+        s.actAt = num(m.get("actAt")); if (s.actAt > 0) s.actAt += shift;
+        return s;
+    }
+
+    private static long num(Object o) { return num(o, 0); }
+    private static long num(Object o, long def) { return o instanceof Number n ? n.longValue() : def; }
+    private static boolean bool(Object o) { return o instanceof Boolean b ? b : o instanceof Number n && n.intValue() != 0; }
+    private static String str(Object o, String def) { return o == null ? def : String.valueOf(o); }
+    private static List<?> list(Object o) { return o instanceof List<?> l ? l : List.of(); }
+    private static Map<?, ?> map(Object o) { return o instanceof Map<?, ?> m ? m : Map.of(); }
+    private static List<Integer> ints(int[] a) { List<Integer> l = new ArrayList<>(); for (int v : a) l.add(v); return l; }
+    private static List<Integer> intList(Object o) { List<Integer> l = new ArrayList<>(); for (Object v : list(o)) if (v instanceof Number n) l.add(n.intValue()); return l; }
+    private static int[] intArr(Object o) { List<Integer> l = intList(o); int[] a = new int[l.size()]; for (int i = 0; i < a.length; i++) a[i] = l.get(i); return a; }
+
     private void sendLobby(long pid) { out.toPlayer(pid, lobby()); }
     private void lobbyChanged() { out.toAll(lobby()); }
 

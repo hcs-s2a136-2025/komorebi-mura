@@ -919,7 +919,7 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.30.3";
+  const VER = "0.30.4";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5319,7 +5319,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.30.3";
+const CLIENT_VERSION = "0.30.4";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7347,6 +7347,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.30.4", date: "2026/10/24", title: "前回いた場所から始まる・麻雀が更新で終わらない", items: [
+    "ページを読み込み直したとき（新しい版になったときなど）、前回いた場所から始まるようになった。村や北の丘はその場所、お店やカジノの中にいたらその中から。家の中・街・洞窟にいたときは、入る前の村の場所から",
+    "みんなの麻雀：サーバーが更新・再起動しても、卓が消えずに続きから打てるようになった（点数・手牌・河・順番もそのまま）",
+    "つなぎ直したときに、麻雀の画面を開いていれば自分の卓のようすを自動でもらい直す",
+  ] },
   { v: "0.30.3", date: "2026/10/24", title: "ピアノの音が鳴らないことがあったのを直した", items: [
     "設定で効果音をオフにしていると、ピアノとカラオケの音まで鳴らなかったのを直した。楽器の音は、効果音とは別に鳴る",
     "ピアノの画面に音量のつまみを追加",
@@ -12159,6 +12164,40 @@ updateCollector = function (dt) {
   }
 };
 F52.ready = true;
+var F53 = {};
+// ---------- v53: 前回いた場所から始める・麻雀の卓に戻る ----------
+// いまいる場所を覚えておく（村・北の丘はその場所、お店とカジノは中のその場所。家の中・街・洞窟は、入る前の村の場所）
+function posNow53() {
+  if (map === village) return { m: "village", x: player.moving ? player.fx : player.x, y: player.moving ? player.fy : player.y, dir: player.dir };
+  if (map && map.isInterior && ["casino", "shop", "bank", "yami"].includes(map.kind)) return { m: "int:" + map.kind, x: player.x, y: player.y, dir: player.dir };
+  return null;
+}
+setInterval(() => { const p = posNow53(); if (p) world.lastPos53 = p; }, 400);
+addEventListener("pagehide", () => { const p = posNow53(); if (p) world.lastPos53 = p; try { saveWorld(); } catch (e) { } });
+function restorePos53() {
+  const p = world.lastPos53; if (!p || typeof p !== "object") return false;
+  const ok = (m, x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < m.w && y < m.h && !m.solid[y][x];
+  if (p.m === "village") {
+    let [x, y] = [p.x, p.y]; if (!ok(village, x, y)) { const f = freeNear(village, Math.max(1, Math.min(village.w - 2, x | 0)), Math.max(1, Math.min(village.h - 2, y | 0))); [x, y] = f; }
+    if (!ok(village, x, y)) return false;
+    map = village; placeAt(player, x, y, p.dir || "down"); return true;
+  }
+  if (typeof p.m === "string" && p.m.startsWith("int:")) {
+    const b = BUILDINGS.find(b => b.kind === p.m.slice(4)); if (!b) return false;
+    interior = makeInterior(b.kind); interior.back = [b.col, b.row + 1]; map = interior; rebuildSolid();
+    if (ok(interior, p.x, p.y)) placeAt(player, p.x, p.y, p.dir || "up"); else placeAt(player, interior.exit[0], interior.exit[1] - 1, "up");
+    return true;
+  }
+  return false;
+}
+F53.restorePos = restorePos53;
+// つなぎ直したとき（サーバーの再起動のあとなど）、麻雀の画面を開いていたら、自分の卓のようすをもう一度もらう
+const _handle53 = handle8;
+handle8 = m => {
+  _handle53(m);
+  if (m && m.type === "welcome" && K.net && K.net.onMj) setTimeout(() => send8({ type: "mj", act: "list" }), 400);
+};
+F53.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12547,7 +12586,7 @@ if (hotData?.pos && !world.labor) {
   if (p.map && p.map.startsWith("int:")) { const b = BUILDINGS.find(b => b.kind === p.map.slice(4)); interior = makeInterior(b.kind); interior.back = [b.col, b.row + 1]; rebuildSolid(); map = interior; }
   else if (p.map === "room") { roomKey = p.roomKey || "home"; lastBack = p.lastBack || [7, 7]; room = makeRoomMap(roomKey); rebuildSolid(); map = room; } else if (!map.isInterior) map = village;
   placeAt(player, p.x, p.y, p.dir);
-}
+} else if (!world.labor) { try { restorePos53(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "restorePos"); } }
 syncUI(); syncBuild(); renderHotbar(); updateHud(true);
 let started13 = false;
 const boot13 = () => { if (started13) return; started13 = true; resize(); drawHousePreview(); paintDecoSwatches(); requestAnimationFrame(frame); requestAnimationFrame(animPreview); };
@@ -12556,7 +12595,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

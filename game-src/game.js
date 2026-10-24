@@ -877,16 +877,18 @@ const hotbarEl = $("hotbar");
 function renderHotbar() {
   hotbarEl.innerHTML = "";
   world.inv.forEach((it, i) => {
-    const b = document.createElement("button"); b.type = "button"; b.className = "slot" + (it ? "" : " empty"); b.id = "slot-" + i;
+    fixR(it);
+    const b = document.createElement("button"); b.type = "button"; b.className = "slot" + (it ? "" : " empty") + (it && it.r ? (it.r[1] ? " rare3" : " rare2") : ""); b.id = "slot-" + i;
     b.setAttribute("aria-pressed", String(world.sel === i));
     b.setAttribute("aria-label", it ? `${ITEMS[it.id].name}${it.n > 1 ? " ×" + it.n : ""}` : "空き");
     const keyLabel = i < 9 ? String(i + 1) : i === 9 ? "0" : "";
-    b.innerHTML = (keyLabel ? `<span class="k">${keyLabel}</span>` : "") + (it ? `<img src="${ASSETS[ITEMS[it.id].icon]}" alt=""><span class="n">${it.n > 1 ? it.n : ""}</span>` : "");
+    b.innerHTML = (keyLabel ? `<span class="k">${keyLabel}</span>` : "") + (it ? `<img src="${ASSETS[ITEMS[it.id].icon]}" alt=""><span class="n">${it.n > 1 ? it.n : ""}</span>${it.r ? `<span class="rs">★</span>` : ""}` : "");
+    if (it && it.r) b.title = `${ITEMS[it.id].name}　★1 ×${rareOf(it)[0]}・★2 ×${it.r[0]}・★3 ×${it.r[1]}`;
     b.addEventListener("click", () => { world.sel = i; renderHotbar(); saveWorld(); });
     hotbarEl.appendChild(b);
   });
   const sel = world.inv[world.sel];
-  const nm = document.createElement("span"); nm.className = "selname"; nm.textContent = sel ? ITEMS[sel.id].name : "手ぶら";
+  const nm = document.createElement("span"); nm.className = "selname"; nm.textContent = sel ? ITEMS[sel.id].name + (sel.r ? `（${sel.r[1] ? "★3×" + sel.r[1] : ""}${sel.r[0] && sel.r[1] ? "・" : ""}${sel.r[0] ? "★2×" + sel.r[0] : ""}）` : "") : "手ぶら";
   hotbarEl.appendChild(nm);
   if (!$("pane-craft").hidden) renderCraft();
   if (!$("pane-build").hidden) syncBuild();
@@ -901,10 +903,40 @@ function addItem(id, n = 1, quiet) {
 function removeItem(id, n = 1) {
   for (let i = 0; i < world.inv.length && n > 0; i++) {
     const it = world.inv[i]; if (!it || it.id !== id) continue;
-    const take = Math.min(n, it.n); it.n -= take; n -= take; if (it.n <= 0) world.inv[i] = null;
+    const take = Math.min(n, it.n); it.n -= take; n -= take; if (it.n <= 0) world.inv[i] = null; else fixR(it);
   }
   renderHotbar(); saveWorld();
 }
+// ---- レア度（★1〜★3）：同じ種類は1マスのまま、マスの中に「★2の数・★3の数」を r:[n2, n3] で持つ。使うときは★1から先に減る ----
+const RARE_MUL = [1, 1.5, 3], RARE_STAR = ["", "★★", "★★★"], RARE_NAME = ["ふつう", "レア", "激レア"];
+let lastFishTier = 1;
+function rareOf(it) { if (!it) return [0, 0, 0]; const r = it.r || [0, 0]; return [Math.max(0, it.n - r[0] - r[1]), r[0], r[1]]; }
+function fixR(it) {
+  if (!it || !it.r) return;
+  if (!Array.isArray(it.r) || it.r.length !== 2) { delete it.r; return; }
+  it.r = it.r.map(v => Math.max(0, Math.floor(+v || 0)));
+  let ex = it.r[0] + it.r[1] - it.n; if (ex > 0) { const a = Math.min(ex, it.r[0]); it.r[0] -= a; ex -= a; it.r[1] = Math.max(0, it.r[1] - ex); }
+  if (!it.r[0] && !it.r[1]) delete it.r;
+}
+const countT = (id, t) => world.inv.reduce((a, it) => a + (it && it.id === id ? rareOf(it)[t - 1] : 0), 0);
+/** さっき addItem した物のうち n 個を、レア度 t（2か3）にする */
+function addRare(id, t, n = 1) {
+  if (t < 2) return; const s = world.inv.find(it => it && it.id === id); if (!s) return;
+  s.r = s.r || [0, 0]; const free = rareOf(s)[0], k = Math.min(n, free); s.r[t - 2] += k; fixR(s);
+  if (world.stats) { const key = t === 3 ? "rare3" : "rare2"; world.stats[key] = (world.stats[key] || 0) + k; }
+}
+/** レア度 t の物を n 個へらす（売るとき用） */
+function removeTier(id, t, n = 1) {
+  for (let i = 0; i < world.inv.length && n > 0; i++) {
+    const it = world.inv[i]; if (!it || it.id !== id) continue;
+    const take = Math.min(n, rareOf(it)[t - 1]); if (!take) continue;
+    it.n -= take; if (t > 1) it.r[t - 2] -= take; n -= take;
+    if (it.n <= 0) world.inv[i] = null; else fixR(it);
+  }
+  renderHotbar(); saveWorld();
+}
+/** ★2・★3 になる確率から、ひとつ決める */
+const rollTier = (p2 = .12, p3 = .03) => { const r = Math.random(); return r < p3 ? 3 : r < p3 + p2 ? 2 : 1; };
 function addMoney(n) { world.money = Math.max(0, Math.round(world.money + n)); updateHud(true); saveWorld(); }
 
 // =================== time & days ===================
@@ -1109,7 +1141,7 @@ function updateFish(dt) {
     const got = fish.got; fish = null;
     if (addItem("fish_" + got)) {
       const first = !world.dex[got]; world.dex[got] = (world.dex[got] || 0) + 1; world.stats.fish++; F6.fishCaught(got); saveWorld();
-      toast("fish_" + got, (got === "ヌシ" ? "ヌシを釣り上げた！！" : got + "が釣れた！") + (typeof lastFishSize50 === "number" && lastFishSize50 ? `（${lastFishSize50}cm${lastFishRec50 ? "・自己ベスト！" : ""}）` : "") + (first ? "（図鑑に登録）" : ""));
+      toast("fish_" + got, (got === "ヌシ" ? "ヌシを釣り上げた！！" : got + "が釣れた！") + (typeof lastFishSize50 === "number" && lastFishSize50 ? `（${lastFishSize50}cm${lastFishRec50 ? "・自己ベスト！" : ""}）` : "") + (lastFishTier > 1 ? `　${RARE_STAR[lastFishTier - 1]} ${RARE_NAME[lastFishTier - 1]}！` : "") + (first ? "（図鑑に登録）" : ""));
     }
   } else if (fish.phase === "miss" && fish.t > .35) fish = null;
 }
@@ -1174,8 +1206,8 @@ function openShop(tab) {
         `<button class="btn" type="button" data-buy="${id}" ${world.money < ITEMS[id].price ? "disabled" : ""}>買う</button>`)).join("")}</div>`;
     } else if (tab === "sell") {
       const ids = [...new Set(world.inv.filter(Boolean).map(it => it.id))];
-      html += ids.length ? `<p class="mtext">道具はリサイクル品として半額で買い取り、店頭で再販売されます。</p><div class="list">${ids.map(id => itemLi(id, `1個 ${fmt(sellPrice(id))}・${count(id)}個`,
-        `<button class="btn light" type="button" data-sell="${id}" data-n="1">1個</button>${count(id) > 1 ? `<button class="btn" type="button" data-sell="${id}" data-n="all">全部</button>` : ""}`)).join("")}</div>` : `<p class="mtext">売れる物を持っていないよ。</p>`;
+      html += ids.length ? `<p class="mtext">道具はリサイクル品として半額で買い取り、店頭で再販売されます。★2（レア）は1.5倍、★3（激レア）は3倍で売れるよ。</p><div class="list">${ids.flatMap(id => [1, 2, 3].filter(t => countT(id, t) > 0).map(t => { const c = countT(id, t); return itemLi(id, `${t > 1 ? `<b class="rare${t}">${RARE_STAR[t - 1]} ${RARE_NAME[t - 1]}</b>・` : ""}1個 ${fmt(Math.round(sellPrice(id) * RARE_MUL[t - 1]))}・${c}個`,
+        `<button class="btn light" type="button" data-sell="${id}" data-t="${t}" data-n="1">1個</button>${c > 1 ? `<button class="btn" type="button" data-sell="${id}" data-t="${t}" data-n="all">全部</button>` : ""}`); })).join("")}</div>` : `<p class="mtext">売れる物を持っていないよ。</p>`;
     } else {
       html += world.recycle.length ? `<p class="mtext">ほかの人が手放した道具。新品より安いよ。</p><div class="list">${world.recycle.map((r, i) => itemLi(r.id, `${fmt(r.price)}（新品 ${fmt(ITEMS[r.id].price)}）`,
         `<button class="btn" type="button" data-rbuy="${i}" ${world.money < r.price ? "disabled" : ""}>買う</button>`)).join("")}</div>` : `<p class="mtext">いまはリサイクル品がないよ。道具を売るとここに並びます。</p>`;
@@ -1187,11 +1219,11 @@ function openShop(tab) {
       if (addItem(id, 1)) { addMoney(-ITEMS[id].price); closeModal(); openShop(ITEMS[id].furn ? "furn" : "buy"); }
     });
     body.querySelectorAll("[data-sell]").forEach(b => b.onclick = () => {
-      const id = b.dataset.sell, n = b.dataset.n === "all" ? count(id) : 1;
-      removeItem(id, n); addMoney(sellPrice(id) * n);
+      const id = b.dataset.sell, t = +b.dataset.t || 1, n = Math.min(countT(id, t), b.dataset.n === "all" ? countT(id, t) : 1), unit = Math.round(sellPrice(id) * RARE_MUL[t - 1]); if (n <= 0) return;
+      removeTier(id, t, n); addMoney(unit * n);
       if (ITEMS[id].tool) for (let i = 0; i < n; i++) world.recycle.push({ id, price: Math.floor(ITEMS[id].price * .7) });
       if (world.inv[world.sel] == null) world.sel = Math.max(0, world.inv.findIndex(Boolean));
-      saveWorld(); toast("coin", `${ITEMS[id].name}×${n}を売った（+${fmt(sellPrice(id) * n)}）`); closeModal(); openShop("sell");
+      saveWorld(); toast("coin", `${ITEMS[id].name}${t > 1 ? RARE_STAR[t - 1] : ""}×${n}を売った（+${fmt(unit * n)}）`); closeModal(); openShop("sell");
     });
     body.querySelectorAll("[data-rbuy]").forEach(b => b.onclick = () => {
       const r = world.recycle[+b.dataset.rbuy]; if (!r || world.money < r.price) return;
@@ -2260,8 +2292,8 @@ function makePort() {
 function openFishMarket() {
   openModal("魚市場", "shop", body => {
     const fishes = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id].fish);
-    body.innerHTML = `<p class="mtext">「いい魚は高く買うよ！」魚はよろず屋より3割増しで売れます。</p><div class="list">${fishes.length ? fishes.map(id => itemLi(id, `1匹 ${fmt(Math.round(ITEMS[id].price * 1.3))}・${count(id)}匹`, `<button class="btn light" type="button" data-fs="${id}" data-n="1">1匹</button><button class="btn" type="button" data-fs="${id}" data-n="all">全部</button>`)).join("") : `<p class="mtext">魚を持っていないよ。海で釣ってみよう。</p>`}</div>`;
-    body.querySelectorAll("[data-fs]").forEach(b => b.onclick = () => { const id = b.dataset.fs, n = b.dataset.n === "all" ? count(id) : 1; const v = Math.round(ITEMS[id].price * 1.3) * n; removeItem(id, n); addMoney(v); toast("coin", `+${fmt(v)}`); closeModal(); openFishMarket(); });
+    body.innerHTML = `<p class="mtext">「いい魚は高く買うよ！」魚はよろず屋より3割増しで売れます。</p><p class="mtext small">大きい魚ほどレア。★2（レア）は1.5倍、★3（激レア）は3倍で買い取るよ。</p><div class="list">${fishes.length ? fishes.flatMap(id => [1, 2, 3].filter(t => countT(id, t) > 0).map(t => itemLi(id, `${t > 1 ? `<b class="rare${t}">${RARE_STAR[t - 1]} ${RARE_NAME[t - 1]}</b>・` : ""}1匹 ${fmt(Math.round(ITEMS[id].price * 1.3 * RARE_MUL[t - 1]))}・${countT(id, t)}匹`, `<button class="btn light" type="button" data-fs="${id}" data-t="${t}" data-n="1">1匹</button><button class="btn" type="button" data-fs="${id}" data-t="${t}" data-n="all">全部</button>`))).join("") : `<p class="mtext">魚を持っていないよ。海で釣ってみよう。</p>`}</div>`;
+    body.querySelectorAll("[data-fs]").forEach(b => b.onclick = () => { const id = b.dataset.fs, t = +b.dataset.t || 1, n = b.dataset.n === "all" ? countT(id, t) : Math.min(1, countT(id, t)); if (n <= 0) return; const v = Math.round(ITEMS[id].price * 1.3 * RARE_MUL[t - 1]) * n; removeTier(id, t, n); addMoney(v); toast("coin", `+${fmt(v)}`); closeModal(); openFishMarket(); });
   });
 }
 function openPeddler() {
@@ -3880,7 +3912,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.32.0";
+const CLIENT_VERSION = "0.33.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5805,7 +5837,7 @@ function openBox17(which, local) {
       body.innerHTML = `<p class="mtext">${desc}</p>
         <p class="mtext small dndhint21">${matchMedia("(pointer: coarse)").matches ? "長押ししてから指を動かすと、箱と持ち物の間で動かせるよ" : "ドラッグでも、箱と持ち物の間で動かせるよ"}</p>
         <h3 class="lbl">箱の中（${list.reduce((a, s) => a + s.n, 0)}個）</h3>
-        <div class="list dropbox21" data-drop="box">${list.length ? list.map(s => ITEMS[s.id] ? itemLi(s.id, `${s.n}個`, `<button class="btn light" type="button" data-bo="${esc(s.id)}" data-n="1">1個</button><button class="btn" type="button" data-bo="${esc(s.id)}" data-n="${s.n}">全部</button>`) : "").join("") : `<p class="mtext">からっぽ</p>`}</div>
+        <div class="list dropbox21" data-drop="box">${list.length ? list.map(s => ITEMS[s.id] ? itemLi(s.id, `${s.n}個${s.r && (s.r[0] || s.r[1]) ? `（${s.r[1] ? "★3×" + s.r[1] : ""}${s.r[0] ? "★2×" + s.r[0] : ""}）` : ""}`, `<button class="btn light" type="button" data-bo="${esc(s.id)}" data-n="1">1個</button><button class="btn" type="button" data-bo="${esc(s.id)}" data-n="${s.n}">全部</button>`) : "").join("") : `<p class="mtext">からっぽ</p>`}</div>
         <h3 class="lbl">持ち物（道具以外）</h3>
         <div class="list dropbox21" data-drop="inv">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個`, `<button class="btn light" type="button" data-bi="${esc(id)}" data-n="1">1個</button><button class="btn" type="button" data-bi="${esc(id)}" data-n="all">全部</button>`)).join("") : `<p class="mtext">しまえる物がないよ</p>`}</div>
         <p class="mtext small" id="boxMsg"></p>`;
@@ -5813,11 +5845,21 @@ function openBox17(which, local) {
       const go = (act, id, n, slot) => {
         if (local) {
           const P = which === "priv" ? room.data.priv : room.data.storage, s = P.find(x => x.id === id);
-          if (act === "put") { removeItem(id, n); if (s) s.n += n; else P.push({ id, n }); }
-          else { if (!s || s.n < n || !addItem(id, n, true)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; } s.n -= n; if (s.n <= 0) P.splice(P.indexOf(s), 1); F7.toSlot?.(id, slot); }
+          if (act === "put") {
+            const b4 = [countT(id, 2), countT(id, 3)]; removeItem(id, n); const mv = [b4[0] - countT(id, 2), b4[1] - countT(id, 3)];
+            let d = s; if (d) d.n += n; else P.push(d = { id, n });
+            if (mv[0] || mv[1]) d.r = [((d.r || [])[0] || 0) + mv[0], ((d.r || [])[1] || 0) + mv[1]];
+          }
+          else {
+            if (!s || s.n < n || !addItem(id, n, true)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; }
+            const r = s.r || [0, 0], fromN = Math.min(n, s.n - r[0] - r[1]), t2 = Math.min(n - fromN, r[0]), t3 = Math.max(0, Math.min(n - fromN - t2, r[1]));
+            if (t2) addRare(id, 2, t2); if (t3) addRare(id, 3, t3);
+            s.n -= n; if (s.r) { s.r = [r[0] - t2, r[1] - t3]; if (!s.r[0] && !s.r[1]) delete s.r; } if (s.n <= 0) P.splice(P.indexOf(s), 1); F7.toSlot?.(id, slot); renderHotbar();
+          }
           saveWorld(); F17.renderBox(); return;
         }
         if (!F8.connected) { msg.textContent = "いまはオンラインにつながっていないよ"; return; }
+        if (act === "put") { n = Math.min(n, countT(id, 1)); if (n <= 0) { msg.textContent = "★2・★3の物は、この箱には入れられないよ（自分の家の箱ならしまえる）"; return; } }
         if (act === "take" && !canTake17(id, n)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; }
         const rid = Math.random().toString(36).slice(2, 10); H17.wait.set(rid, { act, id, n, slot });
         send8({ type: "box", key, box: which, act, id, n, rid }); msg.textContent = "…";
@@ -5908,6 +5950,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.33.0", date: "2026/10/24", title: "レア度とエモート", items: [
+    "釣った魚と、素潜りでとった海の幸に「レア度」がついた。★2（レア）は1.5倍、★3（激レア）は3倍の値段で売れる。魚は大きいほどレア",
+    "レア度がちがっても、同じ種類は持ち物の1マスにまとまるので、持ち物がいっぱいにならない。★のマークがレア入りのしるし（料理などに使うときは★1から先に使う）",
+    "よろず屋と魚市場では、レア度ごとに分けて売れる",
+    "キャラが動くエモートを追加。G キー（スマホは右下の「動」ボタン）で輪が開いて、手をふる・おじぎ・拍手・ジャンプ・おどる・すわる・ねる・がっかりができる。オンラインなら、まわりの人にも見える",
+    "ふたりでするエモートを追加（オンライン）。近くの人に「ハイタッチ」「手をつなぐ」「乾杯」を申しこんで、OKしてもらうと一緒にポーズ。手をつなぐと、並んで歩ける",
+    "実績2つと、てびきの「エモート」の章を追加",
+  ] },
   { v: "0.32.0", date: "2026/10/24", title: "ミニゲームがいっぱい", items: [
     "カラオケの音ゲーに、いちばん難しい「げきむず」を追加。2つ同時のノーツや、長いノーツの細かい連打が出てくる。判定もきびしめ",
     "カラオケの曲が5曲ふえて10曲に（どんぐりロックンロール・夜明けのハイウェイ・スターダスト・カジノ・ひまわり畑でダンス・こもれび村のアンセム）",
@@ -11039,7 +11089,9 @@ function dive55() {
     if (lost) { const n = Math.floor(haul.length / 2); for (let i = 0; i < n; i++) lostList.push(haul.splice(Math.floor(Math.random() * haul.length), 1)[0]); }
     const dex = diveDex55(), cnt = {};
     for (const id of haul) { cnt[id] = (cnt[id] || 0) + 1; dex[id] = (dex[id] || 0) + 1; }
-    let full = false; for (const [id, n] of Object.entries(cnt)) if (!addItem(id, n, true)) full = true;
+    let full = false; const cntR = {};
+    for (const [id, n] of Object.entries(cnt)) { if (!addItem(id, n, true)) { full = true; continue; } const r = [0, 0]; for (let i = 0; i < n; i++) { const t = rollTier(); if (t > 1) r[t - 2]++; } if (r[0]) addRare(id, 2, r[0]); if (r[1]) addRare(id, 3, r[1]); if (r[0] || r[1]) cntR[id] = r; }
+    renderHotbar();
     if (money) addMoney(money);
     world.stats.dives55 = (world.stats.dives55 || 0) + 1; if (haul.length) addXp("fish", haul.length * 2);
     if (cnt.sea_rainbow55 || cnt.sea_odako55) K.news41 && K.news41.add && K.news41.add("dive", `素潜りで${cnt.sea_rainbow55 ? "虹色の真珠" : "オオダコ"}をとった`, 85);
@@ -11048,7 +11100,7 @@ function dive55() {
     closeModal();
     openModal("素潜りの成果", "shop", body => {
       body.innerHTML = `<p class="mtext">${lost ? "息が続かなくて、あわてて浮上した…。とった物を半分落としてしまった" : "ぷはっ！ 無事に水面にもどった"}</p>
-        ${haul.length ? `<div class="list">${Object.entries(cnt).map(([id, n]) => itemLi(id, `${n}こ・1こ ${fmt(ITEMS[id].price)}`, "")).join("")}</div><p class="mtext">ぜんぶで ${fmt(val)} ぶん${money ? `・宝箱から ${fmt(money)}` : ""}${full ? "（持ち物がいっぱいで、入りきらなかった物がある）" : ""}</p>` : `<p class="mtext">今回は、なにもとれなかった${money ? `（宝箱から ${fmt(money)}）` : ""}</p>`}
+        ${haul.length ? `<div class="list">${Object.entries(cnt).map(([id, n]) => itemLi(id, `${n}こ・1こ ${fmt(ITEMS[id].price)}${cntR[id] ? `・<b class="rare${cntR[id][1] ? 3 : 2}">${cntR[id][1] ? `★★★×${cntR[id][1]}` : ""}${cntR[id][0] ? `★★×${cntR[id][0]}` : ""}</b>` : ""}`, "")).join("")}</div><p class="mtext">ぜんぶで ${fmt(val)} ぶん${money ? `・宝箱から ${fmt(money)}` : ""}${full ? "（持ち物がいっぱいで、入りきらなかった物がある）" : ""}</p>` : `<p class="mtext">今回は、なにもとれなかった${money ? `（宝箱から ${fmt(money)}）` : ""}</p>`}
         ${lostList.length ? `<p class="mtext small">落とした物：${lostList.map(id => esc(ITEMS[id].name)).join("・")}</p>` : ""}
         <div class="row2"><button class="btn" type="button" id="dvAgain" ${world.hp < DIVE_HP55 ? "disabled" : ""}>もう一度潜る（HP-${DIVE_HP55}）</button><button class="btn light" type="button" id="dvEnd">陸にあがる</button></div>`;
       body.querySelector("#dvAgain").onclick = () => { if (world.hp < DIVE_HP55) return; world.hp -= DIVE_HP55; updateHp(); closeModal(); dive55(); };
@@ -11675,6 +11727,239 @@ GUIDE54.splice(GUIDE54.length - 1, 0, ["村の運動会（オンライン）", I
   <li>勝った組は1,500G、引き分け1,000G、負けた組も500G</li></ul>`]);
 F59.open = openSD59; F59.send = m => send8(m); F59.state = () => sd59; F59.kari = () => kari59; F59.play = sdPlay59;
 F59.ready = true;
+var F60 = {};
+// ---------- v60: 収集物のレア度（釣った魚は大きいほどレア）・キャラが動くエモート・ふたりでするエモート ----------
+// 魚のレア度：図鑑の基準の1.22倍以上で★2、1.4倍以上で★3（だいたい7匹に1匹が★2、20匹に1匹が★3）
+const _fishCaught60 = F6.fishCaught;
+F6.fishCaught = got => {
+  _fishCaught60(got);
+  const base = FISHBASE28[got] || 30, size = typeof lastFishSize50 === "number" ? lastFishSize50 : 0;
+  lastFishTier = !size ? 1 : size >= base * 1.4 ? 3 : size >= base * 1.22 ? 2 : 1;
+  if (lastFishTier > 1) { addRare("fish_" + got, lastFishTier); renderHotbar(); saveWorld(); }
+  if (lastFishTier === 3) K.news41 && K.news41.add && K.news41.add("rare", `★3の${got}（${size}cm）を釣り上げた`, 70);
+  setTimeout(() => { lastFishTier = 1; }, 0);
+};
+ACH.push(["激レアハンター", "★3（激レア）の魚か海の幸を手に入れる", () => (world.stats.rare3 || 0) >= 1]);
+ACH_REWARD["激レアハンター"] = ["money", 3000];
+GUIDE54.forEach(g => {
+  if (g[0] === "釣り") g[2] = g[2].replace("<li><b>ヌシとの綱引き</b>", "<li><b>レア度</b>：釣った魚は大きいほどレア。図鑑の基準より大きいと★2（レア）、とても大きいと★3（激レア）。★2は1.5倍、★3は3倍の値段で売れる。同じ魚は1マスにまとまるので、持ち物はふえない（持ち物の★のマークがレア入りのしるし。料理などに使うときは★1から先に使う）</li><li><b>ヌシとの綱引き</b>");
+  if (g[0] === "素潜り（みなと町）") g[2] = g[2].replace("</ul>", "<li>とった海の幸にも、ときどき★2（レア）・★3（激レア）がまじる。売るときに高く売れる</li></ul>");
+});
+
+// ===== キャラが動くエモート =====
+const EMO60 = [["wave", "手をふる", 1.8], ["bow", "おじぎ", 1.3], ["clap", "拍手", 1.8], ["jump", "ジャンプ", 1.2], ["dance", "おどる", 3.2], ["sit", "すわる", 0], ["sleep", "ねる", 0], ["sad", "がっかり", 2.2]];
+const PAIR60 = [["hifive", "ハイタッチ"], ["hand", "手をつなぐ"], ["cheers", "乾杯"]];
+const EMO_DUR60 = Object.fromEntries(EMO60.map(([k, , d]) => [k, d]));
+const SKIN60 = "#f6cfa8";
+function setEmo60(e, k) { if (!e) return; if (k === "stop") { e.emo60 = null; return; } e.emo60 = { k, t0: performance.now(), x: e.x, y: e.y }; }
+function doEmote60(k) {
+  if (!EMO_DUR60.hasOwnProperty(k)) return;
+  if (busy || fish || placing) return;
+  setEmo60(player, k); world.stats.emotes60 = (world.stats.emotes60 || 0) + 1;
+  if (F8.connected) send8({ type: "motion", k: "emote", e: k });
+  if (k === "clap") setTimeout(() => { try { SFX.small && SFX.small(); } catch (e) { } }, 150);
+}
+// 動いたら、すわる・ねるはおしまい
+const _tryMove60 = tryMove;
+tryMove = function () {
+  if (player.emo60 && (player.emo60.k === "sit" || player.emo60.k === "sleep")) { player.emo60 = null; if (F8.connected) send8({ type: "motion", k: "emote", e: "stop" }); }
+  if (hand60 && !hand60.lead) endHand60(true, "手をはなした");
+  return _tryMove60.apply(this, arguments);
+};
+const _onMotion60 = onMotion44;
+onMotion44 = function (m) {
+  if (m && m.k === "emote") { const e = remotes.get(m.id); if (e) setEmo60(e, String(m.e || "")); return; }
+  return _onMotion60.apply(this, arguments);
+};
+const entById60 = id => id === onl.id ? player : (() => { const e = remotes.get(id); return e && e.rmap === mapKey() ? e : null; })();
+const tileOf60 = e => e.moving ? [e.fx, e.fy] : [e.x, e.y];
+// 絵：体ごと動かす（drawEnt の前後で ctx を変える）
+const _drawEnt60 = drawEnt;
+drawEnt = function (e) {
+  if (!e || e.sprite || e.kind === "cat" || (e !== player && e.kind !== "remote")) return _drawEnt60.apply(this, arguments);
+  const now = performance.now(), cx = e.px + 8, fy = e.py + 16;
+  let m = e.emo60;
+  if (m) { const d = EMO_DUR60[m.k]; if ((d && now - m.t0 > d * 1000) || ((m.k === "sit" || m.k === "sleep") && (e.moving || e.x !== m.x || e.y !== m.y))) { e.emo60 = m = null; } }
+  const pr = e.pair60 && now - e.pair60.t0 < 1700 ? e.pair60 : (e.pair60 = null);
+  const t = m ? (now - m.t0) / 1000 : 0;
+  const dir0 = e.dir;
+  ctx.save();
+  try {
+    if (pr) { const o = entById60(pr.oid); if (o) { const dx = o.px - e.px, dy = o.py - e.py; e.dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down"); } }
+    if (m) {
+      if (m.k === "jump") ctx.translate(0, -Math.round(Math.abs(Math.sin(t * Math.PI * 1.7)) * 6));
+      else if (m.k === "bow") { const a = t < .3 ? t / .3 : t < .8 ? 1 : Math.max(0, 1 - (t - .8) / .4); ctx.translate(cx, fy); ctx.scale(1, 1 - .2 * a); ctx.translate(-cx, -fy); }
+      else if (m.k === "dance") { const beat = Math.floor(t * 4); e.dir = ["left", "down", "right", "down"][beat % 4]; ctx.translate(0, -(beat % 2 ? 2 : 0)); }
+      else if (m.k === "sit") { ctx.translate(cx, fy); ctx.scale(1, .8); ctx.translate(-cx, -fy); }
+      else if (m.k === "sleep") { ctx.translate(cx, e.py + 11); ctx.rotate(-Math.PI / 2); ctx.translate(-cx, -(e.py + 11)); }
+      else if (m.k === "sad") { const a = Math.min(1, t / .3); ctx.translate(cx, fy); ctx.scale(1, 1 - .08 * a); ctx.translate(-cx, -fy); }
+    }
+    _drawEnt60.apply(this, arguments);
+  } finally { ctx.restore(); e.dir = dir0; }
+  // 上にかさねる絵
+  if (m) {
+    ctx.save();
+    if (m.k === "wave") { const sx = Math.round(Math.sin(t * 14) * 1.5); ctx.fillStyle = SKIN60; ctx.fillRect(Math.round(e.px) + 14 + sx, Math.round(e.py) + 2, 3, 3); ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(Math.round(e.px) + 14 + sx, Math.round(e.py) + 5, 3, 1); }
+    else if (m.k === "clap") { const hit = Math.floor(t * 6) % 2 === 0; ctx.fillStyle = SKIN60; ctx.fillRect(Math.round(cx) - (hit ? 2 : 4), Math.round(e.py) + 9, 2, 3); ctx.fillRect(Math.round(cx) + (hit ? 0 : 2), Math.round(e.py) + 9, 2, 3); if (hit) { ctx.fillStyle = "#ffe27a"; ctx.fillRect(Math.round(cx) - 5, Math.round(e.py) + 6, 1, 1); ctx.fillRect(Math.round(cx) + 4, Math.round(e.py) + 6, 1, 1); ctx.fillRect(Math.round(cx), Math.round(e.py) + 5, 1, 1); } }
+    else if (m.k === "dance") { ctx.fillStyle = "#ff8ab8"; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "center"; ctx.fillText("♪", cx + Math.sin(t * 5) * 7, e.py - 3 - (t * 8 % 8)); }
+    else if (m.k === "sleep") { ctx.fillStyle = "#cfe0ff"; ctx.strokeStyle = "rgba(30,40,70,.7)"; ctx.lineWidth = 2; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "left"; const k = (t * .8) % 1; ctx.strokeText("z", e.px + 13 + k * 4, e.py + 4 - k * 6); ctx.fillText("z", e.px + 13 + k * 4, e.py + 4 - k * 6); ctx.font = "bold 9px sans-serif"; ctx.strokeText("Z", e.px + 16 + k * 3, e.py - 2 - k * 6); ctx.fillText("Z", e.px + 16 + k * 3, e.py - 2 - k * 6); }
+    else if (m.k === "sad") { ctx.fillStyle = "rgba(90,110,180,.75)"; for (let i = 0; i < 3; i++) ctx.fillRect(Math.round(e.px) + 4 + i * 4, Math.round(e.py) - 4, 1, 4); ctx.fillStyle = "#8ac8ff"; if (t > .4) ctx.fillRect(Math.round(e.px) + 12, Math.round(e.py) + 7 + Math.min(4, (t - .4) * 6), 1, 2); }
+    else if (m.k === "bow" && t > .3 && t < .9) { ctx.fillStyle = "#fff"; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 2; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center"; ctx.strokeText("ぺこり", cx, e.py - 4); ctx.fillText("ぺこり", cx, e.py - 4); }
+    ctx.restore();
+  }
+  if (pr) {
+    const o = entById60(pr.oid), pt = (now - pr.t0) / 1000;
+    if (o) {
+      const mx = (e.px + o.px) / 2 + 8, my = Math.min(e.py, o.py) + 2, side = o.px >= e.px ? 1 : -1;
+      ctx.save();
+      if (pr.k === "hifive") { const up = Math.min(1, pt / .35); ctx.fillStyle = SKIN60; ctx.fillRect(Math.round(e.px + 8 + side * (4 + up * 2)), Math.round(e.py + 8 - up * 8), 3, 3); }
+      else if (pr.k === "cheers") { const up = Math.min(1, pt / .35), hx = Math.round(e.px + 8 + side * (3 + up * 3)), hy = Math.round(e.py + 8 - up * 6); ctx.fillStyle = "#f0c040"; ctx.fillRect(hx, hy, 4, 5); ctx.fillStyle = "#fff8e0"; ctx.fillRect(hx, hy - 1, 4, 2); ctx.fillStyle = "#8a6a30"; ctx.fillRect(hx + (side > 0 ? -1 : 4), hy + 1, 1, 3); }
+      if (pr.lead && pt > .4 && pt < 1.3) {
+        ctx.fillStyle = "#ffe27a"; const r = 3 + (pt - .4) * 8;
+        for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.fillRect(Math.round(mx + Math.cos(a) * r), Math.round(my + Math.sin(a) * r), 1, 1); }
+        ctx.fillStyle = "#fff"; ctx.strokeStyle = "rgba(60,30,10,.8)"; ctx.lineWidth = 2; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "center";
+        const txt = pr.k === "hifive" ? "パチン！" : "かんぱーい！"; ctx.strokeText(txt, mx, my - 10); ctx.fillText(txt, mx, my - 10);
+      }
+      ctx.restore();
+    }
+  }
+  // 手をつないでいる線（先頭の人の絵のところで描く）
+  const myId = e === player ? onl.id : e.rid;
+  for (const hp of handPairs60.values()) {
+    if (hp.a !== myId) continue; const o = entById60(hp.b); if (!o) continue;
+    const dx = o.px - e.px, dy = o.py - e.py; if (Math.abs(dx) + Math.abs(dy) > 22) continue;
+    ctx.save(); ctx.strokeStyle = SKIN60; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(e.px + 8 + Math.sign(dx) * 4, e.py + 11 + Math.sign(dy) * 2); ctx.lineTo(o.px + 8 - Math.sign(dx) * 4, o.py + 11 - Math.sign(dy) * 2); ctx.stroke();
+    if (Math.floor(now / 2600) % 3 === 0) { const k = (now % 2600) / 2600; ctx.globalAlpha = 1 - k; ctx.fillStyle = "#ff7aa8"; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "center"; ctx.fillText("♥", (e.px + o.px) / 2 + 8, Math.min(e.py, o.py) - 2 - k * 8); }
+    ctx.restore();
+  }
+};
+
+// ===== ふたりでするエモート =====
+let hand60 = null; // { lead: 自分が先頭か, other: 相手のid, trail: [[x,y],...], map }
+const handPairs60 = new Map(); // "a-b" → {a, b}（同じ場所の、手をつないでいる組）
+let ask60 = null; // 届いた申しこみ { from, name, e, until }
+function nearRemote60() {
+  let best = null, bd = 9;
+  for (const e of F8.remotes()) { const [x, y] = tileOf60(e), d = Math.abs(x - player.x) + Math.abs(y - player.y); if (d <= 3 && d < bd) { bd = d; best = e; } }
+  return best;
+}
+function askPair60(k) {
+  if (!F8.connected) { toast(null, "ふたりでするエモートは、オンラインで遊べるよ"); return; }
+  if (k === "hand" && hand60) { endHand60(true, "手をはなした"); return; }
+  const o = nearRemote60(); if (!o) { toast(null, "近くにだれもいないみたい（3マス以内の人に申しこめるよ）"); return; }
+  send8({ type: "pair", act: "ask", to: o.rid, e: k });
+  toast(null, `${o.name}に「${PAIR60.find(p => p[0] === k)[1]}」を申しこんだ`);
+}
+function endHand60(send, msg) {
+  if (!hand60) return; const other = hand60.other;
+  if (send && F8.connected) send8({ type: "pair", act: "end", to: other });
+  handPairs60.delete(hand60.lead ? `${onl.id}-${other}` : `${other}-${onl.id}`);
+  hand60 = null; if (msg) toast(null, msg);
+}
+// 申しこみの帯
+($("rep").closest(".hud")?.parentElement || document.querySelector(".stage")).insertAdjacentHTML("beforeend", `<div class="pair60ask" id="pair60ask" hidden><span id="pair60txt"></span><button class="btn" type="button" id="pair60ok">OK</button><button class="btn light" type="button" id="pair60no">ことわる</button></div>`);
+function showAsk60() {
+  const el = $("pair60ask"); if (!ask60 || performance.now() > ask60.until) { el.hidden = true; ask60 = null; return; }
+  el.hidden = false; $("pair60txt").textContent = `${ask60.name}さんが「${(PAIR60.find(p => p[0] === ask60.e) || [, "ハイタッチ"])[1]}」をしたがってる`;
+}
+$("pair60ok").addEventListener("click", e => { e.stopPropagation(); if (!ask60) return; send8({ type: "pair", act: "ok", to: ask60.from }); ask60 = null; showAsk60(); });
+$("pair60no").addEventListener("click", e => { e.stopPropagation(); if (!ask60) return; send8({ type: "pair", act: "no", to: ask60.from }); ask60 = null; showAsk60(); });
+setInterval(showAsk60, 500);
+const _handle60 = handle8;
+handle8 = m => {
+  _handle60(m);
+  if (!m || m.type !== "pair") { if (m && (m.type === "welcome" || m.type === "leave")) { if (m.type === "welcome") { handPairs60.clear(); hand60 = null; } else { for (const [k, v] of handPairs60) if (v.a === m.id || v.b === m.id) handPairs60.delete(k); if (hand60 && hand60.other === m.id) endHand60(false, "相手が帰っちゃった"); } } return; }
+  const pname = id => (remotes.get(id) || {}).name || "だれか";
+  if (m.act === "ask") { ask60 = { from: m.from, name: String(m.name || "だれか").slice(0, 16), e: m.e, until: performance.now() + 18000 }; showAsk60(); try { SFX.chat && SFX.chat(); } catch (e) { } }
+  else if (m.act === "no") toast(null, `${String(m.name || "相手").slice(0, 16)}さんに、ことわられちゃった…`);
+  else if (m.act === "far") toast(null, "相手が遠すぎるみたい。もう少し近づいてみよう");
+  else if (m.act === "do") {
+    const a = entById60(m.a), b = entById60(m.b), now = performance.now();
+    if (m.e === "hand") {
+      handPairs60.set(`${m.a}-${m.b}`, { a: m.a, b: m.b });
+      if (m.a === onl.id || m.b === onl.id) {
+        if (hand60) endHand60(true);
+        const lead = m.a === onl.id, other = lead ? m.b : m.a; hand60 = { lead, other, trail: [], map: mapKey() };
+        handPairs60.set(`${m.a}-${m.b}`, { a: m.a, b: m.b });
+        toast(null, lead ? `${pname(other)}さんと手をつないだ。歩くと、ついてきてくれるよ` : `${pname(other)}さんと手をつないだ。動くと手をはなすよ`);
+        world.stats.pair60 = (world.stats.pair60 || 0) + 1; saveWorld();
+      }
+    } else {
+      if (a) a.pair60 = { k: m.e, t0: now, oid: m.b, lead: true };
+      if (b) b.pair60 = { k: m.e, t0: now, oid: m.a, lead: false };
+      if (m.a === onl.id || m.b === onl.id) { world.stats.pair60 = (world.stats.pair60 || 0) + 1; saveWorld(); setTimeout(() => { try { SFX.small && SFX.small(); } catch (e) { } }, 450); }
+    }
+  } else if (m.act === "end") {
+    handPairs60.delete(`${m.a}-${m.b}`); handPairs60.delete(`${m.b}-${m.a}`);
+    if (hand60 && (m.a === hand60.other || m.b === hand60.other) && (m.a === onl.id || m.b === onl.id)) { const o = hand60.other; hand60 = null; if (m.a !== onl.id) toast(null, `${pname(o)}さんが手をはなした`); }
+  }
+};
+// 手をつないでいるあいだ：後ろの人は、先頭の人が通ったところを歩く
+setInterval(() => {
+  if (!hand60) return;
+  if (mapKey() !== hand60.map || !F8.connected) { endHand60(true, "手をはなした"); return; }
+  const L = remotes.get(hand60.other);
+  if (!L || L.rmap !== mapKey()) { endHand60(true, "はぐれちゃった"); return; }
+  if (hand60.lead) return;
+  const lt = tileOf60(L), tr = hand60.trail, last = tr[tr.length - 1];
+  if (!last || last[0] !== lt[0] || last[1] !== lt[1]) { tr.push(lt); if (tr.length > 12) tr.shift(); }
+  if (player.moving || busy || fish || modalOpen) return;
+  const d = Math.abs(player.x - lt[0]) + Math.abs(player.y - lt[1]);
+  if (d > 6) { const f = freeNear(map, lt[0], lt[1]); placeAt(player, f[0], f[1], player.dir); tr.length = 0; tr.push(lt); return; }
+  if (d <= 1) return;
+  // 先頭の人の足あとのうち、自分のとなりにあるいちばん新しい場所へ
+  for (let i = tr.length - 2; i >= 0; i--) {
+    const [tx, ty] = tr[i]; const dd = Math.abs(player.x - tx) + Math.abs(player.y - ty);
+    if (dd === 1) {
+      const dir = tx > player.x ? "right" : tx < player.x ? "left" : ty > player.y ? "down" : "up";
+      player.dir = dir; if (!blocked(map, tx, ty, player)) { player.fx = tx; player.fy = ty; player.moving = true; player.prog = 0; }
+      return;
+    }
+    if (tx === player.x && ty === player.y) break;
+  }
+  // 足あとが見つからないとき（ななめにずれた など）は、近いほうへ一歩
+  const dx = lt[0] - player.x, dy = lt[1] - player.y, dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"), [mx, my] = DIRS[dir];
+  player.dir = dir; if (!blocked(map, player.x + mx, player.y + my, player)) { player.fx = player.x + mx; player.fy = player.y + my; player.moving = true; player.prog = 0; }
+}, 60);
+
+// ===== エモートの輪（G キー・スマホは右下の「動」ボタン） =====
+($("rep").closest(".hud")?.parentElement || document.querySelector(".stage")).insertAdjacentHTML("beforeend", `<div class="emo60w" id="emo60w" hidden><div class="emo60r">
+  ${EMO60.map(([k, l], i) => `<button type="button" class="emo60b" data-emo="${k}" style="--a:${i * 45}deg"><b>${i + 1}</b>${l}</button>`).join("")}
+  <button type="button" class="emo60c" id="emo60x">とじる</button></div>
+  <div class="emo60p">${PAIR60.map(([k, l], i) => `<button type="button" class="btn light" data-pair="${k}"><b>${["9", "0", "-"][i]}</b> ${l}</button>`).join("")}</div>
+  <p class="emo60n">ふたりでするエモートは、近く（3マス以内）の人に申しこむよ</p></div>`);
+$("rpad8").insertAdjacentHTML("afterbegin", `<button class="ebtn8" id="emo60pad" type="button" aria-label="エモート">動</button>`);
+const emoOpen60 = () => !$("emo60w").hidden;
+function toggleEmo60(v) {
+  const el = $("emo60w"); el.hidden = v === undefined ? !el.hidden : !v;
+  if (!el.hidden) { el.querySelectorAll("[data-pair]").forEach(b => { b.disabled = !F8.connected; b.lastChild.textContent = " " + (b.dataset.pair === "hand" && hand60 ? "手をはなす" : PAIR60.find(p => p[0] === b.dataset.pair)[1]); }); }
+}
+$("emo60w").addEventListener("click", e => {
+  const b = e.target.closest("[data-emo],[data-pair],#emo60x"); e.stopPropagation();
+  if (!b) { if (e.target.id === "emo60w") toggleEmo60(false); return; }
+  if (b.dataset.emo) doEmote60(b.dataset.emo); else if (b.dataset.pair) askPair60(b.dataset.pair);
+  toggleEmo60(false);
+});
+$("emo60pad").addEventListener("pointerdown", e => { e.preventDefault(); if (!modalOpen) toggleEmo60(); });
+addEventListener("keydown", e => {
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if ((e.key === "g" || e.key === "G") && !modalOpen && !e.repeat) { e.preventDefault(); toggleEmo60(); return; }
+  if (!emoOpen60()) return;
+  const i = "12345678".indexOf(e.key), j = "90-".indexOf(e.key);
+  if (i >= 0) { e.preventDefault(); e.stopImmediatePropagation(); doEmote60(EMO60[i][0]); toggleEmo60(false); }
+  else if (j >= 0) { e.preventDefault(); e.stopImmediatePropagation(); if (F8.connected) askPair60(PAIR60[j][0]); toggleEmo60(false); }
+  else if (e.key === "Escape") { toggleEmo60(false); }
+}, true);
+ACH.push(["なかよしの証", "ほかの人と、ふたりでするエモートをする", () => (world.stats.pair60 || 0) >= 1]);
+ACH_REWARD["なかよしの証"] = ["money", 1000];
+GUIDE54.splice(GUIDE54.length - 1, 0, ["エモート", null, `
+  <ul>
+  <li>G キー（スマホは右下の「動」ボタン）で、エモートの輪が開く。数字キーかタップで選ぶ</li>
+  <li>手をふる・おじぎ・拍手・ジャンプ・おどる・すわる・ねる・がっかり。オンラインなら、同じ場所にいる人にも見える。すわる・ねるは、歩くとおしまい</li>
+  <li><b>ふたりでするエモート</b>（オンライン）：近く（3マス以内）の人に「ハイタッチ」「手をつなぐ」「乾杯」を申しこめる。相手がOKすると、一緒にポーズ</li>
+  <li>手をつなぐと、申しこんだ人が先頭になって、相手はうしろをついて歩く。うしろの人が自分で動くか、輪の「手をはなす」で、手をはなす。別の場所に入ると自然にはなれる</li></ul>`]);
+F60.emote = doEmote60; F60.ask = askPair60; F60.hand = () => hand60; F60.pairs = handPairs60; F60.toggle = toggleEmo60; F60.askState = () => ask60;
+F60.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12134,5 +12419,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

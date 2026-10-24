@@ -72,7 +72,7 @@ if (fs.existsSync(path.join(BJ_CP, "SwBridge.class"))) {
   process.on("exit", () => sw.kill());
 }
 // 村の運動会：本物と同じ sports/SportsDayGame.java を bj/SdBridge.java で動かす。管理人の操作は、ためしに {"type":"sdAdmin","act":"open|start|stop"} で
-let sd = null, sdLast = null;
+let sd = null, sdLast = null; const pairAsks = new Map();
 if (fs.existsSync(path.join(BJ_CP, "SdBridge.class"))) {
   sd = spawn("java", ["-cp", BJ_CP, "SdBridge"], { stdio: ["pipe", "pipe", "ignore"] });
   let buf = "";
@@ -192,7 +192,13 @@ wss.on("connection", s => {
       if (m.act === "fish" && act === "fish" && now - sc.last >= 2500) { sc.last = now; const size = Math.floor(+m.size || 0); if (size < 1 || size > 210) return; sc.points += 50; sc.count++; if (!sc.kinds.includes(m.fish)) sc.kinds.push(String(m.fish).slice(0, 16)); sc.best = Math.max(sc.best, size); ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
       if (m.act === "collect" && act === "collect" && now - sc.last >= 700) { sc.last = now; sc.collected++; ev.dirty = true; return send({ type: "evMe", event: evNode(ev, me) }); }
       return; }
-    if (m.type === "motion") { const ok = ["hoe", "axe", "pick", "can", "sword", "shovel", "plant", "fish", "catch", "status"]; if (!ok.includes(m.k)) return; const o = { type: "motion", id: s.pl.id, k: m.k }; if (m.k === "catch") o.f = String(m.f || "").slice(0, 16); if (m.k === "status") o.s = String(m.s || "").slice(0, 12); toMap(s.map, o, s); }
+    if (m.type === "motion") { const ok = ["hoe", "axe", "pick", "can", "sword", "shovel", "plant", "fish", "catch", "status", "emote"]; if (!ok.includes(m.k)) return; const o = { type: "motion", id: s.pl.id, k: m.k }; if (m.k === "catch") o.f = String(m.f || "").slice(0, 16); if (m.k === "status") o.s = String(m.s || "").slice(0, 12); if (m.k === "emote") { if (!["wave", "bow", "clap", "jump", "dance", "sit", "sleep", "sad", "stop"].includes(m.e)) return; o.e = m.e; } toMap(s.map, o, s); }
+    // ふたりでするエモート（本物は ws/PairEmoteHandler.java）
+    if (m.type === "pair") { const to = Math.floor(+m.to || 0), me = s.pl.id, o2 = [...sessions].find(o => o.pl && o.pl.id === to), sendTo = (id, obj) => { for (const o of sessions) if (o.pl && o.pl.id === id) o.send(JSON.stringify(obj)); };
+      if (!to || to === me) return;
+      if (m.act === "ask") { if (!["hifive", "hand", "cheers"].includes(m.e)) return; if (!o2 || o2.map !== s.map || Math.abs(o2.x - s.x) + Math.abs(o2.y - s.y) > 3) { s.send(JSON.stringify({ type: "pair", act: "far", from: to })); return; } pairAsks.set(me, { to, e: m.e, at: Date.now() }); sendTo(to, { type: "pair", act: "ask", from: me, name: s.pl.name, e: m.e }); }
+      else if (m.act === "ok" || m.act === "no") { const a = pairAsks.get(to); if (!a || a.to !== me || Date.now() - a.at > 20000) return; pairAsks.delete(to); if (m.act === "no") { sendTo(to, { type: "pair", act: "no", from: me, name: s.pl.name }); return; } if (!o2 || o2.map !== s.map) return; toMap(s.map, { type: "pair", act: "do", a: to, b: me, e: a.e }, null); }
+      else if (m.act === "end") { const o = { type: "pair", act: "end", a: me, b: to }; toMap(s.map, o, null); if (o2 && o2.map !== s.map) o2.send(JSON.stringify(o)); } }
     if (m.type === "farm") { const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 20) }; farms.set(s.pl.id, f); bc(f, s); }
     if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); }
     if (m.type === "news") { const day = Math.floor(+m.day || 0);

@@ -3880,7 +3880,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.30.4";
+const CLIENT_VERSION = "0.30.5";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5908,6 +5908,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.30.5", date: "2026/10/24", title: "こもれび村のてびき", items: [
+    "遊び方とルールをまとめた「こもれび村のてびき」を追加。上の「てびき」ボタンか、キーボードの H で開ける",
+    "はじめに・道具の使い方（シャベルの役割など）・畑・道や柵の作り方・釣り・牧場とペット・クラフト・家づくり・村と職業・お金と借金・カジノ・街・着せ替え・洞窟・オンラインの15章",
+    "ことばでさがせる（例：シャベル、道、借金）",
+  ] },
   { v: "0.30.4", date: "2026/10/24", title: "前回いた場所から始まる・麻雀が更新で終わらない", items: [
     "ページを読み込み直したとき（新しい版になったときなど）、前回いた場所から始まるようになった。村や北の丘はその場所、お店やカジノの中にいたらその中から。家の中・街・洞窟にいたときは、入る前の村の場所から",
     "みんなの麻雀：サーバーが更新・再起動しても、卓が消えずに続きから打てるようになった（点数・手牌・河・順番もそのまま）",
@@ -10759,6 +10764,156 @@ handle8 = m => {
   if (m && m.type === "welcome" && K.net && K.net.onMj) setTimeout(() => send8({ type: "mj", act: "list" }), 400);
 };
 F53.ready = true;
+var F54 = {};
+// ---------- v54: こもれび村のてびき（遊び方・ルールのまとめ。上の「てびき」ボタンか H キー） ----------
+const GUIDE54 = [
+  ["はじめに", "pv", `
+    <p>こもれび村は、畑・釣り・牧場・家づくりでのんびり暮らしながら、ときどきカジノで一攫千金をねらうゲーム。やることに決まりはないから、好きなことから始めてOK。</p>
+    <h4>まず覚えること</h4><ul>
+    <li>歩く：矢印キー か WASD（スマホは左下の十字ボタン）</li>
+    <li>使う・調べる・話す：<b>Space</b> か <b>Z</b>（スマホはⒶ）。目の前のマスに対して使う</li>
+    <li>持ち物をえらぶ：1〜9・0、Q と E、マウスのホイール。マウスなら、となりのマスをクリックしても使える</li>
+    <li>閉じる：Esc</li></ul>
+    <h4>1日の流れ</h4><ul>
+    <li>朝6時に起きて、夜24時までに家（村の左上の赤い屋根）のベッドでⒶ。24時を過ぎると倒れてしまう</li>
+    <li>1日はだいたい現実の18分。7日で季節が変わる（春→夏→秋→冬）</li>
+    <li>眠ると、水をやった作物が育ち、岩がまた湧き、お店の品物が入れかわる</li></ul>
+    <h4>ほかのキー</h4><ul>
+    <li><b>M</b> 地図　<b>P</b> ペットたち　<b>O</b> いまオンラインの人　<b>H</b> このてびき</li>
+    <li><b>C</b> チャット　<b>T</b> スタンプ（オンラインのとき）</li></ul>`],
+  ["道具の使い方", "hoe", `
+    <ul>
+    <li><b>鍬</b>：草地を耕して畑にする。何も植えていない畑にもう一度使う（2回）と、草地にもどせる。枯れた作物の片付けにも</li>
+    <li><b>じょうろ</b>：畑に水をやる。水は毎日いる</li>
+    <li><b>斧</b>：木を切る（何回か当てると倒れて、木材×4）。柵や橋の片付けにも使う。切り株は2日でまた生える</li>
+    <li><b>つるはし</b>：岩を砕く（石×2、たまに鉱石やアメジスト）。石畳の片付けにも使う</li>
+    <li><b>釣り竿</b>：池・川・海に向かって使う（くわしくは「釣り」）</li>
+    <li><b>シャベル</b>：地面を掘る。<br>・草地を掘る → 水場になる（魚も釣れる）<br>・水辺に石1個 → 埋めて草地にもどす<br>・何も植えていない畑 → 草地にもどす<br>・茶色い道 → 草地にもどす（「土の道」が1つ手に入る）</li>
+    <li><b>剣</b>：洞窟のモンスターと戦う</li></ul>
+    <p>道具は、こもれび工務店で 銅 → はがね → 金 → 虹 と鍛え直せる。強いほど少ない回数でこわせたり、広く耕せたりする。強い釣り竿でしか釣れない魚もいる。</p>
+    <p class="gtip">道具や種を持っているとき、目の前のペットはよけてくれる。手ぶらなら、なでたり話しかけたりできる。</p>`],
+  ["畑と作物", "tomato", `
+    <ol><li>鍬で草地を耕す</li><li>種を持って、耕した土にⒶ</li><li>じょうろで水をやる</li><li>眠る。水をやった日の夜に育つ</li><li>実ったら、手ぶらでⒶで収穫</li></ol>
+    <ul>
+    <li>種には「旬」（育つ季節）がある。お店の種の説明に書いてある。季節外れになると枯れてしまうので、鍬で片付けよう</li>
+    <li>種はよろず屋で買える。花の種は草地にまくと花が咲く。苗木を植えると木になる</li>
+    <li>作物はお店で売る、料理に使う、村の人や依頼にわたす、などに使える</li></ul>`],
+  ["道・柵・橋（村のもようがえ）", "dirtpath50", `
+    <ul>
+    <li><b>土の道（茶色い道）</b>：クラフトで 石1個 → 4つ。持って空いている草地でⒶ。けずるときはシャベル</li>
+    <li><b>石畳</b>：クラフトで 石1個 → 2つ。草地に置ける。片付けはつるはし</li>
+    <li><b>木の柵</b>：クラフトで 木材2本。片付けは斧</li>
+    <li><b>木の橋</b>：クラフトで 木材5本。水の上にかける。外すときは斧</li>
+    <li><b>水場</b>：シャベルで草地を掘る。埋めるときは石1個とシャベル</li>
+    <li><b>飾り</b>：ベンチ・街灯・花壇などは、置いてから位置を変えたり片付けたりできる</li></ul>
+    <p>オンラインでは、村の地形はみんなで共有。だれかが作った道や橋は、みんなの村にも出る。採石場の中と、北の丘へ抜けるすき間の道は、けずれない。</p>`],
+  ["釣り", "rod", `
+    <ol><li>釣り竿を持って、水に向かってⒶ</li><li>頭の上に「！」が出たら、すぐⒶ</li><li>早すぎたり、遅すぎたりすると逃げられる</li></ol>
+    <ul>
+    <li>魚によって、釣れる場所（村の池・みなと町の海）・季節・時間（昼・夜）・天気（雨）がちがう。記録タブの魚図鑑に、まだ釣っていない魚の条件も書いてある</li>
+    <li>えさ（クラフトで作れる）をつけると、そのえさが好きな魚がかかる。強化した釣り竿でしか釣れない魚もいる</li>
+    <li>釣った魚には大きさがつき、図鑑にいちばん大きかった記録が残る。たまに大物がかかる</li>
+    <li>ヌシ級：村の池の「ヌシ」（雨の夜に出やすい）、みなと町の「クエ」「ナポレオンフィッシュ」、雨の夜だけの「オオウミノヌシ」</li>
+    <li>夏のみなと町は、南から暖かい潮が来て、南の魚が釣れる</li></ul>`],
+  ["牧場とペット", "cow", `
+    <h4>家畜</h4><ul>
+    <li>こもれび牧場で、ニワトリ・牛・羊などを買える。池の南の牧場で暮らす</li>
+    <li>飼料をあげると、なついて、卵やミルクや羊毛を出してくれる。サイロを建てると、毎朝自動でエサをあげてくれる</li>
+    <li>家畜小屋・ニワトリ小屋を建てると、飼える数がふえる</li></ul>
+    <h4>ペット</h4><ul>
+    <li>こもれび牧場で迎えられる（ネコ・イヌ・インコ・ウサギ・ハムスター）。同じ種類でも何匹でも、全部で20匹まで。柄と色はランダム</li>
+    <li>ふだんは足あとをたどってついてくる。<b>P</b> で「ペットたち」を開くと、1匹ずつ「ついてくる・ここで待つ・小屋」を選べる</li>
+    <li>ペット小屋を建てると、小屋の中で休ませられる。毎朝なついて、ときどきおみやげを持ってくる</li></ul>`],
+  ["クラフトと料理", "stove", `
+    <ul>
+    <li>クラフトタブで、材料から物を作る（柵・石畳・土の道・橋・えさ・飾りなど）</li>
+    <li>料理は、かまどのある部屋（家の中）で作れる。料理は売っても、食べてHPを回復してもいい</li>
+    <li>料理を作ると料理図鑑に記録される</li></ul>`],
+  ["家を建てる", "house", `
+    <ol><li>建築タブで、横幅・高さ（32〜160×32〜128ドット）と屋根・壁の色をえらぶ（虹とゲーミングもある）</li><li>「置く場所を選ぶ」→ 家はキャラのすぐ上に建つ。ドアがキャラの目の前に来る</li><li>木材と石を使う（大きい家ほどたくさんいる）</li></ol>
+    <ul>
+    <li><b>北の丘</b>：こもれびパレスのすぐ左の道を上へ。家を建てる広い土地がある。いちばん下の紫の扉は、パレスの裏口</li>
+    <li>建てたあとも「自分の家を、この色に塗りかえる」で色を変えられる</li>
+    <li>家の中では、建築タブで模様替え（家具を置く）・壁紙・床・間取りを変えられる。大きい家ほど部屋をふやせる</li>
+    <li>家具はよろず屋や街のお店で買う。家の中のピアノはⒶで弾ける</li>
+    <li><b>入れる人</b>（オンライン）：家の中の建築タブで「自分だけ・合鍵の人だけ・だれでも」。いまオンラインの人に合鍵をわたせる</li>
+    <li>最初からある家は、オンラインでは「みんなの家」。収納箱はみんなで使えて、鍵つきの箱は自分だけ</li></ul>`],
+  ["村・評判・職業", "board", `
+    <ul>
+    <li><b>掲示板</b>：村の人の依頼（届けると、お礼がもらえる）、共同プロジェクト（材料をみんなで寄付すると、温泉や観覧車などができる）</li>
+    <li><b>村の人</b>：毎日話しかけたり、好きな物を贈ったりすると仲良くなる。誕生日もある。村タブで好きな物のヒントが見られる</li>
+    <li><b>評判</b>：依頼や寄付で上がる。村のレベルが上がると、図書館・駅・温泉街・桜並木などができる</li>
+    <li><b>スキル</b>：農業・釣り・採集・クラフト。使うほどレベルが上がる</li>
+    <li><b>職業</b>：村タブでえらぶ。そのスキルの経験値+25%・売値+10%。変えられるのは1日1回（変えた日のうちなら取り消せる）</li>
+    <li><b>実績と称号</b>：記録タブ。実績のごほうびを受け取れる。称号は名前の上に出せる</li>
+    <li><b>新聞</b>：毎朝とどく。村のできごとやオンラインの仲間の活躍がのる。過去の新聞も読める</li></ul>`],
+  ["お金・借金", "coin", `
+    <ul>
+    <li>お金を増やす：作物・魚・料理を売る（よろず屋の「売る」、みなと町の魚市場）、露店、依頼のお礼、カジノ</li>
+    <li><b>村の信用金庫</b>：まっとうな借金と預金。<b>十日屋</b>：すぐ借りられるけど利子がきつい</li>
+    <li>返済期限を過ぎると、朝8時〜夜10時のあいだ、取り立て屋が村に来る。期限切れが3日以上か8,000G以上だと、払えなければ労働施設で岩を砕いて働くことになる</li>
+    <li>建物の中に隠れていると、その日はあきらめて帰ることもある。信用金庫の「借金の一本化」「生活再建プラン」で立て直せる</li></ul>`],
+  ["カジノ こもれびパレス", "slot", `
+    <ul>
+    <li><b>スロット</b>：5ラインで中段に7が3つそろうと、ジャックポット（賭け金の3%がみんなで積み立てられた賞金）</li>
+    <li><b>丁半・チンチロ</b>：サイコロの勝負</li>
+    <li><b>ブラックジャック</b>：ひとりでも、みんなの卓でも</li>
+    <li><b>麻雀</b>：ひとりで（CPUと）か、みんなの卓で。自信がなければ「ヒント」や「おまかせ打ち」（ノーレートの卓）を。対局中に閉じても続き、サーバーが更新されても続きから打てる</li>
+    <li><b>競どんぐり</b>：壁のモニターで。単勝は1着、複勝は2着まで当たり</li>
+    <li>カジノの画面の下でチャットできる。麻雀・BJの卓では「卓」と「みんな」を切りかえられる</li></ul>
+    <p class="gtip">負けが続いたら、無理しないでね。借金にはご用心。</p>`],
+  ["バスで行ける街", "busstop", `
+    <ul>
+    <li>村のバス停から。行きはお金がかかり、村に帰るバスは無料</li>
+    <li><b>みなと町</b>：海釣り・魚市場・行商人の店</li>
+    <li><b>都会・ひかり通り</b>：ブティック・家具の店・珈琲店・宝くじ など</li>
+    <li><b>すすきの</b>：ラウンジ（会話の答えと贈り物で仲良くなる）・カラオケ（音ゲー）・ラーメン・占い</li>
+    <li><b>秋葉原</b>：ゲームセンター・メイド喫茶・アニメのお店</li>
+    <li><b>表参道</b>：服のお店・美容室・きせかえガチャ</li></ul>`],
+  ["着せ替え", "pv", `
+    <ul>
+    <li>着せ替えタブで、髪・顔・服・小物をえらぶ。「おまかせ」でランダム</li>
+    <li>まだ持っていない物（未入手）は、押すとどこで手に入るかがわかる。「まだ持っていない物の入手方法」で一覧も見られる</li>
+    <li>虹とゲーミングの色は特別。季節のイベントでしか手に入らない服もある</li></ul>`],
+  ["洞窟", "pick", `
+    <ul>
+    <li>入口は村の池の右にある岩壁（地図の「洞窟」）。中には鉱石・アメジスト・モンスター</li>
+    <li>剣を持って戦う。HPが減ったら料理を食べて回復。はしごで下の階へ行ける（深いほど強い）</li>
+    <li>はしごに向かってⒶでも使える</li></ul>`],
+  ["オンライン", "chat", `
+    <ul>
+    <li>「お便り」ボタンから、合言葉と名前で参加。セーブもサーバーに残る</li>
+    <li>村はみんなで共有。ほかの人の動き・畑・家畜・ペットも見える（さわれない）。近くの人の作業の音も聞こえる</li>
+    <li><b>C</b> でチャット、<b>T</b> でスタンプ、<b>O</b> か左上の「オンライン◯人」で、いまだれがどこにいるかわかる</li>
+    <li>ページを読み込み直しても、前回いた場所から始まる</li>
+    <li>こまったことや要望は「お便り」から管理人に送れる</li></ul>`],
+];
+function openGuide54(start = 0) {
+  openModal("こもれび村のてびき", "", body => {
+    body.innerHTML = `<div class="g54"><input type="search" id="g54q" placeholder="さがす（例：シャベル、道、借金）" autocomplete="off">
+      <div class="g54toc" id="g54toc">${GUIDE54.map(([t, ic], i) => `<button type="button" class="chip" data-g54="${i}">${ASSETS[ic] ? `<img src="${ASSETS[ic]}" alt="">` : ""}${esc(t)}</button>`).join("")}</div>
+      <div class="g54body" id="g54body"></div></div>`;
+    const B = body.querySelector("#g54body"), q = body.querySelector("#g54q");
+    const show = i => { body.querySelectorAll("[data-g54]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.g54 === i))); B.innerHTML = `<h3>${esc(GUIDE54[i][0])}</h3>${GUIDE54[i][2]}`; B.scrollTop = 0; world.stats.guide54 = i; };
+    body.querySelectorAll("[data-g54]").forEach(b => b.onclick = () => { q.value = ""; show(+b.dataset.g54); });
+    q.addEventListener("keydown", e => e.stopPropagation());
+    q.oninput = () => {
+      const w = q.value.trim(); if (!w) { show(world.stats.guide54 || 0); return; }
+      const hits = [];
+      GUIDE54.forEach(([t, , html], i) => { const tmp = document.createElement("div"); tmp.innerHTML = html; tmp.querySelectorAll("li, p").forEach(el => { if ((t + el.textContent).includes(w)) hits.push(`<li><a href="#" data-gj="${i}">${esc(t)}</a>　${el.innerHTML}</li>`); }); });
+      B.innerHTML = `<h3>「${esc(w)}」の検索結果（${hits.length}）</h3>${hits.length ? `<ul>${hits.join("")}</ul>` : `<p>見つからなかった。別のことばでさがしてみてね</p>`}`;
+      B.querySelectorAll("[data-gj]").forEach(a => a.onclick = e => { e.preventDefault(); q.value = ""; show(+a.dataset.gj); });
+    };
+    show(Math.max(0, Math.min(GUIDE54.length - 1, start)));
+  });
+}
+F54.open = openGuide54;
+$("mapBtn13").insertAdjacentHTML("beforebegin", `<button class="btn ghost" id="guideBtn54" type="button" aria-label="てびき">てびき</button>`);
+$("guideBtn54").addEventListener("click", () => { if (modalOpen && $("mtitle").textContent === "こもれび村のてびき") closeModal(); else if (!modalOpen) openGuide54(world.stats.guide54 || 0); });
+if ($("rpad8")) $("mapPad13").insertAdjacentHTML("afterend", `<button class="ebtn8" id="guidePad54" type="button" aria-label="てびき">てびき</button>`);
+$("guidePad54")?.addEventListener("click", () => { if (!modalOpen) openGuide54(world.stats.guide54 || 0); });
+addEventListener("keydown", e => { if ((e.key === "h" || e.key === "H") && !e.repeat && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA" && !document.body.classList.contains("menu")) { if (!modalOpen) openGuide54(world.stats.guide54 || 0); else if ($("mtitle").textContent === "こもれび村のてびき") closeModal(); } });
+F54.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -11156,5 +11311,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

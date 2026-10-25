@@ -920,10 +920,10 @@ function fixR(it) {
 }
 const countT = (id, t) => world.inv.reduce((a, it) => a + (it && it.id === id ? rareOf(it)[t - 1] : 0), 0);
 /** さっき addItem した物のうち n 個を、レア度 t（2か3）にする */
-function addRare(id, t, n = 1) {
+function addRare(id, t, n = 1, noStat) {
   if (t < 2) return; const s = world.inv.find(it => it && it.id === id); if (!s) return;
   s.r = s.r || [0, 0]; const free = rareOf(s)[0], k = Math.min(n, free); s.r[t - 2] += k; fixR(s);
-  if (world.stats) { const key = t === 3 ? "rare3" : "rare2"; world.stats[key] = (world.stats[key] || 0) + k; }
+  if (world.stats && !noStat) { const key = t === 3 ? "rare3" : "rare2"; world.stats[key] = (world.stats[key] || 0) + k; }
 }
 /** レア度 t の物を n 個へらす（売るとき用） */
 function removeTier(id, t, n = 1) {
@@ -934,6 +934,14 @@ function removeTier(id, t, n = 1) {
     if (it.n <= 0) world.inv[i] = null; else fixR(it);
   }
   renderHotbar(); saveWorld();
+}
+/** サーバーの箱には、★2・★3 を「ID:2」「ID:3」という別の名前で入れる（箱の中身の数え方はそのままで、レア度を保てる） */
+const rKey = (id, t) => t > 1 ? id + ":" + t : id;
+function splitR(k) { const m = /^(.+):([23])$/.exec(String(k || "")); return m ? [m[1], +m[2]] : [k, 1]; }
+function groupR(list) {
+  const out = [];
+  for (const s of list || []) { if (!s) continue; const [id, t] = splitR(s.id); let g = out.find(x => x.id === id); if (!g) out.push(g = { id, n: 0 }); g.n += s.n; if (t > 1) { g.r = g.r || [0, 0]; g.r[t - 2] += s.n; } }
+  return out;
 }
 /** ★2・★3 になる確率から、ひとつ決める */
 const rollTier = (p2 = .12, p3 = .03) => { const r = Math.random(); return r < p3 ? 3 : r < p3 + p2 ? 2 : 1; };
@@ -3912,7 +3920,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.33.1";
+const CLIENT_VERSION = "0.33.2";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -4451,9 +4459,11 @@ function refreshShared(ground) {
 }
 // v18: 共有の村を最初からにする（キャラクター・持ち物・お金・自分の家はそのまま）
 function homeStore18(id, n) {
+  const [base, t] = splitR(id); id = base;
   if (!ITEMS[id] || !(n > 0)) return 0;
   const R = roomFor("home"); R.storage = R.storage || [];
-  const s = R.storage.find(x => x && x.id === id); if (s) s.n += n; else R.storage.push({ id, n });
+  let s = R.storage.find(x => x && x.id === id); if (s) s.n += n; else R.storage.push(s = { id, n });
+  if (t > 1) { s.r = s.r || [0, 0]; s.r[t - 2] += n; }
   return n;
 }
 function freshShared18(why) {
@@ -4465,7 +4475,7 @@ function freshShared18(why) {
     const R = world.rooms[key];
     const left = { bed: 1, window: 1 };
     for (const f of R.furn || []) { if (left[f.id] > 0) { left[f.id]--; continue; } if (ITEMS["f_" + f.id]) back += homeStore18("f_" + f.id, 1); }
-    for (const s of [...(R.storage || []), ...(R.priv || [])]) if (s) back += homeStore18(s.id, s.n);
+    for (const s of [...(R.storage || []), ...(R.priv || [])]) if (s) { const r = Array.isArray(s.r) ? s.r : [0, 0], r2 = Math.min(r[0] || 0, s.n), r3 = Math.min(r[1] || 0, s.n - r2); back += homeStore18(s.id, s.n - r2 - r3) + homeStore18(rKey(s.id, 2), r2) + homeStore18(rKey(s.id, 3), r3); }
     for (const tank of Object.values(R.aqua || {})) for (const id of tank || []) back += homeStore18(id, 1);
     delete world.rooms[key];
   }
@@ -5826,7 +5836,7 @@ function openBox17(which, local) {
   F17.boxOpen = { key, which };
   F17.renderBox = () => {
     const B = local ? { priv: (room.data.priv = room.data.priv || []), storage: (room.data.storage = room.data.storage || []) } : H17.box[key] || { storage: [], priv: [] };
-    const list = (which === "priv" ? B.priv : B.storage) || [];
+    const list = local ? ((which === "priv" ? B.priv : B.storage) || []) : groupR((which === "priv" ? B.priv : B.storage) || []);
     const owner = houseOf17(key)?.owner || "だれか";
     const home = key === "home" && !local;
     const title = which === "priv" ? (home ? "自分だけの箱" : "鍵つきの箱（あなただけ）") : local ? "収納箱" : home ? "みんなの家の収納箱" : "みんなの収納箱";
@@ -5853,16 +5863,29 @@ function openBox17(which, local) {
           else {
             if (!s || s.n < n || !addItem(id, n, true)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; }
             const r = s.r || [0, 0], fromN = Math.min(n, s.n - r[0] - r[1]), t2 = Math.min(n - fromN, r[0]), t3 = Math.max(0, Math.min(n - fromN - t2, r[1]));
-            if (t2) addRare(id, 2, t2); if (t3) addRare(id, 3, t3);
+            if (t2) addRare(id, 2, t2, true); if (t3) addRare(id, 3, t3, true);
             s.n -= n; if (s.r) { s.r = [r[0] - t2, r[1] - t3]; if (!s.r[0] && !s.r[1]) delete s.r; } if (s.n <= 0) P.splice(P.indexOf(s), 1); F7.toSlot?.(id, slot); renderHotbar();
           }
           saveWorld(); F17.renderBox(); return;
         }
         if (!F8.connected) { msg.textContent = "いまはオンラインにつながっていないよ"; return; }
-        if (act === "put") { n = Math.min(n, countT(id, 1)); if (n <= 0) { msg.textContent = "★2・★3の物は、この箱には入れられないよ（自分の家の箱ならしまえる）"; return; } }
-        if (act === "take" && !canTake17(id, n)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; }
-        const rid = Math.random().toString(36).slice(2, 10); H17.wait.set(rid, { act, id, n, slot });
-        send8({ type: "box", key, box: which, act, id, n, rid }); msg.textContent = "…";
+        let parts;
+        if (act === "put") {
+          n = Math.min(n, count(id)); if (n <= 0) return;
+          const p1 = Math.min(n, countT(id, 1)), p2 = Math.min(n - p1, countT(id, 2)), p3 = Math.min(n - p1 - p2, countT(id, 3));
+          parts = [[1, p1], [2, p2], [3, p3]];
+        } else {
+          const s = list.find(x => x.id === id); if (!s) return; n = Math.min(n, s.n);
+          if (!canTake17(id, n)) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; }
+          const r = s.r || [0, 0], fromN = Math.min(n, s.n - r[0] - r[1]), t2 = Math.min(n - fromN, r[0]), t3 = Math.max(0, Math.min(n - fromN - t2, r[1]));
+          parts = [[1, fromN], [2, t2], [3, t3]];
+        }
+        for (const [t, k] of parts) {
+          if (k <= 0) continue;
+          if (rKey(id, t).length > 32) { msg.textContent = "この物の★つきは、名前が長くて箱に入れられないみたい"; continue; }
+          const rid = Math.random().toString(36).slice(2, 10); H17.wait.set(rid, { act, id, n: k, t, slot });
+          send8({ type: "box", key, box: which, act, id: rKey(id, t), n: k, rid }); msg.textContent = "…";
+        }
       };
       body.querySelectorAll("[data-bi]").forEach(b => b.onclick = () => { const id = b.dataset.bi, n = b.dataset.n === "all" ? count(id) : 1; if (n > 0) go("put", id, Math.min(n, 9999)); });
       body.querySelectorAll("[data-bo]").forEach(b => b.onclick = () => go("take", b.dataset.bo, Math.min(+b.dataset.n, 9999)));
@@ -5936,7 +5959,8 @@ handle8 = m => {
     if (F17.boxOpen && F17.boxOpen.key === m.key) F17.renderBox();
   } else if (m.type === "boxOk") {
     const w = H17.wait.get(m.rid); if (!w) return; H17.wait.delete(m.rid);
-    if (w.act === "put") removeItem(w.id, w.n); else if (!addItem(w.id, w.n, true)) toast(null, "持ち物がいっぱい…"); else F7.toSlot?.(w.id, w.slot);
+    if (w.act === "put") { if (w.t) removeTier(w.id, w.t, w.n); else removeItem(w.id, w.n); }
+    else if (!addItem(w.id, w.n, true)) toast(null, "持ち物がいっぱい…"); else { if (w.t > 1) addRare(w.id, w.t, w.n, true); F7.toSlot?.(w.id, w.slot); }
     saveWorld();
   } else if (m.type === "boxNg") {
     H17.wait.delete(m.rid); const el = $("boxMsg"); if (el) el.textContent = String(m.text || "できなかった").slice(0, 60); else toast(null, String(m.text || "できなかった").slice(0, 60));
@@ -5950,6 +5974,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.33.2", date: "2026/10/26", title: "★つきも箱にしまえる・土の道の場所", items: [
+    "★2・★3の物も、みんなの家の「自分だけの箱」や、建てた家の箱にしまえるように。しまってもレア度はそのまま（出すときは★1から）",
+    "土の道を、木の葉っぱの下などにも作れるように。作れないときは「石畳がある」「畑になっている」など、理由を出すようにした",
+  ] },
   { v: "0.33.1", date: "2026/10/24", title: "スマホの画面をすっきり", items: [
     "スマホの右の丸ボタンを「動・話・A」の3つにまとめた。スタンプは「動」のエモートの輪の中に、地図は上のメニューに移したよ",
     "雪合戦の陣地の四角は、試合中だけ出るようにした（ふだんの北の丘はすっきり）",
@@ -10734,7 +10762,11 @@ F7.act = (tx, ty, key, sel, item, other) => {
   if (map === village && !other && item && item.dirt50) {
     const g = village.ground[ty]?.[tx] || "";
     if (/^path/.test(g)) { toast("dirtpath50", "もう道になっているよ"); return true; }
-    if (!/^(grass|flower)/.test(g) || village.solid[ty]?.[tx] || world.tilled[key] || world.crops[key] || world.paths[key] || world.fences[key] || (world.decor || {})[key] || village.noBuild.has(key) || inPaddock(tx, ty)) { toast("dirtpath50", "ここには道を作れないよ（空いている草地に）"); return true; }
+    // 作れない理由を、できるだけ具体的に伝える（木の上の葉っぱのところ・雪合戦の陣地などの「建てられない場所」でも、道ならOK）
+    const why = world.paths[key] ? "石畳がしいてあるよ（つるはしで外すと、土の道にできる）" : world.fences[key] ? "柵があるよ（外してから）" : world.tilled[key] || world.crops[key] ? "畑になっているよ（鍬で草地にもどしてから）"
+      : (world.decor || {})[key] ? "かざりが置いてあるよ（どかしてから）" : inPaddock(tx, ty) ? "牧場の中には道を作れないよ" : village.solid[ty]?.[tx] ? "物や建物があって、道を作れないよ"
+      : !/^(grass|flower)/.test(g) ? (g === "water" ? "水の上には道を作れないよ（橋をかけよう）" : "ここの地面には道を作れないよ（草地にどうぞ）") : "";
+    if (why) { toast("dirtpath50", why); return true; }
     world.terrain[key] = "path" + ((tx + ty) % 2); village.ground[ty][tx] = world.terrain[key]; village.base[ty][tx] = false; removeItem(sel.id, 1);
     rebuildSolid(); dust(tx, ty, [184, 148, 106], 6); try { SFX.dig && SFX.dig(); } catch (e) { } saveWorld(); return true;
   }
@@ -11971,6 +12003,7 @@ $("emo60w").querySelector(".emo60p").insertAdjacentHTML("beforebegin", `<div cla
 $("emo60s").addEventListener("click", e => { const b = e.target.closest("[data-st61]"); if (!b) return; e.stopPropagation(); stamp(b.dataset.st61); toggleEmo60(false); });
 const _toggleEmo61 = toggleEmo60;
 toggleEmo60 = function (v) { _toggleEmo61(v); const st = $("emo60s"); if (st) st.hidden = !F8.connected; };
+F61.box = openBox17; F61.addRare = addRare; F61.countT = countT; F61.groupR = groupR;
 F61.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};

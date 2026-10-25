@@ -418,3 +418,19 @@ b.rare2 { color: #3a78d8; } b.rare3 { color: #d88a00; }
 .emo60s .btn { font-size: .82rem; padding: 4px 10px; }
 @media (max-width: 560px) { #mapBtn13 { display: inline-block; } }
 @media (orientation: landscape) and (max-height: 540px) { header #mapBtn13 { display: inline-block !important; } }
+/* v62: COSME COUNTER（顔にドットでメイク） */
+.cos62 { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+.cos62l { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#cos62cv { width: min(78vw, 300px); aspect-ratio: 10 / 9; image-rendering: pixelated; border: 3px solid #d88aa2; border-radius: 10px; touch-action: none; cursor: crosshair; background: #fff; }
+.cos62t { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.cos62r { display: flex; flex-direction: column; gap: 8px; align-items: center; max-width: 300px; }
+.cos62pal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%; }
+.cos62c { display: flex; align-items: center; gap: 4px; padding: 3px 5px; border: 2px solid transparent; border-radius: 8px; background: rgba(255, 255, 255, .7); font: inherit; font-size: .68rem; cursor: pointer; color: inherit; }
+.cos62c.on { border-color: #d0507a; background: #fff0f5; }
+.cos62c i { width: 14px; height: 14px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
+.cos62c i.er { background: repeating-linear-gradient(45deg, #fff 0 3px, #ddd 3px 6px); }
+.cos62looks { display: flex; gap: 6px; }
+.cos62looks > div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cos62looks img { width: 40px; height: 40px; image-rendering: pixelated; background: #fff6f8; border-radius: 8px; }
+.cos62looks img.empty { opacity: .35; }
+.cos62looks .btn { font-size: .66rem; padding: 2px 6px; }

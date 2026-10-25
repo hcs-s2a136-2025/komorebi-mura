@@ -32,7 +32,10 @@ final class Sanitize {
         return DIRS.contains(s) ? s : "down";
     }
 
-    /** 見た目の設定：文字列の値だけ・20項目まで・各20文字まで */
+    /** 顔に描いたメイク（よこ10×たて9マス、1マス16色を16進数1文字で） */
+    private static final Pattern PAINT = Pattern.compile("[0-9a-f]{90}");
+
+    /** 見た目の設定：文字列の値だけ・20項目まで・各20文字まで（メイクの paint だけは決まった形の90文字） */
     static ObjectNode cfg(JsonNode n, ObjectMapper om) {
         ObjectNode out = om.createObjectNode();
         if (n == null || !n.isObject()) return out;
@@ -41,6 +44,7 @@ final class Sanitize {
             Map.Entry<String, JsonNode> e = it.next();
             if (e.getKey().length() > 12) continue;
             JsonNode v = e.getValue();
+            if ("paint".equals(e.getKey())) { if (v.isTextual() && PAINT.matcher(v.asText()).matches()) { out.put("paint", v.asText()); count++; } continue; }
             if (v.isTextual() && v.asText().length() <= 20) { out.put(e.getKey(), v.asText()); count++; }
             else if (v.isBoolean()) { out.put(e.getKey(), v.asBoolean()); count++; }
         }

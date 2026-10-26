@@ -441,3 +441,10 @@ html, body { touch-action: manipulation; }
 .keys64 .row { align-items: center; gap: 6px; flex-wrap: wrap; }
 .kname64 { min-width: 5em; font-weight: bold; }
 #hname64 { background: #fffaf0; color: var(--ink, #3b2a21); border: 2px solid var(--wood, #8a6a44); border-radius: 8px; padding: 6px 8px; font: inherit; }
+/* v66: こもれび証券 */
+.up66 { color: #2a9a5a; } .dn66 { color: #d0404a; }
+.tr66h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
+.tr66p { font-size: 1.2rem; font-weight: bold; }
+#tr66cv { width: 100%; max-width: 520px; aspect-ratio: 320 / 150; display: block; margin: 6px auto; border-radius: 8px; }
+.tr66in { width: 8em; padding: 6px 8px; border: 2px solid var(--wood, #8a6a44); border-radius: 8px; background: #fffaf0; font: inherit; color: inherit; }
+.spark66 { width: 80px; height: 26px; }

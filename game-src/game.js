@@ -3922,7 +3922,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.35.0";
+const CLIENT_VERSION = "0.36.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5990,6 +5990,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.36.0", date: "2026/10/26", title: "ビニールハウス・こもれび証券・自転車", items: [
+    "よろず屋に「枯れ防止剤」（150G）。作物に向かって使うと、まわり5×5マスの作物が、次の季節の変わり目を1回のりこえられる",
+    "よろず屋に「ビニールハウス」（30,000G）。6×5マスのハウスの中の作物は、季節が変わっても枯れず、どの季節の種でも育つ（2つまで）",
+    "村の信用金庫に「こもれび証券」がオープン。株（3社）・FX（ドル、レバレッジ10倍）・暗号資産（2種類）を取引できる。値段は30秒ごとに動いて、みんな同じ値段",
+    "よろず屋に自転車（15,000G）とスケートボード（8,000G）。持ってAで乗る。村・街・みなと町で、自転車は約2倍、スケボーは約1.5倍の速さ。ほかの人にも乗っている姿が見えるよ",
+    "実績4つと、てびきの説明を追加",
+  ] },
   { v: "0.35.0", date: "2026/10/26", title: "家の名前と同居人", items: [
     "自分の家に、すきな名前をつけられるように（家の中の建築タブ）。村の地図やオンラインの一覧にも出るよ",
     "合鍵をわたした人を「同居人」にできるように。同居人は、模様替えと収納箱から出すことができる",
@@ -12201,6 +12208,311 @@ F32.wire = (body, d, k, mine) => {
 GUIDE54.forEach(g => { if (g[0] === "牧場とペット") g[2] = g[2].replace("</ul>", "<li>家畜小屋かニワトリ小屋を建てていれば、小屋に向かってAボタン →「まとめて回収する」で、牧場に落ちている卵・ミルク・毛などを全部拾える</li><li>柵の中では、家畜をすりぬけて歩ける</li></ul>"); });
 F63.drops = prodDrops63;
 F63.ready = true;
+var F65 = {}, F66 = {}, F67 = {};
+// ---------- v65: 枯れ防止剤・ビニールハウス（季節が変わっても作物が枯れない） ----------
+IMG.aw65 = pix13(16, 16, (s, r) => { r(6, 1, 4, 2, C13["#5a8a5a"]); r(5, 3, 6, 2, C13["#3a6a4a"]); r(4, 5, 8, 10, C13["#7ac0e8"]); r(4, 5, 8, 1, C13["#b8e4f8"]); r(5, 8, 6, 4, C13["#f4fbf2"]); r(6, 9, 1, 2, C13["#5aa85a"]); r(7, 9, 3, 1, C13["#5aa85a"]); r(8, 10, 1, 1, C13["#5aa85a"]); r(4, 14, 8, 1, C13["#4a8ab8"]); });
+IMG.gh65 = pix13(16, 16, (s, r) => { for (let y = 3; y <= 7; y++) { const hw = Math.round(Math.sqrt(Math.max(0, 25 - (7 - y) * (7 - y) * 1.5)) * 1.3); r(8 - hw, y, hw * 2, 1, C13["#d8eef6"]); } r(1, 7, 14, 7, C13["#e8f6fb"]); r(1, 7, 1, 7, C13["#9ab8c4"]); r(14, 7, 1, 7, C13["#9ab8c4"]); r(7, 3, 1, 11, C13["#9ab8c4"]); r(1, 13, 14, 1, C13["#7a9aa6"]); r(3, 10, 2, 3, C13["#5aa85a"]); r(10, 9, 2, 4, C13["#e85a5a"]); r(10, 11, 2, 2, C13["#5aa85a"]); });
+ASSETS.aw65 = IMG.aw65.toDataURL(); ASSETS.gh65 = IMG.gh65.toDataURL();
+ITEMS.antiwither65 = { name: "枯れ防止剤", icon: "aw65", price: 150, antiwither: true };
+ITEMS.greenhouse65 = { name: "ビニールハウスのキット", icon: "gh65", price: 30000, greenhouse: true };
+for (const id of ["antiwither65", "greenhouse65"]) { SHOP_STOCK.push(id); SHOP_BASE.push(id); }
+const GH_W65 = 6, GH_H65 = 5, GH_MAX65 = 2;
+world.greenhouses65 = Array.isArray(world.greenhouses65) ? world.greenhouses65.filter(g => g && Number.isFinite(g.x) && Number.isFinite(g.y)) : [];
+const inGH65 = (x, y) => world.greenhouses65.find(g => x >= g.x && x < g.x + GH_W65 && y >= g.y && y < g.y + GH_H65);
+const keyInGH65 = k => { const [x, y] = k.split(",").map(Number); return !!inGH65(x, y); };
+function ghRect65() {
+  const [tx, ty] = front(), d = player.dir;
+  const x = d === "left" ? tx - GH_W65 + 1 : d === "right" ? tx : tx - Math.floor(GH_W65 / 2) + (GH_W65 % 2 ? 0 : 1) - 1;
+  const y = d === "up" ? ty - GH_H65 + 1 : d === "down" ? ty : ty - Math.floor(GH_H65 / 2);
+  return { x, y };
+}
+function ghFree65(g) {
+  const band = player.y >= NY0 ? [NY0, VH - 1] : [0, NY0 - 1];
+  for (let y = g.y; y < g.y + GH_H65; y++) for (let x = g.x; x < g.x + GH_W65; x++) {
+    if (x < 1 || x >= village.w - 1 || y < band[0] + 1 || y > band[1] - 1) return "村のはしには建てられないよ";
+    const gr = village.ground[y]?.[x] || "";
+    if (gr === "water") return "水の上には建てられないよ";
+    if (village.solid[y][x]) return "物や建物があって、建てられないよ";
+    if (inPaddock(x, y)) return "牧場の中には建てられないよ";
+    if (inGH65(x, y)) return "ほかのビニールハウスと重なってるよ";
+  }
+  return "";
+}
+// 季節が変わったとき：ビニールハウスの中と、枯れ防止剤をかけた作物は枯れない
+witherOutOfSeason = function () {
+  let n = 0, saved = 0; const si = seasonIdx();
+  for (const k in world.crops) {
+    const c = world.crops[k]; if (c.dead || CROP_INFO[c.type].seasons.includes(season())) continue;
+    if (keyInGH65(k) || (Number.isFinite(c.guard65) && c.guard65 >= si - 1)) { saved++; continue; }
+    c.dead = true; n++;
+  }
+  if (saved) setTimeout(() => F7.notify(`ビニールハウスと枯れ防止剤のおかげで、作物${saved}つは無事だった`, "aw65"), 400);
+  return n;
+};
+// 使う：枯れ防止剤（まわり5×5の作物に）・ビニールハウスのキット（置く／片付ける）
+const _f7act65 = F7.act;
+F7.act = (tx, ty, key, sel, item, other) => {
+  if (map === village && !other && item && item.antiwither) {
+    const si = seasonIdx(); let n = 0;
+    for (let y = ty - 2; y <= ty + 2; y++) for (let x = tx - 2; x <= tx + 2; x++) { const c = world.crops[x + "," + y]; if (c && !c.dead && c.guard65 !== si) { c.guard65 = si; n++; } }
+    if (!n) { toast("aw65", "かける作物がないよ（作物に向かって使うと、まわり5×5マスにかかる）"); return true; }
+    removeItem(sel.id, 1); saveWorld(); dust(tx, ty, [150, 210, 240], 10); try { SFX.splash ? SFX.splash() : SFX.small(); } catch (e) { }
+    toast("aw65", `作物${n}つに枯れ防止剤をかけた。次に季節が変わっても枯れないよ（1季節ぶん）`); return true;
+  }
+  if (map === village && item && item.greenhouse) {
+    const hit = inGH65(tx, ty);
+    if (hit) {
+      openModal("ビニールハウス", "", body => {
+        body.innerHTML = `<p class="mtext">このビニールハウスを片付けて、キットにもどす？（中の作物はそのまま残るけど、季節が変わると枯れるようになるよ）</p><div class="row2"><button class="btn light" type="button" id="gh65no">やめる</button><button class="btn" type="button" id="gh65yes">片付ける</button></div>`;
+        body.querySelector("#gh65no").onclick = () => closeModal();
+        body.querySelector("#gh65yes").onclick = () => { world.greenhouses65 = world.greenhouses65.filter(g => g !== hit); addItem("greenhouse65", 1, true); saveWorld(); closeModal(); toast("gh65", "ビニールハウスをキットにもどした"); };
+      });
+      return true;
+    }
+    if (world.greenhouses65.length >= GH_MAX65) { toast("gh65", `ビニールハウスは${GH_MAX65}つまで（キットを持って、ハウスに向かってAで片付けられる）`); return true; }
+    const g = ghRect65(), why = ghFree65(g);
+    if (why) { toast("gh65", why); return true; }
+    world.greenhouses65.push(g); removeItem(sel.id, 1); saveWorld();
+    for (let x = g.x; x < g.x + GH_W65; x++) dust(x, g.y + GH_H65 - 1, [220, 240, 250], 4);
+    world.stats.gh65 = (world.stats.gh65 || 0) + 1;
+    toast("gh65", "ビニールハウスが建った！ 中の作物は、季節が変わっても枯れないよ。どの季節の種も育つ"); return true;
+  }
+  return _f7act65 ? _f7act65(tx, ty, key, sel, item, other) : false;
+};
+// 描く：ハウス（中が透けて見える）・置く場所の下書き・枯れ防止剤のしるし
+const _atl65 = F7.addToList;
+F7.addToList = (list, now) => {
+  _atl65(list, now);
+  if (map !== village) return;
+  const si = seasonIdx();
+  for (const k in world.crops) { const c = world.crops[k]; if (!c.dead && Number.isFinite(c.guard65) && c.guard65 >= si) { const [x, y] = k.split(",").map(Number); list.push({ s: y * TS + 15, d: () => { const tw = Math.sin(now / 300 + x) > .3; ctx.fillStyle = tw ? "#bfe8ff" : "#7ac0e8"; ctx.fillRect(x * TS + 12, y * TS + 2, 2, 2); } }); } }
+  for (const g of world.greenhouses65) {
+    const X = g.x * TS, Y = g.y * TS, W = GH_W65 * TS, H = GH_H65 * TS;
+    list.push({ s: (g.y + GH_H65) * TS + 1, d: () => {
+      ctx.fillStyle = "rgba(220,240,250,.22)"; ctx.fillRect(X, Y, W, H);
+      ctx.fillStyle = "rgba(255,255,255,.35)"; for (let i = 0; i < 3; i++) ctx.fillRect(X + 6 + i * 30, Y + 4, 10, 2);
+      ctx.strokeStyle = "rgba(150,180,195,.9)"; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, W - 1, H - 1);
+      for (let x = 1; x < GH_W65; x++) { ctx.fillStyle = "rgba(150,180,195,.45)"; ctx.fillRect(X + x * TS, Y, 1, H); }
+      ctx.fillStyle = "rgba(150,180,195,.7)"; ctx.fillRect(X, Y + H - 2, W, 2);
+    } });
+  }
+  const sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+  if (it && it.greenhouse && !modalOpen) {
+    const [tx, ty] = front(); if (inGH65(tx, ty)) return;
+    const g = ghRect65(), ok = !ghFree65(g) && world.greenhouses65.length < GH_MAX65;
+    list.push({ s: 1e9, d: () => { ctx.fillStyle = ok ? "rgba(120,220,140,.25)" : "rgba(240,90,90,.25)"; ctx.fillRect(g.x * TS, g.y * TS, GH_W65 * TS, GH_H65 * TS); ctx.strokeStyle = ok ? "#5ac06a" : "#e05a5a"; ctx.strokeRect(g.x * TS + .5, g.y * TS + .5, GH_W65 * TS - 1, GH_H65 * TS - 1); } });
+  }
+};
+// 作物の説明に「ハウスの中」「枯れ防止剤」
+ACH.push(["ハウス農家", "ビニールハウスを建てる", () => (world.stats.gh65 || 0) >= 1]);
+ACH_REWARD["ハウス農家"] = ["item", "antiwither65", 10];
+GUIDE54.forEach(g => { if (g[0] === "畑と作物") g[2] = g[2].replace("</ul>", "<li><b>季節が変わると</b>、旬じゃない作物は枯れてしまう。よろず屋の<b>枯れ防止剤</b>（150G）を作物に向かって使うと、まわり5×5マスの作物が、次の季節の変わり目を1回だけのりこえられる（青い点がしるし）</li><li><b>ビニールハウス</b>（よろず屋・30,000G）：キットを持って向いた先に、6×5マスのハウスが建つ。中の作物は季節が変わっても枯れず、どの季節の種でも育つ（2つまで。キットを持ってハウスに向かってAで片付け）</li></ul>"); });
+F65.gh = () => world.greenhouses65; F65.inGH = inGH65;
+
+// ---------- v66: こもれび証券（株・FX・暗号資産）。値動きは、みんな同じ式で決まるので、だれが見ても同じ値段 ----------
+const TICK66 = 30000;
+const ASSET66 = {
+  KMR: { kind: "stock", name: "こもれび電鉄", base: 1200, vol: .12, seed: 101, unit: "株" },
+  DNG: { kind: "stock", name: "どんぐり製菓", base: 800, vol: .16, seed: 202, unit: "株" },
+  HKR: { kind: "stock", name: "ひかりテック", base: 3000, vol: .26, seed: 303, unit: "株" },
+  USD: { kind: "fx", name: "ドル（1ドルあたりのG）", base: 150, vol: .045, seed: 404 },
+  DGC: { kind: "coin", name: "ドングリコイン", base: 50000, vol: .5, seed: 505 },
+  TKM: { kind: "coin", name: "ツキミコイン", base: 120, vol: .85, seed: 606 },
+};
+const FEE66 = { stock: .003, coin: .005, fx: .001 }, LEV66 = 10;
+function hash66(i, s) { let h = (i | 0) ^ Math.imul(s | 0, 0x9E3779B1); h = Math.imul(h ^ (h >>> 16), 0x85EBCA6B); h = Math.imul(h ^ (h >>> 13), 0xC2B2AE35); h ^= h >>> 16; return (h >>> 0) / 4294967296 * 2 - 1; }
+function noise66(x, s) { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return hash66(i, s) * (1 - u) + hash66(i + 1, s) * u; }
+function price66(sym, n) {
+  const A = ASSET66[sym], s = A.seed;
+  const z = .55 * noise66(n / 1440, s) + .35 * noise66(n / 240, s + 1) + .22 * noise66(n / 40, s + 2) + .1 * noise66(n / 7, s + 3) + .035 * hash66(n, s + 4);
+  const p = A.base * Math.exp(A.vol * z * 1.6);
+  return A.kind === "stock" ? Math.max(1, Math.round(p)) : A.kind === "fx" ? Math.round(p * 100) / 100 : Math.round(p * 100) / 100;
+}
+const tickNow66 = () => Math.floor(Date.now() / TICK66);
+const pNow66 = sym => price66(sym, tickNow66());
+world.trade66 = world.trade66 && typeof world.trade66 === "object" ? world.trade66 : {};
+const T66 = () => { const t = world.trade66; t.hold = t.hold || {}; t.cost = t.cost || {}; t.fx = Array.isArray(t.fx) ? t.fx : []; t.realized = t.realized || 0; return t; };
+const fmtP66 = (sym, p) => ASSET66[sym].kind === "stock" ? fmt(p) : p >= 1000 ? fmt(Math.round(p)) : p.toFixed(2) + " G";
+const fxPL66 = (pos, p) => Math.round(pos.margin * LEV66 * (p / pos.entry - 1) * pos.side);
+// ロスカット：損が証拠金の8割をこえたら、自動で決済
+function losscut66() {
+  const t = T66(); let cut = 0;
+  for (const pos of t.fx.slice()) { const pl = fxPL66(pos, pNow66("USD")); if (pl <= -pos.margin * .8) { t.fx.splice(t.fx.indexOf(pos), 1); const back = Math.max(0, pos.margin + pl); addMoney(back); t.realized += pl; cut++; } }
+  if (cut) { saveWorld(); F7.notify(`FXの取引が${cut}件、ロスカットされた（損が証拠金の8割をこえたため）`, "coin"); }
+}
+setInterval(() => { try { if (T66().fx.length) losscut66(); } catch (e) { } }, 15000);
+function portfolio66() {
+  const t = T66(); let v = 0;
+  for (const [sym, q] of Object.entries(t.hold)) if (ASSET66[sym] && q > 0) v += q * pNow66(sym);
+  for (const pos of t.fx) v += pos.margin + fxPL66(pos, pNow66("USD"));
+  return Math.round(v);
+}
+IMG.term66 = pix13(16, 26, (s, r) => { r(2, 2, 12, 12, C13["#2a3040"]); r(3, 3, 10, 9, C13["#0e1a2a"]); for (let x = 3; x < 13; x++) s(x, 10 - Math.round((Math.sin(x * .9) + 1) * 2.5 + (x % 3 === 0 ? 1 : 0)), x % 4 === 1 ? C13["#ff6a6a"] : C13["#5ae08a"]); r(7, 14, 2, 6, C13["#4a5060"]); r(3, 20, 10, 4, C13["#c8a060"]); r(3, 20, 10, 1, C13["#e8c888"]); r(2, 24, 12, 2, C13["#8a6a44"]); });
+ASSETS.term66 = IMG.term66.toDataURL();
+const _mi66 = makeInterior;
+makeInterior = function (kind) {
+  const m = _mi66(kind);
+  if (kind === "bank") { m.objs.push({ img: "term66", x: 8 * TS, y: 4 * TS - 26, sortY: 4 * TS - 1 }); m.base[3][8] = true; m.interact["8,3"] = () => openTrade66(); m.labels.push({ x: 8 * TS + 8, y: 2 * TS - 4, text: "こもれび証券" }); }
+  return m;
+};
+let tr66 = { tab: "stock", sym: null, range: 0 };
+const RANGE66 = [["1時間", 120, 1], ["6時間", 720, 6], ["1日", 2880, 24], ["1週間", 20160, 168]];
+function chart66(cv, sym) {
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height, [, span, step] = RANGE66[tr66.range], n0 = tickNow66();
+  const pts = []; for (let n = n0 - span; n <= n0; n += step) pts.push(price66(sym, n));
+  const lo = Math.min(...pts), hi = Math.max(...pts), pad = (hi - lo) * .1 || 1;
+  const Y = p => H - 14 - (p - lo + pad) / (hi - lo + pad * 2) * (H - 24);
+  g.fillStyle = "#101a26"; g.fillRect(0, 0, W, H);
+  g.strokeStyle = "rgba(255,255,255,.08)"; for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(0, i * H / 4); g.lineTo(W, i * H / 4); g.stroke(); }
+  const up = pts[pts.length - 1] >= pts[0], col = up ? "#5ae08a" : "#ff6a6a";
+  g.beginPath(); pts.forEach((p, i) => { const x = i / (pts.length - 1) * W; i ? g.lineTo(x, Y(p)) : g.moveTo(x, Y(p)); }); g.strokeStyle = col; g.lineWidth = 1.5; g.stroke();
+  g.lineTo(W, H); g.lineTo(0, H); g.closePath(); g.fillStyle = up ? "rgba(90,224,138,.12)" : "rgba(255,106,106,.12)"; g.fill();
+  g.fillStyle = "rgba(255,255,255,.7)"; g.font = "10px sans-serif"; g.textAlign = "left"; g.fillText("高 " + fmtP66(sym, hi), 4, 11); g.fillText("安 " + fmtP66(sym, lo), 4, H - 3);
+}
+function change66(sym) { const n = tickNow66(), a = price66(sym, n - 120), b = price66(sym, n); return (b / a - 1) * 100; }
+function openTrade66() {
+  losscut66();
+  const t = T66();
+  openModal("こもれび証券", "", body => {
+    const draw = msg => {
+      const cash = world.money, pv = portfolio66();
+      let html = `<div class="mtabs">${[["stock", "株"], ["fx", "FX"], ["coin", "暗号資産"], ["mine", "持っているもの"]].map(([k, l]) => `<button class="chip" type="button" data-t66="${k}" aria-pressed="${tr66.tab === k}">${l}</button>`).join("")}</div>
+        <p class="mtext small">所持金 <b>${fmt(cash)}</b>　運用中 <b>${fmt(pv)}</b>　これまでの損益 <b class="${t.realized >= 0 ? "up66" : "dn66"}">${t.realized >= 0 ? "+" : ""}${fmt(t.realized)}</b></p>`;
+      if (tr66.sym) {
+        const sym = tr66.sym, A = ASSET66[sym], p = pNow66(sym), ch = change66(sym);
+        html += `<div class="tr66h"><button class="btn light" type="button" id="tr66back">← もどる</button><b>${esc(A.name)}</b><span class="tr66p">${fmtP66(sym, p)}</span><span class="${ch >= 0 ? "up66" : "dn66"}">${ch >= 0 ? "▲" : "▼"}${Math.abs(ch).toFixed(2)}%（1時間）</span></div>
+          <div class="mtabs">${RANGE66.map(([l], i) => `<button class="chip" type="button" data-r66="${i}" aria-pressed="${tr66.range === i}">${l}</button>`).join("")}</div>
+          <canvas id="tr66cv" width="320" height="150"></canvas>`;
+        if (A.kind === "stock") {
+          const q = t.hold[sym] || 0, avg = q ? t.cost[sym] / q : 0;
+          html += `<p class="mtext small">持っている数 <b>${q}株</b>${q ? `（平均 ${fmt(Math.round(avg))}・いまの評価 ${fmt(q * p)}・損益 <b class="${q * p - t.cost[sym] >= 0 ? "up66" : "dn66"}">${fmt(Math.round(q * p - t.cost[sym]))}</b>）` : ""}　手数料 0.3%</p>
+            <div class="row2"><input type="number" id="tr66n" min="1" max="100000" value="10" class="tr66in"><span>株</span><button class="btn" type="button" id="tr66buy">買う</button><button class="btn light" type="button" id="tr66sell" ${q ? "" : "disabled"}>売る</button><button class="btn light" type="button" id="tr66sellall" ${q ? "" : "disabled"}>全部売る</button></div>`;
+        } else if (A.kind === "coin") {
+          const q = t.hold[sym] || 0;
+          html += `<p class="mtext small">持っている量 <b>${q.toFixed(6)}</b>${q ? `（いまの評価 ${fmt(Math.round(q * p))}・損益 <b class="${q * p - t.cost[sym] >= 0 ? "up66" : "dn66"}">${fmt(Math.round(q * p - t.cost[sym]))}</b>）` : ""}　手数料 0.5%。値動きがとても大きいので、気をつけてね</p>
+            <div class="row2"><input type="number" id="tr66n" min="100" max="10000000" value="10000" class="tr66in"><span>G 分</span><button class="btn" type="button" id="tr66buy">買う</button><button class="btn light" type="button" id="tr66sell" ${q ? "" : "disabled"}>その金額ぶん売る</button><button class="btn light" type="button" id="tr66sellall" ${q ? "" : "disabled"}>全部売る</button></div>`;
+        } else {
+          html += `<p class="mtext small">証拠金の${LEV66}倍の金額で取引する（レバレッジ${LEV66}倍）。ドルが上がると思ったら「買い」、下がると思ったら「売り」。損が証拠金の8割をこえると、自動で決済（ロスカット）されるよ。手数料 0.1%</p>
+            <div class="row2"><input type="number" id="tr66n" min="1000" max="10000000" value="10000" class="tr66in"><span>G（証拠金）</span><button class="btn" type="button" id="tr66long">買い（上がる）</button><button class="btn light" type="button" id="tr66short">売り（下がる）</button></div>
+            <div class="list">${t.fx.map((pos, i) => { const pl = fxPL66(pos, p); return `<div class="li"><span class="nm">${pos.side > 0 ? "買い" : "売り"}　証拠金 ${fmt(pos.margin)}・${pos.entry.toFixed(2)}で注文<span class="sub2">いまの損益 <b class="${pl >= 0 ? "up66" : "dn66"}">${pl >= 0 ? "+" : ""}${fmt(pl)}</b></span></span><span class="acts"><button class="btn" type="button" data-fxc="${i}">決済</button></span></div>`; }).join("") || `<p class="mtext small">いま持っているポジションはないよ</p>`}</div>`;
+        }
+      } else if (tr66.tab === "mine") {
+        const rows = Object.entries(t.hold).filter(([s, q]) => ASSET66[s] && q > 0).map(([s, q]) => { const v = q * pNow66(s), pl = v - (t.cost[s] || 0); return `<div class="li" data-s66="${s}"><span class="nm">${esc(ASSET66[s].name)}<span class="sub2">${ASSET66[s].kind === "stock" ? q + "株" : q.toFixed(6)}・評価 ${fmt(Math.round(v))}・損益 <b class="${pl >= 0 ? "up66" : "dn66"}">${pl >= 0 ? "+" : ""}${fmt(Math.round(pl))}</b></span></span><span class="acts">›</span></div>`; });
+        for (const pos of t.fx) { const pl = fxPL66(pos, pNow66("USD")); rows.push(`<div class="li" data-s66="USD"><span class="nm">FX ${pos.side > 0 ? "買い" : "売り"}<span class="sub2">証拠金 ${fmt(pos.margin)}・損益 <b class="${pl >= 0 ? "up66" : "dn66"}">${pl >= 0 ? "+" : ""}${fmt(pl)}</b></span></span><span class="acts">›</span></div>`); }
+        html += `<div class="list">${rows.join("") || `<p class="mtext">まだ何も持っていないよ</p>`}</div>`;
+      } else {
+        html += `<div class="list">${Object.entries(ASSET66).filter(([, A]) => A.kind === tr66.tab).map(([s, A]) => { const ch = change66(s); return `<div class="li" data-s66="${s}"><span class="nm">${esc(A.name)}<span class="sub2">${fmtP66(s, pNow66(s))}　<b class="${ch >= 0 ? "up66" : "dn66"}">${ch >= 0 ? "▲" : "▼"}${Math.abs(ch).toFixed(2)}%</b>（1時間）</span></span><span class="acts"><canvas class="spark66" data-sp66="${s}" width="80" height="26"></canvas></span></div>`; }).join("")}</div>
+          <p class="note">値段は30秒ごとに動く。みんな同じ値段で取引しているよ。${tr66.tab === "coin" ? "暗号資産は、株よりずっと値動きが大きい。" : tr66.tab === "fx" ? "FXは、もうけも損も10倍になるよ。" : ""}</p>`;
+      }
+      html += `<p class="mtext small" id="tr66msg">${msg ? esc(msg) : ""}</p>`;
+      const keepN = body.querySelector("#tr66n")?.value;
+      body.innerHTML = html;
+      if (keepN && body.querySelector("#tr66n")) body.querySelector("#tr66n").value = keepN;
+      body.querySelectorAll("[data-t66]").forEach(b => b.onclick = () => { tr66.tab = b.dataset.t66; tr66.sym = null; draw(); });
+      body.querySelectorAll("[data-s66]").forEach(b => b.onclick = () => { tr66.sym = b.dataset.s66; draw(); });
+      body.querySelectorAll("[data-r66]").forEach(b => b.onclick = () => { tr66.range = +b.dataset.r66; draw(); });
+      body.querySelector("#tr66back")?.addEventListener("click", () => { tr66.sym = null; draw(); });
+      body.querySelectorAll("[data-sp66]").forEach(cv => { const g = cv.getContext("2d"), s = cv.dataset.sp66, n0 = tickNow66(), pts = []; for (let n = n0 - 120; n <= n0; n += 4) pts.push(price66(s, n)); const lo = Math.min(...pts), hi = Math.max(...pts) || 1; g.beginPath(); pts.forEach((p, i) => { const x = i / (pts.length - 1) * 80, y = 24 - (p - lo) / (hi - lo || 1) * 22; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.strokeStyle = pts[pts.length - 1] >= pts[0] ? "#3aa86a" : "#d84a4a"; g.lineWidth = 1.5; g.stroke(); });
+      const cv = body.querySelector("#tr66cv"); if (cv) chart66(cv, tr66.sym);
+      const num = () => Math.max(0, Math.floor(+body.querySelector("#tr66n")?.value || 0));
+      const sym = tr66.sym, A = sym && ASSET66[sym];
+      const done = (m, ok) => { if (ok) { world.stats.trade66 = (world.stats.trade66 || 0) + 1; saveWorld(); } draw(m); };
+      body.querySelector("#tr66buy")?.addEventListener("click", () => {
+        const p = pNow66(sym), n = num(); if (!n) return;
+        if (A.kind === "stock") { const cost = Math.ceil(n * p * (1 + FEE66.stock)); if (cost > world.money) return draw("お金が足りないよ"); addMoney(-cost); t.hold[sym] = (t.hold[sym] || 0) + n; t.cost[sym] = (t.cost[sym] || 0) + cost; done(`${A.name}を${n}株買った（${fmt(cost)}）`, true); }
+        else { if (n > world.money) return draw("お金が足りないよ"); const q = n * (1 - FEE66.coin) / p; addMoney(-n); t.hold[sym] = (t.hold[sym] || 0) + q; t.cost[sym] = (t.cost[sym] || 0) + n; done(`${A.name}を${q.toFixed(6)}買った（${fmt(n)}）`, true); }
+      });
+      const sell = all => {
+        const p = pNow66(sym), have = t.hold[sym] || 0; if (!have) return;
+        let q = A.kind === "stock" ? Math.min(have, all ? have : num()) : Math.min(have, all ? have : num() / p);
+        if (!(q > 0)) return;
+        if (A.kind === "coin" && have - q < 1e-9) q = have;
+        const gross = q * p, fee = gross * (A.kind === "stock" ? FEE66.stock : FEE66.coin), get = Math.floor(gross - fee);
+        const costPart = (t.cost[sym] || 0) * (q / have); t.cost[sym] = (t.cost[sym] || 0) - costPart; t.hold[sym] = have - q;
+        if (t.hold[sym] <= 1e-9) { delete t.hold[sym]; delete t.cost[sym]; }
+        addMoney(get); const pl = Math.round(get - costPart); t.realized += pl; world.stats.tradeBest66 = Math.max(world.stats.tradeBest66 || 0, t.realized);
+        done(`${A.name}を売った（+${fmt(get)}・損益 ${pl >= 0 ? "+" : ""}${fmt(pl)}）`, true);
+      };
+      body.querySelector("#tr66sell")?.addEventListener("click", () => sell(false));
+      body.querySelector("#tr66sellall")?.addEventListener("click", () => sell(true));
+      const open = side => { const m = num(); if (m < 1000) return draw("証拠金は1,000Gから"); const fee = Math.ceil(m * LEV66 * FEE66.fx); if (m + fee > world.money) return draw("お金が足りないよ"); if (t.fx.length >= 5) return draw("ポジションは5つまで");
+        addMoney(-(m + fee)); t.fx.push({ side, margin: m, entry: pNow66("USD"), t: Date.now() }); done(`ドルを${side > 0 ? "買った" : "売った"}（証拠金 ${fmt(m)}・手数料 ${fmt(fee)}）`, true); };
+      body.querySelector("#tr66long")?.addEventListener("click", () => open(1));
+      body.querySelector("#tr66short")?.addEventListener("click", () => open(-1));
+      body.querySelectorAll("[data-fxc]").forEach(b => b.onclick = () => { const pos = t.fx[+b.dataset.fxc]; if (!pos) return; const pl = fxPL66(pos, pNow66("USD")); t.fx.splice(t.fx.indexOf(pos), 1); addMoney(Math.max(0, pos.margin + pl)); t.realized += pl; world.stats.tradeBest66 = Math.max(world.stats.tradeBest66 || 0, t.realized); done(`決済した（損益 ${pl >= 0 ? "+" : ""}${fmt(pl)}）`, true); });
+    };
+    draw();
+    // 値段が動いたら、開いている画面も新しくする（入力中の数はそのまま）
+    let lastTick = tickNow66();
+    const iv = setInterval(() => { if (!modalOpen || $("mtitle").textContent !== "こもれび証券") { clearInterval(iv); return; } const n = tickNow66(); if (n !== lastTick) { lastTick = n; losscut66(); if (document.activeElement?.id !== "tr66n") draw(); } }, 1000);
+  });
+}
+ACH.push(["はじめての投資", "こもれび証券で、株・FX・暗号資産のどれかを取引する", () => (world.stats.trade66 || 0) >= 1]);
+ACH_REWARD["はじめての投資"] = ["money", 1000];
+ACH.push(["億り人", "こもれび証券の、これまでの損益が+1,000,000Gをこえる", () => (world.stats.tradeBest66 || 0) >= 1000000]);
+ACH_REWARD["億り人"] = ["money", 50000];
+GUIDE54.splice(GUIDE54.length - 1, 0, ["株・FX・暗号資産", "term66", `
+  <ul>
+  <li>村の信用金庫の中、右の「こもれび証券」の端末で取引できる</li>
+  <li>値段は30秒ごとに動く。みんな同じ式で決まるので、だれが見ても同じ値段。1時間・6時間・1日・1週間のグラフが見られる</li>
+  <li><b>株</b>（こもれび電鉄・どんぐり製菓・ひかりテック）：1株ずつ買える。手数料0.3%</li>
+  <li><b>FX</b>（ドル）：証拠金の10倍で取引。上がると思ったら「買い」、下がると思ったら「売り」。損が証拠金の8割をこえると自動で決済（ロスカット）。5つまで</li>
+  <li><b>暗号資産</b>（ドングリコイン・ツキミコイン）：金額を決めて買う。値動きがとても大きい。手数料0.5%</li></ul>`]);
+F66.price = price66; F66.now = pNow66; F66.open = openTrade66; F66.tick = tickNow66;
+
+// ---------- v67: 自転車・スケートボード（村・街・みなと町で、はやく移動できる） ----------
+IMG.bike67 = pix13(16, 16, (s, r) => { ell13(s, 4, 11, 3, 3, C13["#2a2a30"]); ell13(s, 4, 11, 1.6, 1.6, C13["#d8dde8"]); ell13(s, 12, 11, 3, 3, C13["#2a2a30"]); ell13(s, 12, 11, 1.6, 1.6, C13["#d8dde8"]); r(4, 8, 8, 1, C13["#e8504a"]); r(7, 8, 1, 4, C13["#e8504a"]); r(5, 6, 3, 1, C13["#3a3a40"]); r(11, 5, 1, 4, C13["#e8504a"]); r(10, 5, 3, 1, C13["#3a3a40"]); });
+IMG.skate67 = pix13(16, 16, (s, r) => { r(2, 9, 12, 2, C13["#f2b44a"]); r(1, 8, 1, 2, C13["#f2b44a"]); r(14, 8, 1, 2, C13["#f2b44a"]); r(2, 9, 12, 1, C13["#ffd88a"]); ell13(s, 4.5, 12, 1.4, 1.4, C13["#3a3a40"]); ell13(s, 11.5, 12, 1.4, 1.4, C13["#3a3a40"]); r(5, 9, 6, 1, C13["#5a8ae0"]); });
+ASSETS.bike67 = IMG.bike67.toDataURL(); ASSETS.skate67 = IMG.skate67.toDataURL();
+const RIDE67 = { bike: { item: "bike67", name: "自転車", speed: 1.9 }, skate: { item: "skate67", name: "スケートボード", speed: 1.5 } };
+ITEMS.bike67 = { name: "自転車", icon: "bike67", price: 15000, tool: true, ride67: "bike" };
+ITEMS.skate67 = { name: "スケートボード", icon: "skate67", price: 8000, tool: true, ride67: "skate" };
+for (const id of ["skate67", "bike67"]) { SHOP_STOCK.push(id); SHOP_BASE.push(id); }
+const rideOK67 = () => map === village || map === port || !!map.isTown;
+if (cfg.ride && !RIDE67[cfg.ride]) delete cfg.ride;
+function setRide67(k) {
+  if (k && !rideOK67()) { toast(RIDE67[k].item, "ここでは乗れないよ（村・街・みなと町で乗れる）"); return; }
+  if (k) cfg.ride = k; else delete cfg.ride;
+  changed(); if (typeof sendCfgSoon === "function") sendCfgSoon();
+  if (k) { world.stats.ride67 = (world.stats.ride67 || 0) + 1; toast(RIDE67[k].item, `${RIDE67[k].name}に乗った！ もう一度使うと降りるよ`); }
+  saveWorld();
+}
+const _act67 = act;
+act = function () {
+  const sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+  if (it && it.ride67 && !modalOpen && !busy) { setRide67(cfg.ride === it.ride67 ? null : it.ride67); return; }
+  return _act67.apply(this, arguments);
+};
+const _clean67 = cleanCfg;
+cleanCfg = function (c) { const o = _clean67(c); if (c && RIDE67[c.ride]) o.ride = c.ride; return o; };
+setInterval(() => {
+  if (cfg.ride && (!rideOK67() || !world.inv.some(i => i && ITEMS[i.id]?.ride67 === cfg.ride))) setRide67(null);
+  player.speed = cfg.ride ? RIDE67[cfg.ride].speed : 1;
+  for (const e of remotes.values()) e.speed = e.cfg && RIDE67[e.cfg.ride] ? RIDE67[e.cfg.ride].speed : 1;
+}, 200);
+// 乗り物を描く（キャラの足もと）
+const _drawEnt67 = drawEnt;
+drawEnt = function (e) {
+  const k = e === player ? cfg.ride : e.kind === "remote" && e.cfg ? e.cfg.ride : null;
+  if (!k || !RIDE67[k] || e.sprite) return _drawEnt67(e);
+  const x = Math.round(e.px), y = Math.round(e.py), side = e.dir === "left" || e.dir === "right";
+  const wheel = (cx, cy) => { ctx.fillStyle = "#2a2a30"; ctx.fillRect(cx - 2, cy - 2, 4, 4); ctx.fillStyle = "#d8dde8"; ctx.fillRect(cx - 1, cy - 1, 2, 2); };
+  if (k === "bike" && side) { wheel(x + 2, y + 14); wheel(x + 14, y + 14); }
+  if (k === "skate") { ctx.fillStyle = "#f2b44a"; if (side) ctx.fillRect(x + 1, y + 14, 14, 2); else ctx.fillRect(x + 5, y + 13, 6, 3); ctx.fillStyle = "#3a3a40"; if (side) { ctx.fillRect(x + 3, y + 16, 2, 1); ctx.fillRect(x + 11, y + 16, 2, 1); } }
+  ctx.save(); if (k === "skate") ctx.translate(0, -1);
+  _drawEnt67(e);
+  ctx.restore();
+  if (k === "bike") {
+    ctx.fillStyle = "#e8504a";
+    if (side) { ctx.fillRect(x + 3, y + 12, 11, 1); ctx.fillRect(x + 8, y + 11, 1, 3); if (e.dir === "left") ctx.fillRect(x + 2, y + 8, 1, 5); else ctx.fillRect(x + 13, y + 8, 1, 5); ctx.fillStyle = "#3a3a40"; if (e.dir === "left") ctx.fillRect(x + 1, y + 8, 3, 1); else ctx.fillRect(x + 12, y + 8, 3, 1); }
+    else { wheel(x + 8, y + (e.dir === "down" ? 15 : 14)); ctx.fillStyle = "#e8504a"; ctx.fillRect(x + 7, y + 11, 2, 3); ctx.fillStyle = "#3a3a40"; ctx.fillRect(x + 4, y + 10, 8, 1); }
+  }
+};
+ACH.push(["風を切って", "自転車かスケートボードに乗る", () => (world.stats.ride67 || 0) >= 1]);
+ACH_REWARD["風を切って"] = ["money", 1000];
+GUIDE54.forEach(g => { if (g[0] === "道具の使い方") g[2] = g[2].replace("</ul>", "<li><b>自転車・スケートボード</b>（よろず屋）：持ってAボタンで乗る・もう一度で降りる。村・街・みなと町で、自転車は約2倍、スケボーは約1.5倍の速さで歩ける。家・お店の中・洞窟では自動で降りる</li></ul>"); });
+F67.ride = () => cfg.ride; F67.set = setRide67;
+F65.ready = F66.ready = F67.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12660,5 +12972,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

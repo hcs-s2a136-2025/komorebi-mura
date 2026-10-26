@@ -448,3 +448,12 @@ html, body { touch-action: manipulation; }
 #tr66cv { width: 100%; max-width: 520px; aspect-ratio: 320 / 150; display: block; margin: 6px auto; border-radius: 8px; }
 .tr66in { width: 8em; padding: 6px 8px; border: 2px solid var(--wood, #8a6a44); border-radius: 8px; background: #fffaf0; font: inherit; color: inherit; }
 .spark66 { width: 80px; height: 26px; }
+/* v68: 個数をえらんで買う・左上の表示をうすく */
+.qty68 { display: inline-flex; align-items: center; gap: 2px; margin-right: 4px; }
+.qty68 input { width: 3.2em; padding: 4px 2px; text-align: center; border: 2px solid var(--wood, #8a6a44); border-radius: 6px; background: #fffaf0; font: inherit; font-size: 16px; color: inherit; }
+.qty68 button { min-width: 28px; height: 30px; border: 0; border-bottom: 2px solid var(--wood, #8a6a44); border-radius: 6px; background: #f3e6c6; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+.qty68 .q68t { font-size: .72rem; padding: 0 4px; }
+.hud { transition: opacity .2s; }
+.hud.fade68 { opacity: .22; }
+.list .li.q68li { grid-template-columns: 36px 1fr; }
+.list .li.q68li .acts { grid-column: 1 / -1; white-space: normal; align-items: center; gap: 4px; }

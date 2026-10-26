@@ -3922,7 +3922,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.36.0";
+const CLIENT_VERSION = "0.36.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5990,6 +5990,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.36.1", date: "2026/10/26", title: "まとめて買う・まとめて植える", items: [
+    "お店で個数をえらんで、まとめて買えるように（−・＋・×10のボタンか、数を入力。99個まで）",
+    "種をまとめて植えられるように。耕した畑に向かって植えると、まわり3×3の空いている畑にもいっしょに植わる（設定タブで切りかえ）",
+    "左上の表示（場所・時間・お金）に自分や目の前のマスが重なったら、表示がうすくなって下が見えるように",
+  ] },
   { v: "0.36.0", date: "2026/10/26", title: "ビニールハウス・こもれび証券・自転車", items: [
     "よろず屋に「枯れ防止剤」（150G）。作物に向かって使うと、まわり5×5マスの作物が、次の季節の変わり目を1回のりこえられる",
     "よろず屋に「ビニールハウス」（30,000G）。6×5マスのハウスの中の作物は、季節が変わっても枯れず、どの季節の種でも育つ（2つまで）",
@@ -12513,6 +12518,85 @@ ACH_REWARD["風を切って"] = ["money", 1000];
 GUIDE54.forEach(g => { if (g[0] === "道具の使い方") g[2] = g[2].replace("</ul>", "<li><b>自転車・スケートボード</b>（よろず屋）：持ってAボタンで乗る・もう一度で降りる。村・街・みなと町で、自転車は約2倍、スケボーは約1.5倍の速さで歩ける。家・お店の中・洞窟では自動で降りる</li></ul>"); });
 F67.ride = () => cfg.ride; F67.set = setRide67;
 F65.ready = F66.ready = F67.ready = true;
+var F68 = {};
+// ---------- v68: お店で個数をえらんで買える・種をまとめて植える（3×3）・自分が左上の表示に隠れたら表示をうすく ----------
+const qty68 = {};
+const qtyOK68 = it => it && !it.tool && !it.ride67 && !it.greenhouse && !(it.place === "build32");
+function addQty68(body, reopen) {
+  if (!body) return;
+  body.querySelectorAll("[data-buy],[data-bi]").forEach(b => {
+    const id = b.dataset.buy || b.dataset.bi, it = ITEMS[id]; if (!qtyOK68(it) || b.dataset.q68) return;
+    const price = b.dataset.buy ? it.price : +b.dataset.p; if (!(price > 0)) return;
+    b.dataset.q68 = "1";
+    const box = document.createElement("span"); box.className = "qty68";
+    box.innerHTML = `<button type="button" class="q68m" aria-label="へらす">−</button><input type="number" inputmode="numeric" min="1" max="99" value="${Math.max(1, Math.min(99, qty68[id] || 1))}" aria-label="個数"><button type="button" class="q68p" aria-label="ふやす">＋</button><button type="button" class="q68t">×10</button>`;
+    b.before(box); b.closest(".li")?.classList.add("q68li");
+    const inp = box.querySelector("input");
+    const val = () => Math.max(1, Math.min(99, Math.floor(+inp.value || 1)));
+    const label = () => { const n = val(); b.textContent = n > 1 ? `${n}個 買う（${fmt(price * n)}）` : "買う"; b.disabled = world.money < price; };
+    const set = n => { inp.value = Math.max(1, Math.min(99, n)); qty68[id] = val(); label(); };
+    box.querySelector(".q68m").onclick = e => { e.stopPropagation(); set(val() - 1); };
+    box.querySelector(".q68p").onclick = e => { e.stopPropagation(); set(val() + 1); };
+    box.querySelector(".q68t").onclick = e => { e.stopPropagation(); set(val() === 10 ? 24 : val() === 24 ? 1 : 10); };
+    inp.oninput = () => { qty68[id] = val(); label(); };
+    label();
+    b.onclick = () => {
+      let n = val(); n = Math.min(n, Math.floor(world.money / price)); if (n < 1) return;
+      if (!addItem(id, n)) return;
+      addMoney(-price * n); world.stats.buy68 = (world.stats.buy68 || 0) + n; saveWorld();
+      toast(it.icon, `${it.name}を${n}個買った（${fmt(price * n)}）`);
+      const mb = $("mbody"), top = mb ? mb.scrollTop : 0;
+      closeModal(); reopen(); const mb2 = $("mbody"); if (mb2) mb2.scrollTop = top;
+    };
+  });
+}
+const _openShop68 = openShop;
+openShop = function (tab) { _openShop68(tab); if (modalOpen && $("mtitle").textContent === "よろず屋") addQty68($("mbody"), () => openShop(tab || "buy")); };
+const _wireBuy68 = wireBuy13;
+wireBuy13 = function (body, reopen) { _wireBuy68(body, reopen); addQty68(body, reopen); };
+// 種をまとめて植える：耕した畑に向かって植えると、まわり3×3の空いている畑にも植わる（設定で切りかえ）
+world.bulkPlant68 = world.bulkPlant68 !== false;
+const _act68 = act;
+act = function () {
+  const sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+  if (!(it && it.seed && map === village && world.bulkPlant68 && !modalOpen)) return _act68.apply(this, arguments);
+  const [tx, ty] = front(), key = tx + "," + ty, had = !!world.crops[key], sid = sel.id;
+  const r = _act68.apply(this, arguments);
+  const c = world.crops[key];
+  if (!had && c && c.type === it.seed && c.stage === 0) {
+    let n = 0;
+    for (let y = ty - 1; y <= ty + 1; y++) for (let x = tx - 1; x <= tx + 1; x++) {
+      const k = x + "," + y; if (k === key || world.crops[k] || village.ground[y]?.[x] !== "tilled" || !world.tilled[k] || count(sid) < 1) continue;
+      world.crops[k] = { type: it.seed, stage: 0 }; removeItem(sid, 1); F7.ev("plant", k); n++;
+    }
+    if (n) { saveWorld(); toast(it.icon, `${it.name.replace("の種", "")}を${n + 1}つ植えた（まわり3×3の空いている畑にも）。水をやって眠ると育つよ`); }
+  }
+  return r;
+};
+const _rs68 = F7.renderSettings;
+F7.renderSettings = () => {
+  _rs68();
+  const B = $("settingsBody"); if (!B || B.querySelector("#bulk68")) return;
+  const d = document.createElement("div"); d.className = "opt";
+  d.innerHTML = `<h3>畑</h3><div class="row"><button class="chip" type="button" id="bulk68" aria-pressed="${world.bulkPlant68}">種をまとめて植える（3×3）</button></div><p class="note">オンにすると、耕した畑に向かって種を植えたとき、まわり3×3の空いている畑にもいっしょに植わるよ</p>`;
+  B.append(d); d.querySelector("#bulk68").onclick = e => { world.bulkPlant68 = !world.bulkPlant68; e.currentTarget.setAttribute("aria-pressed", String(world.bulkPlant68)); saveWorld(); };
+};
+// 左上の表示（場所・時間・お金）に自分や目の前のマスが重なったら、表示をうすくする
+setInterval(() => {
+  const hud = document.querySelector(".hud"); if (!hud) return;
+  if (document.body.classList.contains("menu") || !map) { hud.classList.remove("fade68"); return; }
+  const mw = map.w * TS, [cb0, cb1] = camBand(), mh = cb1 - cb0;
+  let camX = player.px + 8 - vw / 2, camY = player.py + 8 - vh / 2;
+  camX = mw <= vw ? (mw - vw) / 2 : Math.max(0, Math.min(mw - vw, camX));
+  camY = mh <= vh ? cb0 + (mh - vh) / 2 : Math.max(cb0, Math.min(cb1 - vh, camY));
+  const cr = cv.getBoundingClientRect(), hr = hud.getBoundingClientRect();
+  const [fx, fy] = front();
+  const pts = [[player.px + 8, player.py + 8], [fx * TS + 8, fy * TS + 8]].map(([wx, wy]) => [cr.left + (wx - camX) * scale, cr.top + (wy - camY) * scale]);
+  const pad = TS * scale * .7, over = pts.some(([x, y]) => x > hr.left - pad && x < hr.right + pad && y > hr.top - pad && y < hr.bottom + pad);
+  hud.classList.toggle("fade68", over);
+}, 150);
+GUIDE54.forEach(g => { if (g[0] === "畑と作物") g[2] = g[2].replace("</ul>", "<li><b>まとめて植える</b>：種を持って耕した畑に向かってAを押すと、まわり3×3の空いている畑にもいっしょに植わる（設定タブで切りかえ）</li><li>お店では、個数をえらんでまとめて買える（−・＋・×10のボタンか、数を入力）</li></ul>"); });
+F68.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -12972,5 +13056,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

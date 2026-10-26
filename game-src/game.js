@@ -3923,7 +3923,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.38.1";
+const CLIENT_VERSION = "0.39.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5992,6 +5992,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.39.0", date: "2026/10/26", title: "共同農園と、共同プロジェクトの続き", items: [
+    "共同農園：オンラインのとき、村のマップを長押しして指をすべらせると、範囲をえらんで共同農園にできる。中の作物はみんなのもの。だれが水をやっても育って、だれでも収穫できる",
+    "共同プロジェクトの続き：花時計の公園 → 屋台村 → ツリーハウス（北の丘）→ 天文台（北の丘）→ こもれび像。観覧車のあとに、掲示板に出るよ",
+    "屋台村ができると魚と海の幸が1割高く売れる。天文台は夜に流れ星へ願いごと、ツリーハウスは木の実ひろい",
+  ] },
   { v: "0.38.1", date: "2026/10/26", title: "称号の条件が見られる", items: [
     "村タブの称号を押すと、手に入れる条件が見られるように（まだ持っていない「？？？」の称号も）",
     "「すべての称号と、手に入れる条件」の一覧と、いくつ集めたかも見られるよ",
@@ -12727,6 +12732,212 @@ renderVillage = function () {
   }
 };
 F71.ready = true;
+var F72 = {};
+// ---------- v72: 共同プロジェクトの続き（花時計の公園 → 屋台村 → ツリーハウス → 天文台 → こもれび像） ----------
+const PROJ72 = {
+  park72: { name: "花時計の公園", desc: "花時計のある公園ができる。1日1回ベンチでひと休みすると、村の評判が上がって、花の種がもらえることも", need: { wood: 120, stone: 60, tomato: 30, carrot: 30 }, w: 3, h: 2, ih: 34, pref: [12, 23],
+    spr: (set, rect) => { ell13(set, 24, 22, 20, 10, C13["#5aa04a"]); ell13(set, 24, 22, 16, 8, C13["#7ac05a"]);
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; ell13(set, 24 + Math.cos(a) * 13, 22 + Math.sin(a) * 6.5, 1.6, 1.4, [C13["#e85a7a"], C13["#f2c84a"], C13["#f4f4f8"], C13["#b08ae0"]][i % 4]); }
+      rect(23, 15, 2, 8, C13["#3a2a2a"]); rect(24, 21, 7, 1, C13["#3a2a2a"]); ell13(set, 24, 22, 1.5, 1.5, C13["#c8a048"]);
+      rect(2, 26, 10, 3, WD[1]); rect(2, 26, 10, 1, WD[0]); rect(3, 29, 1, 3, WD[3]); rect(10, 29, 1, 3, WD[3]); rect(36, 26, 10, 3, WD[1]); rect(36, 26, 10, 1, WD[0]); rect(37, 29, 1, 3, WD[3]); rect(44, 29, 1, 3, WD[3]); } },
+  market72: { name: "屋台村", desc: "広場に屋台がならぶ。魚と海の幸が、1割高く売れるようになる", need: { wood: 150, stone: 40, ore: 20, egg: 20, milk: 20 }, w: 4, h: 2, ih: 40, pref: [44, 31],
+    spr: (set, rect) => { for (let i = 0; i < 3; i++) { const x = 2 + i * 21; rect(x, 18, 18, 18, WD[1]); rect(x, 18, 18, 2, WD[0]); rect(x + 2, 22, 14, 6, C13["#f4ecdc"]);
+        for (let j = 0; j < 6; j++) rect(x + j * 3, 8, 3, 8, j % 2 ? C13["#f4f4f8"] : [C13["#e85a5a"], C13["#5a8ae0"], C13["#5aa85a"]][i]); rect(x, 16, 18, 2, C13["#8a5a3a"]);
+        rect(x + 1, 36, 2, 4, WD[3]); rect(x + 15, 36, 2, 4, WD[3]); ell13(set, x + 6, 25, 2, 1.4, [C13["#7ac0e8"], C13["#f2b44a"], C13["#e85a7a"]][i]); ell13(set, x + 12, 25, 2, 1.4, C13["#c8a060"]); } } },
+  tree72: { name: "ツリーハウス", desc: "北の丘に、大きな木のツリーハウスができる。1日1回のぼると、どんぐりや木の実が見つかる", need: { wood: 250, stone: 30, ore: 30, gem: 5 }, w: 3, h: 2, ih: 72, pref: [12, 60], north: true,
+    spr: (set, rect) => { rect(20, 34, 8, 36, C13["#6a4a34"]); rect(20, 34, 2, 36, C13["#8a6a50"]);
+      ell13(set, 24, 18, 23, 17, C13["#3e7a44"]); ell13(set, 16, 22, 10, 9, C13["#5a9a56"]); ell13(set, 32, 20, 11, 9, C13["#5a9a56"]); ell13(set, 24, 10, 12, 8, C13["#7cba6a"]);
+      rect(10, 30, 28, 12, WD[1]); rect(10, 30, 28, 2, WD[0]); rect(14, 34, 6, 6, C13["#a8d4ec"]); rect(28, 33, 6, 9, C13["#3a2418"]); rect(8, 42, 32, 2, WD[3]);
+      for (let y = 44; y < 70; y += 4) rect(32, y, 6, 1, WD[2]); rect(32, 44, 1, 26, WD[3]); rect(37, 44, 1, 26, WD[3]); } },
+  observ72: { name: "天文台", desc: "北の丘に天文台ができる。夜（20:00〜4:00）にのぞくと、流れ星に願いごとができる（1日1回）", need: { stone: 250, ore: 80, gem: 15, wood: 60 }, w: 3, h: 3, ih: 56, pref: [48, 70], north: true,
+    spr: (set, rect) => { rect(6, 28, 36, 26, C13["#e8e4dc"]); for (let y = 32; y < 54; y += 5) rect(6, y, 36, 1, C13["#c8c4bc"]); rect(6, 54, 36, 2, C13["#9a968e"]);
+      ell13(set, 24, 26, 18, 16, C13["#c8ccd8"]); ell13(set, 20, 20, 7, 5, C13["#e8ecf4"]); rect(6, 26, 36, 3, C13["#9aa0b0"]);
+      rect(22, 10, 4, 18, C13["#2a3040"]); for (let i = 0; i < 8; i++) rect(26 + i, 12 - i, 3, 3, C13["#4a5068"]); rect(20, 40, 8, 14, C13["#3a2a2a"]); set(4, 6, C13["#fff0a0"]); set(40, 4, C13["#fff0a0"]); set(44, 12, C13["#fff0a0"]); } },
+  statue72: { name: "こもれび像", desc: "広場に、村のみんなの銅像が建つ。1日1回みがくと、村の評判がぐっと上がる。台座には、手伝ってくれた村の人の名前", need: { ore: 150, stone: 150, gem: 20, wood: 50 }, w: 2, h: 2, ih: 52, pref: [30, 12],
+    spr: (set, rect) => { rect(2, 36, 28, 14, C13["#a8a49c"]); rect(2, 36, 28, 2, C13["#c8c4bc"]); rect(0, 48, 32, 4, C13["#8a867e"]); rect(6, 40, 20, 6, C13["#c8a048"]);
+      const B = C13["#8a6a3a"], L = C13["#b08a4a"]; ell13(set, 16, 8, 5, 5, B); ell13(set, 15, 7, 2, 2, L); rect(11, 13, 10, 12, B); rect(12, 14, 3, 10, L); rect(7, 14, 4, 3, B); rect(21, 10, 3, 6, B); rect(22, 6, 2, 4, B);
+      rect(12, 25, 3, 11, B); rect(17, 25, 3, 11, B); ell13(set, 23, 4, 3, 2, C13["#7ac05a"]); } },
+};
+for (const [id, P] of Object.entries(PROJ72)) { PROJ35[id] = P; ORDER35.push(id); PROJECTS[id] = [P.name, P.desc]; IMG["p35_" + id] = pix13(P.w * 16, P.ih, P.spr); ASSETS["p35_" + id] = IMG["p35_" + id].toDataURL(); }
+// 北の丘に建つものは、北の丘の中で場所をさがす
+const _chooseAt72 = chooseAt35;
+chooseAt35 = function (id) {
+  const P = PROJ35[id]; if (!P || !P.north) return _chooseAt72(id);
+  const ok = (x, y) => y >= NY0 + 3 && y <= VH - 5 && okTile35(x, y);
+  const fits = (ax, ay) => { for (let y = ay - P.h + 1; y <= ay; y++) for (let x = ax; x < ax + P.w; x++) if (!ok(x, y) || (typeof inGH65 === "function" && inGH65(x, y))) return false; return true; };
+  const [px, py] = P.pref;
+  for (let r = 0; r <= 22; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; if (fits(px + dx, py + dy)) return [px + dx, py + dy]; }
+  return [px, py];
+};
+const _useProj72 = useProj35;
+useProj35 = function (id) {
+  if (!PROJ72[id]) return _useProj72(id);
+  const d = world.daily35 || (world.daily35 = {}), today = d[id] === world.day, img = "p35_" + id;
+  if (id === "market72") { toast(img, "屋台から、いいにおい。魚と海の幸が、1割高く売れるよ"); return; }
+  if (today) { toast(img, "今日はもう来たよ。また明日ね"); return; }
+  if (id === "observ72" && !(world.time >= 1200 || world.time < 240)) { toast(img, "星が見えるのは、夜（20:00〜4:00）だよ"); return; }
+  d[id] = world.day; world.stats["p72_" + id] = (world.stats["p72_" + id] || 0) + 1;
+  if (id === "park72") { addRep(1); const gift = Math.random() < .4 && addItem("seed_flower", 1, true); toast(img, `花時計の前のベンチで、ひと休み。村の評判が上がった${gift ? "（花の種を1つ見つけた）" : ""}`); }
+  else if (id === "tree72") { const got = []; for (let i = 0; i < 3; i++) { const k = ["acorn_normal", "acorn_big", "acorn_small"][rnd(3)]; if (ITEMS[k] && addItem(k, 1, true)) got.push(ITEMS[k].name); } toast(img, `ツリーハウスにのぼった。風が気持ちいい！ ${got.length ? got.join("・") + "を見つけた" : ""}`); }
+  else if (id === "observ72") {
+    const r = Math.random();
+    if (r < .35) { const g = 3000 + rnd(8) * 1000; addMoney(g); toast(img, `流れ星だ！ 願いごとをした…ポケットに ${fmt(g)} が入っていた`); }
+    else if (r < .65 && ITEMS.crystal36) { addItem("crystal36", 2, true); toast(img, "流れ星だ！ 空から、きらきらの結晶が2つ落ちてきた"); }
+    else { addRep(2); toast(img, "満天の星。ずっと見ていたくなる（村の評判が上がった）"); }
+  } else if (id === "statue72") {
+    addRep(3);
+    const names = [onl.name || myName(), ...[...remotes.values()].map(e => e.name)].filter(Boolean).slice(0, 8);
+    toast(img, `こもれび像をぴかぴかにみがいた（評判+3）。台座には「${names.join("・")} …みんなの村」と刻まれている`);
+  }
+  saveWorld();
+};
+const _sellMul72 = F7.sellMul;
+F7.sellMul = id => { let m = _sellMul72(id); if (world.projects?.market72?.done && (id.startsWith("fish_") || id.startsWith("sea_"))) m += .1; return m; };
+ensureChain35(); rebuildSolid();
+ACH.push(["村の歴史をつくる人", "こもれび像まで、共同プロジェクトをぜんぶ完成させる", () => ORDER35.every(id => world.projects?.[id]?.done)]);
+ACH_REWARD["村の歴史をつくる人"] = ["money", 30000];
+
+// ---------- v72: 共同農園（範囲をえらんで、みんなで植えて・水をやって・収穫できる畑） ----------
+// 区画は共有の村の "cfarm"（つくった人だけが消せる）、作物は "ccrops" に { t:種類, pd:植えた日, w:[水をやった日] }。
+// 育ち方は「植えた日のあとに、水をやった日の数」で決まるので、だれの画面でも同じに見える。
+SH_LAYERS.push("ccrops", "cfarm"); SHARED_KEYS14.push("ccrops", "cfarm");
+const cz72 = () => world.cfarm && typeof world.cfarm === "object" ? world.cfarm : (world.cfarm = {});
+const cc72 = () => world.ccrops && typeof world.ccrops === "object" ? world.ccrops : (world.ccrops = {});
+const zoneAt72 = (x, y) => Object.entries(cz72()).find(([, z]) => z && x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h);
+const seasonOfDay72 = d => SEASONS[Math.floor((d - 1) / 7) % 4];
+function ccState72(c) {
+  const info = CROP_INFO[c.t]; if (!info) return { dead: true, stage: 0, wet: false };
+  const pd = c.pd | 0, today = world.day, w = Array.isArray(c.w) ? c.w : [];
+  let dead = false;
+  for (let d = Math.max(pd + 1, today - 400); d <= today; d++) if (seasonOfDay72(d) !== seasonOfDay72(d - 1) && !info.seasons.includes(seasonOfDay72(d))) { dead = true; break; }
+  const n = new Set(w.filter(d => d >= pd && d < today)).size;
+  return { dead, stage: Math.min(2, Math.floor(n / info.days)), wet: w.includes(today) };
+}
+const _freshShared72 = freshShared18;
+freshShared18 = function () { _freshShared72.apply(this, arguments); world.ccrops = {}; world.cfarm = {}; };
+// 描く：区画のわく・看板と、作物
+let sel72 = null;
+const _atl72 = F7.addToList;
+F7.addToList = (list, now) => {
+  _atl72(list, now);
+  if (map !== village) return;
+  for (const [, z] of Object.entries(cz72())) {
+    if (!z) continue; const X = z.x * TS, Y = z.y * TS, W = z.w * TS, H = z.h * TS;
+    list.push({ s: Y - 2, d: () => { ctx.save(); ctx.strokeStyle = "rgba(240,200,80,.9)"; ctx.setLineDash([4, 3]); ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, W - 1, H - 1); ctx.restore();
+      ctx.font = '8px "DotGothic16", sans-serif'; const t = `共同農園（${z.n || "だれか"}）`, tw = ctx.measureText(t).width + 6; ctx.fillStyle = "rgba(90,60,20,.8)"; ctx.fillRect(X + 1, Y - 9, tw, 9); ctx.fillStyle = "#ffe8a0"; ctx.textBaseline = "top"; ctx.fillText(t, X + 4, Y - 8); ctx.textBaseline = "alphabetic"; } });
+  }
+  for (const [k, c] of Object.entries(cc72())) {
+    if (!c || world.crops[k]) continue; const st = ccState72(c), [x, y] = k.split(",").map(Number);
+    const img = st.dead ? (IMG.wither ? "wither" : "sprout") : st.stage === 0 ? "sprout" : st.stage === 1 ? "young_" + c.t : c.t; if (!IMG[img]) continue;
+    list.push({ s: y * TS + 8, d: () => { if (st.wet) { ctx.fillStyle = "rgba(40,60,90,.28)"; ctx.fillRect(x * TS, y * TS, TS, TS); } ctx.drawImage(IMG[img], x * TS, y * TS - (st.stage === 2 && !st.dead ? 3 : 1)); } });
+  }
+  if (sel72) {
+    const r = rect72(sel72), ok = !zoneErr72(r);
+    list.push({ s: 1e9, d: () => { ctx.fillStyle = ok ? "rgba(240,200,80,.25)" : "rgba(240,90,90,.25)"; ctx.fillRect(r.x * TS, r.y * TS, r.w * TS, r.h * TS); ctx.strokeStyle = ok ? "#f0c850" : "#e05a5a"; ctx.lineWidth = 1.5; ctx.strokeRect(r.x * TS + .5, r.y * TS + .5, r.w * TS - 1, r.h * TS - 1);
+      ctx.font = '9px "DotGothic16", sans-serif'; ctx.fillStyle = "#fff"; ctx.fillText(`${r.w}×${r.h}`, r.x * TS + 2, r.y * TS + 10); } });
+  }
+};
+// 使う：共同農園の中では、植える・水をやる・収穫するが、みんなの作物になる
+const _act72 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+    const [tx, ty] = front(), k = tx + "," + ty, sel = world.inv[world.sel], it = sel && ITEMS[sel.id], c = cc72()[k], zone = zoneAt72(tx, ty);
+    if (c && !world.crops[k]) {
+      const st = ccState72(c), nm = ITEMS[c.t]?.name || "作物";
+      if (it && it.use === "can") { if (!st.dead && !st.wet) { c.w = [...new Set([...(c.w || []), world.day])].slice(-14); saveWorld(); swing("can", .25, () => {}); dust(tx, ty, [120, 170, 230], 5); world.stats.cwater72 = (world.stats.cwater72 || 0) + 1; toast("can", `共同農園の${nm}に水をやった`); } else toast("can", st.dead ? "枯れてしまっている…" : "今日はもう、だれかが水をやったみたい"); return; }
+      if (it && it.use === "hoe") { toast("hoe", "共同農園の作物が植わっているよ"); return; }
+      if (st.dead) { delete cc72()[k]; saveWorld(); toast("wither", `枯れた${nm}を片付けた`); return; }
+      if (st.stage >= 2) {
+        if (!world.inv.some(i => !i || i.id === c.t)) { toast(null, "持ち物がいっぱい"); return; }
+        delete cc72()[k]; addItem(c.t, 1, true); world.stats.harvest++; world.stats.charvest72 = (world.stats.charvest72 || 0) + 1; F7.ev("harvest", c.t); saveWorld();
+        toast(c.t, `共同農園の${nm}を収穫した！`); return;
+      }
+      toast(st.stage === 0 ? "sprout" : "young_" + c.t, `共同農園の${nm}（${st.stage === 0 ? "芽が出たばかり" : "もう少しで収穫"}）。${st.wet ? "今日は水やりずみ" : "水をやると育つよ"}。だれが水をやっても、収穫してもいいよ`); return;
+    }
+    if (zone && it && it.seed && !world.crops[k]) {
+      if (village.ground[ty]?.[tx] !== "tilled" || !world.tilled[k]) { toast(it.icon, "耕した畑にまこう（共同農園の中も、鍬で耕せるよ）"); return; }
+      let n = 0; const keys = world.bulkPlant68 !== false ? [] : [k];
+      if (!keys.length) for (let y = ty - 1; y <= ty + 1; y++) for (let x = tx - 1; x <= tx + 1; x++) keys.push(x + "," + y);
+      for (const kk of keys) { const [x, y] = kk.split(",").map(Number); if (count(sel.id) < 1) break; if (!zoneAt72(x, y) || cc72()[kk] || world.crops[kk] || village.ground[y]?.[x] !== "tilled" || !world.tilled[kk]) continue; cc72()[kk] = { t: it.seed, pd: world.day, w: [] }; removeItem(sel.id, 1); F7.ev("plant", kk); n++; }
+      if (n) { saveWorld(); swing("plant", .18, () => {}); toast(it.icon, `共同農園に${it.name.replace("の種", "")}を${n}つ植えた。だれが水をやっても育つよ`); }
+      else toast(it.icon, "ここは、もう植わっているよ");
+      return;
+    }
+  }
+  return _act72.apply(this, arguments);
+};
+// 雨の日は、共同農園の作物にも水がたまる（最初に気づいた人の画面が記録する）
+setInterval(() => {
+  if (!F8.connected || !(world.weather === "rain" || world.weather === "storm")) return;
+  let ch = false; for (const c of Object.values(cc72())) if (c && !(c.w || []).includes(world.day)) { c.w = [...new Set([...(c.w || []), world.day])].slice(-14); ch = true; }
+  if (ch) saveWorld();
+}, 5000);
+// 範囲をえらぶ：マップを長押し → 指（マウス）をすべらせて → はなす
+const rect72 = s => ({ x: Math.min(s.a[0], s.b[0]), y: Math.min(s.a[1], s.b[1]), w: Math.abs(s.a[0] - s.b[0]) + 1, h: Math.abs(s.a[1] - s.b[1]) + 1 });
+function zoneErr72(r) {
+  if (r.w < 2 || r.h < 2) return "2×2マス以上にしてね";
+  if (r.w > 12 || r.h > 12) return "大きさは12×12マスまで";
+  const band = r.y >= NY0 ? [NY0, VH] : [0, VH0];
+  if (r.y < band[0] + 1 || r.y + r.h > band[1] - 1 || r.x < 1 || r.x + r.w > village.w - 1) return "村のはしには作れないよ";
+  for (const [, z] of Object.entries(cz72())) if (z && r.x < z.x + z.w && z.x < r.x + r.w && r.y < z.y + z.h && z.y < r.y + r.h) return "ほかの共同農園と重なってるよ";
+  if (Object.values(cz72()).filter(z => z && z.o === onl.id).length >= 3) return "共同農園は、ひとり3つまで";
+  return "";
+}
+function tileAt72(e) {
+  const r = cv.getBoundingClientRect(), mw = map.w * TS, [cb0, cb1] = camBand(), mh = cb1 - cb0;
+  let camX = player.px + 8 - vw / 2, camY = player.py + 8 - vh / 2;
+  camX = mw <= vw ? (mw - vw) / 2 : Math.max(0, Math.min(mw - vw, camX));
+  camY = mh <= vh ? cb0 + (mh - vh) / 2 : Math.max(cb0, Math.min(cb1 - vh, camY));
+  return [Math.floor((camX + (e.clientX - r.left) / scale) / TS), Math.floor((camY + (e.clientY - r.top) / scale) / TS)];
+}
+let lp72 = null;
+cv.addEventListener("pointerdown", e => {
+  if (map !== village || modalOpen || !F8.connected) return;
+  const t0 = [e.clientX, e.clientY], tile = tileAt72(e);
+  lp72 = { t0, timer: setTimeout(() => { sel72 = { a: tile, b: tile }; lp72.on = true; try { navigator.vibrate && navigator.vibrate(30); } catch (er) { } toast(null, "共同農園にしたい範囲を、指をすべらせてえらんでね"); }, 600) };
+});
+cv.addEventListener("pointermove", e => {
+  if (!lp72) return;
+  if (!lp72.on) { if (Math.hypot(e.clientX - lp72.t0[0], e.clientY - lp72.t0[1]) > 12) { clearTimeout(lp72.timer); lp72 = null; } return; }
+  e.preventDefault(); sel72.b = tileAt72(e);
+});
+const end72 = () => {
+  if (!lp72) return; clearTimeout(lp72.timer); const on = lp72.on; lp72 = null; if (!on || !sel72) return;
+  const r = rect72(sel72), err = zoneErr72(r);
+  if (err) { toast(null, err); sel72 = null; return; }
+  openModal("共同農園にする？", "", body => {
+    body.innerHTML = `<p class="mtext">えらんだ ${r.w}×${r.h}マスを「共同農園」にする？</p>
+      <p class="note">共同農園の中に植えた作物は、みんなのもの。だれが水をやっても育って、だれでも収穫できるよ。中にある自分の作物も、共同農園の作物になる。区画は、つくった人（あなた）だけが消せる。</p>
+      <div class="row2"><button class="btn light" type="button" id="cz72no">やめる</button><button class="btn" type="button" id="cz72yes">共同農園にする</button></div>`;
+    body.querySelector("#cz72no").onclick = () => closeModal();
+    body.querySelector("#cz72yes").onclick = () => {
+      const id = "z" + onl.id + "_" + Date.now().toString(36).slice(-5);
+      cz72()[id] = { x: r.x, y: r.y, w: r.w, h: r.h, o: onl.id, n: onl.name || myName() };
+      let moved = 0; for (const [k, c] of Object.entries(world.crops)) { const [x, y] = k.split(",").map(Number); if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h && c && !c.dead && !cc72()[k]) { const info = CROP_INFO[c.type]; const w = []; for (let i = 0; i < (c.stage | 0) * (info ? info.days : 1); i++) w.push(world.day - 1 - i); cc72()[k] = { t: c.type, pd: world.day - 1 - w.length, w: w.concat(world.tilled[k]?.wet ? [world.day] : []) }; delete world.crops[k]; moved++; } }
+      world.stats.cfarm72 = (world.stats.cfarm72 || 0) + 1; saveWorld(); closeModal();
+      toast(null, `共同農園ができた！（${r.w}×${r.h}マス${moved ? `・自分の作物${moved}つが共同の作物になった` : ""}）`);
+    };
+  }, () => { sel72 = null; });
+};
+cv.addEventListener("pointerup", end72); cv.addEventListener("pointercancel", () => { if (lp72) clearTimeout(lp72.timer); lp72 = null; sel72 = null; });
+// 村タブ：共同農園の一覧（自分のは消せる）
+const _renderVillage72 = renderVillage;
+renderVillage = function () {
+  _renderVillage72.apply(this, arguments);
+  const B = $("villageBody"); if (!B || B.querySelector("#cfarm72")) return;
+  const zs = Object.entries(cz72()).filter(([, z]) => z);
+  const d = document.createElement("div"); d.className = "opt"; d.id = "cfarm72";
+  d.innerHTML = `<h3>共同農園</h3><p class="note">オンラインのとき、村のマップを長押しして、そのまま指（マウス）をすべらせると、範囲をえらんで「共同農園」にできる（2×2〜12×12マス・ひとり3つまで）。中に植えた作物は、みんなで水をやって、だれでも収穫できるよ。</p>
+    <div class="list">${zs.map(([id, z]) => { const n = Object.keys(cc72()).filter(k => { const [x, y] = k.split(",").map(Number); return x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h; }).length;
+      return `<div class="li tl71"><span class="nm">${esc(z.n || "だれか")}さんの共同農園<span class="sub2">${z.w}×${z.h}マス・${z.y >= NY0 ? "北の丘" : "村"}（${z.x},${z.y}）・作物${n}つ</span></span><span class="acts">${z.o === onl.id ? `<button class="btn light" type="button" data-cz72="${esc(id)}">区画を消す</button>` : ""}</span></div>`; }).join("") || `<p class="mtext small">まだ共同農園はないよ</p>`}</div>`;
+  B.append(d);
+  d.querySelectorAll("[data-cz72]").forEach(b => b.onclick = () => { delete cz72()[b.dataset.cz72]; saveWorld(); renderVillage(); toast(null, "共同農園の区画を消した（植わっている作物は、そのまま残るよ）"); });
+};
+ACH.push(["みんなの畑", "共同農園をつくるか、共同農園で収穫する", () => (world.stats.cfarm72 || 0) + (world.stats.charvest72 || 0) >= 1]);
+ACH_REWARD["みんなの畑"] = ["item", "seed_carrot", 24];
+GUIDE54.forEach(g => { if (g[0] === "畑と作物") g[2] = g[2].replace("</ul>", "<li><b>共同農園</b>（オンライン）：村のマップを長押しして指をすべらせると、範囲をえらんで共同農園にできる。中の作物はみんなのもの。だれが水をやっても育って、だれでも収穫できる（植えた日のあとに水をやった日の数で育つ）</li></ul>"); });
+F72.zones = cz72; F72.crops = cc72; F72.tile = tileAt72; F72.rebuild = () => rebuildSolid(); F72.state = ccState72; F72.zoneErr = zoneErr72;
+F72.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -13186,5 +13397,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F72tile: e => tileAt72(e), F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

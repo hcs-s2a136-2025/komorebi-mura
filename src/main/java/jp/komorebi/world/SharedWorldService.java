@@ -34,7 +34,7 @@ public class SharedWorldService implements WelcomeContributor {
 
     private static final Logger log = LoggerFactory.getLogger(SharedWorldService.class);
     public static final Set<String> LAYERS = Set.of("terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths",
-        "stakes", "tilled", "houses", "quarry", "meta", "decor");
+        "stakes", "tilled", "houses", "quarry", "meta", "decor", "ccrops", "cfarm");
     private static final Pattern KEY = Pattern.compile("[A-Za-z0-9,:_\\-]{1,24}");
     private static final int MAX_VALUE = 600, MAX_KEYS = 6000, MAX_DOC = 990_000;
 
@@ -93,6 +93,21 @@ public class SharedWorldService implements WelcomeContributor {
                         ObjectNode nv = om.createObjectNode().put("id", id).put("o", playerId).put("n", name == null ? "" : name);
                         v = nv; // 置いた人は、サーバーが知っている本人にする
                     }
+                }
+                if (!ok) {
+                    if (rejected != null) { ObjectNode r = rejected.addObject().put("l", l).put("k", k); r.set("v", cur == null ? NullNode.getInstance() : cur.deepCopy()); }
+                    continue;
+                }
+            }
+            if ("cfarm".equals(l) && playerId > 0) {
+                // 共同農園の区画は、つくった人（o）だけが変えたり消したりできる。大きさは 2〜12マス
+                JsonNode cur = layer.get(k);
+                long owner = cur == null ? 0 : cur.path("o").asLong(0);
+                boolean ok = owner <= 0 || owner == playerId;
+                if (ok && v != null && !v.isNull()) {
+                    int x = v.path("x").asInt(-1), y = v.path("y").asInt(-1), w = v.path("w").asInt(0), h = v.path("h").asInt(0);
+                    if (x < 0 || y < 0 || x > 250 || y > 250 || w < 2 || h < 2 || w > 12 || h > 12) ok = false;
+                    else v = om.createObjectNode().put("x", x).put("y", y).put("w", w).put("h", h).put("o", owner > 0 ? owner : playerId).put("n", name == null ? "" : name);
                 }
                 if (!ok) {
                     if (rejected != null) { ObjectNode r = rejected.addObject().put("l", l).put("k", k); r.set("v", cur == null ? NullNode.getInstance() : cur.deepCopy()); }

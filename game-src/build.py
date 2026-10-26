@@ -12,7 +12,7 @@ out = (head + css + '</style>\n\n' + r('body.html')
        + '\n<script>\n' + r('errguard.js').replace('/*VER*/', ver) + '\n</script>'
        + '\n<script>\n' + r('data.js') + '\n</script>\n<script>\n' + r('mj_core.js') + '\n' + r('bgm.js') + '\n' + r('sfx.js')
        + '\n</script>\n<script>\n' + r('game.js') + '\n</script>\n<script>\n' + r('casino.js') + '\n</script>\n')
-page = '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' + out + '</html>'
+page = '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">' + out + '</html>'
 open(os.path.join(D, '..', 'src', 'main', 'resources', 'static', 'index.html'), 'w', encoding='utf-8').write(page)
 open(os.path.join(D, 'komorebi.html'), 'w', encoding='utf-8').write(page)
 print('built', len(page), 'bytes')

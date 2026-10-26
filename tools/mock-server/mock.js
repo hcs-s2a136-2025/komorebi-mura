@@ -168,7 +168,7 @@ wss.on("connection", s => {
       mjPending.delete(pl.id); adminPending.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
-    if (m.type === "move") { Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }
+    if (m.type === "move") { if (!/^[A-Za-z0-9:,_\-]{1,40}$/.test(String(m.map || ""))) return; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }
     if (m.type === "cfg") { s.cfg = m.cfg; bc({ type: "cfg", id: s.pl.id, cfg: m.cfg }, s); }
     if (m.type === "emote") bc({ type: "emote", id: s.pl.id, e: m.e }, s);
     if (m.type === "snow") { const o = { type: "snow", id: s.pl.id, x: m.x | 0, y: m.y | 0, dir: m.dir, m: String(m.m || "").slice(0, 32) }; if (m.to && m.to !== s.pl.id) o.to = m.to; bc(o, s); }

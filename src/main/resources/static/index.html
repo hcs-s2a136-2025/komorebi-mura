@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>こもれび村</title>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"><title>こもれび村</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -896,6 +896,8 @@ b.rare2 { color: #3a78d8; } b.rare3 { color: #d88a00; }
 .cos62looks img { width: 40px; height: 40px; image-rendering: pixelated; background: #fff6f8; border-radius: 8px; }
 .cos62looks img.empty { opacity: .35; }
 .cos62looks .btn { font-size: .66rem; padding: 2px 6px; }
+/* v63: スマホで連続タップしたときのダブルタップ拡大を止める（ピンチは使える） */
+html, body { touch-action: manipulation; }
 </style>
 
 <header>
@@ -1022,7 +1024,7 @@ b.rare2 { color: #3a78d8; } b.rare3 { color: #d88a00; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.34.0";
+  const VER = "0.34.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -2354,7 +2356,7 @@ function entsOf(m) {
 function blocked(m, x, y, self) {
   if (x < 0 || y < 0 || x >= m.w || y >= m.h || m.solid[y][x]) return true;
   const ents = [...entsOf(m), ...(m === map ? [player] : [])];
-  return ents.some(e => e !== self && !(self === player && e.kind === "pet") && ((e.x === x && e.y === y) || (e.fx === x && e.fy === y)));
+  return ents.some(e => e !== self && !(self === player && (e.kind === "pet" || e.kind === "animal")) && ((e.x === x && e.y === y) || (e.fx === x && e.fy === y)));
 }
 function placeAt(e, x, y, dir) { Object.assign(e, { x, y, fx: x, fy: y, px: x * TS, py: y * TS, moving: false, prog: 0 }); if (dir) e.dir = dir; }
 function freeNear(m, x, y) {
@@ -5462,7 +5464,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.34.0";
+const CLIENT_VERSION = "0.34.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7516,6 +7518,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.34.1", date: "2026/10/26", title: "家の中で会えない不具合など", items: [
+    "建てた家の中で、ほかの人が見えなかった（外にいるように見えていた）のを直した",
+    "スマホで連続タップしたときに、画面がズームされないようにした",
+    "家畜小屋・ニワトリ小屋から、牧場の卵やミルクを「まとめて回収」できるように",
+    "柵の中では、家畜をすりぬけて歩けるように（出られなくならない）",
+  ] },
   { v: "0.34.0", date: "2026/10/26", title: "表参道のデパコス・顔にメイクを描こう", items: [
     "表参道のけやき並木に、デパコスの「COSME COUNTER」がオープン",
     "顔のまわり（10×9マス）に、16色のドットで自由にメイクを描ける。左右対称モード・ひとつ戻す・ぜんぶ消すつき（1回3,000G、落とすのは無料）",
@@ -13679,6 +13687,33 @@ ACH_REWARD["メイクアップアーティスト"] = ["money", 2000];
 GUIDE54.forEach(g => { if (g[0] === "着せ替え") g[2] = g[2].replace("</ul>", "<li><b>メイク</b>：表参道のけやき並木にある「COSME COUNTER」で、顔のまわり（10×9マス）にドットで自由にメイクを描ける（1回3,000G・落とすのは無料）。左右対称モードあり、3つまで保存できる。描いたメイクは、ほかの人の画面にも見える</li></ul>"); });
 F62.open = openCosme62; F62.valid = validPaint62; F62.render = (c, d, f) => renderChar(c, d, f);
 F62.ready = true;
+var F63 = {};
+// ---------- v63: 家畜小屋・ニワトリ小屋から、牧場の卵やミルクをまとめて回収 ----------
+const prodIds63 = () => new Set([...Object.values(ANIMALS).map(a => a.prod).filter(Boolean), "truffle_white", "truffle_black"]);
+const prodDrops63 = () => { const P = prodIds63(); return world.drops.filter(d => P.has(d.id) && ITEMS[d.id]); };
+const _extra63 = F32.extra, _wire63 = F32.wire;
+F32.extra = (d, k, mine) => {
+  let h = _extra63 ? _extra63(d, k, mine) : "";
+  if (mine && (d.id === "barn32" || d.id === "coop32")) {
+    const ds = prodDrops63(), n = ds.reduce((a, x) => a + (x.n || 1), 0);
+    const sum = {}; for (const x of ds) sum[x.id] = (sum[x.id] || 0) + (x.n || 1);
+    h += `<p class="mtext">牧場に落ちている卵・ミルク・毛など：${n ? Object.entries(sum).map(([id, c]) => `${esc(ITEMS[id].name)}×${c}`).join("・") : "いまはないよ"}</p>
+      <button class="btn" type="button" id="col63" ${n ? "" : "disabled"}>まとめて回収する</button>`;
+  }
+  return h;
+};
+F32.wire = (body, d, k, mine) => {
+  if (_wire63) _wire63(body, d, k, mine);
+  body.querySelector("#col63")?.addEventListener("click", () => {
+    let got = 0, left = 0;
+    for (const x of prodDrops63()) { if (addItem(x.id, x.n || 1, true)) { world.drops.splice(world.drops.indexOf(x), 1); got += x.n || 1; F7.ev("pickup", x.id); } else left++; }
+    saveWorld(); closeModal();
+    toast(got ? "egg" : null, got ? `牧場の物を${got}個、まとめて回収した${left ? "（持ち物がいっぱいで、少し残った）" : ""}` : "持ち物がいっぱいで回収できなかった");
+  });
+};
+GUIDE54.forEach(g => { if (g[0] === "牧場とペット") g[2] = g[2].replace("</ul>", "<li>家畜小屋かニワトリ小屋を建てていれば、小屋に向かってAボタン →「まとめて回収する」で、牧場に落ちている卵・ミルク・毛などを全部拾える</li><li>柵の中では、家畜をすりぬけて歩ける</li></ul>"); });
+F63.drops = prodDrops63;
+F63.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -14138,7 +14173,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

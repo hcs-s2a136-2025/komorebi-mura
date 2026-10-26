@@ -14,7 +14,7 @@ final class Sanitize {
     private Sanitize() {
     }
 
-    private static final Pattern MAP = Pattern.compile("[A-Za-z0-9:_\\-]{1,40}");
+    private static final Pattern MAP = Pattern.compile("[A-Za-z0-9:,_\\-]{1,40}");
     static final Set<String> DIRS = Set.of("up", "down", "left", "right");
 
     static String map(JsonNode n) {

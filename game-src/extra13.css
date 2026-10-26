@@ -434,3 +434,5 @@ b.rare2 { color: #3a78d8; } b.rare3 { color: #d88a00; }
 .cos62looks img { width: 40px; height: 40px; image-rendering: pixelated; background: #fff6f8; border-radius: 8px; }
 .cos62looks img.empty { opacity: .35; }
 .cos62looks .btn { font-size: .66rem; padding: 2px 6px; }
+/* v63: スマホで連続タップしたときのダブルタップ拡大を止める（ピンチは使える） */
+html, body { touch-action: manipulation; }

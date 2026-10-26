@@ -3923,7 +3923,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.39.1";
+const CLIENT_VERSION = "0.39.2";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -4461,12 +4461,15 @@ function refreshShared(ground) {
   saveWorld(); if (!$("pane-build").hidden) syncBuild();
 }
 // v18: 共有の村を最初からにする（キャラクター・持ち物・お金・自分の家はそのまま）
+function myHome18() { if (!world.rooms.home) world.rooms.home = defaultHomeRoom(); return world.rooms.home; }
 function homeStore18(id, n) {
   const [base, t] = splitR(id); id = base;
   if (!ITEMS[id] || !(n > 0)) return 0;
-  const R = roomFor("home"); R.storage = R.storage || [];
+  // つないでいるときの roomFor("home") は、みんなの家を見るための写しを返すので、ここでは自分のセーブの家に直接入れる（つないでいれば、あとで自分だけの箱へ移る）
+  const R = myHome18(); R.storage = R.storage || [];
   let s = R.storage.find(x => x && x.id === id); if (s) s.n += n; else R.storage.push(s = { id, n });
   if (t > 1) { s.r = s.r || [0, 0]; s.r[t - 2] += n; }
+  if (F8 && F8.connected && F17 && F17.tryImport) { clearTimeout(F17.imp18); F17.imp18 = setTimeout(() => F17.tryImport(), 1200); }
   return n;
 }
 function freshShared18(why) {
@@ -5992,7 +5995,7 @@ handle8 = m => {
 F17.ready = true;
 
 // =================== v19: update history (アップデート履歴) ===================
-// 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
+// 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
   { v: "0.39.1", date: "2026/10/27", title: "持ち物が消える不具合を直した", items: [
     "ゲームを開いたときに、自転車・スケートボード・枯れ防止剤・ビニールハウスのキットが「知らない物」としてあずかられて、持ち物から消えていたのを直した。あずかっていた物は、持ち物に返すよ（入りきらない分は家の収納箱へ）",
@@ -6480,7 +6483,7 @@ F7.openChanges = since => {
 {
   const seen = store.get(SEEN19);
   const played = !!(world.tut && world.tut.done);
-  if (seen && vcmp19(CLIENT_VERSION, seen) > 0) F7.pending.push({ kind: "custom", show: () => F7.openChanges(seen) });
+  if (seen && vcmp19(CLIENT_VERSION, seen) > 0 && CHANGES19.some(c => vcmp19(c.v, seen) > 0)) F7.pending.push({ kind: "custom", show: () => F7.openChanges(seen) });
   else if (!seen && played) F7.pending.push({ kind: "custom", show: () => F7.openChanges("0.9.7") });
   store.set(SEEN19, CLIENT_VERSION);
 }
@@ -8845,7 +8848,7 @@ function sanitize37() {
     if (!ITEMS[s.id]) return true;
     let left = s.n;
     if (Array.isArray(w.inv)) { const st = w.inv.find(x => x && x.id === s.id); if (st) { st.n += left; left = 0; } else { const i = w.inv.findIndex(x => !x); if (i >= 0) { w.inv[i] = { id: s.id, n: left }; left = 0; } } }
-    if (left > 0) { const R = roomFor("home"); R.storage = R.storage || []; const t = R.storage.find(x => x && x.id === s.id); if (t) t.n += left; else R.storage.push({ id: s.id, n: left }); }
+    if (left > 0) { const R = myHome18(); R.storage = R.storage || []; const t = R.storage.find(x => x && x.id === s.id); if (t) t.n += left; else R.storage.push({ id: s.id, n: left }); }
     back37.push(ITEMS[s.id].name + (s.n > 1 ? "×" + s.n : "") + (left > 0 ? "（家の収納箱へ）" : ""));
     return false;
   });
@@ -12961,6 +12964,36 @@ setInterval(() => {
   const sig = JSON.stringify(layoutOf17(R)); if (R.sig64 === undefined) { R.sig64 = sig; return; }
   if (sig !== R.sig64) { R.sig64 = sig; R.ts64 = Date.now(); saveWorld(); }
 }, 1000);
+// =================== v73: 管理人からのプレゼント ===================
+var F73 = {};
+/** 管理人室から届いた物を受け取る。持ち物に入りきらない分は家の収納箱へ。知らない物（まだない物）は lost37 に取っておく */
+function applyAdminGift73(items, text) {
+  const got = [];
+  let toHome = 0, icon = null;
+  for (const it of Array.isArray(items) ? items.slice(0, 50) : []) {
+    if (!it || typeof it.id !== "string" || !/^[\p{L}\p{N}_:\-]{1,32}$/u.test(it.id)) continue;
+    const n = Math.max(1, Math.min(999, Math.floor(+it.n || 1)));
+    const [base] = splitR(it.id);
+    if (!ITEMS[base]) { world.lost37 = Array.isArray(world.lost37) ? world.lost37 : []; world.lost37.push({ id: it.id, n }); continue; }
+    icon = icon || base;
+    if (it.id === base && addItem(base, n, true)) { got.push(`${ITEMS[base].name}×${n}`); continue; }
+    toHome += homeStore18(it.id, n); got.push(`${ITEMS[base].name}×${n}`);
+  }
+  saveWorld(); renderHotbar(); updateHud(true);
+  if (!got.length) return got;
+  const t = String(text || "").slice(0, 60);
+  F7.notify(`${t ? t + "　" : ""}管理人からプレゼントが届いた：${got.join("、")}${toHome ? `（持ち物がいっぱいの分は、${F8.connected ? "みんなの家の「自分だけの箱」" : "家の収納箱"}に入れたよ）` : ""}`, icon);
+  if (typeof SFX !== "undefined" && SFX.small) SFX.small();
+  return got;
+}
+F73.apply = applyAdminGift73;
+const _handle73 = handle8;
+handle8 = m => {
+  if (m && m.type === "adminGift") { applyAdminGift73(m.items, m.text); return; }
+  _handle73(m);
+  if (m && m.type === "welcome" && Array.isArray(m.adminGift)) for (const g of m.adminGift.slice(0, 50)) if (g && typeof g === "object") applyAdminGift73(g.items, g.text);
+};
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -13421,5 +13454,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F72tile: e => tileAt72(e), F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F72tile: e => tileAt72(e), F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

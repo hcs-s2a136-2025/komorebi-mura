@@ -40,6 +40,12 @@
   </section>
 
   <section class="card">
+    <h2>物をプレゼント</h2>
+    <p class="muted">プレイヤーに物を届けられます。不具合でなくなった物の埋め合わせなどに。</p>
+    <div class="row"><a class="btn" href="/admin/gift">物をプレゼントする</a></div>
+  </section>
+
+  <section class="card">
     <h2>村の時計</h2>
     <p th:text="${clockText}">1日目</p>
     <form class="row" method="post" th:action="@{/admin/clock/morning}"><button class="btn ghost" type="submit">次の日の朝にする</button></form>

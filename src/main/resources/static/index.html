@@ -898,6 +898,11 @@ b.rare2 { color: #3a78d8; } b.rare3 { color: #d88a00; }
 .cos62looks .btn { font-size: .66rem; padding: 2px 6px; }
 /* v63: スマホで連続タップしたときのダブルタップ拡大を止める（ピンチは使える） */
 html, body { touch-action: manipulation; }
+/* v64: 家の名前・同居人 */
+.keys64 { display: flex; flex-direction: column; gap: 4px; }
+.keys64 .row { align-items: center; gap: 6px; flex-wrap: wrap; }
+.kname64 { min-width: 5em; font-weight: bold; }
+#hname64 { background: #fffaf0; color: var(--ink, #3b2a21); border: 2px solid var(--wood, #8a6a44); border-radius: 8px; padding: 6px 8px; font: inherit; }
 </style>
 
 <header>
@@ -1024,7 +1029,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.34.1";
+  const VER = "0.35.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -2108,7 +2113,9 @@ function enterRoom(key, back) {
   enter(room, room.exit[0], room.exit[1] - 1, "up");
   if (!$("pane-build").hidden) syncBuild();
 }
-const roomTitle = () => roomKey === "home" ? (typeof F17 !== "undefined" && F17.shared && F17.shared("home") ? "みんなの家" : myName() + "の家") : ((world.houses.find(h => h.col + "," + h.row === roomKey)?.owner) || "だれか") + "の家";
+/** 家の呼び名：持ち主がつけた名前があればそれ、なければ「〇〇の家」 */
+function houseLabel(h) { const n = h && typeof h.name === "string" ? h.name.replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 16) : ""; return n || ((h && h.owner) || "だれか") + "の家"; }
+const roomTitle = () => roomKey === "home" ? (typeof F17 !== "undefined" && F17.shared && F17.shared("home") ? "みんなの家" : myName() + "の家") : houseLabel(world.houses.find(h => h.col + "," + h.row === roomKey));
 const roomHas = id => map === room && room.data.furn.some(f => f.id === id);
 let decor = false;
 function setDecor(on) { decor = on && map === room; $("decorbar").hidden = !decor; if (!$("pane-build").hidden) syncBuild(); }
@@ -3203,7 +3210,7 @@ function draw(now) {
     ctx.font = '11px "DotGothic16", sans-serif';
     for (const h of world.houses) {
       const [sx, sy] = toS(h.col * TS + 8, (h.row + 1) * TS + 2);
-      const lb = (h.owner || "だれか") + "の家"; const w = ctx.measureText(lb).width + 8;
+      const lb = houseLabel(h); const w = ctx.measureText(lb).width + 8;
       ctx.fillStyle = "rgba(243,230,198,.85)"; ctx.fillRect(sx - w / 2, sy, w, 13); ctx.fillStyle = "#3b2a21"; ctx.fillText(lb, sx, sy + 7);
     }
   }
@@ -5464,7 +5471,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.34.1";
+const CLIENT_VERSION = "0.35.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5956,7 +5963,7 @@ F8.myId = () => (F8.online && onl.id) || 0;
 F8.canEnter = key => {
   const h = world.houses.find(h => h.col + "," + h.row === key);
   if (!h || !h.ownerId || !F8.online || h.ownerId === onl.id) return true;
-  toast(null, `${h.owner || "だれか"}の家。鍵がかかっている（持ち主が家の中の建築タブで「だれでも」か「合鍵」にすると入れるよ）`); return false;
+  toast(null, `${houseLabel(h)}。鍵がかかっている（持ち主が家の中の建築タブで「だれでも」か「合鍵」にすると入れるよ）`); return false;
 };
 F8.myHouseIndex = () => { for (let i = world.houses.length - 1; i >= 0; i--) { const h = world.houses[i]; if (!F8.online || !h.ownerId || h.ownerId === onl.id) return i; } return -1; };
 
@@ -7276,6 +7283,8 @@ const sharedHouse17 = key => !!(F8.connected && key && (key === "home" || houseO
 const homeShared17 = key => key === "home" && sharedHouse17("home");
 F17.home = () => homeShared17("home");
 const mineHouse17 = key => { const h = houseOf17(key); return !h || !h.ownerId || h.ownerId === onl.id; };
+/** 持ち主から「同居人」にえらばれた合鍵の人（模様替えできる） */
+const mateHouse17 = key => { const h = houseOf17(key); return !!(h && h.ownerId && F8.online && Array.isArray(h.keys) && h.keys.some(k => k && k.id === onl.id && k.edit === true)); };
 F17.shared = sharedHouse17; F17.mine = mineHouse17;
 const layoutOf17 = R => ({ wall: R.wall, floor: R.floor, furn: R.furn, aqua: R.aqua || {}, ...(R.plan ? { plan: R.plan } : {}), ...(R.lv38 ? { lv38: R.lv38 } : {}) });
 
@@ -7345,6 +7354,16 @@ function applyHouse17(m) {
       return;
     }
     if (H17.seeding[key] && m.layout && R) { R.storage = []; R.priv = []; H17.seeding[key] = false; saveWorld(); }
+    // 同居人が模様替えしたら、持ち主の手元の部屋にも反映する（自分が送ったものと同じなら何もしない）
+    else if (m.layout && R && !H17.seeding[key] && JSON.stringify(m.layout) !== H17.lastPut[key]) {
+      const L = m.layout;
+      if (typeof applyPlan38 === "function") applyPlan38(R, L, key);
+      if (typeof L.wall === "string" && WALLPAPERS.includes(L.wall)) R.wall = L.wall;
+      if (typeof L.floor === "string" && FLOORS.includes(L.floor)) R.floor = L.floor;
+      R.furn = cleanFurn17(L.furn, R); R.aqua = L.aqua && typeof L.aqua === "object" ? L.aqua : {};
+      H17.lastPut[key] = JSON.stringify(layoutOf17(R)); saveWorld();
+      if (map === room && roomKey === key) { rebuildSolid(); if (room.solid[player.y]?.[player.x]) { const s = freeNear(room, player.x, player.y); placeAt(player, s[0], s[1]); } }
+    }
   } else {
     const R = H17.visit[key] || roomFor(key); const L = m.layout || {};
     if (typeof applyPlan38 === "function") applyPlan38(R, L, key);
@@ -7353,6 +7372,7 @@ function applyHouse17(m) {
     R.furn = cleanFurn17(L.furn, R);
     R.aqua = L.aqua && typeof L.aqua === "object" ? L.aqua : {};
     if (key === "home") { H17.lastPut.home = JSON.stringify(layoutOf17(R)); if (m.layout) H17.seeding.home = false; F17.tryImport?.(); }
+    else if (mateHouse17(key)) H17.lastPut[key] = JSON.stringify(layoutOf17(R));
     if (map === room && roomKey === key) { rebuildSolid(); if (room.solid[player.y]?.[player.x]) { const s = freeNear(room, player.x, player.y); placeAt(player, s[0], s[1]); } }
   }
   if (map === room && roomKey === key && !$("pane-build").hidden) syncBuild();
@@ -7367,8 +7387,8 @@ setInterval(() => {
     if (homeShared17("home")) { H17.loaded.home = false; send8({ type: "house", act: "get", key: "home" }); }
     updateHud(true); if (!$("pane-build").hidden) syncBuild();
   }
-  if (!(map === room && sharedHouse17(roomKey) && (roomKey === "home" || mineHouse17(roomKey)) && H17.loaded[roomKey])) return;
-  const R = roomKey === "home" ? H17.visit.home : world.rooms[roomKey]; if (!R) return;
+  if (!(map === room && sharedHouse17(roomKey) && (roomKey === "home" || mineHouse17(roomKey) || mateHouse17(roomKey)) && H17.loaded[roomKey])) return;
+  const R = roomKey === "home" ? H17.visit.home : mineHouse17(roomKey) ? world.rooms[roomKey] : H17.visit[roomKey]; if (!R) return;
   const L = layoutOf17(R), t = JSON.stringify(L);
   if (t !== H17.lastPut[roomKey]) { H17.lastPut[roomKey] = t; send8({ type: "house", act: "put", key: roomKey, layout: L }); }
 }, 1000);
@@ -7385,7 +7405,7 @@ function openBox17(which, local) {
     const home = key === "home" && !local;
     const title = which === "priv" ? (home ? "自分だけの箱" : "鍵つきの箱（あなただけ）") : local ? "収納箱" : home ? "みんなの家の収納箱" : "みんなの収納箱";
     const desc = which === "priv" ? (local ? "あなただけの箱。" : home ? "みんなの家の鍵つきの箱は、ひとりずつ別の箱です。中身はあなたにしか見えません。" : "持ち主だけが開けられる箱。中身はサーバーに保存されて、どの端末からでも同じです。")
-      : local ? "しまった物はこの部屋に残ります。" : home ? "みんなの家の箱。だれでも出し入れできます。" : `${esc(owner)}の家の箱。家に入れる人なら、だれでも出し入れできます。`;
+      : local ? "しまった物はこの部屋に残ります。" : home ? "みんなの家の箱。だれでも出し入れできます。" : `${esc(owner)}の家の箱。家に入れる人ならだれでも入れられて、出せるのは持ち主と同居人だけです。`;
     openModal(title, "", body => {
       const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && !ITEMS[id].tool);
       body.innerHTML = `<p class="mtext">${desc}</p>
@@ -7462,7 +7482,7 @@ F17.openPriv = () => {
 // ---- friends' houses can be looked at, not rearranged ----
 const _setDecor17 = setDecor;
 setDecor = function (on) {
-  if (on && map === room && sharedHouse17(roomKey) && !mineHouse17(roomKey)) { toast(null, "人の家は模様替えできないよ"); return; }
+  if (on && map === room && sharedHouse17(roomKey) && !mineHouse17(roomKey) && !mateHouse17(roomKey)) { toast(null, "人の家は模様替えできないよ（持ち主に「同居人」にしてもらうとできる）"); return; }
   _setDecor17(on);
 };
 const _f6act17 = F6.act;
@@ -7480,13 +7500,14 @@ syncBuild = function () {
   _syncBuild17();
   const panel = $("roomPanel"); if (!panel) return;
   let box = $("access17");
-  const inShared = map === room && sharedHouse17(roomKey), mine = inShared && mineHouse17(roomKey), visitor = inShared && !mine;
+  const inShared = map === room && sharedHouse17(roomKey), mine = inShared && mineHouse17(roomKey), mate = inShared && !mine && mateHouse17(roomKey), visitor = inShared && !mine && !mate;
   panel.querySelectorAll("#decorToggle, #wpRow, #flRow").forEach(el => { const o = el.closest(".opt") || el; o.style.display = visitor ? "none" : ""; });
   if (!inShared) { if (box) box.remove(); return; }
   if (!box) { panel.insertAdjacentHTML("beforeend", `<div class="opt" id="access17"></div>`); box = $("access17"); }
   if (roomKey === "home") { box.innerHTML = `<h3>みんなの家</h3><p class="note">オンラインでは、最初からある家はみんなの家です。だれでも入れて、だれでも模様替えできます。収納箱はみんなで使えて、鍵つきの箱はひとりずつ別の「自分だけの箱」です。ひとりで遊ぶときは、これまでどおり自分の家になります。</p>`; return; }
   const h = houseOf17(roomKey);
-  if (visitor) { box.innerHTML = `<h3>この家</h3><p class="note">${esc(h?.owner || "だれか")}の家に遊びに来ています。家具や箱の中身は、持ち主のものがそのまま見えます。</p>`; return; }
+  if (mate) { box.innerHTML = `<h3>${esc(houseLabel(h))}</h3><p class="note">あなたは${esc(h?.owner || "だれか")}さんの家の「同居人」。模様替え（家具・壁紙・床）と、収納箱から出すことができます。片付けた家具は、あなたの持ち物に入ります。</p>`; return; }
+  if (visitor) { box.innerHTML = `<h3>${esc(houseLabel(h))}</h3><p class="note">${esc(h?.owner || "だれか")}の家に遊びに来ています。家具や箱の中身は、持ち主のものがそのまま見えます。</p>`; return; }
   box.innerHTML = `<h3>この家に入れる人</h3><div class="row"><button class="chip" type="button" data-acc="0" aria-pressed="${!h.open}">自分だけ</button><button class="chip" type="button" data-acc="1" aria-pressed="${!!h.open}">だれでも</button></div>
     <p class="note">「だれでも」にすると、オンラインの友達も中に入れて、みんなの収納箱を使えます。鍵つきの箱はあなただけ。模様替えできるのは持ち主だけです。</p>`;
   box.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => { h.open = b.dataset.acc === "1"; saveWorld(); syncBuild(); toast(null, h.open ? "この家を、だれでも入れるようにした" : "この家を、自分だけ入れるようにした"); });
@@ -7518,6 +7539,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.35.0", date: "2026/10/26", title: "家の名前と同居人", items: [
+    "自分の家に、すきな名前をつけられるように（家の中の建築タブ）。村の地図やオンラインの一覧にも出るよ",
+    "合鍵をわたした人を「同居人」にできるように。同居人は、模様替えと収納箱から出すことができる",
+    "ふつうの合鍵の人・遊びに来た人は、収納箱に「入れる」だけ（出せるのは持ち主と同居人）",
+    "家の名前・入れる人・合鍵・取りこわしは、持ち主にしか変えられないように、サーバーでもしっかり確かめるようにした",
+  ] },
   { v: "0.34.1", date: "2026/10/26", title: "家の中で会えない不具合など", items: [
     "建てた家の中で、ほかの人が見えなかった（外にいるように見えていた）のを直した",
     "スマホで連続タップしたときに、画面がズームされないようにした",
@@ -12199,6 +12226,7 @@ function where49(e) {
   if (k === "village") return e.y >= NY0 ? "北の丘" : "こもれび村";
   if (k.startsWith("int:")) return INT49[k.slice(4)] || "お店の中";
   if (k === "port") return "みなと町";
+  if (k.startsWith("house:")) { const key = k.slice(6); return key === "home" ? "みんなの家" : houseLabel(world.houses.find(h => h.col + "," + h.row === key)); }
   return "おでかけ中（街・洞窟・家の中など）";
 }
 function openOnline49() {
@@ -12356,12 +12384,14 @@ syncBuild = function () {
   const keys = Array.isArray(h.keys) ? h.keys.filter(k => k && Number.isFinite(k.id)) : [];
   const mode = h.open ? "all" : keys.length ? "keys" : "me";
   const online = [...remotes.values()].filter(e => e.rid && !keys.some(k => k.id === e.rid));
-  box.innerHTML = `<h3>この家に入れる人</h3>
+  box.innerHTML = `<h3>家の名前</h3>
+    <div class="row"><input id="hname64" maxlength="16" placeholder="${esc((h.owner || myName()) + "の家")}" value="${esc(h.name || "")}" style="flex:1;min-width:8em"><button class="btn light" type="button" id="hnameGo64">変える</button></div>
+    <h3>この家に入れる人</h3>
     <div class="row"><button class="chip" type="button" data-acc51="me" aria-pressed="${mode === "me"}">自分だけ</button><button class="chip" type="button" data-acc51="keys" aria-pressed="${mode === "keys"}">合鍵の人だけ</button><button class="chip" type="button" data-acc51="all" aria-pressed="${mode === "all"}">だれでも</button></div>
     <p class="mtext small" style="margin:8px 0 4px">合鍵をわたした人（${keys.length} / 8）</p>
-    <div class="row">${keys.length ? keys.map(k => `<button class="chip" type="button" data-unkey51="${k.id}" title="合鍵を返してもらう">${esc(k.name || "だれか")} ×</button>`).join("") : `<span class="note">まだだれにもわたしていない</span>`}</div>
+    <div class="keys64">${keys.length ? keys.map(k => `<div class="row"><span class="kname64">${esc(k.name || "だれか")}</span><button class="chip" type="button" data-mate64="${k.id}" aria-pressed="${k.edit === true}" title="模様替えと、収納箱から出すのをゆるす">${k.edit === true ? "同居人（模様替えOK）" : "入るだけ"}</button><button class="chip" type="button" data-unkey51="${k.id}" title="合鍵を返してもらう">返してもらう</button></div>`).join("") : `<span class="note">まだだれにもわたしていない</span>`}</div>
     ${keys.length < 8 ? `<p class="mtext small" style="margin:8px 0 4px">いまオンラインの人に合鍵をわたす</p><div class="row">${online.length ? online.map(e => `<button class="chip" type="button" data-key51="${e.rid}">＋ ${esc(e.name)}</button>`).join("") : `<span class="note">いまオンラインの人がいないよ</span>`}</div>` : ""}
-    <p class="note">「合鍵の人だけ」は、合鍵をわたした人だけが入れる。「だれでも」は、オンラインのみんなが入れる。どちらでも、鍵つきの箱はあなただけで、模様替えできるのも持ち主だけ。</p>`;
+    <p class="note">「合鍵の人だけ」は、合鍵をわたした人だけが入れる。「だれでも」は、オンラインのみんなが入れる。合鍵の人は、ふだんは「入るだけ」。押して「同居人」にすると、模様替えと収納箱から出すことができる（片付けた家具はその人の持ち物に入るので、信頼できる人だけにしてね）。家の名前・入れる人・合鍵・取りこわしは、持ち主のあなたにしか変えられない。鍵つきの箱も、あなただけ。</p>`;
   // 押したときに、いまの家のデータを取り直す（あとから届いた更新で、家のデータが入れかわっていても効くように）
   const cur = () => houseOf17(roomKey);
   const done = msg => { saveWorld(); syncBuild(); if (msg) toast(null, msg); };
@@ -12371,6 +12401,10 @@ syncBuild = function () {
   box.querySelectorAll("[data-key51]").forEach(b => b.onclick = () => { const x = cur(); if (!x) return; const id = +b.dataset.key51, e = remotes.get(id); if (!e) return;
     x.keys = (Array.isArray(x.keys) ? x.keys : []).filter(k => k && k.id !== id).concat([{ id, name: String(e.name || "").slice(0, 12) }]).slice(0, 8); x.open = false;
     done(`${e.name}に合鍵をわたした`); });
+  box.querySelector("#hnameGo64")?.addEventListener("click", () => { const x = cur(); if (!x) return; const v = String($("hname64").value || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 16);
+    if (v) x.name = v; else delete x.name; done(v ? `家の名前を「${v}」にした` : "家の名前を、もとの呼び名にもどした"); });
+  box.querySelectorAll("[data-mate64]").forEach(b => b.onclick = () => { const x = cur(); if (!x) return; const id = +b.dataset.mate64, k = (x.keys || []).find(k => k && k.id === id); if (!k) return;
+    if (k.edit === true) delete k.edit; else k.edit = true; done(k.edit ? `${k.name || "だれか"}を同居人にした（模様替えできる）` : `${k.name || "だれか"}を「入るだけ」にもどした`); });
   box.querySelectorAll("[data-unkey51]").forEach(b => b.onclick = () => { const x = cur(); if (!x) return; const id = +b.dataset.unkey51, k = (x.keys || []).find(k => k.id === id);
     x.keys = (x.keys || []).filter(k => k.id !== id); if (!x.keys.length) delete x.keys;
     done(`${k?.name || "だれか"}から合鍵を返してもらった`); });
@@ -12383,7 +12417,7 @@ handle8 = m => {
   try {
     if (!F8.connected) return;
     const now = new Set(world.houses.filter(hasKey51).map(h => h.col + "," + h.row));
-    if (keySeen51) for (const k of now) if (!keySeen51.has(k)) { const h = world.houses.find(h => h.col + "," + h.row === k); toast(null, `${h?.owner || "だれか"}の家の合鍵をもらった！ いつでも中に入れるよ`); }
+    if (keySeen51) for (const k of now) if (!keySeen51.has(k)) { const h = world.houses.find(h => h.col + "," + h.row === k); toast(null, `${houseLabel(h)}の合鍵をもらった！ いつでも中に入れるよ${h && (h.keys || []).some(k => k && k.id === onl.id && k.edit) ? "（模様替えもできる同居人）" : ""}`); }
     keySeen51 = now;
   } catch (e) { }
 };
@@ -12518,6 +12552,8 @@ const GUIDE54 = [
     <li>家の中では、建築タブで模様替え（家具を置く）・壁紙・床・間取りを変えられる。大きい家ほど部屋をふやせる</li>
     <li>家具はよろず屋や街のお店で買う。家の中のピアノはⒶで弾ける</li>
     <li><b>入れる人</b>（オンライン）：家の中の建築タブで「自分だけ・合鍵の人だけ・だれでも」。いまオンラインの人に合鍵をわたせる</li>
+    <li><b>家の名前</b>：自分の家の中の建築タブで、すきな名前をつけられる（16文字まで）。村の地図やオンラインの一覧にも出る</li>
+    <li><b>同居人</b>：合鍵をわたした人を「同居人」にすると、模様替えと収納箱から出すことができる。ふつうの合鍵の人は、入る・収納箱に入れるだけ。家の名前・合鍵・取りこわしは持ち主しか変えられない</li>
     <li>最初からある家は、オンラインでは「みんなの家」。収納箱はみんなで使えて、鍵つきの箱は自分だけ</li></ul>`],
   ["村・評判・職業", "board", `
     <ul>

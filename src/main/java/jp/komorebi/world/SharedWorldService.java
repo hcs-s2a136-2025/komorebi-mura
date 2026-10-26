@@ -99,6 +99,24 @@ public class SharedWorldService implements WelcomeContributor {
                     continue;
                 }
             }
+            if ("houses".equals(l) && playerId > 0) {
+                // 家は、持ち主（ownerId）だけが変えたり取りこわしたりできる。合鍵の人や、ほかの人の画面からは書きかえられない
+                JsonNode cur = layer.get(k);
+                long owner = cur == null ? 0 : cur.path("ownerId").asLong(0);
+                boolean ok = owner <= 0 || owner == playerId;
+                if (ok && v != null && !v.isNull()) {
+                    if (!v.isObject()) ok = false;
+                    else {
+                        ObjectNode nv = ((ObjectNode) v).deepCopy();
+                        nv.put("ownerId", owner > 0 ? owner : playerId); // 持ち主は、サーバーが知っている本人にする（ほかの人のものにはできない）
+                        v = nv;
+                    }
+                }
+                if (!ok) {
+                    if (rejected != null) { ObjectNode r = rejected.addObject().put("l", l).put("k", k); r.set("v", cur == null ? NullNode.getInstance() : cur.deepCopy()); }
+                    continue;
+                }
+            }
             if (v == null || v.isNull()) {
                 if (layer.remove(k) == null) continue;
                 v = NullNode.getInstance();

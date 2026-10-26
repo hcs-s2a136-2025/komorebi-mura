@@ -14,7 +14,7 @@ import jp.komorebi.ws.PlayerSession;
 
 /**
  * {"type":"house","act":"get","key":"48,21"} … 家の中身をもらう
- * {"type":"house","act":"put","key":"48,21","layout":{...},"seed":{"storage":{...},"priv":{...}}} … 持ち主が家具の並びを送る
+ * {"type":"house","act":"put","key":"48,21","layout":{...},"seed":{"storage":{...},"priv":{...}}} … 持ち主（か同居人）が家具の並びを送る。seed は持ち主だけ
  * {"type":"house","act":"returns"} … 共有の村のリセットで消えた家の箱の中身を受け取る → {"type":"houseReturn","items":[{id,n}]}
  * {"type":"house","act":"import","key":"home","items":{...},"rid":"x"} … ひとりで遊んでいたときの家の物を、自分だけの箱へ → {"type":"houseImport","rid","ok":{...}}
  * key "home" はオンラインの「みんなの家」。だれでも入れて模様替えでき、鍵つきの箱はひとりずつ別
@@ -70,16 +70,17 @@ public class HouseHandler implements MessageHandler {
                 hub.send(from, box);
             }
             case "put" -> {
-                if (!owner) return;
+                if (!owner && !houses.canEdit(key, me)) return;
                 JsonNode layout = msg.get("layout");
                 if (layout == null || !layout.isObject()) return;
                 String text = layout.toString();
                 if (text.length() > HouseBook.MAX_LAYOUT) return;
                 boolean home = HouseService.HOME.equals(key);
-                Map<String, Long> seedShared = home ? null : counts(msg.path("seed").path("storage")), seedPriv = home ? null : counts(msg.path("seed").path("priv"));
+                boolean seedOk = !home && owner;
+                Map<String, Long> seedShared = seedOk ? counts(msg.path("seed").path("storage")) : null, seedPriv = seedOk ? counts(msg.path("seed").path("priv")) : null;
                 if (!houses.book().putLayout(key, text, seedShared, seedPriv)) return;
                 houses.save(key);
-                hub.send(from, reply(hub, key, true, me));
+                hub.send(from, reply(hub, key, owner, me));
                 hub.sendToMap("house:" + key, reply(hub, key, false, me), from);
             }
             default -> { }

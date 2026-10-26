@@ -97,6 +97,16 @@ public class HouseService {
         return false;
     }
 
+    /** 模様替えしていいか（持ち主か、持ち主から「同居人」にえらばれた合鍵の人。みんなの家はだれでも） */
+    public boolean canEdit(String key, long playerId) {
+        if (HOME.equals(key)) return true;
+        if (isOwner(key, playerId)) return true;
+        JsonNode h = world.layerValue("houses", key);
+        if (h == null) return false;
+        for (JsonNode k : h.path("keys")) if (k.path("id").asLong(-1) == playerId && k.path("edit").asBoolean(false)) return true;
+        return false;
+    }
+
     public boolean isOpen(String key) {
         if (HOME.equals(key)) return true;
         JsonNode h = world.layerValue("houses", key);

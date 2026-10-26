@@ -436,3 +436,8 @@ b.rare2 { color: #3a78d8; } b.rare3 { color: #d88a00; }
 .cos62looks .btn { font-size: .66rem; padding: 2px 6px; }
 /* v63: スマホで連続タップしたときのダブルタップ拡大を止める（ピンチは使える） */
 html, body { touch-action: manipulation; }
+/* v64: 家の名前・同居人 */
+.keys64 { display: flex; flex-direction: column; gap: 4px; }
+.keys64 .row { align-items: center; gap: 6px; flex-wrap: wrap; }
+.kname64 { min-width: 5em; font-weight: bold; }
+#hname64 { background: #fffaf0; color: var(--ink, #3b2a21); border: 2px solid var(--wood, #8a6a44); border-radius: 8px; padding: 6px 8px; font: inherit; }

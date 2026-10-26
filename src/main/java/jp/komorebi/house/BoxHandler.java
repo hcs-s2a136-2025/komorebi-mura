@@ -38,6 +38,8 @@ public class BoxHandler implements MessageHandler {
         if (!HouseBook.validKey(key) || !houses.exists(key)) { ng(hub, from, rid, "その家は見つからなかった"); return; }
         boolean owner = houses.isOwner(key, me);
         if (priv ? !owner : !houses.canEnter(key, me)) { ng(hub, from, rid, priv ? "鍵がかかっていて開かない" : "この家の箱は使えないみたい"); return; }
+        // 建てた家の収納箱から「出す」のは、持ち主と同居人だけ（合鍵の人・遊びに来た人は、入れるだけ）
+        if (!priv && "take".equals(act) && !houses.canEdit(key, me)) { ng(hub, from, rid, "この箱から出せるのは、持ち主と同居人だけだよ（入れるのはOK）"); return; }
         // みんなの家の鍵つきの箱は、ひとりずつ別の箱
         String bookKey = priv && HouseService.HOME.equals(key) ? HouseService.personal(me) : key;
         long left;

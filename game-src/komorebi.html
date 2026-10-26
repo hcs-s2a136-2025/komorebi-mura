@@ -1045,7 +1045,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.36.1";
+  const VER = "0.37.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -3238,7 +3238,7 @@ function draw(now) {
       continue;
     }
     const [sx, sy] = toS(e.px + 8, e.py);
-    const nm = e === player ? F7.tag() : e.name;
+    const nm = e === player ? F7.tag() : e.kind === "remote" && e.cfg && typeof e.cfg.tt === "string" && e.cfg.tt ? `「${e.cfg.tt}」${e.name}` : e.name;
     ctx.font = '12px "DotGothic16", sans-serif';
     const w = ctx.measureText(nm).width + 10;
     ctx.fillStyle = e === player ? "rgba(240,189,79,.92)" : e.kind === "remote" ? "rgba(60,100,180,.9)" : e.kind === "collector" || e.kind === "guard" ? "rgba(150,30,30,.85)" : "rgba(20,30,25,.7)";
@@ -5487,7 +5487,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.36.1";
+const CLIENT_VERSION = "0.37.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7524,6 +7524,7 @@ syncBuild = function () {
   const h = houseOf17(roomKey);
   if (mate) { box.innerHTML = `<h3>${esc(houseLabel(h))}</h3><p class="note">あなたは${esc(h?.owner || "だれか")}さんの家の「同居人」。模様替え（家具・壁紙・床）と、収納箱から出すことができます。片付けた家具は、あなたの持ち物に入ります。</p>`; return; }
   if (visitor) { box.innerHTML = `<h3>${esc(houseLabel(h))}</h3><p class="note">${esc(h?.owner || "だれか")}の家に遊びに来ています。家具や箱の中身は、持ち主のものがそのまま見えます。</p>`; return; }
+  return; // 持ち主の設定は、あとの v51・v64 で作る（ここで作り直すと、スマホで押している途中のボタンが消える）
   box.innerHTML = `<h3>この家に入れる人</h3><div class="row"><button class="chip" type="button" data-acc="0" aria-pressed="${!h.open}">自分だけ</button><button class="chip" type="button" data-acc="1" aria-pressed="${!!h.open}">だれでも</button></div>
     <p class="note">「だれでも」にすると、オンラインの友達も中に入れて、みんなの収納箱を使えます。鍵つきの箱はあなただけ。模様替えできるのは持ち主だけです。</p>`;
   box.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => { h.open = b.dataset.acc === "1"; saveWorld(); syncBuild(); toast(null, h.open ? "この家を、だれでも入れるようにした" : "この家を、自分だけ入れるようにした"); });
@@ -7555,6 +7556,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.37.0", date: "2026/10/26", title: "作物どろぼうと「盗人」", items: [
+    "ほかの人の、収穫どきの作物を盗めるように（作物に向かってA）。盗むと、ゲームの中で3日間はずせない称号「盗人」がつくよ",
+    "盗まれた人には、だれに何を盗まれたか知らせが届く（つないでいなかったときも、次につないだときに）",
+    "えらんだ称号が、ほかの人の画面の名前にも出るように",
+    "スマホで、家の合鍵をわたす人をえらべない・家の名前が入力できなかったのを直した",
+  ] },
   { v: "0.36.1", date: "2026/10/26", title: "まとめて買う・まとめて植える", items: [
     "お店で個数をえらんで、まとめて買えるように（−・＋・×10のボタンか、数を入力。99個まで）",
     "種をまとめて植えられるように。耕した畑に向かって植えると、まわり3×3の空いている畑にもいっしょに植わる（設定タブで切りかえ）",
@@ -12412,7 +12419,7 @@ syncBuild = function () {
   const keys = Array.isArray(h.keys) ? h.keys.filter(k => k && Number.isFinite(k.id)) : [];
   const mode = h.open ? "all" : keys.length ? "keys" : "me";
   const online = [...remotes.values()].filter(e => e.rid && !keys.some(k => k.id === e.rid));
-  box.innerHTML = `<h3>家の名前</h3>
+  const html51 = `<h3>家の名前</h3>
     <div class="row"><input id="hname64" maxlength="16" placeholder="${esc((h.owner || myName()) + "の家")}" value="${esc(h.name || "")}" style="flex:1;min-width:8em"><button class="btn light" type="button" id="hnameGo64">変える</button></div>
     <h3>この家に入れる人</h3>
     <div class="row"><button class="chip" type="button" data-acc51="me" aria-pressed="${mode === "me"}">自分だけ</button><button class="chip" type="button" data-acc51="keys" aria-pressed="${mode === "keys"}">合鍵の人だけ</button><button class="chip" type="button" data-acc51="all" aria-pressed="${mode === "all"}">だれでも</button></div>
@@ -12420,6 +12427,10 @@ syncBuild = function () {
     <div class="keys64">${keys.length ? keys.map(k => `<div class="row"><span class="kname64">${esc(k.name || "だれか")}</span><button class="chip" type="button" data-mate64="${k.id}" aria-pressed="${k.edit === true}" title="模様替えと、収納箱から出すのをゆるす">${k.edit === true ? "同居人（模様替えOK）" : "入るだけ"}</button><button class="chip" type="button" data-unkey51="${k.id}" title="合鍵を返してもらう">返してもらう</button></div>`).join("") : `<span class="note">まだだれにもわたしていない</span>`}</div>
     ${keys.length < 8 ? `<p class="mtext small" style="margin:8px 0 4px">いまオンラインの人に合鍵をわたす</p><div class="row">${online.length ? online.map(e => `<button class="chip" type="button" data-key51="${e.rid}">＋ ${esc(e.name)}</button>`).join("") : `<span class="note">いまオンラインの人がいないよ</span>`}</div>` : ""}
     <p class="note">「合鍵の人だけ」は、合鍵をわたした人だけが入れる。「だれでも」は、オンラインのみんなが入れる。合鍵の人は、ふだんは「入るだけ」。押して「同居人」にすると、模様替えと収納箱から出すことができる（片付けた家具はその人の持ち物に入るので、信頼できる人だけにしてね）。家の名前・入れる人・合鍵・取りこわしは、持ち主のあなたにしか変えられない。鍵つきの箱も、あなただけ。</p>`;
+  // 中身が変わっていないとき・名前を入力しているときは作り直さない（スマホで、押している途中のボタンや入力中の欄が消えないように）
+  if (box.dataset.sig51 === html51 && box.querySelector("#hname64")) return;
+  if (box.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  box.dataset.sig51 = html51; box.innerHTML = html51;
   // 押したときに、いまの家のデータを取り直す（あとから届いた更新で、家のデータが入れかわっていても効くように）
   const cur = () => houseOf17(roomKey);
   const done = msg => { saveWorld(); syncBuild(); if (msg) toast(null, msg); };
@@ -14162,6 +14173,83 @@ setInterval(() => {
 }, 150);
 GUIDE54.forEach(g => { if (g[0] === "畑と作物") g[2] = g[2].replace("</ul>", "<li><b>まとめて植える</b>：種を持って耕した畑に向かってAを押すと、まわり3×3の空いている畑にもいっしょに植わる（設定タブで切りかえ）</li><li>お店では、個数をえらんでまとめて買える（−・＋・×10のボタンか、数を入力）</li></ul>"); });
 F68.ready = true;
+var F69 = {};
+// ---------- v69: ほかの人の作物を盗める（そのかわり、ゲームの中で3日間はずせない称号「盗人」）・称号がほかの人にも見える ----------
+const THIEF_DAYS69 = 3;
+world.thief69 = Number.isFinite(world.thief69) ? world.thief69 : 0; // この日になったら「盗人」がはずれる
+const thief69 = () => world.thief69 > world.day;
+const thiefLeft69 = () => Math.max(0, world.thief69 - world.day);
+const _tag69 = F7.tag;
+F7.tag = () => thief69() ? `「盗人」${myName()}` : _tag69();
+// 称号を見た目の設定（cfg.tt）に入れて、ほかの人の画面の名前にも出す
+const ttOK69 = t => typeof t === "string" && t.length <= 12 && (t === "盗人" || TITLES.some(x => x[0] === t));
+function myTT69() { if (thief69()) return "盗人"; const t = world.title; return t && t !== "村の新入り" && titleOk(t) ? t : ""; }
+const _clean69 = cleanCfg;
+cleanCfg = function (c) { const o = _clean69(c); if (c && ttOK69(c.tt)) o.tt = c.tt; return o; };
+setInterval(() => { const tt = myTT69(); if ((cfg.tt || "") !== tt) { if (tt) cfg.tt = tt; else delete cfg.tt; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); } }, 1000);
+// 村タブの称号：「盗人」のあいだは選べない
+const _renderVillage69 = renderVillage;
+renderVillage = function () {
+  _renderVillage69.apply(this, arguments);
+  if (!thief69()) return;
+  const B = $("villageBody"); if (!B) return;
+  const bs = B.querySelectorAll("[data-title]"); bs.forEach(b => { b.disabled = true; });
+  if (bs.length && !B.querySelector(".thief69")) bs[0].parentElement.insertAdjacentHTML("beforebegin", `<p class="note thief69">いまは称号「盗人」がついていて、あと${thiefLeft69()}日はずせない…（作物を盗んだから）</p>`);
+};
+// 盗む：ほかの人の、収穫どきの作物に向かってA
+let stealAt69 = 0;
+const _act69 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village && F8.connected) {
+    const [tx, ty] = front(), key = tx + "," + ty, sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
+    if (!world.crops[key] && !(it && (it.seed || it.use === "hoe" || it.use === "can"))) {
+      for (const [pid, F] of farms44) {
+        const c = F.crops.get(key); if (!c || c[1] < 2) continue;
+        const t = c[0], nm = ITEMS[t]?.name || "作物";
+        openModal("こっそり…？", "", body => {
+          body.innerHTML = `<p class="mtext">${esc(F.name)}さんの${esc(nm)}が、おいしそうに実っている。<br>こっそり持っていく？</p>
+            <p class="note">盗むと、ゲームの中で${THIEF_DAYS69}日間、はずせない称号「盗人」がついて、みんなの画面の名前にも出るよ。${esc(F.name)}さんにも、だれに盗まれたか知らせが届く。</p>
+            <div class="row2"><button class="btn" type="button" id="st69no">やめておく</button><button class="btn light" type="button" id="st69yes">盗む</button></div>`;
+          body.querySelector("#st69no").onclick = () => closeModal();
+          body.querySelector("#st69yes").onclick = () => {
+            if (!world.inv.some(i => !i || i.id === t)) { toast(null, "持ち物がいっぱいで、持って帰れない"); return; }
+            if (Date.now() - stealAt69 < 800) return; stealAt69 = Date.now();
+            send8({ type: "farm", act: "steal", owner: pid, x: tx, y: ty }); closeModal();
+          };
+        });
+        return;
+      }
+    }
+  }
+  return _act69.apply(this, arguments);
+};
+function onStolen69(items) {
+  let n = 0; const by = new Set(), what = new Set();
+  for (const e of Array.isArray(items) ? items : []) {
+    if (!Array.isArray(e)) continue; const [x, y, t, who] = e, k = (x | 0) + "," + (y | 0), c = world.crops[k];
+    if (c && !c.dead && c.type === t && c.stage >= 2) { delete world.crops[k]; n++; by.add(String(who || "だれか").slice(0, 16)); what.add(ITEMS[t]?.name || "作物"); }
+  }
+  if (!n) return;
+  world.stats.stolen69 = (world.stats.stolen69 || 0) + n; saveWorld(); farmLast44 = "";
+  F7.notify(`${[...by].join("・")}さんに、${[...what].join("・")}を${n}つ盗まれた…！（いまその人には「盗人」の称号がついているよ）`, "wither");
+}
+const _handle69 = handle8;
+handle8 = m => {
+  _handle69(m);
+  if (!m || typeof m.type !== "string") return;
+  if (m.type === "farmSteal") {
+    if (!m.ok) { toast(null, String(m.text || "盗めなかった").slice(0, 40)); return; }
+    const t = String(m.t || ""); if (!ITEMS[t]) return;
+    addItem(t, 1, true);
+    world.thief69 = Math.max(world.thief69 || 0, world.day + THIEF_DAYS69); world.stats.steal69 = (world.stats.steal69 || 0) + 1; saveWorld();
+    const F = farms44.get(m.owner); if (F) F.crops.delete((m.x | 0) + "," + (m.y | 0));
+    toast(ITEMS[t].icon, `${String(m.name || "だれか").slice(0, 16)}さんの${ITEMS[t].name}を盗んだ…。称号「盗人」がついた（あと${THIEF_DAYS69}日はずせない）`);
+  } else if (m.type === "farmStolen") onStolen69(m.items);
+  else if (m.type === "welcome" && Array.isArray(m.farmStolen)) setTimeout(() => onStolen69(m.farmStolen), 300);
+};
+GUIDE54.forEach(g => { if (g[0] === "オンライン") g[2] = g[2].replace(/<\/ul>/, "<li><b>作物どろぼう</b>：ほかの人の収穫どきの作物に向かってAを押すと、こっそり盗める。そのかわり、ゲームの中で3日間はずせない称号「盗人」がついて、みんなの画面の名前にも出る。盗まれた人には、だれに盗まれたか知らせが届く</li><li>えらんだ称号は、ほかの人の画面の名前にも出るよ</li></ul>"); });
+F69.thief = thief69; F69.left = thiefLeft69;
+F69.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -14621,7 +14709,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

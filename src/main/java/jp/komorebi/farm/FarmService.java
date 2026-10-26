@@ -120,9 +120,48 @@ public class FarmService implements WelcomeContributor {
             if (!ID.matcher(b).matches()) continue;
             ArrayNode o = pets.addArray(); o.add(b); o.add(Math.max(0, Math.min(20, p.path(1).asInt(0)))); o.add(clean(p.path(2).asText(""), 12));
         }
+        // 盗まれた作物：持ち主の画面がまだ知らずに送ってきたら、その作物は外しておく。もう消えていたら（知らせが届いた）、記録も消す
+        ObjectNode old = farms.get(playerId);
+        ArrayNode pend = old == null ? null : (ArrayNode) (old.get("stolen") instanceof ArrayNode a ? a : null);
+        if (pend != null && !pend.isEmpty()) {
+            ArrayNode keep = om.createArrayNode();
+            for (JsonNode s : pend) {
+                boolean still = false;
+                for (int i = crops.size() - 1; i >= 0; i--) {
+                    JsonNode c = crops.get(i);
+                    if (c.path(0).asInt() == s.path(0).asInt() && c.path(1).asInt() == s.path(1).asInt() && c.path(2).asText().equals(s.path(2).asText()) && c.path(3).asInt() >= 2) { crops.remove(i); still = true; }
+                }
+                if (still) keep.add(s);
+            }
+            if (!keep.isEmpty()) f.set("stolen", keep);
+        }
         ObjectNode prev = farms.put(playerId, f);
         if (prev == null || !prev.equals(f)) dirty.add(playerId);
         return f;
+    }
+
+    /**
+     * ほかの人の、収穫どきの作物を盗む。うまくいったら作物の種類を返す（だめなら null）。
+     * 持ち主の畑のようすから外して、「盗まれた」記録を残す（持ち主がつないでいなくても、次につないだときに知らせる）。
+     */
+    public synchronized String steal(long owner, int x, int y, String thiefName) {
+        ObjectNode f = farms.get(owner);
+        if (f == null || !(f.get("crops") instanceof ArrayNode crops)) return null;
+        for (int i = 0; i < crops.size(); i++) {
+            JsonNode c = crops.get(i);
+            if (c.path(0).asInt(-1) != x || c.path(1).asInt(-1) != y || c.path(3).asInt(0) < 2) continue;
+            String t = c.path(2).asText("");
+            crops.remove(i);
+            ArrayNode st = f.get("stolen") instanceof ArrayNode a ? a : f.putArray("stolen");
+            if (st.size() < 100) { ArrayNode e = st.addArray(); e.add(x); e.add(y); e.add(t); e.add(clean(thiefName, 16)); }
+            dirty.add(owner);
+            return t;
+        }
+        return null;
+    }
+
+    public ObjectNode get(long owner) {
+        return farms.get(owner);
     }
 
     public void forget(long playerId) {
@@ -139,6 +178,8 @@ public class FarmService implements WelcomeContributor {
     public void contribute(PlayerSession session, ObjectNode welcome) {
         ArrayNode list = welcome.putArray("farms");
         for (Map.Entry<Long, ObjectNode> e : farms.entrySet()) if (!e.getKey().equals(session.playerId())) list.add(e.getValue());
+        ObjectNode mine = session.playerId() == null ? null : farms.get(session.playerId());
+        if (mine != null && mine.get("stolen") instanceof ArrayNode st && !st.isEmpty()) welcome.set("farmStolen", st.deepCopy());
     }
 
     static String clean(String s, int max) {

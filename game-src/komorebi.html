@@ -1065,7 +1065,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.39.0";
+  const VER = "0.39.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5508,7 +5508,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.39.0";
+const CLIENT_VERSION = "0.39.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7392,8 +7392,10 @@ function applyHouse17(m) {
     }
     if (H17.seeding[key] && m.layout && R) { R.storage = []; R.priv = []; H17.seeding[key] = false; saveWorld(); }
     // 同居人が模様替えしたら、持ち主の手元の部屋にも反映する（自分が送ったものと同じなら何もしない）
-    else if (m.layout && R && !H17.seeding[key] && JSON.stringify(m.layout) !== H17.lastPut[key]) {
-      const L = m.layout;
+    // サーバーの並びを使うのは「同居人がいま模様替えした知らせ（owner:false）」か「サーバーのほうが新しい（ts）」ときだけ。
+    // （つないでいないあいだに自分で置いた家具が、古いサーバーの並びで消えないように）
+    else if (m.layout && R && !H17.seeding[key] && (m.owner === false || (+m.layout.ts || 0) > (+R.ts64 || 0)) && JSON.stringify(layoutOf17(m.layout)) !== H17.lastPut[key]) {
+      const L = m.layout; R.ts64 = +L.ts || Date.now();
       if (typeof applyPlan38 === "function") applyPlan38(R, L, key);
       if (typeof L.wall === "string" && WALLPAPERS.includes(L.wall)) R.wall = L.wall;
       if (typeof L.floor === "string" && FLOORS.includes(L.floor)) R.floor = L.floor;
@@ -7427,7 +7429,7 @@ setInterval(() => {
   if (!(map === room && sharedHouse17(roomKey) && (roomKey === "home" || mineHouse17(roomKey) || mateHouse17(roomKey)) && H17.loaded[roomKey])) return;
   const R = roomKey === "home" ? H17.visit.home : mineHouse17(roomKey) ? world.rooms[roomKey] : H17.visit[roomKey]; if (!R) return;
   const L = layoutOf17(R), t = JSON.stringify(L);
-  if (t !== H17.lastPut[roomKey]) { H17.lastPut[roomKey] = t; send8({ type: "house", act: "put", key: roomKey, layout: L }); }
+  if (t !== H17.lastPut[roomKey]) { H17.lastPut[roomKey] = t; R.ts64 = Date.now(); send8({ type: "house", act: "put", key: roomKey, layout: { ...L, ts: R.ts64 } }); }
 }, 1000);
 
 // ---- chests ----
@@ -7577,6 +7579,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.39.1", date: "2026/10/27", title: "持ち物が消える不具合を直した", items: [
+    "ゲームを開いたときに、自転車・スケートボード・枯れ防止剤・ビニールハウスのキットが「知らない物」としてあずかられて、持ち物から消えていたのを直した。あずかっていた物は、持ち物に返すよ（入りきらない分は家の収納箱へ）",
+    "つないでいないあいだに自分の家に置いた家具が、家に入ったときに古いサーバーの並びで消えてしまうことがあったのを直した",
+  ] },
   { v: "0.39.0", date: "2026/10/26", title: "共同農園と、共同プロジェクトの続き", items: [
     "共同農園：オンラインのとき、村のマップを長押しして指をすべらせると、範囲をえらんで共同農園にできる。中の作物はみんなのもの。だれが水をやっても育って、だれでも収穫できる",
     "共同プロジェクトの続き：花時計の公園 → 屋台村 → ツリーハウス（北の丘）→ 天文台（北の丘）→ こもれび像。観覧車のあとに、掲示板に出るよ",
@@ -10419,7 +10425,16 @@ function sanitize37() {
   w.lost37 = Array.isArray(w.lost37) ? w.lost37.filter(s => s && typeof s.id === "string" && s.n > 0) : [];
   let fixed = 0;
   // あずかっていた物を戻す
-  if (w.lost37.length) w.lost37 = w.lost37.filter(s => { if (!ITEMS[s.id]) return true; const R = roomFor("home"); R.storage = R.storage || []; const t = R.storage.find(x => x && x.id === s.id); if (t) t.n += s.n; else R.storage.push({ id: s.id, n: s.n }); return false; });
+  const back37 = [];
+  if (w.lost37.length) w.lost37 = w.lost37.filter(s => {
+    if (!ITEMS[s.id]) return true;
+    let left = s.n;
+    if (Array.isArray(w.inv)) { const st = w.inv.find(x => x && x.id === s.id); if (st) { st.n += left; left = 0; } else { const i = w.inv.findIndex(x => !x); if (i >= 0) { w.inv[i] = { id: s.id, n: left }; left = 0; } } }
+    if (left > 0) { const R = roomFor("home"); R.storage = R.storage || []; const t = R.storage.find(x => x && x.id === s.id); if (t) t.n += left; else R.storage.push({ id: s.id, n: left }); }
+    back37.push(ITEMS[s.id].name + (s.n > 1 ? "×" + s.n : "") + (left > 0 ? "（家の収納箱へ）" : ""));
+    return false;
+  });
+  if (back37.length) setTimeout(() => { try { F7.notify(`あずかっていた物を返したよ：${back37.join("・")}`, null); } catch (e) { } }, 1500);
   const lose = (id, n) => { if (typeof id === "string" && n > 0) w.lost37.push({ id, n }); fixed++; };
   if (Array.isArray(w.inv)) w.inv = w.inv.map(s => { if (!s) return null; if (typeof s.id !== "string" || !ITEMS[s.id] || !(s.n > 0)) { lose(s.id, s.n); return null; } return s; });
   for (const R of Object.values(w.rooms || {})) {
@@ -10445,7 +10460,8 @@ function sanitize37() {
   return fixed;
 }
 F37.sanitize = sanitize37;
-try { if (sanitize37()) { saveWorld(); } syncPets(); syncAnimals(); rebuildSolid(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "sanitize"); }
+// 起動したときの整理は、ファイルのいちばん最後（ぜんぶの物が登録されたあと）で行う（v0.39.1 まではここで行っていて、あとの版で足した自転車などを「知らない物」として預かってしまっていた）
+F37.startup = () => { try { if (sanitize37()) { saveWorld(); } syncPets(); syncAnimals(); rebuildSolid(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "sanitize"); } };
 const _loadSave37 = loadSave;
 loadSave = function (obj, label) {
   if (obj && obj.world) { const keep = world; world = obj.world; try { sanitizeShape(world); sanitize37(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "sanitize"); } obj.world = world; world = keep; }
@@ -14523,6 +14539,13 @@ ACH_REWARD["みんなの畑"] = ["item", "seed_carrot", 24];
 GUIDE54.forEach(g => { if (g[0] === "畑と作物") g[2] = g[2].replace("</ul>", "<li><b>共同農園</b>（オンライン）：村のマップを長押しして指をすべらせると、範囲をえらんで共同農園にできる。中の作物はみんなのもの。だれが水をやっても育って、だれでも収穫できる（植えた日のあとに水をやった日の数で育つ）</li></ul>"); });
 F72.zones = cz72; F72.crops = cc72; F72.tile = tileAt72; F72.rebuild = () => rebuildSolid(); F72.state = ccState72; F72.zoneErr = zoneErr72;
 F72.ready = true;
+// v73: つないでいないときに自分の家の家具を動かしたら、その時刻を残す（つないだとき、古いサーバーの並びで上書きしないため）
+setInterval(() => {
+  if (map !== room || roomKey === "home" || sharedHouse17(roomKey)) return;
+  const R = world.rooms && world.rooms[roomKey]; if (!R) return;
+  const sig = JSON.stringify(layoutOf17(R)); if (R.sig64 === undefined) { R.sig64 = sig; return; }
+  if (sig !== R.sig64) { R.sig64 = sig; R.ts64 = Date.now(); saveWorld(); }
+}, 1000);
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -14974,6 +14997,7 @@ if (hotData?.pos && !world.labor) {
   else if (p.map === "room") { roomKey = p.roomKey || "home"; lastBack = p.lastBack || [7, 7]; room = makeRoomMap(roomKey); rebuildSolid(); map = room; } else if (!map.isInterior) map = village;
   placeAt(player, p.x, p.y, p.dir);
 } else if (!world.labor) { try { restorePos53(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "restorePos"); } }
+F37.startup();
 syncUI(); syncBuild(); renderHotbar(); updateHud(true);
 let started13 = false;
 const boot13 = () => { if (started13) return; started13 = true; resize(); drawHousePreview(); paintDecoSwatches(); requestAnimationFrame(frame); requestAnimationFrame(animPreview); };

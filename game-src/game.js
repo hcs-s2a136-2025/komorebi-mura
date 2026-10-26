@@ -466,7 +466,8 @@ function solidRect(m, x0, y0, w, h) { for (let y = y0; y < y0 + h; y++) for (let
 
 // 村の大きさ。VH0 までが元からの村。v0.29.4 で、その下の配列に「北の丘」（NY0〜）を足した。
 // 北の丘は、こもれびパレスの左の木のすき間（NGAP の2マス）から行き来する（配列では下にあるが、画面では村の上につながっているように見せる）
-const VW = 64, VH0 = 44, NY0 = 44, VH = 64, NGAP = [20, 21];
+// v0.38.0 で北の丘を縦に倍（20マス → 40マス）にした
+const VW = 64, VH0 = 44, NY0 = 44, VH = 84, NGAP = [20, 21];
 const BIGQ = { x0: 42, x1: 60, y0: 30, y1: 41, gate: [50, 29], ramps: [[51, 34], [45, 38]], bands: [[30, 33], [35, 37], [39, 41]] };
 function makeVillage() {
   const m = blankMap(VW, VH, "こもれび村"); m.fenceS = new Set();
@@ -3922,7 +3923,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.37.0";
+const CLIENT_VERSION = "0.38.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5991,6 +5992,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.38.0", date: "2026/10/26", title: "北の丘が2倍の広さに", items: [
+    "北の丘を、たてに2倍（20マス → 40マス）に広げた。大きな家も、みんなの家も建てやすくなったよ。パレスの裏口は、新しい丘のいちばん下にお引っ越し",
+    "スマホで、イベント中などにボタンがふえると、上の「メニュー」が画面の外に押し出されていたのを直した（2段に折り返す）",
+    "セーブを読みこみ直したあとに、画面が止まることがあったのを直した",
+  ] },
   { v: "0.37.0", date: "2026/10/26", title: "作物どろぼうと「盗人」", items: [
     "ほかの人の、収穫どきの作物を盗めるように（作物に向かってA）。盗むと、ゲームの中で3日間はずせない称号「盗人」がつくよ",
     "盗まれた人には、だれに何を盗まれたか知らせが届く（つないでいなかったときも、次につないだときに）",
@@ -10641,7 +10647,7 @@ var F48 = {};
 F48.ready = true;
 var F49 = {};
 // ---------- v49: 北の丘（家を建てる土地）・パレスの裏口・いまオンラインの人 ----------
-const NBACK49 = [24, 60]; // 裏口のドア（北の丘のいちばん下、木のすき間のとなり）
+const NBACK49 = [24, VH - 4]; // 裏口のドア（北の丘のいちばん下、木のすき間のとなり）
 IMG.backdoor49 = pix13(48, 48, (set, rect) => {
   rect(2, 10, 44, 37, C13["#4a2a6a"]); rect(2, 10, 44, 3, C13["#6a3a8a"]);
   for (let x = 4; x < 44; x += 4) { set(x, 8, C13["#ff7ab8"]); set(x + 2, 8, C13["#ffe27a"]); }
@@ -12068,7 +12074,10 @@ var F61 = {};
 $("emo60w").querySelector(".emo60p").insertAdjacentHTML("beforebegin", `<div class="emo60s" id="emo60s">${STAMPS.map(s => `<button type="button" class="btn light" data-st61="${esc(s)}">${esc(s)}</button>`).join("")}</div>`);
 $("emo60s").addEventListener("click", e => { const b = e.target.closest("[data-st61]"); if (!b) return; e.stopPropagation(); stamp(b.dataset.st61); toggleEmo60(false); });
 const _toggleEmo61 = toggleEmo60;
-toggleEmo60 = function (v) { _toggleEmo61(v); const st = $("emo60s"); if (st) st.hidden = !F8.connected; };
+let emoAt61 = 0;
+toggleEmo60 = function (v) { const was = $("emo60w").hidden; _toggleEmo61(v); if (was && !$("emo60w").hidden) emoAt61 = performance.now(); const st = $("emo60s"); if (st) st.hidden = !F8.connected; };
+// スマホで「動」を押した直後の、指をはなしたときのクリックで、開いた輪がすぐ閉じないように
+$("emo60w").addEventListener("click", e => { if (performance.now() - emoAt61 < 450 && e.target.id === "emo60w") { e.stopImmediatePropagation(); } }, true);
 F61.box = openBox17; F61.addRare = addRare; F61.countT = countT; F61.groupR = groupR;
 F61.ready = true;
 var F62 = {};
@@ -12233,8 +12242,10 @@ ITEMS.antiwither65 = { name: "枯れ防止剤", icon: "aw65", price: 150, antiwi
 ITEMS.greenhouse65 = { name: "ビニールハウスのキット", icon: "gh65", price: 30000, greenhouse: true };
 for (const id of ["antiwither65", "greenhouse65"]) { SHOP_STOCK.push(id); SHOP_BASE.push(id); }
 const GH_W65 = 6, GH_H65 = 5, GH_MAX65 = 2;
-world.greenhouses65 = Array.isArray(world.greenhouses65) ? world.greenhouses65.filter(g => g && Number.isFinite(g.x) && Number.isFinite(g.y)) : [];
-const inGH65 = (x, y) => world.greenhouses65.find(g => x >= g.x && x < g.x + GH_W65 && y >= g.y && y < g.y + GH_H65);
+// セーブを読みこみ直すと world が入れかわるので、毎回たしかめる（入れかわったあとに undefined で止まらないように）
+const ghs65 = () => Array.isArray(world.greenhouses65) ? world.greenhouses65 : (world.greenhouses65 = []);
+world.greenhouses65 = ghs65().filter(g => g && Number.isFinite(g.x) && Number.isFinite(g.y));
+const inGH65 = (x, y) => ghs65().find(g => x >= g.x && x < g.x + GH_W65 && y >= g.y && y < g.y + GH_H65);
 const keyInGH65 = k => { const [x, y] = k.split(",").map(Number); return !!inGH65(x, y); };
 function ghRect65() {
   const [tx, ty] = front(), d = player.dir;
@@ -12281,14 +12292,14 @@ F7.act = (tx, ty, key, sel, item, other) => {
       openModal("ビニールハウス", "", body => {
         body.innerHTML = `<p class="mtext">このビニールハウスを片付けて、キットにもどす？（中の作物はそのまま残るけど、季節が変わると枯れるようになるよ）</p><div class="row2"><button class="btn light" type="button" id="gh65no">やめる</button><button class="btn" type="button" id="gh65yes">片付ける</button></div>`;
         body.querySelector("#gh65no").onclick = () => closeModal();
-        body.querySelector("#gh65yes").onclick = () => { world.greenhouses65 = world.greenhouses65.filter(g => g !== hit); addItem("greenhouse65", 1, true); saveWorld(); closeModal(); toast("gh65", "ビニールハウスをキットにもどした"); };
+        body.querySelector("#gh65yes").onclick = () => { world.greenhouses65 = ghs65().filter(g => g !== hit); addItem("greenhouse65", 1, true); saveWorld(); closeModal(); toast("gh65", "ビニールハウスをキットにもどした"); };
       });
       return true;
     }
-    if (world.greenhouses65.length >= GH_MAX65) { toast("gh65", `ビニールハウスは${GH_MAX65}つまで（キットを持って、ハウスに向かってAで片付けられる）`); return true; }
+    if (ghs65().length >= GH_MAX65) { toast("gh65", `ビニールハウスは${GH_MAX65}つまで（キットを持って、ハウスに向かってAで片付けられる）`); return true; }
     const g = ghRect65(), why = ghFree65(g);
     if (why) { toast("gh65", why); return true; }
-    world.greenhouses65.push(g); removeItem(sel.id, 1); saveWorld();
+    ghs65().push(g); removeItem(sel.id, 1); saveWorld();
     for (let x = g.x; x < g.x + GH_W65; x++) dust(x, g.y + GH_H65 - 1, [220, 240, 250], 4);
     world.stats.gh65 = (world.stats.gh65 || 0) + 1;
     toast("gh65", "ビニールハウスが建った！ 中の作物は、季節が変わっても枯れないよ。どの季節の種も育つ"); return true;
@@ -12302,7 +12313,7 @@ F7.addToList = (list, now) => {
   if (map !== village) return;
   const si = seasonIdx();
   for (const k in world.crops) { const c = world.crops[k]; if (!c.dead && Number.isFinite(c.guard65) && c.guard65 >= si) { const [x, y] = k.split(",").map(Number); list.push({ s: y * TS + 15, d: () => { const tw = Math.sin(now / 300 + x) > .3; ctx.fillStyle = tw ? "#bfe8ff" : "#7ac0e8"; ctx.fillRect(x * TS + 12, y * TS + 2, 2, 2); } }); } }
-  for (const g of world.greenhouses65) {
+  for (const g of ghs65()) {
     const X = g.x * TS, Y = g.y * TS, W = GH_W65 * TS, H = GH_H65 * TS;
     list.push({ s: (g.y + GH_H65) * TS + 1, d: () => {
       ctx.fillStyle = "rgba(220,240,250,.22)"; ctx.fillRect(X, Y, W, H);
@@ -12315,7 +12326,7 @@ F7.addToList = (list, now) => {
   const sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
   if (it && it.greenhouse && !modalOpen) {
     const [tx, ty] = front(); if (inGH65(tx, ty)) return;
-    const g = ghRect65(), ok = !ghFree65(g) && world.greenhouses65.length < GH_MAX65;
+    const g = ghRect65(), ok = !ghFree65(g) && ghs65().length < GH_MAX65;
     list.push({ s: 1e9, d: () => { ctx.fillStyle = ok ? "rgba(120,220,140,.25)" : "rgba(240,90,90,.25)"; ctx.fillRect(g.x * TS, g.y * TS, GH_W65 * TS, GH_H65 * TS); ctx.strokeStyle = ok ? "#5ac06a" : "#e05a5a"; ctx.strokeRect(g.x * TS + .5, g.y * TS + .5, GH_W65 * TS - 1, GH_H65 * TS - 1); } });
   }
 };
@@ -12323,7 +12334,7 @@ F7.addToList = (list, now) => {
 ACH.push(["ハウス農家", "ビニールハウスを建てる", () => (world.stats.gh65 || 0) >= 1]);
 ACH_REWARD["ハウス農家"] = ["item", "antiwither65", 10];
 GUIDE54.forEach(g => { if (g[0] === "畑と作物") g[2] = g[2].replace("</ul>", "<li><b>季節が変わると</b>、旬じゃない作物は枯れてしまう。よろず屋の<b>枯れ防止剤</b>（150G）を作物に向かって使うと、まわり5×5マスの作物が、次の季節の変わり目を1回だけのりこえられる（青い点がしるし）</li><li><b>ビニールハウス</b>（よろず屋・30,000G）：キットを持って向いた先に、6×5マスのハウスが建つ。中の作物は季節が変わっても枯れず、どの季節の種でも育つ（2つまで。キットを持ってハウスに向かってAで片付け）</li></ul>"); });
-F65.gh = () => world.greenhouses65; F65.inGH = inGH65;
+F65.gh = () => ghs65(); F65.inGH = inGH65;
 
 // ---------- v66: こもれび証券（株・FX・暗号資産）。値動きは、みんな同じ式で決まるので、だれが見ても同じ値段 ----------
 const TICK66 = 30000;
@@ -12347,7 +12358,7 @@ function price66(sym, n) {
 const tickNow66 = () => Math.floor(Date.now() / TICK66);
 const pNow66 = sym => price66(sym, tickNow66());
 world.trade66 = world.trade66 && typeof world.trade66 === "object" ? world.trade66 : {};
-const T66 = () => { const t = world.trade66; t.hold = t.hold || {}; t.cost = t.cost || {}; t.fx = Array.isArray(t.fx) ? t.fx : []; t.realized = t.realized || 0; return t; };
+const T66 = () => { const t = world.trade66 && typeof world.trade66 === "object" ? world.trade66 : (world.trade66 = {}); t.hold = t.hold || {}; t.cost = t.cost || {}; t.fx = Array.isArray(t.fx) ? t.fx : []; t.realized = t.realized || 0; return t; };
 const fmtP66 = (sym, p) => ASSET66[sym].kind === "stock" ? fmt(p) : p >= 1000 ? fmt(Math.round(p)) : p.toFixed(2) + " G";
 const fxPL66 = (pos, p) => Math.round(pos.margin * LEV66 * (p / pos.entry - 1) * pos.side);
 // ロスカット：損が証拠金の8割をこえたら、自動で決済
@@ -12570,7 +12581,7 @@ world.bulkPlant68 = world.bulkPlant68 !== false;
 const _act68 = act;
 act = function () {
   const sel = world.inv[world.sel], it = sel && ITEMS[sel.id];
-  if (!(it && it.seed && map === village && world.bulkPlant68 && !modalOpen)) return _act68.apply(this, arguments);
+  if (!(it && it.seed && map === village && world.bulkPlant68 !== false && !modalOpen)) return _act68.apply(this, arguments);
   const [tx, ty] = front(), key = tx + "," + ty, had = !!world.crops[key], sid = sel.id;
   const r = _act68.apply(this, arguments);
   const c = world.crops[key];
@@ -12589,8 +12600,8 @@ F7.renderSettings = () => {
   _rs68();
   const B = $("settingsBody"); if (!B || B.querySelector("#bulk68")) return;
   const d = document.createElement("div"); d.className = "opt";
-  d.innerHTML = `<h3>畑</h3><div class="row"><button class="chip" type="button" id="bulk68" aria-pressed="${world.bulkPlant68}">種をまとめて植える（3×3）</button></div><p class="note">オンにすると、耕した畑に向かって種を植えたとき、まわり3×3の空いている畑にもいっしょに植わるよ</p>`;
-  B.append(d); d.querySelector("#bulk68").onclick = e => { world.bulkPlant68 = !world.bulkPlant68; e.currentTarget.setAttribute("aria-pressed", String(world.bulkPlant68)); saveWorld(); };
+  d.innerHTML = `<h3>畑</h3><div class="row"><button class="chip" type="button" id="bulk68" aria-pressed="${world.bulkPlant68 !== false}">種をまとめて植える（3×3）</button></div><p class="note">オンにすると、耕した畑に向かって種を植えたとき、まわり3×3の空いている畑にもいっしょに植わるよ</p>`;
+  B.append(d); d.querySelector("#bulk68").onclick = e => { world.bulkPlant68 = world.bulkPlant68 === false; e.currentTarget.setAttribute("aria-pressed", String(world.bulkPlant68 !== false)); saveWorld(); };
 };
 // 左上の表示（場所・時間・お金）に自分や目の前のマスが重なったら、表示をうすくする
 setInterval(() => {

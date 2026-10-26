@@ -457,3 +457,13 @@ html, body { touch-action: manipulation; }
 .hud.fade68 { opacity: .22; }
 .list .li.q68li { grid-template-columns: 36px 1fr; }
 .list .li.q68li .acts { grid-column: 1 / -1; white-space: normal; align-items: center; gap: 4px; }
+/* v70: スマホでボタンがふえても（イベント中など）、上のメニューが画面の外に押し出されないように */
+@media (max-width: 820px) and (orientation: portrait) {
+  header { flex-wrap: wrap; row-gap: 4px; }
+  header .spacer { flex: 1 1 0; min-width: 0; }
+}
+@media (orientation: landscape) and (max-height: 540px) {
+  header { overflow-x: auto; scrollbar-width: none; }
+  header::-webkit-scrollbar { display: none; }
+  header > * { order: 2; } header h1 { order: 0; } #menuBtn { order: 1; }
+}

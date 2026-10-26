@@ -929,6 +929,16 @@ html, body { touch-action: manipulation; }
   header::-webkit-scrollbar { display: none; }
   header > * { order: 2; } header h1 { order: 0; } #menuBtn { order: 1; }
 }
+/* v71: 称号の条件 */
+.chip.lock71 { opacity: .55; }
+.chip.sel71 { outline: 2px solid var(--wood, #8a6a44); outline-offset: 1px; }
+.tinfo71 { margin: 6px 0 2px; padding: 6px 10px; background: #fffaf0; border: 1px dashed var(--panel-2, #d8c8a0); border-radius: 8px; font-size: .85rem; line-height: 1.5; }
+.tall71 summary { cursor: pointer; font-size: .85rem; margin: 6px 0; }
+.tall71 .li.no .nm { opacity: .6; }
+.tall71 .li .acts { font-size: .75rem; }
+.tall71 .li.tl71 { grid-template-columns: 1fr auto; padding: 4px 10px; }
+.tall71 .list .li.tl71 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tall71 .list .li.tl71 .acts { flex: none; }
 </style>
 
 <header>
@@ -1055,7 +1065,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.38.0";
+  const VER = "0.38.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5498,7 +5508,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.38.0";
+const CLIENT_VERSION = "0.38.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7567,6 +7577,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値）
 const CHANGES19 = [
+  { v: "0.38.1", date: "2026/10/26", title: "称号の条件が見られる", items: [
+    "村タブの称号を押すと、手に入れる条件が見られるように（まだ持っていない「？？？」の称号も）",
+    "「すべての称号と、手に入れる条件」の一覧と、いくつ集めたかも見られるよ",
+  ] },
   { v: "0.38.0", date: "2026/10/26", title: "北の丘が2倍の広さに", items: [
     "北の丘を、たてに2倍（20マス → 40マス）に広げた。大きな家も、みんなの家も建てやすくなったよ。パレスの裏口は、新しい丘のいちばん下にお引っ越し",
     "スマホで、イベント中などにボタンがふえると、上の「メニュー」が画面の外に押し出されていたのを直した（2段に折り返す）",
@@ -14271,6 +14285,33 @@ handle8 = m => {
 GUIDE54.forEach(g => { if (g[0] === "オンライン") g[2] = g[2].replace(/<\/ul>/, "<li><b>作物どろぼう</b>：ほかの人の収穫どきの作物に向かってAを押すと、こっそり盗める。そのかわり、ゲームの中で3日間はずせない称号「盗人」がついて、みんなの画面の名前にも出る。盗まれた人には、だれに盗まれたか知らせが届く</li><li>えらんだ称号は、ほかの人の画面の名前にも出るよ</li></ul>"); });
 F69.thief = thief69; F69.left = thiefLeft69;
 F69.ready = true;
+var F71 = {};
+// ---------- v71: 称号を押すと、獲得の条件が見える（持っていない称号も）・すべての称号の条件の一覧 ----------
+let tsel71 = null;
+const _renderVillage71 = renderVillage;
+renderVillage = function () {
+  _renderVillage71.apply(this, arguments);
+  const B = $("villageBody"); if (!B) return;
+  const chips = [...B.querySelectorAll("[data-title]")]; if (!chips.length) return;
+  const row = chips[0].parentElement, thief = typeof F69 !== "undefined" && F69.thief && F69.thief();
+  const info = n => { const T = TITLES.find(t => t[0] === n); if (!T) return ""; const ok = T[2](), cur = (world.title || "村の新入り") === n;
+    return `<b>${ok ? "「" + esc(n) + "」" : "？？？"}</b>　${esc(T[1])}<br><span class="note">${ok ? (cur ? "獲得ずみ・いまつけている称号" : thief ? "獲得ずみ（いまは「盗人」がついていて、つけかえられない）" : "獲得ずみ。押すと、この称号にした") : "まだ持っていない称号（条件をみたすと、自動で手に入るよ）"}</span>`; };
+  row.insertAdjacentHTML("afterend", `<p class="tinfo71" id="tinfo71">${tsel71 ? info(tsel71) : "称号を押すと、手に入れる条件が見られるよ"}</p>
+    <details class="tall71"><summary>すべての称号と、手に入れる条件</summary><div class="list">${TITLES.map(([n, d, f]) => { const ok = f(); return `<div class="li tl71${ok ? "" : " no"}"><span class="nm">${ok ? esc(n) : "？？？"}<span class="sub2">${esc(d)}</span></span><span class="acts">${ok ? "獲得ずみ" : "まだ"}</span></div>`; }).join("")}</div>
+    <p class="note">${TITLES.filter(t => t[2]()).length} / ${TITLES.length} 個 獲得</p></details>`);
+  for (const b of chips) {
+    const n = b.dataset.title, T = TITLES.find(t => t[0] === n), ok = T ? T[2]() : false;
+    b.disabled = false; if (!ok || thief) b.classList.add("lock71");
+    b.onclick = () => {
+      tsel71 = n;
+      if (ok && !thief && (world.title || "村の新入り") !== n) { world.title = n; saveWorld(); renderVillage(); return; }
+      const el = $("tinfo71"); if (el) el.innerHTML = info(n);
+      chips.forEach(c => c.classList.toggle("sel71", c === b));
+    };
+    if (n === tsel71) b.classList.add("sel71");
+  }
+};
+F71.ready = true;
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -14730,7 +14771,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

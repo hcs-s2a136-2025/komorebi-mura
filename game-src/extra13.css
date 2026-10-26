@@ -467,3 +467,13 @@ html, body { touch-action: manipulation; }
   header::-webkit-scrollbar { display: none; }
   header > * { order: 2; } header h1 { order: 0; } #menuBtn { order: 1; }
 }
+/* v71: 称号の条件 */
+.chip.lock71 { opacity: .55; }
+.chip.sel71 { outline: 2px solid var(--wood, #8a6a44); outline-offset: 1px; }
+.tinfo71 { margin: 6px 0 2px; padding: 6px 10px; background: #fffaf0; border: 1px dashed var(--panel-2, #d8c8a0); border-radius: 8px; font-size: .85rem; line-height: 1.5; }
+.tall71 summary { cursor: pointer; font-size: .85rem; margin: 6px 0; }
+.tall71 .li.no .nm { opacity: .6; }
+.tall71 .li .acts { font-size: .75rem; }
+.tall71 .li.tl71 { grid-template-columns: 1fr auto; padding: 4px 10px; }
+.tall71 .list .li.tl71 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tall71 .list .li.tl71 .acts { flex: none; }

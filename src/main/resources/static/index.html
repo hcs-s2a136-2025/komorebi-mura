@@ -1203,7 +1203,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.44.0";
+  const VER = "0.45.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5656,7 +5656,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.44.0";
+const CLIENT_VERSION = "0.45.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7731,6 +7731,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.45.0", date: "2026/10/27", title: "札束の扇を手に持つ・飾りを現金に戻す・大きな札束の山", items: [
+    "札束の扇を、ホットバーで選んで手に持つと、手元に扇が見えるようになった。同じ場所にいる人にも見える",
+    "札束の扇・札束の山は、スマホの「財布」の「飾りを現金に戻す」で、もとのお札に戻せるようになった（持ち物に入れてある分。作るときにまざっていた偽札も、そのまま戻る）",
+    "札束の山に、大きなサイズがふえた。財布の「札束で飾りを作る」から、50枚（札束の大きな山）・100枚（札束の山積み）・500枚（札束の大山）で作れる",
+  ] },
   { v: "0.44.0", date: "2026/10/27", title: "電気ボートはみなと町へ・建てた家の階・ステージのダンスライブ・スロットの演出", items: [
     "電気ボートは、みなと町の桟橋の船着き場で使うことになった。村にあった船は、みなと町に入ると自動でお引っこしする。沖でしか釣れない魚が5種類（トビウオ・シイラ・カンパチ・ヨシキリザメ・アカムツ）ふえて、全部とると称号がもらえる",
     "自分で建てた家にも、2・3階を足せるようになった。家の縦の大きさ（48ドット以上で2階・80ドット以上で3階まで）と広さで、建てられる階と値段が変わる",
@@ -15471,6 +15476,12 @@ function drawPool78(n, cb) {
   F78.drawWait.set(rid, fin); send8({ type: "fake77", act: "draw", n, rid }); setTimeout(() => fin(0), 1500);
 }
 // ---- 絵 ----
+// 大きな札束の山の絵：7段まで積む。wide は台まで横いっぱい、gold は帯が金色
+const pileSpr78 = (wide, gold) => [16, 18, (s, r) => {
+  const x0 = wide ? 0 : 2, w = wide ? 16 : 12;
+  for (let i = 0; i < 7; i++) { const y = 12 - i * 2; r(x0, y, w, 3, C13["#3a6a3a"]); r(x0 + 1, y, w - 2, 2, C13["#d8ecc8"]); r(x0 + (w >> 1) - 1, y, 2, 2, C13[gold ? "#c8a040" : "#c84a4a"]); }
+  r(wide ? 0 : 1, 15, wide ? 16 : 14, 3, C13["#5a3a22"]);
+}];
 const SPR78 = {
   bill: [16, 16, (s, r) => { r(1, 4, 14, 8, C13["#3a6a3a"]); r(2, 5, 12, 6, C13["#d8ecc8"]); r(3, 6, 3, 4, C13["#9ac888"]); r(10, 6, 3, 1, C13["#5a8a5a"]); r(10, 8, 3, 1, C13["#5a8a5a"]); s(7, 7, C13["#c8a040"]); s(8, 8, C13["#c8a040"]); }],
   plate: [16, 16, (s, r) => { r(2, 3, 12, 10, C13["#7a4e26"]); r(3, 4, 10, 8, C13["#c8925a"]); for (let y = 5; y < 11; y += 2) r(4, y, 8, 1, C13["#8a5a2a"]); r(6, 6, 4, 3, C13["#5a3a1a"]); }],
@@ -15478,6 +15489,7 @@ const SPR78 = {
   loupe: [16, 16, (s, r, P) => { ell13(s, 6, 6, 5, 5, C13["#c8a040"]); ell13(s, 6, 6, 3.6, 3.6, C13["#d8f0f8"]); s(4, 4, C13["#ffffff"]); for (let i = 0; i < 5; i++) { r(9 + i, 9 + i, 2, 2, C13["#5a3a22"]); } }],
   pile: [16, 18, (s, r) => { for (let i = 0; i < 5; i++) { r(2, 12 - i * 2, 12, 3, C13["#3a6a3a"]); r(3, 12 - i * 2, 10, 2, C13["#d8ecc8"]); r(7, 12 - i * 2, 2, 2, C13["#c84a4a"]); } r(1, 15, 14, 3, C13["#5a3a22"]); }],
   fan: [16, 16, (s, r) => { for (let i = -3; i <= 3; i++) { const a = i * .28; for (let t = 0; t < 10; t++) { const x = Math.round(8 + Math.sin(a) * t), y = Math.round(14 - Math.cos(a) * t); r(x - 1, y, 2, 1, C13[t > 7 ? "#3a6a3a" : "#d8ecc8"]); } } r(7, 13, 2, 3, C13["#c8a040"]); }],
+  pile50: pileSpr78(false, false), pile100: pileSpr78(true, false), pile500: pileSpr78(true, true),
   counter: [32, 24, (s, r) => { r(0, 6, 32, 18, C13["#5a6a8a"]); r(1, 7, 30, 16, C13["#e8ecf4"]); r(0, 4, 32, 3, C13["#3a4a6a"]); r(4, 10, 10, 6, C13["#c8d8e8"]); r(18, 10, 10, 6, C13["#c8d8e8"]); r(6, 0, 6, 5, C13["#d8ecc8"]); r(7, 1, 4, 3, C13["#3a6a3a"]); }],
   shelf: [32, 30, (s, r) => { r(0, 0, 32, 30, C13["#2a1e1e"]); r(1, 1, 30, 28, C13["#4a3434"]); for (const y of [9, 19]) r(1, y, 30, 2, C13["#2a1e1e"]); r(3, 3, 6, 6, C13["#7a4e26"]); r(11, 4, 5, 5, C13["#2a2a4a"]); r(19, 2, 8, 7, C13["#c8a040"]); r(4, 13, 10, 6, C13["#5a5a5a"]); r(17, 12, 6, 7, C13["#8a2a2a"]); r(25, 14, 4, 5, C13["#d8ecc8"]); r(6, 22, 20, 5, C13["#3a3a3a"]); }],
   washer: [16, 30, (s, r) => { r(0, 4, 16, 26, C13["#c8ccd4"]); r(1, 5, 14, 24, C13["#eef0f4"]); r(1, 5, 14, 5, C13["#a8b0bc"]); ell13(s, 8, 18, 5, 5, C13["#5a6a8a"]); ell13(s, 8, 18, 3.6, 3.6, C13["#8ac8a0"]); r(6, 16, 4, 2, C13["#d8ecc8"]); r(3, 6, 2, 2, C13["#e04a4a"]); r(11, 6, 2, 2, C13["#4ae04a"]); }],
@@ -15493,11 +15505,19 @@ FURN.billpile78 = { name: "札束の山", w: 1, h: 1, oy: -2, price: 10000, img:
 FURN.billfan78 = { name: "札束の扇", w: 1, h: 1, oy: 0, wall: true, price: 5000, img: "s78_fan" };
 ITEMS.f_billpile78 = { name: "札束の山", icon: "s78_pile", furn: "billpile78", price: 0 };
 ITEMS.f_billfan78 = { name: "札束の扇", icon: "s78_fan", furn: "billfan78", price: 0 };
-{ const _h = F7.hideFurn; F7.hideFurn = k => k === "billpile78" || k === "billfan78" || _h(k); }
+// 山の大きさ違い（v0.45.0）：50枚・100枚・500枚
+for (const [k, n, nm] of [["50", 50, "札束の大きな山"], ["100", 100, "札束の山積み"], ["500", 500, "札束の大山"]]) {
+  FURN["billpile" + k + "_78"] = { name: nm, w: 1, h: 1, oy: -2, price: n * 1000, img: "s78_pile" + k };
+  ITEMS["f_billpile" + k + "_78"] = { name: nm, icon: "s78_pile" + k, furn: "billpile" + k + "_78", price: 0 };
+}
+// 札束かざり：[アイテムID, 作るのに使う枚数]。財布の「作る」と「現金に戻す」で使う（戻すと同じ枚数のお札に戻る）
+const DECO78 = [["f_billfan78", 5], ["f_billpile78", 10], ["f_billpile50_78", 50], ["f_billpile100_78", 100], ["f_billpile500_78", 500]];
+const DECOK78 = Object.fromEntries(DECO78);
+{ const _h = F7.hideFurn; F7.hideFurn = k => DECO78.some(([id]) => ITEMS[id].furn === k) || _h(k); }
 SHOP_STOCK.push("loupe78");
 // よろず屋では、闇市の物と札束かざりは買い取らない
 {
-  const NOSELL = new Set(["plate78", "ink78", "f_billpile78", "f_billfan78"]);
+  const NOSELL = new Set(["plate78", "ink78", ...DECO78.map(([id]) => id)]);
   const _shop78 = openShop;
   openShop = function (tab) {
     const r = _shop78.apply(this, arguments);
@@ -15723,22 +15743,71 @@ function appraise78() {
   world.stats.loupe78 = (world.stats.loupe78 || 0) + 1;
   return u;
 }
+// ---- 札束かざりを作る・現金に戻す ----
+// 作るときに使ったお札の中身（知らずにまざっていた偽札・わかっている偽札）を覚えておいて、戻すときに同じだけ戻す（偽札が本物に化けないように）
+// world.cash78.deco[アイテムID] = { clean: 偽札のない飾りの数, dirty: [{ fu, fk, q, o }]（1つが飾り1個ぶん） }
+function decoLedger78(id) {
+  const c = cash78(), D = c.deco = c.deco && typeof c.deco === "object" && !Array.isArray(c.deco) ? c.deco : {};
+  const L = D[id] = D[id] && typeof D[id] === "object" && !Array.isArray(D[id]) ? D[id] : {};
+  L.clean = Number.isFinite(+L.clean) ? Math.max(0, Math.floor(+L.clean)) : 0;
+  L.dirty = Array.isArray(L.dirty) ? L.dirty.filter(x => x && typeof x === "object") : [];
+  return L;
+}
+const addOrigins78 = (o, add) => { for (const [p, v] of Object.entries(add || {})) if (/^\d+$/.test(p) && v > 0) o[p] = (o[p] || 0) + Math.floor(v); return o; };
+function makeDeco78(id) {
+  const k = DECOK78[id], c = cash78(); if (!k || c.n < k) return false;
+  // 本物のつもりのお札から先に使う。足りないときだけ、わかっている偽札も使う（記録に残るので、戻すと偽札のまま戻る）
+  const d = drawCash78(k, Math.max(0, k - (c.n - c.fk))), L = decoLedger78(id);
+  if (d.fu || d.fk) {
+    if (L.dirty.length >= 400) { const a = L.dirty.shift(), b = L.dirty[0], fk = (a.fk || 0) + (b.fk || 0); L.dirty[0] = { fu: (a.fu || 0) + (b.fu || 0), fk, q: fk ? ((a.q || 0) * (a.fk || 0) + (b.q || 0) * (b.fk || 0)) / fk : .5, o: addOrigins78({ ...(a.o || {}) }, b.o) }; }
+    L.dirty.push({ fu: d.fu, fk: d.fk, q: d.q, o: d.origins });
+  } else L.clean++;
+  if (!addItem(id, 1, true)) homeStore18(id, 1);
+  world.stats.billDeco78 = (world.stats.billDeco78 || 0) + 1; saveWorld();
+  return true;
+}
+/** 持ち物の飾りを want 個、お札に戻す。戻した個数を返す（0＝戻せなかった） */
+function unmakeDeco78(id, want) {
+  const k = DECOK78[id]; if (!k) return 0;
+  const c = cash78(), n = Math.min(Math.max(0, Math.floor(want) || 0), count(id), Math.floor((9999 - c.n) / k));
+  if (n <= 0) return 0;
+  const L = decoLedger78(id), o = {}; let fu = 0, fk = 0, fq = 0;
+  for (let i = 0; i < n; i++) {
+    const tot = L.clean + L.dirty.length; if (!tot) break; // 記録がない飾り（前の版で作った物・もらった物）は、本物のお札として戻る
+    const r = Math.floor(Math.random() * tot);
+    if (r < L.clean) { L.clean--; continue; }
+    const e = L.dirty.splice(r - L.clean, 1)[0], efk = Math.max(0, Math.floor(+e.fk) || 0);
+    fu += Math.max(0, Math.floor(+e.fu) || 0); fk += efk; fq += (Number.isFinite(+e.q) ? Math.max(0, Math.min(1, +e.q)) : .5) * efk; addOrigins78(o, e.o);
+  }
+  fk = Math.min(fk, k * n); fu = Math.min(fu, k * n - fk);
+  removeItem(id, n);
+  addCash78(k * n, { fk, fu, q: fk ? fq / fk : undefined });
+  addOrigins78(cash78().o, o); saveWorld();
+  return n;
+}
+F78.makeDeco = makeDeco78; F78.unmakeDeco = unmakeDeco78;
 function openWallet78(msg) {
   openModal("財布", "", body => {
     const draw = m => {
-      const c = cash78(), hasL = count("loupe78") > 0, crime = crimeTitle78();
+      const c = cash78(), hasL = count("loupe78") > 0, crime = crimeTitle78(), back = DECO78.filter(([id]) => count(id) > 0);
       body.innerHTML = `<div class="stat"><span>所持金（電子マネー）</span><b>${fmt(world.money)}</b><span>現金</span><b>${billTxt78(c.n)}（${fmt(c.n * BILL78)}分）</b>${c.fk ? `<span>うち偽札（わかっている分）</span><b>${c.fk}枚・出来「${qName78(c.q)}」</b>` : ""}</div>
         ${m ? `<p class="mtext"><b>${esc(m)}</b></p>` : ""}
         <p class="mtext small">現金は、信用金庫の「現金の窓口」で引き出したり預けたりできる。VIPルーム・十日屋の闇市・ラウンジのチップ・ポチ袋は現金だけ。現金の中には、知らないうちに偽札がまざっていることもある…${hasL ? "" : "（よろず屋の「鑑定ルーペ」があれば、いつでも調べられる）"}</p>
         ${crime ? `<p class="note">いまは称号「${esc(crime)}」がついている…</p>` : ""}
         <div class="row2">${hasL ? `<button class="btn" type="button" id="wl78l">ルーペで調べる</button>` : ""}<button class="btn light" type="button" id="wl78p" ${c.n ? "" : "disabled"}>ポチ袋を贈る</button></div>
-        <h4>札束で飾りを作る</h4><div class="list">${[["f_billfan78", 5], ["f_billpile78", 10]].map(([id, k]) => itemLi(id, `${billTxt78(k)}から作る家具`, `<button class="btn light" type="button" data-wf78="${id}" data-k="${k}" ${c.n >= k ? "" : "disabled"}>作る</button>`)).join("")}</div>`;
+        <h4>札束で飾りを作る</h4><div class="list">${DECO78.map(([id, k]) => itemLi(id, `${billTxt78(k)}から作る家具`, `<button class="btn light" type="button" data-wf78="${id}" data-k="${k}" ${c.n >= k ? "" : "disabled"}>作る</button>`)).join("")}</div>
+        ${back.length ? `<h4>飾りを現金に戻す</h4><div class="list">${back.map(([id, k]) => itemLi(id, `持ち物に${count(id)}個・1個で${billTxt78(k)}に戻る`, `<button class="btn light" type="button" data-wb78="${id}" data-n="1">1個戻す</button>${count(id) > 1 ? `<button class="btn" type="button" data-wb78="${id}" data-n="all">ぜんぶ戻す</button>` : ""}`)).join("")}</div>
+        <p class="mtext small">持ち物に入れてある飾りが、お札に戻せる（家に飾った分は、片づけてから）。作るときにまざっていた偽札も、そのまま戻ってくるよ。</p>` : ""}`;
       body.querySelector("#wl78l")?.addEventListener("click", () => { const u = appraise78(); se13("small"); draw(u ? `……偽札が${u}枚まざっていた！` : (cash78().fk ? "新しく見つかった偽札はなかった" : "ぜんぶ本物だった。ほっ")); });
       body.querySelector("#wl78p").onclick = () => { closeModal(); F76.fromPhone = true; openFriends76(); };
       body.querySelectorAll("[data-wf78]").forEach(b => b.onclick = () => {
-        const id = b.dataset.wf78, k = +b.dataset.k; if (cash78().n < k) return;
-        drawCash78(k, 0); if (!addItem(id, 1, true)) homeStore18(id, 1); world.stats.billDeco78 = (world.stats.billDeco78 || 0) + 1; saveWorld();
-        draw(`「${ITEMS[id].name}」ができた！ 家の中で飾れるよ`);
+        const id = b.dataset.wf78; if (!makeDeco78(id)) return;
+        draw(`「${ITEMS[id].name}」ができた！ 家の中で飾れるよ${id === "f_billfan78" ? "。手に持つと、まわりの人にも見える" : ""}`);
+      });
+      body.querySelectorAll("[data-wb78]").forEach(b => b.onclick = () => {
+        const id = b.dataset.wb78, want = b.dataset.n === "all" ? count(id) : +b.dataset.n || 1, n = unmakeDeco78(id, want);
+        if (!n) { draw(count(id) ? "現金がいっぱいで、これ以上は戻せないよ（9,999枚まで）" : "持ち物に、その飾りがないよ"); return; }
+        se13("small"); draw(`「${ITEMS[id].name}」${n}個を、${billTxt78(DECOK78[id] * n)}に戻した`);
       });
     };
     draw(msg);
@@ -16025,7 +16094,8 @@ handle8 = m => {
 GUIDE54.push(["現金と偽札", "s78_bill", `
     <p>所持金（G）は村の電子マネー。これとは別に、<b>現金（1,000G札）</b>を持てる。スマホの「財布」で、いまの現金が見られる。</p><ul>
     <li>信用金庫の「現金の窓口」で、電子マネーをお札に引き出したり、お札を預けたりできる</li>
-    <li>現金だけで使えるもの：カジノの<b>VIPルーム</b>（大小）、十日屋の<b>闇市</b>、ラウンジの<b>チップ</b>、フレンドへの<b>ポチ袋</b>、<b>札束かざり</b>（札束の山・札束の扇）</li>
+    <li>現金だけで使えるもの：カジノの<b>VIPルーム</b>（大小）、十日屋の<b>闇市</b>、ラウンジの<b>チップ</b>、フレンドへの<b>ポチ袋</b>、<b>札束かざり</b>（札束の扇・札束の山）</li>
+    <li><b>札束かざり</b>は、財布の「札束で飾りを作る」で作る。扇は5枚、山は10・50・100・500枚の4つの大きさ。財布の「飾りを現金に戻す」で、お札に戻せる（まざっていた偽札も、そのまま戻る）。扇は手に持つと、同じ場所にいる人にも見える</li>
     <li><b>偽札</b>は、本物のお札とまったく同じに見える。知らないうちに財布にまざっていることもある（ポチ袋や、VIPルームの払い戻しなど）</li>
     <li>よろず屋の<b>鑑定ルーペ</b>があれば、いつでも財布の中の偽札を調べられる。銀行に預けると、知らない偽札は回収されて、1枚100Gのお礼がもらえる</li>
     <li>偽札を見つけたら：巡査に届ける（1枚100Gのお礼）／十日屋で洗う（手数料3割・たまに足がつく）／こっそり使う（会計ミニゲームで勝負）</li>
@@ -17155,6 +17225,56 @@ F86.kindsCap = kindsCap86; F86.boxCount = boxCount86;
 }
 F86.ready = true;
 
+// =================== v87: 札束の扇を手に持つと、まわりの人にも見える ===================
+// ホットバーで「札束の扇」を選んでいる（手に持っている）あいだ、キャラの手元に小さな扇が描かれる。
+// 見た目の設定 cfg.hold（短い文字だけ）に乗せるので、サーバーは変えなくても、同じ場所にいる人に届く。
+var F87 = {};
+IMG.s87_fanhand = pix13(11, 10, (s, r) => {
+  // 11×10。持ち手（金）の先が (5,8)。草の上でも見えるように、まわりを暗い線でふちどる
+  const px = [];
+  for (let a = -.9; a <= .9; a += .15) for (let t = 1; t <= 5; t++) px.push([Math.round(5 + Math.sin(a) * t), Math.round(8 - Math.cos(a) * t), t >= 5 ? "#3a6a3a" : Math.round(a * 20) % 6 === 0 ? "#9ac888" : "#d8ecc8"]);
+  px.push([5, 8, "#c8a040"], [5, 7, "#c8a040"]);
+  for (const [x, y] of px) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) s(x + dx, y + dy, C13["#2a2a30"]);
+  for (const [x, y, c] of px) s(x, y, C13[c]);
+});
+const HOLD87 = { billfan: "f_billfan78" };                      // cfg.hold の値 → 手に持つアイテムのID
+const HOLDBY87 = Object.fromEntries(Object.entries(HOLD87).map(([k, id]) => [id, k]));
+const holdOK87 = k => typeof k === "string" && Object.prototype.hasOwnProperty.call(HOLD87, k);
+const heldKey87 = () => { const s = world.inv[world.sel]; return (s && Object.prototype.hasOwnProperty.call(HOLDBY87, s.id) && HOLDBY87[s.id]) || null; };
+// 選んだ物がかわったら、見た目の設定（cfg.hold）に反映して、みんなに送る
+function sync87() {
+  const k = heldKey87(); if ((cfg.hold || null) === k) return;
+  if (k) cfg.hold = k; else delete cfg.hold;
+  changed(); if (typeof sendCfgSoon === "function") sendCfgSoon();
+}
+if (cfg.hold && !holdOK87(cfg.hold)) delete cfg.hold;
+{ const k = heldKey87(); if (k) cfg.hold = k; else delete cfg.hold; }
+const _clean87 = cleanCfg;
+cleanCfg = function (c) { const o = _clean87(c); if (c && holdOK87(c.hold)) o.hold = c.hold; return o; };
+const _rh87 = renderHotbar;
+renderHotbar = function () { const r = _rh87.apply(this, arguments); try { sync87(); } catch (e) {} return r; };
+setInterval(() => { try { sync87(); } catch (e) {} }, 1000);
+// 手元に描く（キャラの上にかさねる。ねている・すわっているときは描かない）
+const _drawEnt87 = drawEnt;
+drawEnt = function (e) {
+  const r = _drawEnt87.apply(this, arguments);
+  try {
+    if (!e || e.sprite || e.kind === "cat") return r;
+    const k = e === player ? heldKey87() : e.kind === "remote" && e.cfg ? e.cfg.hold : null;
+    if (!holdOK87(k)) return r;
+    const em = e.emo60; if (em && (em.k === "sleep" || em.k === "sit")) return r;
+    const x = Math.round(e.px), y = Math.round(e.py), hx = e.dir === "left" ? x + 3 : x + 13, hy = y + (e.dir === "down" || e.dir === "up" ? 12 : 11);
+    ctx.drawImage(IMG.s87_fanhand, hx - 5, hy - 8);
+  } catch (x) {}
+  return r;
+};
+F87.heldKey = heldKey87; F87.sync = sync87;
+{
+  const g = GUIDE54.find(x => x[0] === "道具の使い方");
+  if (g) g[2] = g[2].replace("</ul>", "<li><b>札束の扇</b>：ホットバーで選んで手に持つと、手元に扇が見える。同じ場所にいる人にも見える（財布で作る。お札にも戻せる）</li></ul>");
+}
+F87.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -17615,7 +17735,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

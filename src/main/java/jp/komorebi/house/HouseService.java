@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jakarta.annotation.PostConstruct;
+import jp.komorebi.village.Villages;
 import jp.komorebi.world.SharedWorldService;
 
 /**
@@ -31,7 +33,9 @@ public class HouseService {
     private final JdbcTemplate jdbc;
     private final ObjectMapper om;
     private final SharedWorldService world;
-    private final HouseBook book = new HouseBook();
+    /** 村ごとの家の中身。データベースの鍵は、1番の村ならそのまま（"48,21"）、ほかの村なら "v2|48,21" */
+    private final Map<Long, HouseBook> books = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Pattern VKEY = Pattern.compile("v(\\d{1,9})\\|(.+)");
     /** リセットで消えた家の箱の中身。持ち主（プレイヤーID）→ 品物 → 個数。次につないだときに本人へ返す */
     private final Map<Long, Map<String, Long>> returns = new LinkedHashMap<>();
     private static final String RET = "ret:";
@@ -61,15 +65,30 @@ public class HouseService {
                 }
                 Map<String, Long> shared = d.has("storage") ? om.convertValue(d.get("storage"), COUNTS) : null;
                 Map<String, Long> priv = d.has("priv") ? om.convertValue(d.get("priv"), COUNTS) : null;
-                book.restore(rs.getString(1), d.path("layout").isTextual() ? d.path("layout").asText() : null, shared, priv);
+                String k = rs.getString(1);
+                long v = Villages.MAIN;
+                java.util.regex.Matcher m = VKEY.matcher(k);
+                if (m.matches()) { v = Long.parseLong(m.group(1)); k = m.group(2); }
+                bookOf(v).restore(k, d.path("layout").isTextual() ? d.path("layout").asText() : null, shared, priv);
             } catch (Exception e) {
                 log.warn("家の中身が読めなかった（{}）: {}", rs.getString(1), e.getMessage());
             }
         });
     }
 
+    private HouseBook bookOf(long village) {
+        return books.computeIfAbsent(village, v -> new HouseBook());
+    }
+
+    /** データベースに書くときの鍵（いまの村） */
+    private static String dbKey(String key) {
+        long v = Villages.current();
+        return v == Villages.MAIN ? key : "v" + v + "|" + key;
+    }
+
+    /** いまの村の家の中身 */
     public HouseBook book() {
-        return book;
+        return bookOf(Villages.current());
     }
 
     /** この家の持ち主か。持ち主が決まっていない古い家は、だれでも持ち主あつかい */
@@ -117,7 +136,7 @@ public class HouseService {
     public ObjectNode view(String key, boolean owner, long playerId) {
         if (!HOME.equals(key)) return view(key, owner);
         ObjectNode v = view(HOME, false);
-        if (owner) v.set("priv", om.valueToTree(book.view(personal(playerId), true).get("priv")));
+        if (owner) v.set("priv", om.valueToTree(book().view(personal(playerId), true).get("priv")));
         return v;
     }
 
@@ -125,13 +144,13 @@ public class HouseService {
     public Map<String, Long> importHome(long playerId, Map<String, Long> items) {
         Map<String, Long> ok = new LinkedHashMap<>();
         String key = personal(playerId);
-        items.forEach((id, n) -> { if (n != null && n > 0 && book.put(key, true, id, Math.min(n, HouseBook.MAX_MOVE)) >= 0) ok.put(id, Math.min(n, HouseBook.MAX_MOVE)); });
+        items.forEach((id, n) -> { if (n != null && n > 0 && book().put(key, true, id, Math.min(n, HouseBook.MAX_MOVE)) >= 0) ok.put(id, Math.min(n, HouseBook.MAX_MOVE)); });
         if (!ok.isEmpty()) save(key);
         return ok;
     }
 
     public ObjectNode view(String key, boolean owner) {
-        ObjectNode v = om.valueToTree(book.view(key, owner));
+        ObjectNode v = om.valueToTree(book().view(key, owner));
         String layout = v.path("layout").asText(null);
         if (layout != null) {
             try { v.set("layout", om.readTree(layout)); } catch (Exception e) { v.putNull("layout"); }
@@ -141,7 +160,7 @@ public class HouseService {
 
     /** 変わった家を保存する（行が無ければ作る） */
     public void save(String key) {
-        HouseBook.Room r = book.copy(key);
+        HouseBook.Room r = book().copy(key);
         if (r == null) return;
         Map<String, Object> doc = new LinkedHashMap<>();
         doc.put("layout", r.layout());
@@ -150,8 +169,8 @@ public class HouseService {
         String json;
         try { json = om.writeValueAsString(doc); } catch (Exception e) { return; }
         Timestamp now = Timestamp.from(Instant.now());
-        int up = jdbc.update("UPDATE house_room SET doc = ?, updated_at = ? WHERE house_key = ?", json, now, key);
-        if (up == 0) jdbc.update("INSERT INTO house_room (house_key, doc, updated_at) VALUES (?, ?, ?)", key, json, now);
+        int up = jdbc.update("UPDATE house_room SET doc = ?, updated_at = ? WHERE house_key = ?", json, now, dbKey(key));
+        if (up == 0) jdbc.update("INSERT INTO house_room (house_key, doc, updated_at) VALUES (?, ?, ?)", dbKey(key), json, now);
     }
 
     /**
@@ -160,19 +179,21 @@ public class HouseService {
      */
     public void resetAll() {
         Map<Long, Map<String, Long>> add = new LinkedHashMap<>();
-        for (String key : book.keys()) {
+        for (String key : book().keys()) {
             if (!HouseBook.builtKey(key)) continue;
             JsonNode h = world.layerValue("houses", key);
             long owner = h == null ? -1 : h.path("ownerId").asLong(-1);
-            HouseBook.Room r = book.copy(key);
+            HouseBook.Room r = book().copy(key);
             if (owner <= 0 || r == null) continue;
             Map<String, Long> to = add.computeIfAbsent(owner, k -> new LinkedHashMap<>());
             r.shared().forEach((id, n) -> to.merge(id, n, Long::sum));
             r.priv().forEach((id, n) -> to.merge(id, n, Long::sum));
         }
         // みんなの家と、ひとりずつの箱は村のリセットでは消さない
-        for (String key : book.keys()) if (HouseBook.builtKey(key)) book.remove(key);
-        jdbc.update("DELETE FROM house_room WHERE house_key LIKE '%,%'");
+        for (String key : book().keys()) if (HouseBook.builtKey(key)) book().remove(key);
+        long v = Villages.current();
+        if (v == Villages.MAIN) jdbc.update("DELETE FROM house_room WHERE house_key LIKE '%,%' AND house_key NOT LIKE 'v%|%'");
+        else jdbc.update("DELETE FROM house_room WHERE house_key LIKE ?", "v" + v + "|%,%");
         synchronized (returns) {
             add.forEach((owner, items) -> {
                 if (items.isEmpty()) return;

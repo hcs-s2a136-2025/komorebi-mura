@@ -43,8 +43,7 @@ public class BoardController {
 
     @GetMapping
     public List<PostView> list(@RequestHeader("X-Player-Token") String token) {
-        players.require(token);
-        return board.latest();
+        return board.latest(players.require(token).getVillageId());
     }
 
     @PostMapping
@@ -53,7 +52,7 @@ public class BoardController {
         Player p = players.require(token);
         limiter.check("board:" + p.getId(), 6, 10 * 60 * 1000L);
         PostView v = board.post(p, req.body());
-        hub.broadcast(hub.json().createObjectNode().put("type", "board").put("id", v.id()).put("name", v.name()), null);
+        hub.broadcastTo(p.getVillageId(), hub.json().createObjectNode().put("type", "board").put("id", v.id()).put("name", v.name()), null);
         return v;
     }
 

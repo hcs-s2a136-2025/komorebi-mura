@@ -12,6 +12,7 @@
   <span class="grow"></span>
   <form method="post" th:action="@{/admin/logout}"><button class="btn ghost" type="submit">ログアウト</button></form>
 </header>
+<nav th:replace="~{admin/fragments :: vbar}"></nav>
 <main class="wrap">
   <p class="flash" th:if="${msg}" th:text="${msg}"></p>
 
@@ -23,8 +24,10 @@
     </ul>
     <form class="row" method="post" th:action="@{/admin/announce}">
       <input name="text" maxlength="120" placeholder="みんなの画面にお知らせを出す（例：10分後にメンテします）" required>
+      <label class="muted"><input type="checkbox" name="all" value="1"> 全部の村に</label>
       <button class="btn" type="submit">お知らせ</button>
     </form>
+    <p class="muted">チェックしないと、いま見ている村（<span th:text="${adminVillage != null ? adminVillage.name() : 'こもれび村'}">村</span>）の人だけに出ます。</p>
   </section>
 
   <section class="card">
@@ -72,7 +75,7 @@
   </section>
 
   <section class="card">
-    <h2>共有の村</h2>
+    <h2>共有の村（<span th:text="${adminVillage != null ? adminVillage.name() : 'こもれび村'}">村</span>）</h2>
     <p class="muted" th:if="${#maps.isEmpty(worldStats)}">まだだれも共有の村をつくっていません</p>
     <ul class="online" th:unless="${#maps.isEmpty(worldStats)}">
       <li th:each="e : ${worldStats}"><span th:text="${e.key}">trees</span>：<b th:text="${e.value}">0</b> 件</li>
@@ -80,7 +83,7 @@
     <p class="muted">村（地形・木・岩・柵・道・建てた家・みんなのプロジェクト）を最初からにします。キャラクター（持ち物・お金・見た目・図鑑・自分の家）はそのまま。建てた家の家具と箱の中身は、持ち主が次につないだときに自分の家の収納箱へ戻ります。</p>
     <form class="row" method="post" th:action="@{/admin/world/reset}">
       <input name="confirm" placeholder="確認のため「リセット」と入力" autocomplete="off">
-      <button class="btn ghost" type="submit">共有の村を最初からにする</button>
+      <button class="btn ghost" type="submit">この村を最初からにする</button>
     </form>
   </section>
 

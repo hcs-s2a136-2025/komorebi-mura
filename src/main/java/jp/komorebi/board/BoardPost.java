@@ -33,13 +33,18 @@ public class BoardPost {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    /** 書いた人の村 */
+    @Column(name = "village_id", nullable = false)
+    private Long villageId = 1L;
+
     protected BoardPost() {
     }
 
-    public BoardPost(Long playerId, String name, String body) {
+    public BoardPost(Long playerId, String name, String body, long villageId) {
         this.playerId = playerId;
         this.name = name;
         this.body = body;
+        this.villageId = villageId;
         this.createdAt = Instant.now();
     }
 
@@ -49,5 +54,6 @@ public class BoardPost {
     public String getBody() { return body; }
     public boolean isDeleted() { return deleted; }
     public void delete() { this.deleted = true; }
+    public long getVillageId() { return villageId == null ? 1L : villageId; }
     public Instant getCreatedAt() { return createdAt; }
 }

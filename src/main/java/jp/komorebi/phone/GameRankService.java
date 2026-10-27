@@ -38,10 +38,13 @@ public class GameRankService {
     private final PlayerService players;
     private final ObjectMapper om;
 
-    public GameRankService(SharedWorldService world, PlayerService players, ObjectMapper om) {
+    private final jp.komorebi.village.VillageService villages;
+
+    public GameRankService(SharedWorldService world, PlayerService players, ObjectMapper om, jp.komorebi.village.VillageService villages) {
         this.world = world;
         this.players = players;
         this.om = om;
+        this.villages = villages;
     }
 
     public static boolean validGame(String g) {
@@ -69,13 +72,39 @@ public class GameRankService {
 
     /** {all:[{name,v,me?}], week:[...], me:{all, week, allRank, weekRank}, from, to} */
     public synchronized ObjectNode board(String game, Long me) {
+        return board(game, me, false);
+    }
+
+    /** everywhere なら全部の村をあわせる（なまえのうしろに村の名前） */
+    public synchronized ObjectNode board(String game, Long me, boolean everywhere) {
         ObjectNode out = om.createObjectNode();
         LocalDate now = LocalDate.now(JST);
         String from = now.minusDays(WEEK - 1).toString(), to = now.toString();
-        Map<Long, String> names = new HashMap<>();
-        for (Player p : players.listAll()) names.put(p.getId(), p.getName());
         List<Row> a = new ArrayList<>(), w = new ArrayList<>();
-        JsonNode g = validGame(game) ? data().path(game) : null;
+        if (everywhere && villages != null) {
+            Map<Long, List<Player>> by = new HashMap<>();
+            for (Player p : players.listEverywhere()) by.computeIfAbsent(p.getVillageId(), k -> new ArrayList<>()).add(p);
+            for (var v : villages.list()) {
+                JsonNode d = world.getSystemIn(v.id(), KEY);
+                Map<Long, String> names = new HashMap<>();
+                for (Player p : by.getOrDefault(v.id(), List.of())) names.put(p.getId(), p.getName() + "（" + v.name() + "）");
+                rows(validGame(game) && d != null ? d.path(game) : null, names, from, to, a, w);
+            }
+        } else {
+            Map<Long, String> names = new HashMap<>();
+            for (Player p : players.listAll()) names.put(p.getId(), p.getName());
+            rows(validGame(game) ? data().path(game) : null, names, from, to, a, w);
+        }
+        Comparator<Row> cmp = Comparator.comparingLong(Row::v).reversed().thenComparingLong(Row::id);
+        a.sort(cmp); w.sort(cmp);
+        ObjectNode mine = out.putObject("me");
+        fill(out.putArray("all"), a, me, mine, "all");
+        fill(out.putArray("week"), w, me, mine, "week");
+        out.put("game", game).put("from", from).put("to", to).put("scope", everywhere ? "everywhere" : "village");
+        return out;
+    }
+
+    private static void rows(JsonNode g, Map<Long, String> names, String from, String to, List<Row> a, List<Row> w) {
         if (g != null && g.isObject()) {
             for (Iterator<Map.Entry<String, JsonNode>> it = g.fields(); it.hasNext(); ) {
                 var f = it.next();
@@ -92,13 +121,6 @@ public class GameRankService {
                 if (wk > 0) w.add(new Row(id, name, wk));
             }
         }
-        Comparator<Row> cmp = Comparator.comparingLong(Row::v).reversed().thenComparingLong(Row::id);
-        a.sort(cmp); w.sort(cmp);
-        ObjectNode mine = out.putObject("me");
-        fill(out.putArray("all"), a, me, mine, "all");
-        fill(out.putArray("week"), w, me, mine, "week");
-        out.put("game", game).put("from", from).put("to", to);
-        return out;
     }
 
     private static void fill(ArrayNode arr, List<Row> rows, Long me, ObjectNode mine, String tag) {

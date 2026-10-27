@@ -25,9 +25,15 @@ public class BoardService {
         this.posts = posts;
     }
 
+    /** いまの村の伝言板 */
     @Transactional(readOnly = true)
     public List<PostView> latest() {
-        return posts.findTop100ByDeletedFalseOrderByCreatedAtDesc().stream().map(PostView::of).toList();
+        return latest(jp.komorebi.village.Villages.current());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostView> latest(long village) {
+        return posts.findTop100ByVillageIdAndDeletedFalseOrderByCreatedAtDesc(village).stream().map(PostView::of).toList();
     }
 
     @Transactional
@@ -35,7 +41,7 @@ public class BoardService {
         String b = body == null ? "" : body.replaceAll("[\\p{Cntrl}&&[^\\n]]", "").strip();
         if (b.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "空っぽです");
         if (b.codePointCount(0, b.length()) > 200) b = b.substring(0, b.offsetByCodePoints(0, 200));
-        return PostView.of(posts.save(new BoardPost(p.getId(), p.getName(), b)));
+        return PostView.of(posts.save(new BoardPost(p.getId(), p.getName(), b, p.getVillageId())));
     }
 
     @Transactional

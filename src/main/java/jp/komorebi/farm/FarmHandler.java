@@ -22,10 +22,12 @@ import jp.komorebi.ws.PlayerSession;
 public class FarmHandler implements MessageHandler {
 
     private final FarmService farms;
+    private final jp.komorebi.village.VillageService villages;
     private final Map<Long, Long> last = new ConcurrentHashMap<>(), lastSteal = new ConcurrentHashMap<>();
 
-    public FarmHandler(FarmService farms) {
+    public FarmHandler(FarmService farms, jp.komorebi.village.VillageService villages) {
         this.farms = farms;
+        this.villages = villages;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class FarmHandler implements MessageHandler {
             long me = from.playerId(), owner = msg.path("owner").asLong(0);
             int x = msg.path("x").asInt(-1), y = msg.path("y").asInt(-1);
             Long ps = lastSteal.put(me, now);
-            if (owner <= 0 || owner == me || (ps != null && now - ps < 700)) return;
+            if (owner <= 0 || owner == me || (ps != null && now - ps < 700) || !villages.same(me, owner)) return;
             ObjectNode ng = hub.json().createObjectNode().put("type", "farmSteal").put("ok", false);
             if (!"village".equals(from.map()) || Math.abs(from.x() - x) + Math.abs(from.y() - y) > 2) { hub.send(from, ng.put("text", "はなれていて、手がとどかない")); return; }
             String t = farms.steal(owner, x, y, from.name());

@@ -97,4 +97,24 @@ public class AdminMoneyController {
             now ? "つないでいたので、すぐ反映されました" : "いまはつないでいないので、次に村に来たときに反映されます"));
         return "redirect:/admin/money";
     }
+
+    /** この村の全員に（お詫びなど）。足すだけ */
+    @PostMapping("/all")
+    public String giveAll(@RequestParam(required = false) String amount, @RequestParam(required = false) String text, RedirectAttributes ra) {
+        long v;
+        try {
+            v = Long.parseLong(amount == null ? "" : amount.replace(",", "").strip());
+        } catch (NumberFormatException e) {
+            ra.addFlashAttribute("msg", "金額は数字で入れてください");
+            return "redirect:/admin/money";
+        }
+        if (v <= 0 || v > MoneyGiftService.MAX) {
+            ra.addFlashAttribute("msg", "金額は 1〜10,000,000 G で入れてください");
+            return "redirect:/admin/money";
+        }
+        int now = 0, later = 0;
+        for (var p : players.listAll()) { if (gifts.give(p.getId(), v, text)) now++; else later++; }
+        ra.addFlashAttribute("msg", String.format("この村の %d 人に +%,d G 送りました（いまつないでいる %d 人にはすぐ、ほかの %d 人には次に村に来たときに届きます）", now + later, v, now, later));
+        return "redirect:/admin/money";
+    }
 }

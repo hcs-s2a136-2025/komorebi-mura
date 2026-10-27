@@ -11,6 +11,7 @@
   <span class="grow"></span>
   <a class="btn ghost" href="/admin/events">イベントの一覧</a>
 </header>
+<nav th:replace="~{admin/fragments :: vbar}"></nav>
 <main class="wrap">
   <section class="card">
     <p th:text="|${e.kindName()}・${e.scoringName()}・${fmt.format(e.startsAt())} 〜 ${fmt.format(e.endsAt())}|">info</p>

@@ -76,4 +76,21 @@ public class AdminGiftController {
             now ? "つないでいたので、すぐ届きました" : "いまはつないでいないので、次に村に来たときに届きます"));
         return "redirect:/admin/gift";
     }
+
+    /** この村の全員に、同じ物を届ける（お詫びの家具など） */
+    @PostMapping("/all")
+    public String giveAll(@RequestParam(defaultValue = "") String item, @RequestParam(defaultValue = "1") String n,
+                          @RequestParam(required = false) String text, RedirectAttributes ra) {
+        String typed = item.strip();
+        String it = catalog.stream().anyMatch(x -> x.id().equals(typed)) ? typed
+            : catalog.stream().filter(x -> x.name().equals(typed)).map(Item::id).findFirst().orElse(typed);
+        int c;
+        try { c = Integer.parseInt(n.strip()); } catch (NumberFormatException e) { c = 0; }
+        if (!ItemGiftService.validId(it) || (!catalog.isEmpty() && catalog.stream().noneMatch(x -> x.id().equals(it)))) { ra.addFlashAttribute("msg", "物を一覧からえらんでください"); return "redirect:/admin/gift"; }
+        if (c < 1 || c > ItemGiftService.MAX_N) { ra.addFlashAttribute("msg", "個数は 1〜999 で入れてください"); return "redirect:/admin/gift"; }
+        int now = 0, later = 0;
+        for (var p : players.listAll()) { if (gifts.give(p.getId(), it, c, text)) now++; else later++; }
+        ra.addFlashAttribute("msg", String.format("この村の %d 人に %s ×%d を送りました（いまつないでいる %d 人にはすぐ、ほかの %d 人には次に村に来たときに届きます）", now + later, nameOf(it), c, now, later));
+        return "redirect:/admin/gift";
+    }
 }

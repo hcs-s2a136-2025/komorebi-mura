@@ -14,6 +14,10 @@ public class PlayerSession {
     volatile int y;
     volatile String dir = "down";
     volatile ObjectNode cfg;
+    /** 住んでいる村 */
+    volatile long village = 1L;
+    /** 管理人の見学（ほかの人には見えない・何も変えられない） */
+    volatile boolean watcher;
     long windowStart;
     int windowCount;
 
@@ -29,6 +33,8 @@ public class PlayerSession {
     public int y() { return y; }
     public String dir() { return dir; }
     public ObjectNode cfg() { return cfg; }
+    public long village() { return village; }
+    public boolean watcher() { return watcher; }
 
     public void moveTo(String map, int x, int y, String dir) {
         this.map = map;

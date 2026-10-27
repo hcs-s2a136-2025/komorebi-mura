@@ -22,17 +22,20 @@ public class RaceService implements WelcomeContributor {
     private final ObjectProvider<GameSocketHandler> hub;
     private final ObjectMapper om;
     private final ClockService clock;
-    private final RaceGame game;
+    /** 村ごとのレース場 */
+    private final jp.komorebi.village.PerVillage<RaceGame> games;
+    private final ObjectProvider<jp.komorebi.village.VillageService> villages;
 
-    public RaceService(ObjectProvider<GameSocketHandler> hub, ObjectMapper om, ClockService clock) {
+    public RaceService(ObjectProvider<GameSocketHandler> hub, ObjectMapper om, ClockService clock, ObjectProvider<jp.komorebi.village.VillageService> villages) {
         this.hub = hub;
         this.om = om;
         this.clock = clock;
-        this.game = new RaceGame(new SecureRandom(), new RaceGame.Out() {
+        this.villages = villages;
+        this.games = new jp.komorebi.village.PerVillage<>(v -> new RaceGame(new SecureRandom(), new RaceGame.Out() {
             @Override
             public void toAll(Map<String, Object> msg) {
                 GameSocketHandler h = hub.getIfAvailable();
-                if (h != null) h.broadcast(om.valueToTree(msg), null);
+                if (h != null) h.broadcastTo(v, om.valueToTree(msg), null);
             }
 
             @Override
@@ -40,29 +43,36 @@ public class RaceService implements WelcomeContributor {
                 GameSocketHandler h = hub.getIfAvailable();
                 if (h != null) h.sendToPlayer(playerId, om.valueToTree(msg));
             }
-        });
+        }));
+    }
+
+    private RaceGame game() {
+        return games.get();
     }
 
     @Scheduled(fixedDelay = 500)
     public void tick() {
-        game.tick(System.currentTimeMillis(), clock.day());
+        // レースは、だれもいない村でも時間どおりに進む（村の時計の日にちを使う）
+        jp.komorebi.village.VillageService vs = villages.getIfAvailable();
+        for (long v : vs == null ? java.util.List.of(jp.komorebi.village.Villages.MAIN) : vs.ids())
+            jp.komorebi.village.Villages.run(v, () -> games.of(v).tick(System.currentTimeMillis(), clock.day()));
     }
 
     public void bet(PlayerSession from, int runner, String kind, int amount) {
-        game.bet(from.playerId(), from.name(), runner, kind, amount, System.currentTimeMillis());
+        game().bet(from.playerId(), from.name(), runner, kind, amount, System.currentTimeMillis());
     }
 
     public ObjectNode state() {
-        return om.valueToTree(game.state(System.currentTimeMillis()));
+        return om.valueToTree(game().state(System.currentTimeMillis()));
     }
 
     public Map<String, Object> daySummary(int day) {
-        return game.daySummary(day);
+        return game().daySummary(day);
     }
 
     @Override
     public void contribute(PlayerSession session, ObjectNode welcome) {
         welcome.set("race", state());
-        welcome.set("raceResults", om.valueToTree(game.results()));
+        welcome.set("raceResults", om.valueToTree(game().results()));
     }
 }

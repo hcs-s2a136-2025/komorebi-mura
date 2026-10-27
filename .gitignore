@@ -3,3 +3,7 @@ data/
 *.log
 .idea/
 .DS_Store
+
+# テスト用のにせサーバーの依存
+tools/mock-server/node_modules/
+tools/mock-server/package-lock.json

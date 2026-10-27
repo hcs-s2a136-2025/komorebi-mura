@@ -23,6 +23,7 @@ import jp.komorebi.feedback.FeedbackThread.Category;
 import jp.komorebi.feedback.FeedbackViews.ThreadView;
 import jp.komorebi.player.Player;
 import jp.komorebi.player.PlayerService;
+import jp.komorebi.village.VillageService;
 import jp.komorebi.ws.GameSocketHandler;
 
 /**
@@ -40,16 +41,23 @@ public class ApiController {
     private final KomorebiProperties props;
     private final RateLimiter limiter;
     private final GameSocketHandler socket;
+    private final VillageService villages;
 
-    public ApiController(PlayerService players, FeedbackService feedback, KomorebiProperties props, RateLimiter limiter, GameSocketHandler socket) {
+    public ApiController(PlayerService players, FeedbackService feedback, KomorebiProperties props, RateLimiter limiter, GameSocketHandler socket, VillageService villages) {
         this.players = players;
         this.feedback = feedback;
         this.props = props;
         this.limiter = limiter;
         this.socket = socket;
+        this.villages = villages;
     }
 
-    public record JoinRequest(@Size(max = 64) String inviteCode, @Size(max = 32) String name, @Size(max = 64) String pass) {
+    /** villageCode：入りたい村の合言葉（こもれび村なら空）。newVillage：新しい村を作るときの村の名前 */
+    public record JoinRequest(@Size(max = 64) String inviteCode, @Size(max = 32) String name, @Size(max = 64) String pass,
+                              @Size(max = 20) String villageCode, @Size(max = 30) String newVillage) {
+    }
+
+    public record VillageNameRequest(@NotBlank @Size(max = 30) String name) {
     }
 
     public record NameRequest(@NotBlank @Size(max = 32) String name) {
@@ -74,14 +82,55 @@ public class ApiController {
         // Cloudflare のトンネル経由だと、みんな同じ住所に見えるので、元の住所のヘッダーがあればそれを使う
         String ip = http.getHeader("CF-Connecting-IP");
         limiter.check("join:" + (ip != null && !ip.isBlank() ? ip.strip() : http.getRemoteAddr()), 20, 60 * 60 * 1000L);
-        PlayerService.Joined j = players.join(req.inviteCode(), req.name(), req.pass());
-        return Map.of("token", j.token(), "id", j.player().getId(), "name", j.player().getName(), "created", j.created());
+        if (req.newVillage() != null && !req.newVillage().isBlank()) limiter.check("village:" + (ip != null && !ip.isBlank() ? ip.strip() : http.getRemoteAddr()), 3, 24 * 60 * 60 * 1000L);
+        PlayerService.Joined j = players.join(req.inviteCode(), req.name(), req.pass(), req.villageCode(), req.newVillage());
+        return Map.of("token", j.token(), "id", j.player().getId(), "name", j.player().getName(), "created", j.created(), "village", villageView(j.village(), j.player()));
     }
 
     @GetMapping("/session")
     public Map<String, Object> session(@RequestHeader(TOKEN) String token) {
         Player p = players.require(token);
-        return Map.of("id", p.getId(), "name", p.getName(), "version", props.version(), "unread", feedback.unreadFor(p), "hasPass", p.hasPass());
+        var v = villages.find(p.getVillageId()).orElse(null);
+        return Map.of("id", p.getId(), "name", p.getName(), "version", props.version(), "unread", feedback.unreadFor(p), "hasPass", p.hasPass(),
+            "village", v == null ? Map.of() : villageView(v, p));
+    }
+
+    /** ゲームに見せる村のようす。合言葉は、その村に住んでいる人にだけ見せる */
+    private Map<String, Object> villageView(VillageService.Village v, Player p) {
+        Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("id", v.id());
+        m.put("name", v.name());
+        m.put("main", v.main());
+        if (!v.main() && v.id() == p.getVillageId()) m.put("code", v.code());
+        m.put("owner", v.ownerId() != null && v.ownerId().equals(p.getId()));
+        return m;
+    }
+
+    /** 村長：村の名前を変える */
+    @PostMapping("/village/name")
+    public Map<String, Object> villageName(@RequestHeader(TOKEN) String token, @Valid @RequestBody VillageNameRequest req) {
+        Player p = requireOwner(token);
+        limiter.check("vname:" + p.getId(), 10, 60 * 60 * 1000L);
+        var v = villages.rename(p.getVillageId(), req.name());
+        socket.villageChanged(v.id());
+        return villageView(v, p);
+    }
+
+    /** 村長：村の合言葉を作り直す（前の合言葉では入れなくなる） */
+    @PostMapping("/village/code")
+    public Map<String, Object> villageCode(@RequestHeader(TOKEN) String token) {
+        Player p = requireOwner(token);
+        limiter.check("vcode:" + p.getId(), 10, 60 * 60 * 1000L);
+        var v = villages.newCode(p.getVillageId());
+        socket.villageChanged(v.id());
+        return villageView(v, p);
+    }
+
+    private Player requireOwner(String token) {
+        Player p = players.require(token);
+        var v = villages.find(p.getVillageId()).orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (v.main() || v.ownerId() == null || !v.ownerId().equals(p.getId())) throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN, "村長だけができるよ");
+        return p;
     }
 
     @PostMapping("/me/name")

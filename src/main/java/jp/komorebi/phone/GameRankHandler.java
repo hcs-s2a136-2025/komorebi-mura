@@ -49,7 +49,7 @@ public class GameRankHandler implements MessageHandler {
             if (prev != null && now - prev < 800) return;
             lastGet.put(id, now);
             var out = hub.json().createObjectNode().put("type", "grank");
-            out.set("board", ranks.board(get, id));
+            out.set("board", ranks.board(get, id, msg.path("everywhere").asBoolean(false)));
             hub.send(from, out);
         }
     }

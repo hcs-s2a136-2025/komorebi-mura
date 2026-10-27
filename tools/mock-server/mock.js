@@ -15,8 +15,8 @@ const canEnter = (k, id) => { const h = houseOf(k); return !!h && (isOwner(k, id
 const toList = m => Object.entries(m).map(([id, n]) => ({ id, n }));
 const hview = (k, owner, me) => { const r = rooms.get(k); const v = { layout: r && r.layout ? JSON.parse(r.layout) : null, storage: toList(r ? r.shared : {}) }; if (owner) { const pr = k === "home" ? rooms.get("me:" + me) : r; v.priv = toList(pr ? pr.priv : {}); } return v; };
 const addTo = (box, id, n) => { if (!ITEMRE.test(id) || !(n >= 1)) return -1; if (!(id in box) && Object.keys(box).length >= 60) return -1; box[id] = Math.min(99999, (box[id] || 0) + n); return box[id]; };
-const toHouse = (k, msg, ex) => { const t = JSON.stringify(msg), b = "house:" + k; for (const o of sessions) if (o !== ex && o.pl && (o.map === b || o.map === b + "_f1" || o.map === b + "_f2")) o.send(t); };
-const toMap = (map, msg, ex) => { const t = JSON.stringify(msg); for (const o of sessions) if (o !== ex && o.pl && o.map === map) o.send(t); };
+const toHouse = (k, msg, ex) => { const t = JSON.stringify(msg), b = "house:" + k; for (const o of sessions) if (o !== ex && o.pl && (!ex || !ex.pl || vOf(o.pl) === vOf(ex.pl)) && (o.map === b || o.map === b + "_f1" || o.map === b + "_f2")) o.send(t); };
+const toMap = (map, msg, ex) => { const t = JSON.stringify(msg); for (const o of sessions) if (o !== ex && o.pl && (!ex || !ex.pl || vOf(o.pl) === vOf(ex.pl)) && o.map === map) o.send(t); };
 // みんなのBJ：本物と同じ BjGame.java を小さな橋渡し（bj/BjBridge.java）で動かす。BJ_CP にコンパイル先を入れる
 const path = require("path"), { spawn } = require("child_process");
 const BJ_CP = process.env.BJ_CP || path.join(__dirname, "bj", "out");
@@ -101,7 +101,14 @@ const RATE = +process.argv[5] || 1;
 const clock = { day: 1, start: Date.now(), weather: "sun" };
 const ctime = () => 360 + (Date.now() - clock.start) / 1000 * RATE;
 const cstate = () => ({ day: clock.day, time: Math.min(1439.9, ctime()), rate: RATE, weather: clock.weather });
-const sessions = new Set(); let shared = {}; let epoch = 0; const returns = new Map(); const chat = []; const board = []; let bid = 1;
+const sessions = new Set(); let shared = {}; let epoch = 0;
+// 村（本物と同じ約束：1番はこもれび村。ほかの村は村の合言葉で入る。共有の村・チャットは村ごと）
+const villages = [{ id: 1, name: "こもれび村", code: "MAIN", owner: null }]; let vid = 2, curV = 1; const sharedBy = new Map([[1, shared]]), epochBy = new Map([[1, 0]]);
+function useV(v) { v = v || 1; if (v === curV) return; sharedBy.set(curV, shared); epochBy.set(curV, epoch); curV = v; shared = sharedBy.get(v) || {}; epoch = epochBy.get(v) || 0; sharedBy.set(v, shared); }
+const vOf = pl => (pl && pl.village) || 1;
+const vView = (v, pl) => ({ id: v.id, name: v.name, main: v.id === 1, ...(v.id !== 1 && pl && vOf(pl) === v.id ? { code: v.code } : {}), owner: !!pl && v.owner === pl.id });
+const newCode = () => { const C = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c; do { c = Array.from({ length: 6 }, () => C[Math.floor(Math.random() * C.length)]).join(""); } while (villages.some(v => v.code === c)); return c; };
+const watchTokens = new Map(); let watchN = 1000; const returns = new Map(); const chat = []; const board = []; let bid = 1;
 const json = (res, code, obj) => { res.writeHead(code, { "Content-Type": "application/json" }); res.end(obj === undefined ? "" : JSON.stringify(obj)); };
 const body = req => new Promise(r => { let d = ""; req.on("data", c => d += c); req.on("end", () => { try { r(JSON.parse(d || "{}")); } catch (e) { r({}); } }); });
 const who = req => players.get(req.headers["x-player-token"]);
@@ -114,10 +121,14 @@ const server = http.createServer(async (req, res) => {
     const b = await body(req); if (b.inviteCode !== "komorebi") return json(res, 403, { message: "招待コードがちがいます" });
     const name = (String(b.name || "").trim() || "たびびと").slice(0, 8), pass = String(b.pass || "").trim();
     if ([...pass].length < 4 || [...pass].length > 32) return json(res, 400, { message: "合言葉は4〜32文字で決めてね" });
-    const same = accounts.filter(a => a.name === name && !a.deleted); let pl = same.find(a => a.pass === pass), created = false;
-    if (!pl) { if (same.some(a => a.pass)) return json(res, 409, { message: "このなまえはもう使われているか、合言葉がちがいます" }); pl = same[0]; if (!pl) { pl = { id: pid++, name }; accounts.push(pl); created = true; } pl.pass = pass; }
+    const nv = String(b.newVillage || "").trim().slice(0, 10), vc = String(b.villageCode || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); let V = villages[0];
+    if (nv) { if (villages.length - 1 >= 10) return json(res, 409, { message: "村はもういっぱい（10こまで）。管理人に相談してね" }); if (villages.some(v => v.name === nv)) return json(res, 409, { message: "その名前の村はもうあるよ" }); V = { id: vid++, name: nv, code: newCode(), owner: null }; villages.push(V); }
+    else if (vc) { V = villages.find(v => v.id !== 1 && v.code === vc); if (!V) return json(res, 404, { message: "村の合言葉がちがうみたい" }); }
+    const same = nv ? [] : accounts.filter(a => a.name === name && !a.deleted && vOf(a) === V.id); let pl = same.find(a => a.pass === pass), created = false;
+    if (!pl) { if (same.some(a => a.pass)) return json(res, 409, { message: "このなまえはもう使われているか、合言葉がちがいます" }); pl = same[0]; if (!pl) { pl = { id: pid++, name, village: V.id }; accounts.push(pl); created = true; } pl.pass = pass; }
+    if (nv) V.owner = pl.id;
     for (const [t, a] of players) if (a === pl) players.delete(t);
-    const token = crypto.randomBytes(18).toString("base64url"); players.set(token, pl); return json(res, 200, { token, id: pl.id, name: pl.name, created });
+    const token = crypto.randomBytes(18).toString("base64url"); players.set(token, pl); return json(res, 200, { token, id: pl.id, name: pl.name, created, village: vView(V, pl) });
   }
   if (p === "/mock/delplayer") { const id = +u.searchParams.get("id"); const a = accounts.find(x => x.id === id && !x.deleted); if (!a) return json(res, 404, {}); a.deleted = true; a.pass = null; saves.delete(id);
     for (const [t, x] of [...players]) if (x === a) { players.delete(t); deletedTokens.add(t); }
@@ -128,7 +139,9 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/jackpot") return json(res, 200, { jackpot });
   if (p.startsWith("/mock/reply")) { const t = threads.find(t => t.id === +u.searchParams.get("id")); t.messages.push({ sender: "ADMIN", body: u.searchParams.get("body"), createdAt: new Date().toISOString() }); t.playerUnread = true; t.status = "WIP"; for (const s of sessions) if (s.pl && s.pl.id === t.player.id) s.send(JSON.stringify({ type: "feedbackReply", threadId: t.id, title: t.title })); return json(res, 200, {}); }
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
-  if (p === "/mock/world") return json(res, 200, shared);
+  if (p === "/mock/world") { if (u.searchParams.has("v")) useV(+u.searchParams.get("v")); return json(res, 200, shared); }
+  if (p === "/mock/villages") return json(res, 200, villages);
+  if (p === "/mock/watch") { const v = +u.searchParams.get("village") || 1; const t = "w_" + crypto.randomBytes(12).toString("base64url"); watchTokens.set(t, v); return json(res, 200, { token: t }); }
   if (p === "/mock/event/start") { const q = u.searchParams; ev = { id: evNext++, name: q.get("name") || "テスト大会", kind: q.get("kind") || "fishing", scoring: q.get("scoring") || "points", rules: q.get("rules") || "", startsAt: Date.now(), endsAt: Date.now() + (+q.get("secs") || 60) * 1000, joinFee: +q.get("fee") || 0, minLevel: +q.get("lv") || 0, rewards: { r1: q.get("r1") || "", r2: q.get("r2") || "", r3: q.get("r3") || "", all: q.get("all") || "", goal: q.get("goal") || "", goalScore: q.get("goalScore") || "0" }, scores: new Map() };
     for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evState", event: evNode(ev, -1) })); return json(res, 200, { id: ev.id }); }
   if (p === "/mock/event/end") { evFinish(); return json(res, 200, {}); }
@@ -142,7 +155,12 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/reset") { for (const [k, r] of rooms) { if (!/,/.test(k)) continue; const o = (houseOf(k) || {}).ownerId; if (!(o > 0)) continue; const to = returns.get(o) || {}; for (const [id, n] of [...Object.entries(r.shared), ...Object.entries(r.priv)]) to[id] = (to[id] || 0) + n; returns.set(o, to); } shared = {}; for (const k of [...rooms.keys()]) if (/,/.test(k)) rooms.delete(k); epoch++; for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
   if (p === "/mock/notice") { for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "notice", text: u.searchParams.get("t") })); return json(res, 200, {}); }
   const pl = who(req); if (p.startsWith("/api/") && !pl) return deletedTokens.has(req.headers["x-player-token"]) ? json(res, 410, { message: "このキャラクターは削除されました" }) : json(res, 401, { message: "もう一度参加してください" });
-  if (p === "/api/session") return json(res, 200, { id: pl.id, name: pl.name, version: VERSION, unread: threads.filter(t => t.player === pl && t.playerUnread).length, hasPass: !!pl.pass });
+  if (p === "/api/session") return json(res, 200, { id: pl.id, name: pl.name, version: VERSION, unread: threads.filter(t => t.player === pl && t.playerUnread).length, hasPass: !!pl.pass, village: vView(villages.find(v => v.id === vOf(pl)) || villages[0], pl) });
+  if (p === "/api/village/name" || p === "/api/village/code") {
+    const V = villages.find(v => v.id === vOf(pl)); if (!V || V.id === 1 || V.owner !== pl.id) return json(res, 403, { message: "村長だけができるよ" });
+    if (p.endsWith("name")) { const b = await body(req); const n = String(b.name || "").trim().slice(0, 10); if (!n) return json(res, 400, { message: "村の名前を入れてね" }); if (villages.some(v => v !== V && v.name === n)) return json(res, 409, { message: "その名前の村はもうあるよ" }); V.name = n; } else V.code = newCode();
+    for (const o of sessions) if (o.pl && !o.watch && vOf(o.pl) === V.id) o.send(JSON.stringify({ type: "village", village: { ...vView(V, o.pl), code: V.code } }));
+    return json(res, 200, vView(V, pl)); }
   if (p === "/api/save" && req.method === "GET") { const v = saves.get(pl.id); return v ? json(res, 200, v) : json(res, 204); }
   if (p === "/api/save" && req.method === "PUT") { const b = await body(req); if (typeof b.doc !== "string" || !b.doc.trim().startsWith("{") || b.doc.length > 900000) return json(res, 400, {}); saves.set(pl.id, { doc: b.doc, rev: +b.rev || 0, savedAt: new Date().toISOString() }); return json(res, 200, { savedAt: new Date().toISOString(), rev: +b.rev || 0 }); }
   if (p === "/api/save" && req.method === "DELETE") { saves.delete(pl.id); return json(res, 204); }
@@ -162,16 +180,26 @@ setInterval(() => { if (ctime() >= 1440) advance("midnight"); }, 500);
 server.listen(PORT, () => console.log("mock on", PORT));
 const wss = new WebSocketServer({ server, path: "/ws" });
 const desc = s => ({ id: s.pl.id, name: s.pl.name, map: s.map, x: s.x, y: s.y, dir: s.dir, cfg: s.cfg || {} });
-const bc = (m, ex) => { const t = JSON.stringify(m); for (const o of sessions) if (o !== ex && o.pl) o.send(t); };
+// 全員に送る：送った人（ex）の村、いなければいまの村の人にだけ
+const bc = (m, ex) => { const v = ex && ex.pl ? vOf(ex.pl) : curV; const t = JSON.stringify(m); for (const o of sessions) if (o !== ex && o.pl && vOf(o.pl) === v) o.send(t); };
 wss.on("connection", s => {
   sessions.add(s);
   s.on("message", raw => {
     let m; try { m = JSON.parse(raw); } catch (e) { return; }
+    if (s.pl) useV(vOf(s.pl));
+    if (!s.pl && m.type === "hello" && String(m.token || "").startsWith("w_")) {
+      const v = watchTokens.get(m.token); if (!v) { s.send(JSON.stringify({ type: "error", code: "watch", text: "見学の期限が切れたみたい" })); return s.close(); }
+      s.pl = { id: -(watchN++), name: "管理人（見学）", village: v }; s.watch = true; useV(v); Object.assign(s, { map: "village", x: 0, y: 0, dir: "down" });
+      const V = villages.find(x => x.id === v) || villages[0];
+      return s.send(JSON.stringify({ type: "welcome", version: VERSION, watch: true, you: { id: s.pl.id, name: s.pl.name }, village: { id: V.id, name: V.name, main: V.id === 1 }, players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === v).map(desc), world: shared, worldEpoch: epoch, chat: chat.filter(c => (c.v || 1) === v).slice(-30), clock: cstate(), jackpot, farms: [...farms].filter(([id]) => (accounts.find(a => a.id === id) || {}).village === v || (v === 1 && !(accounts.find(a => a.id === id) || {}).village)).map(([, f]) => f) }));
+    }
+    if (s.watch && m.type !== "ping") return;
     if (!s.pl) {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
-      s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
+      const V = villages.find(x => x.id === vOf(pl)) || villages[0];
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -189,7 +217,7 @@ wss.on("connection", s => {
       const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(0), from = jst(6);
       const g = String(m.game || ""); if (/^[a-z0-9]{1,12}$/.test(g) && +m.score > 0) { const G = grank[g] = grank[g] || {}; const e = G[s.pl.id] = G[s.pl.id] || { b: 0, d: {} }; e.b = Math.max(e.b, +m.score); e.d[today] = Math.max(e.d[today] || 0, +m.score); }
       const q = String(m.get || ""); if (/^[a-z0-9]{1,12}$/.test(q)) {
-        const G = grank[q] || {}, rows = accounts.filter(a => !a.deleted && G[a.id]).map(a => ({ id: a.id, name: a.name, b: G[a.id].b, w: Math.max(0, ...Object.entries(G[a.id].d).filter(([k]) => k >= from && k <= today).map(([, v]) => v)) }));
+        const G = grank[q] || {}, rows = accounts.filter(a => !a.deleted && G[a.id] && (m.everywhere || vOf(a) === vOf(s.pl))).map(a => ({ id: a.id, name: m.everywhere ? `${a.name}（${(villages.find(v => v.id === vOf(a)) || villages[0]).name}）` : a.name, b: G[a.id].b, w: Math.max(0, ...Object.entries(G[a.id].d).filter(([k]) => k >= from && k <= today).map(([, v]) => v)) }));
         const me = {}, part = (k, tag) => { const L = rows.filter(r => r[k] > 0).sort((x, y) => y[k] - x[k] || x.id - y.id); const i = L.findIndex(r => r.id === s.pl.id); me[tag] = i >= 0 ? L[i][k] : 0; me[tag + "Rank"] = i + 1; return L.slice(0, 10).map(r => ({ name: r.name, v: r[k], ...(r.id === s.pl.id ? { me: true } : {}) })); };
         s.send(JSON.stringify({ type: "grank", board: { all: part("b", "all"), week: part("w", "week"), me, game: q, from, to: today } }));
       }
@@ -212,7 +240,7 @@ wss.on("connection", s => {
       const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(+(process.env.CRANK_SHIFT || 0));
       if ("total" in m || "add" in m) { const e = crank.get(s.pl.id) || { a: 0, d: {} }; if (typeof m.total === "number") e.a = m.total; const add = Math.floor(+m.add || 0); if (add) e.d[today] = (e.d[today] || 0) + add; crank.set(s.pl.id, e); s.send(JSON.stringify({ type: "crank", ok: String(m.rid || "") })); }
       if (m.get) {
-        const from = jst(+(process.env.CRANK_SHIFT || 0) + 6), rows = accounts.filter(a => !a.deleted && crank.has(a.id)).map(a => { const e = crank.get(a.id); return { id: a.id, name: a.name, a: e.a, w: Object.entries(e.d).filter(([k]) => k >= from && k <= today).reduce((x, [, v]) => x + v, 0) }; });
+        const from = jst(+(process.env.CRANK_SHIFT || 0) + 6), rows = accounts.filter(a => !a.deleted && crank.has(a.id) && (m.everywhere || vOf(a) === vOf(s.pl))).map(a => { const e = crank.get(a.id); return { id: a.id, name: m.everywhere ? `${a.name}（${(villages.find(v => v.id === vOf(a)) || villages[0]).name}）` : a.name, a: e.a, w: Object.entries(e.d).filter(([k]) => k >= from && k <= today).reduce((x, [, v]) => x + v, 0) }; });
         const me = {}, part = (k, tag) => { const win = rows.filter(r => r[k] > 0).sort((x, y) => y[k] - x[k] || x.id - y.id), lose = rows.filter(r => r[k] < 0).sort((x, y) => x[k] - y[k] || x.id - y.id); me[tag] = (rows.find(r => r.id === s.pl.id) || {})[k] || 0; me[tag + "Win"] = win.findIndex(r => r.id === s.pl.id) + 1; me[tag + "Lose"] = lose.findIndex(r => r.id === s.pl.id) + 1; const f = l => l.slice(0, 10).map(r => ({ name: r.name, v: r[k], ...(r.id === s.pl.id ? { me: true } : {}) })); return { win: f(win), lose: f(lose) }; };
         s.send(JSON.stringify({ type: "crank", board: { all: part("a", "all"), week: part("w", "week"), me, from, to: today } }));
       }
@@ -289,7 +317,7 @@ wss.on("connection", s => {
       if (!bridges.length) { s.send(JSON.stringify({ type: "tchatNg" })); return; }
       tReq.set(rid, { from: s.pl.id, s, left: bridges.length, msg: { type: "tchat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() } });
       for (const br of bridges) br.stdin.write(["M", s.pl.id, rid].join("\t") + "\n"); return; }
-    if (m.type === "chat") { const t = String(m.text || "").slice(0, 60).trim(); if (!t) return; chat.push({ name: s.pl.name, text: t, at: Date.now() }); bc({ type: "chat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() }, s); }
+    if (m.type === "chat") { const t = String(m.text || "").slice(0, 60).trim(); if (!t) return; chat.push({ name: s.pl.name, text: t, at: Date.now(), v: vOf(s.pl) }); bc({ type: "chat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() }, s); }
   });
-  s.on("close", () => { sessions.delete(s); if (s.pl) bc({ type: "leave", id: s.pl.id }); });
+  s.on("close", () => { sessions.delete(s); if (s.pl && !s.watch) bc({ type: "leave", id: s.pl.id }, s); });
 });

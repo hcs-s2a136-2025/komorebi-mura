@@ -615,3 +615,18 @@ html, body { touch-action: manipulation; }
 .qty86 { display: inline-flex; align-items: center; gap: 4px; }
 .qin86 { width: 4.4em; padding: 6px 4px; text-align: center; border: 2px solid var(--wood, #a8794a); border-radius: 8px; background: #fffaf0; font: inherit; }
 
+/* v88 村（参加の画面・スマホの村アプリ・見学） */
+.vj88 { margin-top: 10px; padding: 8px 10px; background: rgba(0, 0, 0, .04); border-radius: 10px; }
+.vj88r { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 4px 0; }
+.vj88r label { display: flex; align-items: center; gap: 4px; }
+.vl88 { display: flex; align-items: baseline; gap: 10px; margin: 2px 0 8px; }
+.vl88 b { font-size: 1.3rem; }
+.vl88 span { font-size: .8rem; opacity: .75; }
+.vl88 .own88 { color: #b8742e; font-weight: bold; opacity: 1; }
+.code88 { font-size: 1.3rem; letter-spacing: .15em; background: #fff7e0; padding: 2px 8px; border-radius: 6px; }
+.watch88bar { position: fixed; top: 6px; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: rgba(30, 40, 60, .92); color: #fff; padding: 6px 14px; border-radius: 14px; font-size: .86rem; max-width: calc(100vw - 24px); }
+.watch88bar .note { color: #cfd8e8; font-size: .74rem; }
+.watch88bar .btn { padding: 4px 12px; min-width: 0; }
+body.watch88 #hotbar { visibility: hidden; }
+.cr74tabs.sc88 .chip[aria-pressed="true"] { background: #6aa84a; color: #fff; }
+body.watch88 #tut { display: none !important; }

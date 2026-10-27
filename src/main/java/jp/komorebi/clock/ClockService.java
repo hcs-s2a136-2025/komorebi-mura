@@ -11,7 +11,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import jakarta.annotation.PostConstruct;
+import jp.komorebi.village.PerVillage;
+import jp.komorebi.village.VillageService;
+import jp.komorebi.village.Villages;
 import jp.komorebi.world.SharedWorldService;
 import jp.komorebi.ws.GameSocketHandler;
 import jp.komorebi.ws.PlayerSession;
@@ -21,6 +23,7 @@ import jp.komorebi.ws.WelcomeContributor;
  * 村の時計。日付・時刻・天気をサーバーが決めて、みんなに同じものを配る。
  * - 時刻は 6:00（360分）から 24:00（1440分）まで、TIME_RATE（ゲーム内の分 / 現実の1秒）で進む
  * - だれかが眠るか、24:00 になると、全員が次の日の朝になる
+ * - 時計は村ごと（共有の村の "_clock" に、その村の日にちと天気を持つ）
  */
 @Service
 public class ClockService implements WelcomeContributor {
@@ -31,83 +34,101 @@ public class ClockService implements WelcomeContributor {
     private final SharedWorldService world;
     private final ObjectMapper om;
     private final ObjectProvider<GameSocketHandler> hub;
+    private final ObjectProvider<VillageService> villages;
     private final double rate;
     private final Random random = new Random();
 
-    private int day = 1;
-    private long dayStartMs;
-    private String weather = "sun";
-    private long lastSync;
+    /** 1つの村の時計 */
+    private static final class C {
+        int day = 1;
+        long dayStartMs;
+        String weather = "sun";
+        long lastSync;
+    }
 
-    public ClockService(SharedWorldService world, ObjectMapper om, ObjectProvider<GameSocketHandler> hub,
+    private final PerVillage<C> clocks;
+
+    public ClockService(SharedWorldService world, ObjectMapper om, ObjectProvider<GameSocketHandler> hub, ObjectProvider<VillageService> villages,
                         @Value("${komorebi.time-rate:1.0}") double rate) {
         this.world = world;
         this.om = om;
         this.hub = hub;
+        this.villages = villages;
         this.rate = rate > 0 ? Math.min(rate, 20) : 1.0;
+        this.clocks = new PerVillage<>(v -> Villages.in(v, () -> {
+            C c = new C();
+            JsonNode saved = world.getSystem("_clock");
+            c.day = saved != null ? Math.max(1, saved.path("day").asInt(1)) : 1;
+            c.weather = saved != null ? saved.path("weather").asText("sun") : "sun";
+            // サーバーを再起動したら、その日の朝から再開する
+            c.dayStartMs = System.currentTimeMillis();
+            world.putSystem("_clock", om.createObjectNode().put("day", c.day).put("weather", c.weather));
+            return c;
+        }));
     }
 
-    @PostConstruct
-    void load() {
-        JsonNode c = world.getSystem("_clock");
-        day = c != null ? Math.max(1, c.path("day").asInt(1)) : 1;
-        weather = c != null ? c.path("weather").asText("sun") : "sun";
-        // サーバーを再起動したら、その日の朝から再開する
-        dayStartMs = System.currentTimeMillis();
-        save();
+    private C c() {
+        return clocks.get();
     }
 
-    public synchronized double time() {
-        return 360 + (System.currentTimeMillis() - dayStartMs) / 1000.0 * rate;
+    public double time() {
+        C c = c();
+        synchronized (c) { return 360 + (System.currentTimeMillis() - c.dayStartMs) / 1000.0 * rate; }
     }
 
-    public synchronized ObjectNode state() {
-        return om.createObjectNode().put("day", day).put("time", Math.min(1439.9, time())).put("rate", rate).put("weather", weather);
+    public ObjectNode state() {
+        C c = c();
+        synchronized (c) { return om.createObjectNode().put("day", c.day).put("time", Math.min(1439.9, time())).put("rate", rate).put("weather", c.weather); }
     }
 
     /** 眠ったとき。直前に朝になったばかりなら何もしない（連続で日付が飛ぶのを防ぐ） */
     public boolean sleep(PlayerSession who) {
-        synchronized (this) {
-            if (System.currentTimeMillis() - dayStartMs < SLEEP_COOLDOWN_MS) return false;
+        C c = c();
+        synchronized (c) {
+            if (System.currentTimeMillis() - c.dayStartMs < SLEEP_COOLDOWN_MS) return false;
         }
         advance("sleep", who);
         return true;
     }
 
-    /** 管理人室から朝にする */
+    /** 管理人室から朝にする（いまの村） */
     public void morningNow() {
         advance("admin", null);
     }
 
     private void advance(String reason, PlayerSession who) {
+        C c = c();
         ObjectNode msg;
-        synchronized (this) {
-            day++;
-            dayStartMs = System.currentTimeMillis();
-            weather = rollWeather(day);
-            save();
+        synchronized (c) {
+            c.day++;
+            c.dayStartMs = System.currentTimeMillis();
+            c.weather = rollWeather(c.day);
+            world.putSystem("_clock", om.createObjectNode().put("day", c.day).put("weather", c.weather));
             msg = state().put("type", "clock").put("reason", reason);
             if (who != null) msg.put("by", who.playerId()).put("byName", who.name());
         }
         GameSocketHandler h = hub.getIfAvailable();
-        if (h != null) h.broadcast(msg, null);
+        if (h != null) h.broadcastTo(Villages.current(), msg, null);
     }
 
     @Scheduled(fixedRate = 1000)
     public void tick() {
-        boolean midnight;
-        synchronized (this) {
-            midnight = time() >= 1440;
-        }
-        if (midnight) {
+        VillageService vs = villages.getIfAvailable();
+        for (long v : vs == null ? java.util.List.of(Villages.MAIN) : vs.ids()) Villages.run(v, this::tickOne);
+    }
+
+    private void tickOne() {
+        C c = c();
+        if (time() >= 1440) {
             advance("midnight", null);
             return;
         }
         long now = System.currentTimeMillis();
-        if (now - lastSync > 30_000) {
-            lastSync = now;
+        boolean sync;
+        synchronized (c) { sync = now - c.lastSync > 30_000; if (sync) c.lastSync = now; }
+        if (sync) {
             GameSocketHandler h = hub.getIfAvailable();
-            if (h != null) h.broadcast(state().put("type", "clock").put("reason", "sync"), null);
+            if (h != null) h.broadcastTo(Villages.current(), state().put("type", "clock").put("reason", "sync"), null);
         }
     }
 
@@ -119,15 +140,11 @@ public class ClockService implements WelcomeContributor {
         return r < .62 ? "sun" : r < .9 ? "rain" : "storm";
     }
 
-    private void save() {
-        world.putSystem("_clock", om.createObjectNode().put("day", day).put("weather", weather));
-    }
-
     @Override
     public void contribute(PlayerSession session, ObjectNode welcome) {
         welcome.set("clock", state());
     }
 
-    public synchronized int day() { return day; }
+    public int day() { C c = c(); synchronized (c) { return c.day; } }
     public double rate() { return rate; }
 }

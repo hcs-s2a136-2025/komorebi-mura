@@ -3,9 +3,11 @@ const TS = 16;
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const IMG = {};
 for (const k in ASSETS) { const im = new Image(); im.src = ASSETS[k]; IMG[k] = im; }
+// 管理人の見学（?watch=トークン）：この端末には何も保存しない・サーバーにもセーブしない
+const WATCH88 = (() => { try { const t = new URLSearchParams(location.search).get("watch") || ""; return /^w_[A-Za-z0-9_-]{8,64}$/.test(t) ? t : ""; } catch (e) { return ""; } })();
 const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  set(k, v) { if (WATCH88) return; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
 };
 const $ = id => document.getElementById(id);
 const kA = s => String(s).replace(/Ⓐ/g, matchMedia("(hover: none), (pointer: coarse)").matches ? "A" : "Z");
@@ -3933,9 +3935,9 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.45.1";
+const CLIENT_VERSION = "0.46.0";
 const ON_KEY = "komorebi-online";
-let onl = store.get(ON_KEY) || {};
+let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
 let ws8 = null, retry8 = 0, ping8 = 0, lastSent8 = "", lastCfg8 = "", stop8 = false;
 const STAMPS = ["！", "？", "♪", "♥", "…", "ありがとう", "こっち！", "おつかれ"];
@@ -4183,8 +4185,9 @@ showPending = p => { if (p.kind === "custom") p.show(); else _showPending7(p); }
   } catch (e) { F8.online = false; }
   setStatus();
   if (!F8.online) return;
+  if (WATCH88) { cloudFor14 = onl.id; cloudReady14 = false; connect8(); setStatus(); return; }
   if (onl.token) {
-    try { const s = await api("/api/session"); onl.name = s.name; onl.id = s.id; store.set(ON_KEY, onl); $("fbDot").hidden = !s.unread; connect8(); }
+    try { const s = await api("/api/session"); onl.name = s.name; onl.id = s.id; if (s.village && s.village.id) onl.village = s.village; store.set(ON_KEY, onl); $("fbDot").hidden = !s.unread; connect8(); }
     catch (e) { if (e.status === 401) { onl = {}; store.set(ON_KEY, onl); } }
   }
   if (!onl.token) F7.pending.push({ kind: "custom", show: () => { if (!F8.skipped && !onl.token) openJoin(); } });
@@ -5560,6 +5563,7 @@ async function cloudLoad14() {
   cloudReady14 = true; cloudPush14(true);
 }
 async function cloudPush14(force) {
+  if (WATCH88) return;
   if (!cloudReady14 || cloudBusy14 || !onl.token || cloudFor14 !== onl.id) return;
   const key = cloudKey14(); if (!force && key === cloudLast14) return;
   const doc = saveText(); if (doc.length > 900000) { if (!F14.bigWarned) { F14.bigWarned = true; toast(null, "セーブデータが大きすぎてサーバーに保存できない…管理人に知らせてね"); } return; }
@@ -5591,6 +5595,7 @@ connect8 = function () {
 };
 
 function authLost14() {
+  if (WATCH88) return;
   const had = !!onl.token; cloudReady14 = false; cloudFor14 = null;
   onl = {}; store.set(ON_KEY, onl); F8.disconnect(); setStatus();
   if (had) F7.pending.push({ kind: "custom", show: () => openModal("ほかの端末で入ったみたい", "shop", body => {
@@ -6008,6 +6013,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.46.0", date: "2026/10/27", title: "自分たちだけの村を作れるようになった", items: [
+    "参加の画面で「新しい村を作る」を選ぶと、自分たちだけの村を作れる。作った人が村長。村はこもれび村のほかに10こまで",
+    "できた村には「村の合言葉」（6文字）がある。友だちは参加の画面で「友だちの村」を選んで合言葉を入れると、その村に入れる",
+    "村ごとに、地図・家・畑・共同プロジェクト・共同農園・村の時計と天気・チャット・伝言板・新聞・カジノの卓とジャックポットが別々になる",
+    "村ごとに別のキャラクターになる（持ち物やお金も村ごと）。同じなまえと合言葉で、同じ村を選べば、その村の続きから遊べる",
+    "スマホに「村」アプリ。村の名前と合言葉が見られる。村長は、村の名前を変えたり、合言葉を作り直したりできる",
+    "番付とこもれびブロックのランキングに「この村」と「全部の村」の切りかえ",
+  ] },
   { v: "0.45.0", date: "2026/10/27", title: "札束の扇を手に持つ・飾りを現金に戻す・大きな札束の山", items: [
     "札束の扇を、ホットバーで選んで手に持つと、手元に扇が見えるようになった。同じ場所にいる人にも見える",
     "札束の扇・札束の山は、スマホの「財布」の「飾りを現金に戻す」で、もとのお札に戻せるようになった（持ち物に入れてある分。作るときにまざっていた偽札も、そのまま戻る）",
@@ -10785,7 +10798,7 @@ F13.openMap = openMap13;
 const INT49 = { casino: "こもれびパレス", shop: "よろず屋", bank: "村の信用金庫", yami: "十日屋", ranch: "こもれび牧場", builder: "こもれび工務店" };
 function where49(e) {
   const k = String(e.rmap || "");
-  if (k === "village") return e.y >= NY0 ? "北の丘" : "こもれび村";
+  if (k === "village") return e.y >= NY0 ? "北の丘" : village.name;
   if (k.startsWith("int:")) return INT49[k.slice(4)] || "お店の中";
   if (k === "port") return "みなと町";
   if (k.startsWith("house:")) { const key = k.slice(6); return key === "home" ? "みんなの家" : houseLabel(world.houses.find(h => h.col + "," + h.row === key)); }
@@ -10793,7 +10806,7 @@ function where49(e) {
 }
 function openOnline49() {
   if (!F8.connected) { toast(null, "オンラインにつないでいないみたい"); return; }
-  const me = { name: onl.name || myName(), where: map === village ? (player.y >= NY0 ? "北の丘" : "こもれび村") : map.name || "", st: "" };
+  const me = { name: onl.name || myName(), where: map === village ? (player.y >= NY0 ? "北の丘" : village.name) : map.name || "", st: "" };
   const list = [...remotes.values()].map(e => ({ name: e.name, where: where49(e), st: e.status44 || "" })).sort((a, b) => a.where.localeCompare(b.where, "ja") || a.name.localeCompare(b.name, "ja"));
   openModal(`いまオンラインの人（${list.length + 1}人）`, "", body => {
     body.innerHTML = `<div class="list">${[{ ...me, me: true }, ...list].map(p => `<div class="li on49"><span class="dot49${p.me ? " me" : ""}"></span><span class="nm">${esc(p.name)}${p.me ? "（あなた）" : ""}<span class="sub2">${esc(p.where)}${p.st ? `・${esc(p.st)}` : ""}</span></span></div>`).join("")}</div>
@@ -13087,7 +13100,8 @@ handle8 = m => {
 const sg74 = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${fmt(Math.abs(v))}`;
 F74.open = () => {
   F74.board = null;
-  if (F8.connected) { F74.wait = null; F74.flush(true); setTimeout(() => send8({ type: "crank", get: true }), 300); }
+  F74.ask = () => send8({ type: "crank", get: true, everywhere: F74.scope === "everywhere" });
+  if (F8.connected) { F74.wait = null; F74.flush(true); setTimeout(() => F74.ask(), 300); }
   openModal("こもれびパレス 番付表", "dark", body => {
     F74.render = () => {
       if (!body.isConnected) { F74.render = null; return; }
@@ -13096,7 +13110,8 @@ F74.open = () => {
       const P = B && B[T], me = B && B.me;
       const mine = me ? `<p class="mtext small cr74me">あなたの${T === "all" ? "全期間" : "この1週間"}の収支：<b>${sg74(me[T] || 0)}</b>${me[T + "Win"] ? `（収益 ${me[T + "Win"]}位）` : me[T + "Lose"] ? `（損失 ${me[T + "Lose"]}位）` : ""}</p>` : "";
       const per = B && T === "week" && B.from ? `<p class="mtext small">${esc(String(B.from).slice(5).replace("-", "/"))}〜${esc(String(B.to).slice(5).replace("-", "/"))}（今日をふくむ7日間・日本時間）の勝ち負け</p>` : T === "all" ? `<p class="mtext small">はじめてからの、カジノでの勝ち負けの合計（記録タブの「ギャンブル収支」と同じ）</p>` : "";
-      body.innerHTML = `<div class="cr74tabs"><button class="chip" type="button" data-t74="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t74="week" aria-pressed="${T === "week"}">この1週間</button></div>
+      body.innerHTML = `${F8.connected ? `<div class="cr74tabs sc88"><button class="chip" type="button" data-s74="village" aria-pressed="${F74.scope !== "everywhere"}">この村</button><button class="chip" type="button" data-s74="everywhere" aria-pressed="${F74.scope === "everywhere"}">全部の村</button></div>` : ""}
+        <div class="cr74tabs"><button class="chip" type="button" data-t74="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t74="week" aria-pressed="${T === "week"}">この1週間</button></div>
         ${per}
         ${!F8.connected ? `<p class="mtext">番付は、オンラインにつないでいるときに見られるよ。<br>いまのあなたの全期間の収支は <b>${sg74(my)}</b></p>`
           : !B ? `<p class="mtext">番付を読みこんでいるよ…</p>`
@@ -13104,6 +13119,7 @@ F74.open = () => {
         <p class="mtext small">スロット・BJ・丁半・チンチロ・麻雀・競どんぐり・くじなど、カジノの賭けの勝ち負けで決まるよ。遊びすぎには気をつけてね</p>
         <div class="row2"><button class="btn" type="button" id="cr74ok">閉じる</button></div>`;
       body.querySelectorAll("[data-t74]").forEach(b => b.onclick = () => { F74.tab = b.dataset.t74; F74.render(); });
+      body.querySelectorAll("[data-s74]").forEach(b => b.onclick = () => { if (F74.scope === b.dataset.s74) return; F74.scope = b.dataset.s74; F74.board = null; F74.render(); F74.ask(); });
       body.querySelector("#cr74ok").onclick = closeModal;
     };
     F74.render();
@@ -13491,7 +13507,7 @@ function openChat76() {
   });
 }
 // ---- フレンド（いまオンラインの人） ----
-const placeName76 = k => { k = String(k || ""); return k === "village" ? "こもれび村" : k.startsWith("room") || /^\d+,\d+$/.test(k) ? "家の中" : k === "casino" ? "カジノ" : k === "port" ? "みなと町" : k ? "おでかけ中" : "どこか"; };
+const placeName76 = k => { k = String(k || ""); return k === "village" ? village.name : k.startsWith("room") || /^\d+,\d+$/.test(k) ? "家の中" : k === "casino" ? "カジノ" : k === "port" ? "みなと町" : k ? "おでかけ中" : "どこか"; };
 function openFriends76() {
   openModal("フレンド", "", body => {
     const draw = () => {
@@ -13590,7 +13606,8 @@ handle8 = m => {
 };
 function openBlkMenu77() {
   F77.board = null;
-  if (F8.connected) { F77.sendBest(); setTimeout(() => send8({ type: "grank", get: "blk" }), 400); }
+  F77.ask = () => send8({ type: "grank", get: "blk", everywhere: F77.scope === "everywhere" });
+  if (F8.connected) { F77.sendBest(); setTimeout(() => F77.ask(), 400); }
   openModal("こもれびブロック", "dark", body => {
     F77.render = () => {
       if (!body.isConnected) { F77.render = null; return; }
@@ -13599,12 +13616,13 @@ function openBlkMenu77() {
       body.innerHTML = `<div class="bk77menu"><p class="mtext">上から落ちてくるブロックを動かして回して、横1列をそろえると消える。どんどん速くなるよ。</p>
         <div class="row2"><button class="btn" type="button" id="bk77go">あそぶ</button></div>
         <p class="mtext small">自己ベスト <b>${b.best.toLocaleString()}点</b>・あそんだ回数 ${b.plays}回・消した列 ${b.lines}列</p>
-        <h4>ランキング</h4><div class="cr74tabs"><button class="chip" type="button" data-t77="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t77="week" aria-pressed="${T === "week"}">この1週間</button></div>
+        <h4>ランキング</h4>${F8.connected ? `<div class="cr74tabs sc88"><button class="chip" type="button" data-s77="village" aria-pressed="${F77.scope !== "everywhere"}">この村</button><button class="chip" type="button" data-s77="everywhere" aria-pressed="${F77.scope === "everywhere"}">全部の村</button></div>` : ""}<div class="cr74tabs"><button class="chip" type="button" data-t77="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t77="week" aria-pressed="${T === "week"}">この1週間</button></div>
         ${!F8.connected ? `<p class="mtext small">ランキングは、オンラインのときに見られるよ</p>` : !B ? `<p class="mtext small">読みこんでいるよ…</p>` :
           rows.length ? `<ol class="cr74l">${rows.map((r, i) => `<li class="${r.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(r.name)}</span><b class="wi74">${esc(String(r.v).replace(/\B(?=(\d{3})+(?!\d))/g, ","))}点</b></li>`).join("")}</ol>${me && me[T + "Rank"] ? `<p class="mtext small cr74me">あなたは <b>${me[T + "Rank"]}位</b></p>` : ""}` : `<p class="mtext small">まだだれもいないよ。いちばん乗りしよう</p>`}
         <p class="mtext small">そうさ：← → 動かす・↓ ゆっくり落とす・↑ か X 回す（Z で逆回し）・Space で一気に落とす・C でキープ。スマホは下のボタン</p></div>`;
       body.querySelector("#bk77go").onclick = () => { closeModal(); playBlk77(); };
       body.querySelectorAll("[data-t77]").forEach(x => x.onclick = () => { F77.tab = x.dataset.t77; F77.render(); });
+      body.querySelectorAll("[data-s77]").forEach(x => x.onclick = () => { if (F77.scope === x.dataset.s77) return; F77.scope = x.dataset.s77; F77.board = null; F77.render(); F77.ask(); });
     };
     F77.render();
   }, () => { F77.render = null; });
@@ -15551,6 +15569,135 @@ F87.heldKey = heldKey87; F87.sync = sync87;
   if (g) g[2] = g[2].replace("</ul>", "<li><b>札束の扇</b>：ホットバーで選んで手に持つと、手元に扇が見える。同じ場所にいる人にも見える（財布で作る。お札にも戻せる）</li></ul>");
 }
 F87.ready = true;
+// =================== v88: 村をふやす（自分たちだけの村・村の合言葉・村長）と、管理人の見学 ===================
+var F88 = {};
+F88.v = onl.village && onl.village.id ? onl.village : null;
+// 村の名前を、画面のあちこちに出す
+function applyVillage88(v) {
+  if (!v || typeof v !== "object" || !v.id) return;
+  const name = String(v.name || "こもれび村").slice(0, 16);
+  F88.v = { id: +v.id, name, main: !!v.main, code: typeof v.code === "string" ? v.code : "", owner: !!v.owner };
+  if (!WATCH88 && onl.token) { onl.village = F88.v; store.set(ON_KEY, onl); }
+  village.name = name;
+  try { if (DEST13 && DEST13[0]) DEST13[0][1] = name; } catch (e) {}
+  updateHud(true);
+}
+F88.apply = applyVillage88;
+if (F88.v && !WATCH88) applyVillage88(F88.v);
+const _handle88 = handle8;
+handle8 = m => {
+  if (m && m.type === "village" && m.village) { const old = F88.v && F88.v.name; applyVillage88(m.village); if (old && old !== F88.v.name) F7.notify(`村の名前が「${F88.v.name}」になったよ`, null); if (F88.render) F88.render(); return; }
+  if (m && m.type === "error" && m.code === "watch") { F7.pending.length = 0; openModal("見学できなかった", "", body => { body.innerHTML = `<p class="mtext">${esc(String(m.text || "見学の期限が切れたみたい"))}</p>`; }); return; }
+  _handle88(m);
+  if (m && m.type === "welcome") {
+    if (m.village) applyVillage88(m.village);
+    if (m.watch || WATCH88) startWatch88();
+  }
+};
+// ---- 参加の画面に「どの村に入るか」を足す ----
+const _openJoin88 = openJoin;
+openJoin = function (after) {
+  _openJoin88(after);
+  const body = $("mbody"), msg = body && body.querySelector("#jMsg"); if (!msg || body.querySelector(".vj88")) return;
+  const pv = onl.village && !onl.village.main ? onl.village : null;
+  msg.insertAdjacentHTML("beforebegin", `<div class="vj88"><span class="lbl">どの村に入る？</span>
+    <div class="vj88r"><label><input type="radio" name="vj88" value="main" ${pv ? "" : "checked"}> こもれび村</label><label><input type="radio" name="vj88" value="code" ${pv ? "checked" : ""}> 友だちの村（村の合言葉）</label><label><input type="radio" name="vj88" value="new"> 新しい村を作る</label></div>
+    <div id="vj88code" ${pv ? "" : "hidden"}><label class="lbl" for="vj88c">村の合言葉（6文字）</label><input id="vj88c" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" value="${esc(pv && pv.code ? pv.code : "")}"></div>
+    <div id="vj88new" hidden><label class="lbl" for="vj88n">村の名前（10文字まで）</label><input id="vj88n" type="text" maxlength="10" autocomplete="off">
+      <p class="note">作った人が村長になるよ。できた村の「村の合言葉」を友だちに教えると、その村に入れる。村ごとに、別のキャラクターになるよ（持ち物やお金は村ごと）。</p></div></div>`);
+  const q = s => body.querySelector(s);
+  const sync = () => { const v = (body.querySelector("[name=vj88]:checked") || {}).value; q("#vj88code").hidden = v !== "code"; q("#vj88new").hidden = v !== "new"; };
+  body.querySelectorAll("[name=vj88]").forEach(r => r.onchange = sync);
+  for (const id of ["#vj88c", "#vj88n"]) q(id).addEventListener("keydown", e => e.stopPropagation());
+  // 前の「参加する」をおきかえる（Enter で前のが動かないように、合言葉の欄も作りなおす）
+  const oldPass = q("#jPass"), pass = oldPass.cloneNode(true); oldPass.replaceWith(pass);
+  const go = async () => {
+    const mode = (body.querySelector("[name=vj88]:checked") || {}).value || "main";
+    const name = q("#jName").value.trim() || myName(), pw = pass.value;
+    const code = mode === "code" ? q("#vj88c").value.trim() : "", vname = mode === "new" ? q("#vj88n").value.trim() : "";
+    if ([...pw.trim()].length < 4) { msg.textContent = "合言葉は4文字以上で決めてね"; return; }
+    if (mode === "code" && !code) { msg.textContent = "村の合言葉を入れてね"; return; }
+    if (mode === "new" && !vname) { msg.textContent = "村の名前を入れてね"; return; }
+    msg.textContent = mode === "new" ? "村を作っています…" : "つないでいます…";
+    // いままでのキャラクターの続きを、先にサーバーへ
+    try { if (onl.token && onl.id && cloudReady14) await cloudPush14(true); } catch (e) {}
+    try {
+      const r = await api("/api/join", { method: "POST", body: JSON.stringify({ inviteCode: q("#jCode").value, name, pass: pw, villageCode: code, newVillage: vname }) });
+      const prevId = cloud14 && cloud14.id;
+      // いまの接続（前のキャラクター）は切って、新しいキャラクターでつなぎなおす
+      F8.disconnect();
+      onl = { token: r.token, id: r.id, name: r.name, village: r.village || null }; store.set(ON_KEY, onl); cloudFor14 = null;
+      // この端末で前に別のキャラクターを使っていて、新しく作ったキャラクターなら、まっさらから
+      if (r.created && prevId && prevId !== r.id) loadSave({ world: defaultWorld(), player: { cfg, name: r.name } }, "別の村のキャラクターに切りかえる前（この端末）");
+      nameEl.value = r.name; changed();
+      if (r.village) applyVillage88(r.village);
+      stop8 = false; closeModal();
+      const vn = r.village && r.village.name ? r.village.name : "こもれび村";
+      toast(null, r.created ? `ようこそ、${r.name}。「${vn}」へ。なまえと合言葉を覚えておいてね` : `おかえり、${r.name}。「${vn}」の続きから遊べるよ`);
+      connect8(); refreshUnread(); setStatus();
+      if (mode === "new" && r.village && r.village.code) F7.pending.push({ kind: "custom", show: () => openVillage88(`「${vn}」ができたよ。下の「村の合言葉」を友だちに教えると、この村に入れるよ`) });
+      if (after) after();
+    } catch (e) {
+      msg.textContent = e.status === 403 ? "招待コードがちがうみたい。もう一度確かめてね" : e.status === 404 ? "村の合言葉がちがうみたい。もう一度確かめてね"
+        : e.status === 409 ? (mode === "new" && e.message && !/なまえ/.test(e.message) ? e.message : "このなまえはもう使われているか、合言葉がちがうみたい")
+        : e.status === 400 ? (e.message || "入力を確かめてね") : e.status === 429 ? "少し時間をおいてから、もう一度ためしてね" : "つなげなかった…電波を確かめて、もう一度ためしてね";
+    }
+  };
+  q("#jGo").onclick = go; pass.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  q("#jShow").onchange = e => { pass.type = e.target.checked ? "text" : "password"; };
+};
+// ---- スマホの「村」アプリ ----
+function openVillage88(note) {
+  openModal("村", "", body => {
+    F88.render = () => {
+      if (!body.isConnected) { F88.render = null; return; }
+      const v = F88.v || { name: "こもれび村", main: true };
+      body.innerHTML = `${note ? `<p class="mtext"><b>${esc(note)}</b></p>` : ""}
+        <div class="vl88"><b>${esc(v.name)}</b>${v.main ? `<span>はじまりの村</span>` : v.owner ? `<span class="own88">あなたが村長</span>` : ""}</div>
+        ${!onl.token ? `<p class="mtext">オンラインにつなぐと、自分たちだけの村を作ったり、友だちの村に入ったりできるよ。</p>`
+          : v.main ? `<p class="mtext">いまは、みんなの「こもれび村」にいるよ。自分たちだけの村を作ったり、友だちの村に入ったりするときは、下の「ほかの村へ」から。</p>`
+          : `<p class="mtext">この村の合言葉：<b class="code88">${esc(v.code || "")}</b> <button class="btn light" type="button" id="vl88cp">コピー</button></p><p class="mtext small">この合言葉を友だちに教えると、参加の画面の「友だちの村」から、この村に入れるよ。</p>`}
+        ${onl.token && !v.main && v.owner ? `<h4>村長のしごと</h4>
+          <div class="row2"><input id="vl88n" type="text" maxlength="10" placeholder="新しい村の名前" autocomplete="off"><button class="btn light" type="button" id="vl88nb">名前を変える</button></div>
+          <div class="row2"><button class="btn light" type="button" id="vl88c">村の合言葉を作り直す</button></div>
+          <p class="note">合言葉を作り直すと、前の合言葉では入れなくなるよ（もう住んでいる人はそのまま）。</p>` : ""}
+        <p class="mtext small" id="vl88m"></p>
+        <div class="row2"><button class="btn light" type="button" id="vl88j">ほかの村へ（友だちの村・新しい村）</button></div>
+        <p class="note">村ごとに、別のキャラクターになるよ。いまのキャラクターの持ち物やお金は、この村に残る。もどってくるときは、同じなまえと合言葉で、この村を選んでね。</p>`;
+      const m = body.querySelector("#vl88m"), q = s => body.querySelector(s);
+      q("#vl88cp")?.addEventListener("click", async () => { try { await navigator.clipboard.writeText(v.code); m.textContent = "コピーしたよ"; } catch (e) { m.textContent = "コピーできなかった…手で書きうつしてね"; } });
+      q("#vl88n")?.addEventListener("keydown", e => e.stopPropagation());
+      q("#vl88nb")?.addEventListener("click", async () => { const name = q("#vl88n").value.trim(); if (!name) { m.textContent = "新しい名前を入れてね"; return; } try { applyVillage88(await api("/api/village/name", { method: "POST", body: JSON.stringify({ name }) })); F88.render(); } catch (e) { m.textContent = e.message || "変えられなかった…"; } });
+      q("#vl88c")?.addEventListener("click", async () => { try { applyVillage88(await api("/api/village/code", { method: "POST" })); F88.render(); body.querySelector("#vl88m").textContent = "新しい合言葉にしたよ"; } catch (e) { m.textContent = e.message || "作り直せなかった…"; } });
+      q("#vl88j").onclick = () => { closeModal(); openJoin(); };
+    };
+    F88.render();
+  }, () => { F88.render = null; });
+}
+F88.open = openVillage88;
+F76.add({ id: "village", name: "村", ch: "村", c: "#6aa84a", open: () => openVillage88(), show: () => !WATCH88 });
+// ---- 管理人の見学 ----
+function startWatch88() {
+  if (F88.watching) return; F88.watching = true;
+  document.body.classList.add("watch88");
+  if (world.tut) world.tut.done = true;
+  { const t = $("tut"); if (t) t.hidden = true; }
+  F7.pending.length = 0;
+  const bar = document.createElement("div"); bar.className = "watch88bar";
+  bar.innerHTML = `<b>見学中</b><span id="w79v"></span><span class="note">村の人には見えていないよ・何もさわれない・セーブしない</span><button class="btn light" type="button" id="w79x">見学をやめる</button>`;
+  document.body.appendChild(bar);
+  const upd = () => { const e = $("w79v"); if (e) e.textContent = `「${F88.v ? F88.v.name : "こもれび村"}」・いま${remotes.size}人`; };
+  upd(); setInterval(upd, 2000);
+  bar.querySelector("#w79x").onclick = () => { location.href = "/admin/villages"; };
+}
+F88.startWatch = startWatch88;
+// 見学中は、さわれない・自分の姿を出さない（あとのモジュールが act を包んでも、いちばん外がこれになるよう、全部読みこんだあとで）
+if (WATCH88) setTimeout(() => {
+  act = function () { if (!modalOpen) toast(null, "見学中は、さわれないよ"); };
+  const _de88 = drawEnt;
+  drawEnt = function (e) { if (e === player) return; return _de88.apply(this, arguments); };
+}, 0);
+F88.ready = true;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -16012,5 +16159,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

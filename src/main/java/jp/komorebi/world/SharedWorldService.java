@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jp.komorebi.village.Villages;
 import jp.komorebi.ws.PlayerSession;
 import jp.komorebi.ws.WelcomeContributor;
 
@@ -40,8 +41,9 @@ public class SharedWorldService implements WelcomeContributor {
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper om;
-    private ObjectNode layers;
-    private volatile boolean dirty;
+    /** 村ごとの中身（村の番号 → レイヤー）。shared_world の行の id が村の番号 */
+    private final Map<Long, ObjectNode> docs = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Set<Long> dirty = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public SharedWorldService(JdbcTemplate jdbc, ObjectMapper om) {
         this.jdbc = jdbc;
@@ -50,16 +52,30 @@ public class SharedWorldService implements WelcomeContributor {
 
     @PostConstruct
     void load() {
-        layers = om.createObjectNode();
-        List<String> rows = jdbc.queryForList("SELECT doc FROM shared_world WHERE id = 1", String.class);
+        docs.put(Villages.MAIN, read(Villages.MAIN));
+    }
+
+    private ObjectNode read(long village) {
+        ObjectNode out = om.createObjectNode();
+        List<String> rows = jdbc.queryForList("SELECT doc FROM shared_world WHERE id = ?", String.class, village);
         if (!rows.isEmpty()) {
             try {
                 JsonNode n = om.readTree(rows.get(0));
-                if (n instanceof ObjectNode o) layers = o;
+                if (n instanceof ObjectNode o) out = o;
             } catch (Exception e) {
-                log.warn("共有の村のデータが読めなかったので、空から始めます: {}", e.getMessage());
+                log.warn("共有の村のデータ（村{}）が読めなかったので、空から始めます: {}", village, e.getMessage());
             }
         }
+        return out;
+    }
+
+    /** いまの村の中身（はじめてなら読みこむ） */
+    private ObjectNode layers() {
+        return docs.computeIfAbsent(Villages.current(), this::read);
+    }
+
+    private void touch() {
+        dirty.add(Villages.current());
     }
 
     /** 編集をまとめて反映し、実際に反映できたものだけを返す（ほかの人に配る用） */
@@ -80,6 +96,7 @@ public class SharedWorldService implements WelcomeContributor {
             String l = e.path("l").asText(""), k = e.path("k").asText("");
             if (!LAYERS.contains(l) || !KEY.matcher(k).matches()) continue;
             JsonNode v = e.get("v");
+            ObjectNode layers = layers();
             JsonNode node = layers.get(l);
             ObjectNode layer = node instanceof ObjectNode o ? o : layers.putObject(l);
             if ("decor".equals(l)) {
@@ -143,34 +160,35 @@ public class SharedWorldService implements WelcomeContributor {
             ObjectNode a = out.addObject();
             a.put("l", l).put("k", k);
             a.set("v", v);
-            dirty = true;
+            touch();
         }
         return out;
     }
 
     /** サーバーだけが書く情報（村の時計など）。プレイヤーからの edits では書きかえられない */
     public synchronized void putSystem(String name, JsonNode value) {
-        layers.set(name, value);
-        dirty = true;
+        layers().set(name, value);
+        touch();
     }
 
     public synchronized JsonNode getSystem(String name) {
-        return layers.get(name);
+        return layers().get(name);
     }
 
     /** レイヤーの中の1つだけ（コピー）。無ければ null */
     public synchronized JsonNode layerValue(String layer, String key) {
-        JsonNode l = layers.get(layer);
+        JsonNode l = layers().get(layer);
         JsonNode v = l == null ? null : l.get(key);
         return v == null || v.isNull() ? null : v.deepCopy();
     }
 
     public synchronized ObjectNode snapshot() {
-        return layers.deepCopy();
+        return layers().deepCopy();
     }
 
     public synchronized Map<String, Integer> stats() {
         Map<String, Integer> m = new LinkedHashMap<>();
+        ObjectNode layers = layers();
         layers.fieldNames().forEachRemaining(f -> { if (!f.startsWith("_")) m.put(f, layers.get(f).size()); });
         return m;
     }
@@ -181,29 +199,31 @@ public class SharedWorldService implements WelcomeContributor {
      */
     public void reset() {
         synchronized (this) {
-            JsonNode clock = layers.get("_clock"), jackpot = layers.get("_jackpot"), mjpay = layers.get("_mjpay"), adminpay = layers.get("_adminpay");
+            ObjectNode old = layers();
             long next = epoch() + 1;
-            layers = om.createObjectNode();
-            if (clock != null) layers.set("_clock", clock);
-            if (jackpot != null) layers.set("_jackpot", jackpot);
-            if (mjpay != null) layers.set("_mjpay", mjpay);
-            if (adminpay != null) layers.set("_adminpay", adminpay);
-            layers.put("_epoch", next);
-            dirty = true;
+            ObjectNode fresh = om.createObjectNode();
+            // 村の時計・ジャックポット・まだ渡していない精算やプレゼント・ランキング・偽札の出回りは残す
+            for (String k : List.of("_clock", "_jackpot", "_mjpay", "_adminpay", "_admingift", "_casinorank", "_gamerank", "_cash")) {
+                JsonNode v = old.get(k);
+                if (v != null) fresh.set(k, v);
+            }
+            fresh.put("_epoch", next);
+            docs.put(Villages.current(), fresh);
+            touch();
         }
         persist();
     }
 
     /** 共有の村が何回リセットされたか（村の代）。0 から始まる */
     public synchronized long epoch() {
-        return layers.path("_epoch").asLong(0);
+        return layers().path("_epoch").asLong(0);
     }
 
     /** プレイヤーに配る分だけ（サーバーだけが使う "_" で始まる情報は入れない） */
     public synchronized ObjectNode clientSnapshot() {
         ObjectNode out = om.createObjectNode();
         for (String l : LAYERS) {
-            JsonNode n = layers.get(l);
+            JsonNode n = layers().get(l);
             if (n instanceof ObjectNode o) out.set(l, o.deepCopy());
         }
         return out;
@@ -211,19 +231,27 @@ public class SharedWorldService implements WelcomeContributor {
 
     @Scheduled(fixedDelay = 10_000)
     public void persist() {
-        String json;
-        synchronized (this) {
-            if (!dirty) return;
-            json = layers.toString();
-            dirty = false;
+        for (Long v : List.copyOf(dirty)) {
+            String json;
+            synchronized (this) {
+                if (!dirty.remove(v)) continue;
+                ObjectNode d = docs.get(v);
+                if (d == null) continue;
+                json = d.toString();
+            }
+            if (json.length() > MAX_DOC) {
+                log.warn("共有の村のデータ（村{}）が大きすぎて保存できません（{}文字）。管理人室からリセットを検討してください", v, json.length());
+                continue;
+            }
+            Timestamp now = Timestamp.from(Instant.now());
+            int up = jdbc.update("UPDATE shared_world SET doc = ?, updated_at = ? WHERE id = ?", json, now, v);
+            if (up == 0) jdbc.update("INSERT INTO shared_world (id, doc, updated_at) VALUES (?, ?, ?)", v, json, now);
         }
-        if (json.length() > MAX_DOC) {
-            log.warn("共有の村のデータが大きすぎて保存できません（{}文字）。管理人室からリセットを検討してください", json.length());
-            return;
-        }
-        Timestamp now = Timestamp.from(Instant.now());
-        int up = jdbc.update("UPDATE shared_world SET doc = ?, updated_at = ? WHERE id = 1", json, now);
-        if (up == 0) jdbc.update("INSERT INTO shared_world (id, doc, updated_at) VALUES (1, ?, ?)", json, now);
+    }
+
+    /** ほかの村のサーバー用の情報を読む（全部の村のランキングなど） */
+    public synchronized JsonNode getSystemIn(long village, String name) {
+        return Villages.in(village, () -> layers().get(name));
     }
 
     @PreDestroy

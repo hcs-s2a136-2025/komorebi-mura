@@ -43,9 +43,12 @@ public class FarmService implements WelcomeContributor {
     private final Map<Long, ObjectNode> farms = new ConcurrentHashMap<>();
     private final Set<Long> dirty = ConcurrentHashMap.newKeySet();
 
-    public FarmService(ObjectMapper om, JdbcTemplate jdbc) {
+    private final jp.komorebi.village.VillageService villages;
+
+    public FarmService(ObjectMapper om, JdbcTemplate jdbc, jp.komorebi.village.VillageService villages) {
         this.om = om;
         this.jdbc = jdbc;
+        this.villages = villages;
     }
 
     @PostConstruct
@@ -177,7 +180,8 @@ public class FarmService implements WelcomeContributor {
     @Override
     public void contribute(PlayerSession session, ObjectNode welcome) {
         ArrayNode list = welcome.putArray("farms");
-        for (Map.Entry<Long, ObjectNode> e : farms.entrySet()) if (!e.getKey().equals(session.playerId())) list.add(e.getValue());
+        long v = session.village();
+        for (Map.Entry<Long, ObjectNode> e : farms.entrySet()) if (!e.getKey().equals(session.playerId()) && villages.of(e.getKey()) == v) list.add(e.getValue());
         ObjectNode mine = session.playerId() == null ? null : farms.get(session.playerId());
         if (mine != null && mine.get("stolen") instanceof ArrayNode st && !st.isEmpty()) welcome.set("farmStolen", st.deepCopy());
     }

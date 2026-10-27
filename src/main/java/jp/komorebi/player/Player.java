@@ -38,6 +38,10 @@ public class Player {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    /** 住んでいる村（1 ＝ こもれび村） */
+    @Column(name = "village_id", nullable = false)
+    private Long villageId = 1L;
+
     protected Player() {
     }
 
@@ -61,5 +65,7 @@ public class Player {
     public void touch() { this.lastSeen = Instant.now(); }
     public Instant getDeletedAt() { return deletedAt; }
     public boolean isDeleted() { return deletedAt != null; }
+    public long getVillageId() { return villageId == null ? 1L : villageId; }
+    public void setVillageId(long villageId) { this.villageId = villageId; }
     public void markDeleted() { this.deletedAt = Instant.now(); this.passHash = null; }
 }

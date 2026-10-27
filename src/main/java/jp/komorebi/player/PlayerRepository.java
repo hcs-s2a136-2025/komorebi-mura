@@ -17,4 +17,9 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     List<Player> findByNameAndDeletedAtIsNullOrderByLastSeenDesc(String name);
 
     List<Player> findAllByDeletedAtIsNullOrderByLastSeenDesc();
+
+    /** 村ごと（同じなまえでも、村がちがえば別の人） */
+    List<Player> findByNameAndVillageIdAndDeletedAtIsNullOrderByLastSeenDesc(String name, Long villageId);
+
+    List<Player> findAllByVillageIdAndDeletedAtIsNullOrderByLastSeenDesc(Long villageId);
 }

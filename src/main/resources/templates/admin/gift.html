@@ -11,6 +11,7 @@
   <span class="grow"></span>
   <a class="btn ghost" href="/admin">管理人室に戻る</a>
 </header>
+<nav th:replace="~{admin/fragments :: vbar}"></nav>
 <main class="wrap">
   <p class="flash" th:if="${msg}" th:text="${msg}"></p>
   <section class="card">
@@ -20,6 +21,13 @@
     <datalist id="items">
       <option th:each="i : ${catalog}" th:value="${i.id()}" th:text="|${i.name()}${i.kind() == 'tool' ? '（道具）' : (i.kind() == 'furn' ? '（家具）' : '')}|">item</option>
     </datalist>
+    <form method="post" th:action="@{/admin/gift/all}" class="row allrow">
+      <b>この村の全員に</b>
+      <input name="item" list="items" placeholder="物（例：ベッド）" size="16" autocomplete="off" required>
+      <input name="n" type="number" min="1" max="999" value="1" style="width:5em" required>
+      <input name="text" placeholder="みんなへのひとこと（例：おわびです）" size="22" maxlength="60" autocomplete="off">
+      <button class="btn" type="submit" onclick="return confirm('この村の全員に送ります。いいですか？')">全員に届ける</button>
+    </form>
     <table class="players">
       <tr><th>なまえ</th><th>状態</th><th>プレゼント</th></tr>
       <tr th:each="r : ${rows}">

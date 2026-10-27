@@ -13,7 +13,7 @@
 
 1. `game-src/` を直す（ゲーム）／`src/main/java/` を直す（サーバー）
 2. `python3 game-src/build.py` … `src/main/resources/static/index.html` と `game-src/komorebi.html` を作る（**どちらも手で直さない**）
-3. 確かめる（→ 4章）。最低限 `python3 tools/tests/smoke.py`、サーバーを触ったら `tools/javacheck/check.sh <変えた.java>`
+3. 確かめる（→ 4章）。最低限 `python3 tools/tests/smoke.py`、サーバーを触ったら `tools/javacheck/check_all.sh`（サーバー全体の型）
 4. バージョンを上げる（→ 5章）
 5. アイテムを足したら `python3 tools/items/gen_items.py game-src/komorebi.html`（管理人室の一覧 `admin-items.json`）
 6. `main` に直接コミットして push。コミットの最後に、会話で指示された Co-Authored-By などの行を入れる
@@ -29,18 +29,20 @@
 | `game-src/data.js` | キャラの絵（CHAR）など |
 | `game-src/extra*.css` | 見た目（新しいものは `extra13.css` の最後に足す） |
 | `game-src/body.html` / `template2.html` / `errguard.js` | HTMLの枠・エラー表示 |
-| `src/main/java/jp/komorebi/` | サーバー。`ws/`（WebSocket）、`world/`（共有の村）、`admin/` `web/`（管理人室）、機能ごとのパッケージ |
+| `src/main/java/jp/komorebi/` | サーバー。`ws/`（WebSocket）、`world/`（共有の村）、`village/`（村をふやす・管理人の村えらび・見学）、`admin/` `web/`（管理人室）、機能ごとのパッケージ |
 | `src/main/resources/templates/admin/` | 管理人室の画面（Thymeleaf） |
 | `tools/mock-server/mock.js` | Java なしで動く、テスト用のにせサーバー（本物と同じ約束でメッセージを返す） |
 | `tools/tests/smoke.py` | 主な場所と画面を回してエラーを探すテスト |
-| `tools/javacheck/` | Maven なしで Java の型だけ確かめる道具と、形だけのクラス（stubs） |
+| `tools/tests/villages.py` | 村をふやす機能のテスト（にせサーバーで4人＋見学）。村まわりを触ったら流す |
+| `tools/javacheck/` | Maven なしで Java の型だけ確かめる道具。`check_all.sh`（サーバー全体。Spring などは `make_libstubs.py` が形だけ作る）、`check.sh`（ファイルを選んで） |
 
 ## 3. ゲーム（game.js）の約束
 
 **モジュールの足し方**
 - 見出し `// =================== vNN: 何の機能か ===================` と `var FNN = {};` で始める
-- **新しいモジュールは `// =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================` の行の直前に入れる**（v73〜v80 もそこにある。番号は v87 まで使用済み。次は **v88**）
-- ファイル最後の `window.__game = { syncAnimals: ..., makeInterior: ..., makePort: ..., F72tile: ..., F75, F74, F73, F72, ...` の先頭側に `FNN` を足す（いまは `F87` が先頭）（テストから触るため）
+- **新しいモジュールは `// =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================` の行の直前に入れる**（v73〜v88 もそこにある。番号は v88 まで使用済み。次は **v89**）
+- ファイル最後の `window.__game = { syncAnimals: ..., makeInterior: ..., makePort: ..., F72tile: ..., F88, F87, ...` の先頭側に `FNN` を足す（テストから触るため）
+- 見学モード（`WATCH88`）：URL に `?watch=` があると、`store.set` は何もしない（端末に保存しない）・`cloudPush14` と `authLost14` も何もしない。見学の画面で動く機能を足したら、見学中にサーバーへ何か送らないか気をつける（送ってもサーバーが捨てるが、画面がずれる）
 
 **既存の機能の広げ方**（上書きせず、包む）
 - 関数宣言は再代入で包む：`const _x = act; act = function () { ...; return _x.apply(this, arguments); };`
@@ -72,21 +74,34 @@
 
 ## 4. サーバーと確かめ方
 
+**村ごとに分ける約束（いちばん大事）**
+- 「いまの村」は `Villages.current()`（`village/Villages.java`）。WebSocket のメッセージを処理するあいだ・つないだとき（welcome）は、その人の村。管理人室の画面のあいだは、管理人がえらんでいる村（`AdminVillageInterceptor`）。どれでもなければ 1番の村
+- 村ごとに状態を持つサービスは、`PerVillage<T>` か `Map<村, …>` で持ち、`Villages.current()` でえらぶ。フィールド1つで「村全体の状態」を持たない
+- `@Scheduled` やタイマーなど、だれのためでもない処理は、`VillageService.ids()` で村ごとに `Villages.run(村, …)` して回す（`PerVillage.each` も、その村をいまの村にして回す）
+- `hub.broadcast(msg, except)` は、いまの村が決まっていればその村の人にだけ届く。村がはっきりしているときは `broadcastTo(村, …)`、全部の村に送るのは `broadcastAll` / `announceAll` だけ
+- ゲームの進行（BJ・麻雀・競どんぐり・雪合戦・運動会）は村ごとに1つ。`Out.toAll` は作った村に `broadcastTo` する
+- データベース：`shared_world` と `mj_state` の行の id ＝ 村の番号。`board_post` `game_event` `player` には `village_id`。`house_room` の鍵は、1番の村ならそのまま（`48,21` `home`）、ほかの村は `v2|48,21`（`me:ID` `ret:ID` は人ごとなのでどの村でも同じ）
+- `PlayerService.listAll()` は**いまの村の人だけ**。全部の村の人は `listEverywhere()`。ほかの人あてのもの（お金を渡す・ポチ袋・作物どろぼう・ふたりのエモート）は、同じ村の人だけにする（`hub.onlineHere(id)`・`villages.same(a, b)`）
+- 管理人の見学：`WatchService` のトークン（`w_…`・10分）で hello すると、見えない人（マイナスの番号）としてつながる。`GameSocketHandler` は見学の人からのメッセージを `ping` と家の `get` しか通さず、`join`/`leave`・人の一覧・`isOnline` にも出さない
+
 **サーバーの約束**
 - WebSocket のメッセージ1種類 ＝ `MessageHandler` を実装した `@Component` 1つ（`type()` が `"type"` と同じ）
 - つないだときに渡すもの ＝ `WelcomeContributor`
 - サーバーだけが持つ情報は `SharedWorldService.putSystem("_名前", json)`。**`_` で始まる名前はプレイヤーに配られない**
-- 家の箱・間取りを送るときは `sendToHouse(key, msg, except)`（1階も2・3階 `house:key_fN` も同じ家として届く）。`sendToMap("house:"+key…)` は使わない
+- 家の箱・間取りを送るときは `sendToHouse(key, msg, except)`（1階も2・3階 `house:key_fN` も同じ家として届く。いまの村の人だけ）。`sendToMap("house:"+key…)` は使わない
 - 共有の村のレイヤー：クライアントの `SH_LAYERS` と `SharedWorldService.LAYERS` を必ずそろえる。`houses` は ownerId、`cfarm` は `o` で持ち主だけが変えられる
 - cfg（見た目）の値は20文字・20個まで（`paint` だけ90文字）。`Sanitize` を通る形にする
 - 本人がいないときの知らせは「取っておいて次の welcome で渡す」（`ItemGiftService` `CashService` が見本）
 
 **確かめ方**
-- この作業環境では Maven Central に届かないので `mvn` は使えない。Java は `tools/javacheck/check.sh` で型だけ確かめ、本番のビルドは Render にまかせる（報告でデプロイ確認をお願いする）
+- この作業環境では Maven Central に届かないので `mvn` は使えない。Java は `tools/javacheck/check_all.sh` で全体の型を確かめ、本番のビルドは Render にまかせる（報告でデプロイ確認をお願いする）
+- SQL（Flyway の `db/migration/V*.sql`）は、入っている PostgreSQL 16 で確かめられる（root では動かないので postgres ユーザーで `initdb` と `pg_ctl` → `psql -f` で V1 から順に流す）。ローカルの H2 とも通る書き方にする（`ALTER COLUMN … SET DATA TYPE`・`ALTER COLUMN id RESTART WITH`）
 - `python3 tools/tests/smoke.py` … PC・スマホ縦・スマホ横で主な場所と画面を回す。新しい場所や画面を足したら STEPS に足す
+- `python3 tools/tests/villages.py` … 村を作る・合言葉で入る・村ごとのチャットと共有の村・村長・キャラの切りかえ・全部の村の番付・見学を確かめる（先に `cd tools/mock-server && npm install`）
 - オンラインの機能は `node tools/mock-server/mock.js <index.htmlのパス> <ポート> <バージョン>` を立てて、Playwright で2人ぶんのページを開いて確かめる。mock.js にも本物と同じ処理を足す（BJ・麻雀・競どんぐり・雪合戦・運動会は Java の橋渡しが要る。作り方は mock.js の4行目）
   - mock のバージョンは `CLIENT_VERSION` と同じにする（ちがうと「新しいバージョンがあります」が出て、テストのモーダルがずれる）
-  - `/mock/...` で状態を見たり入れたりできる（players, world, rooms, crank, cash, admingift など）
+  - `/mock/...` で状態を見たり入れたりできる（players, world（`?v=村`）, villages, watch（`?village=村` で見学トークン）, rooms, crank, cash, admingift など）
+  - mock も村ごと：`bc()` は送った人の村にだけ届く。共有の村は `useV(村)` で切りかえる（メッセージを受けたとき、その人の村にする）
 - Playwright と Chromium は入っている（`from playwright.async_api import async_playwright`）
 
 ## 5. バージョンとアップデート履歴
@@ -97,7 +112,16 @@
 
 ## 6. 決まっていること（設計）
 
-**村と時間**：村は 64×84 マス（北の丘をふくむ）。季節は7日で変わる。村の時計と天気はサーバーが決める。
+**村と時間**：村は 64×84 マス（北の丘をふくむ）。季節は7日で変わる。村の時計と天気はサーバーが村ごとに決める。
+
+**村をふやす（v0.46.0〜）**
+- 1番の村は「こもれび村」（合言葉なし・村長なし）。参加の画面の「新しい村を作る」で村を作れる（こもれび村のほかに10こまで・作った人が村長）。村には6文字の「村の合言葉」があり、「友だちの村」で合言葉を入れるとその村に入れる
+- 1つの村に1キャラ。同じなまえでも村がちがえば別のキャラ（持ち物・お金・セーブは村ごと）。引っ越しはない
+- 同じ端末で、前に別のキャラを使っていて、新しく作ったキャラで入ったときは、まっさらな村から始める（前のキャラのお金や持ち物を持ちこまない）
+- 村ごと：共有の村・家・畑・共同プロジェクト・共同農園・時計と天気・チャット・伝言板・新聞・カジノの卓とジャックポット・偽札の出回り・番付とゲームのランキング・大会と運動会
+- 全部の村で共通：管理人へのお便り。番付とこもれびブロックは「全部の村」のランキングも見られる（なまえのうしろに村の名前）
+- 村長：スマホの「村」アプリで、村の名前を変える・合言葉を作り直す（前の合言葉では入れなくなる。住んでいる人はそのまま）。追い出しや村を消すのは管理人だけ（村を消すのは、まだ作っていない）
+- 管理人室：上の帯で村をえらぶと、どの画面もその村の分になる（お金の調整・物のプレゼント・お知らせ・リセット・イベント・運動会）。お金と物は「この村の全員に」も送れる。お知らせは「全部の村に」も出せる。「村の一覧」から見学できる
 
 **電気**：あると便利な**おまけ**で、強制しない（なくても困らない。なくなったら止まるだけで何も失わない）。「ほのぼの感」を大事にする。電気は自分のぶん（`world.elec33`。蓄電池で上限がふえる）で、村全体では共有しない。
 - つくる：避雷針（雷雨で+2・雷雨の翌朝は1本につき+4）／まわし車（エサをあげた家畜が次の朝に回す。1台3頭まで・1頭で+1・回した家畜はなかよし+1）
@@ -138,6 +162,7 @@
 
 ## 7. 変更履歴（新しい順・1行ずつ）
 
+- v0.46.0 村をふやす（新しい村・村の合言葉・村長・村ごとのデータ）・管理人室の村えらびと村の一覧・全員にお金と物・全部の村のランキング・管理人の見学
 - v0.45.1 よろず屋に鑑定ルーペが並ばない不具合（店を開くたびに在庫が基本の一覧に戻るので、店に出すものは `SHOP_BASE` にも足す）
 - v0.45.0 札束の扇を手に持つとほかの人にも見える（`cfg.hold`・サーバー変更なし）・札束の扇と山を現金に戻せる（偽札の中身も記録）・札束の山に50・100・500枚の大きなサイズ
 - v0.44.0 電気ボートをみなと町の船着き場へ・沖の魚5種・建てた家の2・3階・景品の個数指定・スロットの演出・ステージのダンスライブ・箱を置いた数だけ種類がふえる／個数指定（サーバー）

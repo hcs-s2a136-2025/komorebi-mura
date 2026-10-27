@@ -40,10 +40,13 @@ public class CasinoRankService {
     private final PlayerService players;
     private final ObjectMapper om;
 
-    public CasinoRankService(SharedWorldService world, PlayerService players, ObjectMapper om) {
+    private final jp.komorebi.village.VillageService villages;
+
+    public CasinoRankService(SharedWorldService world, PlayerService players, ObjectMapper om, jp.komorebi.village.VillageService villages) {
         this.world = world;
         this.players = players;
         this.om = om;
+        this.villages = villages;
     }
 
     static LocalDate today() {
@@ -82,13 +85,39 @@ public class CasinoRankService {
 
     private record Row(long id, String name, long v) { }
 
-    /** {all:{win:[{name,v}],lose:[...]}, week:{...}, me:{all,week,allWin,allLose,weekWin,weekLose}} （順位は 0 なら圏外） */
+    /** {all:{win:[{name,v}],lose:[...]}, week:{...}, me:{all,week,allWin,allLose,weekWin,weekLose}} （順位は 0 なら圏外）。いまの村だけ */
     public synchronized ObjectNode board(Long me) {
-        ObjectNode all = data();
+        return board(me, false);
+    }
+
+    /** everywhere なら全部の村をあわせる（なまえのうしろに村の名前） */
+    public synchronized ObjectNode board(Long me, boolean everywhere) {
         LocalDate now = today();
-        Map<Long, String> names = new HashMap<>();
-        for (Player p : players.listAll()) names.put(p.getId(), p.getName());
         List<Row> a = new ArrayList<>(), w = new ArrayList<>();
+        if (everywhere && villages != null) {
+            Map<Long, List<Player>> by = new HashMap<>();
+            for (Player p : players.listEverywhere()) by.computeIfAbsent(p.getVillageId(), k -> new ArrayList<>()).add(p);
+            for (var v : villages.list()) {
+                JsonNode d = world.getSystemIn(v.id(), KEY);
+                if (!(d instanceof ObjectNode o)) continue;
+                Map<Long, String> names = new HashMap<>();
+                for (Player p : by.getOrDefault(v.id(), List.of())) names.put(p.getId(), p.getName() + "（" + v.name() + "）");
+                rows(o, names, now, a, w);
+            }
+        } else {
+            Map<Long, String> names = new HashMap<>();
+            for (Player p : players.listAll()) names.put(p.getId(), p.getName());
+            rows(data(), names, now, a, w);
+        }
+        ObjectNode out = om.createObjectNode();
+        ObjectNode mine = out.putObject("me");
+        put(out.putObject("all"), a, me, mine, "all");
+        put(out.putObject("week"), w, me, mine, "week");
+        out.put("from", now.minusDays(WEEK_DAYS - 1).toString()).put("to", now.toString()).put("scope", everywhere ? "everywhere" : "village");
+        return out;
+    }
+
+    private static void rows(ObjectNode all, Map<Long, String> names, LocalDate now, List<Row> a, List<Row> w) {
         for (Iterator<Map.Entry<String, JsonNode>> it = all.fields(); it.hasNext(); ) {
             var f = it.next();
             long id;
@@ -98,12 +127,6 @@ public class CasinoRankService {
             a.add(new Row(id, name, f.getValue().path("a").asLong(0)));
             w.add(new Row(id, name, week(f.getValue(), now)));
         }
-        ObjectNode out = om.createObjectNode();
-        ObjectNode mine = out.putObject("me");
-        put(out.putObject("all"), a, me, mine, "all");
-        put(out.putObject("week"), w, me, mine, "week");
-        out.put("from", now.minusDays(WEEK_DAYS - 1).toString()).put("to", now.toString());
-        return out;
     }
 
     private void put(ObjectNode o, List<Row> rows, Long me, ObjectNode mine, String tag) {

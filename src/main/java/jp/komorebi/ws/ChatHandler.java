@@ -21,7 +21,8 @@ public class ChatHandler implements MessageHandler, WelcomeContributor {
     public record ChatLine(String name, String text, Instant at) {
     }
 
-    private final Deque<ChatLine> recent = new ArrayDeque<>();
+    /** 村ごとの最近のチャット */
+    private final jp.komorebi.village.PerVillage<Deque<ChatLine>> recentBy = new jp.komorebi.village.PerVillage<>(v -> new ArrayDeque<>());
     private final Map<Long, Long> lastSent = new ConcurrentHashMap<>();
 
     @Override
@@ -37,6 +38,7 @@ public class ChatHandler implements MessageHandler, WelcomeContributor {
         Long prev = lastSent.put(from.playerId(), now);
         if (prev != null && now - prev < 1000) return;
         ChatLine line = new ChatLine(from.name(), text, Instant.ofEpochMilli(now));
+        Deque<ChatLine> recent = recentBy.get();
         synchronized (recent) {
             recent.addLast(line);
             while (recent.size() > 30) recent.pollFirst();
@@ -51,7 +53,9 @@ public class ChatHandler implements MessageHandler, WelcomeContributor {
         for (ChatLine c : recentLines()) arr.addObject().put("name", c.name()).put("text", c.text()).put("at", c.at().toEpochMilli());
     }
 
+    /** いまの村の最近のチャット */
     public List<ChatLine> recentLines() {
+        Deque<ChatLine> recent = recentBy.get();
         synchronized (recent) {
             return new ArrayList<>(recent);
         }

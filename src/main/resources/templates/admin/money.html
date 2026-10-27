@@ -11,12 +11,19 @@
   <span class="grow"></span>
   <a class="btn ghost" href="/admin">管理人室に戻る</a>
 </header>
+<nav th:replace="~{admin/fragments :: vbar}"></nav>
 <main class="wrap">
   <p class="flash" th:if="${msg}" th:text="${msg}"></p>
   <section class="card">
     <h2>プレイヤーのお金</h2>
     <p class="muted">金額は、その人が最後にサーバーへセーブしたときのものです（遊んでいる最中の人は、少しずれていることがあります）。「預金」は信用金庫の普通預金と定期預金、「借金」は返す額の合計、「合計」は所持金＋預金−借金です。ここで足したり減らしたりできるのは所持金だけです。足すか減らすかを選んで金額を入れると、つないでいる人にはすぐ、つないでいない人には次に村に来たときに反映されます。<br>
       「本人へのひとこと」を空のままにすると、本人の画面には何も出ずに、お金だけが変わります。書いたときは、その言葉といっしょにお知らせが出ます。</p>
+    <form method="post" th:action="@{/admin/money/all}" class="row allrow">
+      <b>この村の全員に足す</b>
+      <input name="amount" inputmode="numeric" placeholder="金額" size="9" autocomplete="off" required>
+      <input name="text" placeholder="みんなへのひとこと（例：おわびです）" size="22" maxlength="60" autocomplete="off">
+      <button class="btn" type="submit" onclick="return confirm('この村の全員に送ります。いいですか？')">全員に送る</button>
+    </form>
     <table class="players">
       <tr><th>なまえ</th><th>所持金</th><th>預金</th><th>借金</th><th>合計</th><th>状態</th><th>調整</th></tr>
       <tr th:each="r : ${rows}">

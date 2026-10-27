@@ -180,10 +180,11 @@ public class AdminController {
     }
 
     @PostMapping("/announce")
-    public String announce(@RequestParam String text, RedirectAttributes ra) {
+    public String announce(@RequestParam String text, @RequestParam(required = false) String all, RedirectAttributes ra) {
         if (text != null && !text.isBlank()) {
-            socket.announce(text.strip().length() > 120 ? text.strip().substring(0, 120) : text.strip());
-            ra.addFlashAttribute("msg", "つないでいる人にお知らせを送りました");
+            String t = text.strip().length() > 120 ? text.strip().substring(0, 120) : text.strip();
+            if ("1".equals(all)) { socket.announceAll(t); ra.addFlashAttribute("msg", "全部の村の、つないでいる人にお知らせを送りました"); }
+            else { socket.announce(t); ra.addFlashAttribute("msg", "この村の、つないでいる人にお知らせを送りました"); }
         }
         return "redirect:/admin";
     }

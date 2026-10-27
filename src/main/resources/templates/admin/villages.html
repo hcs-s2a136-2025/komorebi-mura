@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>村の一覧｜こもれび村 管理人室</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<header class="bar">
+  <h1>村の一覧</h1>
+  <span class="grow"></span>
+  <a class="btn ghost" href="/admin">管理人室に戻る</a>
+</header>
+<nav th:replace="~{admin/fragments :: vbar}"></nav>
+<main class="wrap">
+  <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+  <section class="card">
+    <h2>村（<span th:text="${extra}">0</span> / <span th:text="${max}">10</span>こ ＋ こもれび村）</h2>
+    <p class="muted">プレイヤーは参加画面の「新しい村を作る」で村を作れます（こもれび村のほかに <span th:text="${max}">10</span>こまで）。村の合言葉を知っている人だけが、その村に入れます。<br>
+      「えらぶ」を押すと、管理人室のほかの画面（お金の調整・物のプレゼント・お知らせ・リセット・イベント・運動会など）が、その村の分になります。<br>
+      「見学する」は、ゲームを見学モードで開きます（村の人には見えない・何もさわれない・セーブしない。10分以内に開いてください）。</p>
+    <table class="players">
+      <tr><th>村</th><th>村長</th><th>人</th><th>合言葉</th><th>最後に遊ばれた</th><th></th></tr>
+      <tr th:each="r : ${rows}">
+        <td><b th:text="${r.name()}">村</b><br><span class="muted" th:text="|${r.id()}番・${@fmt.time(r.createdAt())} にできた|">1番</span></td>
+        <td th:text="${r.owner()}">村長</td>
+        <td><span th:text="|${r.players()}人|">0人</span><br><span class="muted" th:text="|いま ${r.online()}人|">いま 0人</span></td>
+        <td><code th:text="${r.main()} ? 'いらない' : ${r.code()}">ABC123</code>
+          <form th:unless="${r.main()}" method="post" th:action="@{/admin/villages/{id}/code(id=${r.id()})}" onsubmit="return confirm('合言葉を作り直すと、前の合言葉では入れなくなります。いいですか？')"><button class="btn ghost" type="submit">作り直す</button></form></td>
+        <td th:text="${r.lastSeen() != null} ? ${@fmt.time(r.lastSeen())} : '-'">-</td>
+        <td>
+          <div class="row">
+            <a class="btn" th:href="@{/admin(village=${r.id()})}">えらぶ</a>
+            <form method="post" th:action="@{/admin/villages/{id}/watch(id=${r.id()})}" target="_blank"><button class="btn light" type="submit">見学する</button></form>
+          </div>
+          <form method="post" th:action="@{/admin/villages/{id}/name(id=${r.id()})}" class="row">
+            <input name="name" maxlength="10" th:placeholder="${r.name()}" size="10" required autocomplete="off">
+            <button class="btn ghost" type="submit">名前を変える</button>
+          </form>
+        </td>
+      </tr>
+    </table>
+  </section>
+</main>
+</body>
+</html>

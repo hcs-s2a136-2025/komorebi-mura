@@ -56,3 +56,10 @@ table.players td.acts form { display: flex; gap: 4px; align-items: center; margi
 .evform .row { display: flex; flex-wrap: wrap; gap: 10px; }
 .evform h3 { margin: 6px 0 0; font-size: 1rem; }
 .btn.danger { background: #b8322e; color: #fff; border-color: #8a2420; }
+
+/* 村の帯（いま見ている村） */
+.vbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: 1100px; margin: 10px auto 0; padding: 8px 14px; background: #fff7e0; border: 2px solid #e0c890; border-radius: 10px; }
+.vbar b { font-size: 1.05rem; }
+.vbar select { font: inherit; padding: 4px 8px; }
+.vbar form { margin: 0; }
+.allrow { background: #f4f9ee; border-radius: 8px; padding: 8px 10px; margin: 8px 0; }

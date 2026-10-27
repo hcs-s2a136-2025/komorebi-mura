@@ -51,7 +51,7 @@ public class CasinoRankHandler implements MessageHandler {
             if (prev != null && now - prev < 1000) return;
             lastGet.put(id, now);
             var out = hub.json().createObjectNode().put("type", "crank");
-            out.set("board", ranks.board(id));
+            out.set("board", ranks.board(id, msg.path("everywhere").asBoolean(false)));
             hub.send(from, out);
         }
     }

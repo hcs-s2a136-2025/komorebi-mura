@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import jp.komorebi.config.KomorebiProperties;
+import jp.komorebi.village.VillageService;
+import jp.komorebi.village.Villages;
 
 /**
  * 参加（招待コード＋なまえ＋合言葉）とトークンでの本人確認。
@@ -30,19 +32,30 @@ public class PlayerService {
     private final KomorebiProperties props;
     private final PasswordEncoder encoder;
     private final SecureRandom random = new SecureRandom();
+    private final VillageService villages;
 
-    public PlayerService(PlayerRepository players, KomorebiProperties props, PasswordEncoder encoder) {
+    public PlayerService(PlayerRepository players, KomorebiProperties props, PasswordEncoder encoder, VillageService villages) {
         this.players = players;
         this.props = props;
         this.encoder = encoder;
+        this.villages = villages;
     }
 
-    /** created = 新しいプレイヤーとして作った（false なら、前のプレイヤーに戻った） */
-    public record Joined(String token, Player player, boolean created) {
+    /** created = 新しいプレイヤーとして作った（false なら、前のプレイヤーに戻った）。village = 住んでいる村 */
+    public record Joined(String token, Player player, boolean created, VillageService.Village village) {
     }
 
     @Transactional
     public Joined join(String inviteCode, String name, String pass) {
+        return join(inviteCode, name, pass, null, null);
+    }
+
+    /**
+     * 参加する。villageCode があればその村に、newVillage（村の名前）があれば新しい村を作ってその村長として、どちらもなければこもれび村に。
+     * 同じなまえと合言葉なら、その村の前のキャラクターに戻る（村がちがえば別のキャラクター）。
+     */
+    @Transactional
+    public Joined join(String inviteCode, String name, String pass, String villageCode, String newVillage) {
         byte[] expected = props.inviteCode().getBytes(StandardCharsets.UTF_8);
         byte[] given = (inviteCode == null ? "" : inviteCode.trim()).getBytes(StandardCharsets.UTF_8);
         if (!MessageDigest.isEqual(expected, given)) {
@@ -50,7 +63,12 @@ public class PlayerService {
         }
         String n = cleanName(name);
         String pw = checkPass(pass);
-        List<Player> same = players.findByNameAndDeletedAtIsNullOrderByLastSeenDesc(n);
+        VillageService.Village v;
+        boolean founding = newVillage != null && !newVillage.isBlank();
+        if (founding) v = villages.create(newVillage);
+        else if (villageCode != null && !villageCode.isBlank()) v = villages.byCode(villageCode).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "村の合言葉がちがうみたい"));
+        else v = villages.find(Villages.MAIN).orElseThrow();
+        List<Player> same = founding ? List.of() : players.findByNameAndVillageIdAndDeletedAtIsNullOrderByLastSeenDesc(n, v.id());
         Player p = null;
         for (Player c : same) if (c.hasPass() && encoder.matches(pw, c.getPassHash())) { p = c; break; }
         boolean created = false;
@@ -63,6 +81,7 @@ public class PlayerService {
                 p = open;
             } else {
                 p = new Player(hash(newToken()), n);
+                p.setVillageId(v.id());
                 created = true;
             }
             p.setPassHash(encoder.encode(pw));
@@ -71,7 +90,9 @@ public class PlayerService {
         p.setTokenHash(hash(token));
         p.touch();
         p = players.save(p);
-        return new Joined(token, p, created);
+        villages.remember(p.getId(), p.getVillageId());
+        if (founding) { villages.setOwner(v.id(), p.getId()); v = villages.find(v.id()).orElse(v); }
+        return new Joined(token, p, created, v);
     }
 
     @Transactional
@@ -98,7 +119,7 @@ public class PlayerService {
     public Player rename(String token, String name) {
         Player p = require(token);
         String n = cleanName(name);
-        if (!n.equals(p.getName()) && players.findByNameAndDeletedAtIsNullOrderByLastSeenDesc(n).stream().anyMatch(c -> !c.getId().equals(p.getId()) && c.hasPass())) {
+        if (!n.equals(p.getName()) && players.findByNameAndVillageIdAndDeletedAtIsNullOrderByLastSeenDesc(n, p.getVillageId()).stream().anyMatch(c -> !c.getId().equals(p.getId()) && c.hasPass())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "そのなまえはほかの人が使っています");
         }
         p.setName(n);
@@ -110,7 +131,7 @@ public class PlayerService {
     public void setPass(String token, String pass) {
         Player p = require(token);
         String pw = checkPass(pass);
-        boolean taken = players.findByNameAndDeletedAtIsNullOrderByLastSeenDesc(p.getName()).stream()
+        boolean taken = players.findByNameAndVillageIdAndDeletedAtIsNullOrderByLastSeenDesc(p.getName(), p.getVillageId()).stream()
             .anyMatch(c -> !c.getId().equals(p.getId()) && c.hasPass() && encoder.matches(pw, c.getPassHash()));
         if (taken) throw new ResponseStatusException(HttpStatus.CONFLICT, "別の合言葉にしてね");
         p.setPassHash(encoder.encode(pw));
@@ -119,9 +140,18 @@ public class PlayerService {
 
     // ---------- 管理人室から ----------
 
-    /** 削除していない人の一覧 */
+    /** いまの村（{@link Villages#current()}）の、削除していない人の一覧 */
     public List<Player> listAll() {
+        return players.findAllByVillageIdAndDeletedAtIsNullOrderByLastSeenDesc(Villages.current());
+    }
+
+    /** 全部の村の、削除していない人の一覧 */
+    public List<Player> listEverywhere() {
         return players.findAllByDeletedAtIsNullOrderByLastSeenDesc();
+    }
+
+    public Optional<Player> find(Long id) {
+        return id == null ? Optional.empty() : players.findById(id).filter(p -> !p.isDeleted());
     }
 
     /**

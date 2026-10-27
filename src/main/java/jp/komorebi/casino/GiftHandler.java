@@ -42,7 +42,7 @@ public class GiftHandler implements MessageHandler {
             hub.send(from, hub.json().createObjectNode().put("type", "giftNg").put("rid", reqId).put("text", "少し待ってから渡してね"));
             return;
         }
-        if (!hub.isOnline(to)) {
+        if (!hub.onlineHere(to)) {
             hub.send(from, hub.json().createObjectNode().put("type", "giftNg").put("rid", reqId).put("text", "相手がいまつないでいないみたい"));
             return;
         }

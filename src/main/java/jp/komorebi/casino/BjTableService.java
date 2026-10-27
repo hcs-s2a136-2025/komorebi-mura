@@ -20,16 +20,17 @@ public class BjTableService implements TableRoster {
 
     private final ObjectProvider<GameSocketHandler> hub;
     private final ObjectMapper om;
-    private final BjGame game;
+    /** 村ごとの卓 */
+    private final jp.komorebi.village.PerVillage<BjGame> games;
 
     public BjTableService(ObjectProvider<GameSocketHandler> hub, ObjectMapper om) {
         this.hub = hub;
         this.om = om;
-        this.game = new BjGame(new SecureRandom(), new BjGame.Out() {
+        this.games = new jp.komorebi.village.PerVillage<>(v -> new BjGame(new SecureRandom(), new BjGame.Out() {
             @Override
             public void toAll(Map<String, Object> msg) {
                 GameSocketHandler h = hub.getIfAvailable();
-                if (h != null) h.broadcast(toNode(msg), null);
+                if (h != null) h.broadcastTo(v, toNode(msg), null);
             }
 
             @Override
@@ -37,7 +38,11 @@ public class BjTableService implements TableRoster {
                 GameSocketHandler h = hub.getIfAvailable();
                 if (h != null) h.sendToPlayer(playerId, toNode(msg));
             }
-        });
+        }));
+    }
+
+    private BjGame game() {
+        return games.get();
     }
 
     private ObjectNode toNode(Map<String, Object> msg) {
@@ -45,14 +50,14 @@ public class BjTableService implements TableRoster {
     }
 
     public void command(PlayerSession from, JsonNode msg) {
-        game.command(from.playerId(), from.name(), msg.path("act").asText(""), msg.path("amount").asLong(0), System.currentTimeMillis());
+        game().command(from.playerId(), from.name(), msg.path("act").asText(""), msg.path("amount").asLong(0), System.currentTimeMillis());
     }
 
     @Scheduled(fixedDelay = 500)
     public void tick() {
         final GameSocketHandler h = hub.getIfAvailable();
         if (h == null) return;
-        game.tick(System.currentTimeMillis(), id -> h.isOnline(id));
+        games.each((v, g) -> g.tick(System.currentTimeMillis(), id -> h.isOnline(id)));
     }
 
     /** 管理人室用：いま座っている人数 */
@@ -63,11 +68,11 @@ public class BjTableService implements TableRoster {
 
     @Override
     public java.util.List<Long> mates(long playerId) {
-        return game.mates(playerId);
+        return game().mates(playerId);
     }
 
     public int seated() {
-        Object seats = game.state(System.currentTimeMillis()).get("seats");
+        Object seats = game().state(System.currentTimeMillis()).get("seats");
         return seats instanceof java.util.List<?> l ? l.size() : 0;
     }
 }

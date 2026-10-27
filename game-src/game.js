@@ -3923,7 +3923,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.41.1";
+const CLIENT_VERSION = "0.42.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5997,6 +5997,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.42.0", date: "2026/10/27", title: "電気の使い道・つくりかたと、家のもの", items: [
+    "まわし車（よろず屋の「建物」）：エサをあげた家畜が、次の朝ぐるぐる回して電気をつくる（1台で3頭まで・1頭で電気1つ）。回した家畜は、ちょっとなかよしに",
+    "釣りのしかけ（よろず屋の「建物」）：水のそばに置くと、電気を1つ使って毎朝魚をとってくれる（8匹まで）。ごくまれに、ヌシがかかることも…？",
+    "家具が4つ：お風呂・ソファ・暖炉・大きな柱時計（よろず屋の家具）",
+    "家の箱（みんなの収納箱・自分だけの箱）に入れられる物の種類が、60から120にふえた",
+    "電気は、あると便利なおまけ。なくても困らないし、自分のぶんだけ。てびきに「電気」をたした（スマホは太陽の光で充電するので、電池切れはありません）",
+  ] },
   { v: "0.41.1", date: "2026/10/27", title: "信用金庫に入ると画面が止まる不具合を直した", items: [
     "信用金庫に入ると、新しい窓口係の絵が描けずに、画面が止まってしまう不具合を直した",
   ] },
@@ -14287,6 +14294,194 @@ GUIDE54.push(["警察と牢獄", "", `
     <li>捕まると、3日間はずせない称号がつく。労働施設では、つとめ（岩砕き・荷物運び・仕分け）を終えると釈放。借金の返済にはならない</li></ul>`]);
 F78.ready = true;
 
+// =================== v79: 電気の使い道とつくりかた（まわし車・釣りのしかけ）・家のもの（お風呂・ソファ・暖炉・柱時計） ===================
+// 電気は「あったら便利」なおまけ。なくても困らない（なくなったら止まるだけで、何も失わない）。電気は自分のぶん（world.elec33）。
+var F79 = {};
+// ---- 建物：まわし車（家畜が回して電気をつくる）・釣りのしかけ（電気で魚をとる） ----
+reg32("wheel79", { name: "まわし車", w: 2, h: 2, ih: 36, money: 6000, mat: { wood: 20, ore: 3 }, desc: "エサをあげた家畜が、次の朝ぐるぐる回して電気をつくる（1台で3頭まで・1頭で電気1つ）。回した家畜は、ちょっとなかよしになる",
+  spr: (set, rect) => {
+    const W = C13["#c8924e"], D = C13["#8a5a3a"], L = C13["#e0b070"], M = C13["#5a4030"];
+    rect(1, 33, 30, 2, C13["#6a8a4a"]);
+    rect(3, 17, 26, 2, M); rect(3, 12, 3, 22, D); rect(26, 12, 3, 22, D); rect(3, 12, 1, 22, W); rect(26, 12, 1, 22, W);
+    ell13(set, 16, 18, 13, 13, D); ell13(set, 16, 18, 11, 11, W); ell13(set, 16, 18, 9.2, 9.2, L);
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; for (let r = 2; r <= 10; r++) set(16 + Math.cos(a) * r, 18 + Math.sin(a) * r, D); }
+    for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8; set(16 + Math.cos(a) * 12, 18 + Math.sin(a) * 12, M); }
+    ell13(set, 16, 18, 2.2, 2.2, M); set(16, 18, C13["#e8c860"]);
+    rect(8, 32, 4, 1, C13["#e8d060"]); rect(20, 32, 5, 1, C13["#e8d060"]); set(10, 31, C13["#e8d060"]); set(22, 31, C13["#e8d060"]);
+  } });
+reg32("trap79", { name: "釣りのしかけ", w: 1, h: 1, ih: 20, money: 3000, mat: { wood: 8, ore: 1 }, desc: "水のそば（池のふち）に置くと、電気を1つ使って、毎朝魚をとっておいてくれる（8匹まで）。ごくまれに…？",
+  spr: (set, rect) => {
+    const T = C13["#c8a060"], D = C13["#8a6a38"], L = C13["#e0c080"];
+    ell13(set, 8, 13, 7, 4.6, T); rect(2, 9, 12, 1, L); for (let x = 3; x < 14; x += 3) rect(x, 9, 1, 9, D); rect(2, 13, 12, 1, D);
+    ell13(set, 2.5, 13, 1.8, 2.8, C13["#4a3418"]);
+    rect(7, 4, 2, 5, C13["#7a848e"]); ell13(set, 8, 3, 2, 2, C13["#e2404e"]); set(7, 2, C13["#ff9090"]);
+    for (const [x, y] of [[13, 10], [12, 11], [13, 12], [12, 13], [11, 14]]) set(x, y, C13["#f2d03a"]);
+    rect(1, 18, 14, 2, C13["#6a8a4a"]);
+  } });
+const trap79 = () => world.trap79 || (world.trap79 = {});
+const TRAPCAP79 = 8;
+const trapN79 = t => Object.values((t && t.f) || {}).reduce((a, n) => a + n, 0);
+const waterNear79 = (ax, ay) => { for (let y = ay - 1; y <= ay + 1; y++) for (let x = ax - 1; x <= ax + 1; x++) if (village.ground[y]?.[x] === "water") return true; return false; };
+// 釣りのしかけは、水のそばにだけ置ける
+const _canBuild79 = canBuild32;
+canBuild32 = function (id, ax, ay) { return _canBuild79.apply(this, arguments) && (id !== "trap79" || waterNear79(ax, ay)); };
+const _act79 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+    const sel = world.inv[world.sel], item = sel && ITEMS[sel.id];
+    if (item?.place === "build32" && item.decor === "trap79") {
+      const [ax, ay] = anchor32("trap79");
+      if (_canBuild79(item.decor, ax, ay) && !waterNear79(ax, ay)) { toast(item.icon, "釣りのしかけは、水のそば（池のふち）に置こう"); return; }
+    }
+  }
+  return _act79.apply(this, arguments);
+};
+// ---- 朝：まわし車（エサをあげた家畜が回す。エサは前の日にあげた分） ----
+const _animalsNewDay79 = animalsNewDay;
+animalsNewDay = function () {
+  const w = mine32("wheel79").length, notes = [];
+  if (w) {
+    const run = world.animals.filter(a => a.fed).slice(0, 3 * w);
+    if (run.length) {
+      const b = world.elec33 || 0; addElec33(run.length); const got = (world.elec33 || 0) - b;
+      for (const a of run) a.hearts = Math.min(10, (a.hearts || 0) + 1);
+      world.stats.wheel79 = (world.stats.wheel79 || 0) + got;
+      notes.push(got ? `まわし車で、家畜${run.length}頭がぐるぐる回って、電気がたまっていた（+${got}）` : `まわし車で、家畜${run.length}頭がぐるぐる回っていた（電気はもういっぱい）`);
+    }
+  }
+  _animalsNewDay79();
+  if (notes.length) setTimeout(() => F7.notify(notes.join("。"), null), 700);
+};
+// ---- 朝：釣りのしかけ（スプリンクラーなどのあとに、のこりの電気で） ----
+// なくなった（片付けた）しかけにかかっていた魚は、家の収納箱へ
+function cleanTraps79() {
+  const T = trap79();
+  for (const k of Object.keys(T)) {
+    const d = world.decor && world.decor[k]; if (d && d.id === "trap79" && myDecor27(d)) continue;
+    for (const [g, n] of Object.entries(T[k].f || {})) if (n > 0 && ITEMS["fish_" + g]) homeStore18("fish_" + g, n);
+    delete T[k];
+  }
+}
+const _f6newday79 = F6.onNewDay;
+F6.onNewDay = () => {
+  _f6newday79();
+  try {
+    cleanTraps79();
+    const T = trap79(); let on = 0, nushi = 0;
+    for (const k of mine32("trap79")) {
+      const t = T[k] || (T[k] = { f: {} });
+      if (trapN79(t) >= TRAPCAP79 || !(world.elec33 > 0)) continue;
+      world.elec33--; on++;
+      const got = pickFish("pond");
+      t.f[got] = (t.f[got] || 0) + 1; world.dex[got] = (world.dex[got] || 0) + 1;
+      if (got === "ヌシ") { nushi++; world.stats.trapNushi79 = (world.stats.trapNushi79 || 0) + 1; }
+    }
+    if (on) {
+      world.stats.trap79 = (world.stats.trap79 || 0) + on; saveWorld();
+      setTimeout(() => F7.notify(nushi ? "釣りのしかけに、なにか大きな魚がかかっていた！？（ヌシだ！）" : `釣りのしかけに、魚がかかっていた（${on}匹）`, null), 1100);
+    }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "trap79"); }
+};
+// 共有の村をリセットするとき：しかけの魚も家の収納箱へ
+const _fresh79 = freshShared18;
+freshShared18 = function (why) { for (const [, t] of Object.entries(trap79())) for (const [g, n] of Object.entries(t.f || {})) if (n > 0 && ITEMS["fish_" + g]) homeStore18("fish_" + g, n); world.trap79 = {}; _fresh79(why); };
+// ---- 建物の中 ----
+const _extra79 = F32.extra, _wire79 = F32.wire;
+F32.extra = (d, k, mine) => {
+  let h = _extra79 ? _extra79(d, k, mine) : "";
+  if (!mine) return h;
+  const bar = `<p class="mtext">ためてある電気 <b>${world.elec33 || 0}</b> / ${elecCap33()}</p>`;
+  if (d.id === "wheel79") {
+    const fed = world.animals.filter(a => a.fed).length, w = mine32("wheel79").length;
+    h += bar + `<p class="mtext">エサをあげた家畜が、次の朝、ぐるぐる回して電気をつくります（1台で3頭まで・1頭で電気1つ）。回した家畜は、ほどよい運動で、ちょっとなかよしになります。</p>
+      <p class="mtext">いま、エサをあげた家畜は ${fed}頭・まわし車 ${w}台（あしたの朝にためられるのは 最大${Math.min(fed, 3 * w)}つ）。${world.stats.wheel79 ? `これまでにためた電気 ${world.stats.wheel79}。` : ""}</p>`;
+  }
+  if (d.id === "trap79") {
+    const t = trap79()[k] || { f: {} }, list = Object.entries(t.f).filter(([g, n]) => n > 0 && ITEMS["fish_" + g]);
+    h += bar + `<p class="mtext">毎朝、電気を1つ使って、水の中の魚をとってくれます（${TRAPCAP79}匹まで）。電気がない日はおやすみ。ヌシがかかることも…？</p>
+      <h3 class="lbl">かかっている魚（${trapN79(t)}/${TRAPCAP79}）</h3><div class="list">${list.length ? list.map(([g, n]) => itemLi("fish_" + g, `${n}匹`, "")).join("") : `<p class="mtext">まだ空っぽ。</p>`}</div>
+      <button class="btn" type="button" id="t79get" ${list.length ? "" : "disabled"}>ぜんぶ取り出す</button>`;
+  }
+  return h;
+};
+F32.wire = (body, d, k, mine) => {
+  if (_wire79) _wire79(body, d, k, mine);
+  if (!mine || d.id !== "trap79") return;
+  body.querySelector("#t79get")?.addEventListener("click", () => {
+    const t = trap79()[k]; if (!t) return;
+    let n = 0; const left = {};
+    for (const [g, c] of Object.entries(t.f || {})) { let keep = c; for (let i = 0; i < c; i++) { if (!addItem("fish_" + g, 1)) break; keep--; n++; } if (keep > 0) left[g] = keep; }
+    t.f = left; saveWorld(); closeModal(); openBuild32(k);
+    toast("b32_trap79", n ? `魚を${n}匹、取り出した` : "持ち物がいっぱいで、取り出せない");
+  });
+};
+ACH.push(["ぐるぐる発電", "まわし車で電気を20ためる", () => (world.stats.wheel79 || 0) >= 20]);
+ACH_REWARD["ぐるぐる発電"] = ["money", 2000];
+ACH.push(["しかけにヌシ", "釣りのしかけで、ヌシをとる", () => (world.stats.trapNushi79 || 0) >= 1]);
+ACH_REWARD["しかけにヌシ"] = ["money", 3000];
+// ---- 家のもの（よろず屋の家具で買える） ----
+const FURN79 = {
+  bath79: { name: "お風呂", w: 2, h: 1, oy: -8, price: 4500, say: ["ちゃぷん…。ほかほかで、ほっとする", "あったかいお湯。あひるがぷかぷか浮いている", "ゆっくりつかると、明日もがんばれそう"],
+    spr: (set, rect) => {
+      rect(1, 9, 30, 12, C13["#f4f0e6"]); rect(0, 8, 32, 2, C13["#ffffff"]); rect(3, 10, 26, 6, C13["#8fd0ee"]); rect(5, 11, 8, 1, C13["#c8ecfa"]);
+      for (const [x, y] of [[18, 11], [26, 12], [10, 13], [14, 14]]) set(x, y, C13["#ffffff"]);
+      ell13(set, 22, 11, 2.6, 2, C13["#f6d040"]); ell13(set, 24.6, 9, 1.5, 1.5, C13["#f6d040"]); set(26, 9, C13["#f2903a"]); set(25, 8, C13["#2a2228"]);
+      rect(3, 21, 3, 3, C13["#c8c0b0"]); rect(26, 21, 3, 3, C13["#c8c0b0"]); rect(1, 20, 30, 1, C13["#d8d0c0"]);
+      rect(2, 2, 2, 7, C13["#b8c0c8"]); rect(2, 1, 6, 2, C13["#b8c0c8"]); set(7, 3, C13["#8fd0ee"]);
+      for (const [x, y] of [[12, 6], [13, 4], [12, 2], [15, 5]]) set(x, y, C13["#e8f4fa"]);
+    } },
+  sofa79: { name: "ソファ", w: 2, h: 1, oy: -4, price: 3500, say: ["ふかふかのソファ。ついのんびりしてしまう", "ごろんと座ると、いい気分"],
+    spr: (set, rect) => {
+      rect(2, 1, 28, 9, C13["#b8434a"]); rect(2, 1, 28, 1, C13["#d0636a"]); rect(0, 6, 5, 12, C13["#9a333a"]); rect(27, 6, 5, 12, C13["#9a333a"]); rect(0, 6, 5, 1, C13["#b8434a"]); rect(27, 6, 5, 1, C13["#b8434a"]);
+      rect(5, 9, 22, 8, C13["#cc545c"]); rect(5, 9, 22, 1, C13["#e07a80"]); rect(16, 9, 1, 8, C13["#9a333a"]); rect(2, 18, 3, 2, C13["#5a3a28"]); rect(27, 18, 3, 2, C13["#5a3a28"]);
+      rect(7, 11, 4, 3, C13["#f2d070"]); set(8, 12, C13["#e8b840"]);
+    } },
+  fireplace79: { name: "暖炉", w: 1, h: 1, oy: -16, price: 6000, say: ["ぱちぱち、火がはぜている。あたたかい", "暖炉の前は、ぽかぽかして眠くなる"],
+    spr: (set, rect) => {
+      rect(1, 3, 14, 29, C13["#a8a49c"]); for (const y of [8, 13, 18, 23, 28]) rect(1, y, 14, 1, C13["#8a867e"]); for (const [x, y] of [[5, 4], [10, 9], [4, 14], [11, 19], [6, 24]]) rect(x, y, 1, 4, C13["#8a867e"]);
+      rect(0, 3, 16, 3, C13["#7a5a3a"]); rect(0, 3, 16, 1, C13["#a07a4e"]);
+      rect(4, 15, 8, 15, C13["#2a2420"]); ell13(set, 8, 15, 4, 2.4, C13["#2a2420"]);
+      ell13(set, 8, 26, 3, 3.4, C13["#e2682e"]); ell13(set, 8, 26.5, 2, 2.4, C13["#f2a03a"]); ell13(set, 8, 27.4, 1, 1.4, C13["#ffe070"]); set(8, 22, C13["#e2682e"]);
+      rect(4, 29, 8, 2, C13["#6a4a2a"]); rect(0, 31, 16, 1, C13["#6a6660"]);
+    } },
+  clock79: { name: "大きな柱時計", w: 1, h: 1, oy: -26, price: 5000,
+    spr: (set, rect) => {
+      rect(3, 2, 10, 38, C13["#8a5a3a"]); rect(2, 0, 12, 3, C13["#6a4028"]); rect(2, 38, 12, 3, C13["#6a4028"]); rect(3, 2, 1, 38, C13["#a87443"]);
+      ell13(set, 8, 9, 4.2, 4.2, C13["#f8f0d8"]); rect(8, 6, 1, 4, C13["#2a2a30"]); rect(8, 9, 3, 1, C13["#2a2a30"]); set(8, 5, C13["#c8402e"]);
+      rect(5, 16, 6, 20, C13["#4a3020"]); rect(8, 17, 1, 12, C13["#d8b048"]); ell13(set, 8, 30, 2.2, 2.2, C13["#e8c050"]);
+    } },
+};
+for (const [k, f] of Object.entries(FURN79)) {
+  const key = "s79_" + k;
+  IMG[key] = pix13(f.w * 16, f.h * 16 - f.oy, f.spr); ASSETS[key] = IMG[key].toDataURL();
+  FURN[k] = { name: f.name, img: key, w: f.w, h: f.h, oy: f.oy, price: f.price };
+  ITEMS["f_" + k] = { name: f.name, icon: key, furn: k, price: f.price };
+}
+const _furnAct79 = F6.act;
+F6.act = (tx, ty, key, sel, item, other) => {
+  if (map === room && !decor && !modalOpen) {
+    const f = furnAt(room.data, tx, ty, "obj");
+    if (f && FURN79[f.id]) {
+      if (f.id === "bath79") { if (world.bathDay79 !== world.day) { world.bathDay79 = world.day; world.stats.bath79 = (world.stats.bath79 || 0) + 1; saveWorld(); } }
+      if (f.id === "clock79") { const t = Math.floor(world.time || 0); toast(FURN[f.id].img, `ボーン…　いまは ${Math.floor(t / 60) % 24}時${String(t % 60).padStart(2, "0")}分`); return true; }
+      const say = FURN79[f.id].say; toast(FURN[f.id].img, say[rnd(say.length)]); return true;
+    }
+  }
+  return _furnAct79(tx, ty, key, sel, item, other);
+};
+ACH.push(["ほかほかの湯", "お風呂に10日、入る", () => (world.stats.bath79 || 0) >= 10]);
+ACH_REWARD["ほかほかの湯"] = ["money", 1500];
+// ---- てびき ----
+GUIDE54.push(["電気", "b32_rod33", `
+    <p>電気は、あると便利な<b>おまけ</b>。なくても困ることはないし、使うかどうかは自由。電気は自分のぶんだけ（ほかの人とは分けない）。</p><ul>
+    <li><b>つくる</b>：避雷針（雷雨の日に雷が落ちる）／まわし車（エサをあげた家畜が、次の朝ぐるぐる回す）。ためておくのは蓄電池</li>
+    <li><b>つかう</b>：スプリンクラー（毎朝の水まき）／自動販売機／釣りのしかけ（水のそばに置くと、毎朝魚をとってくれる）。どれも1日に電気1つ</li>
+    <li>どれも、よろず屋の「建物」で買える</li>
+    <li>スマホは太陽の光で充電するから、電池切れの心配はいらない</li></ul>`]);
+F79.ready = true;
+F79.runDay = () => F6.onNewDay();
+F79.state = () => ({ elec: world.elec33 || 0, trap: JSON.parse(JSON.stringify(trap79())), wheel: world.stats.wheel79 || 0 });
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -14747,5 +14942,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

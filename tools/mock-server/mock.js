@@ -38,6 +38,8 @@ if (fs.existsSync(BJ_CP)) {
 }
 // みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
 let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPending = new Map(), crank = new Map();
+const grank = {}, cashLed = new Map(), cashPend = new Map(); let cashPool = 0;
+function cashDeliver(to, ev) { const on = [...sessions].filter(o => o.pl && o.pl.id === to); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "cash77", ev }))); else { const l = cashPend.get(to) || []; l.push(ev); cashPend.set(to, l); } }
 // イベント（本物は EventService.java。ここでは同じ約束をメモリだけで）
 let ev = null; let evNext = 1; const evRewards = new Map(); // playerId -> [{id,name,rank,total,reward}]
 const evAct = e => ["easter", "halloween", "christmas"].includes(e.kind) ? "collect" : e.kind === "fishing" ? "fish" : e.scoring === "collect" ? "collect" : e.scoring === "none" ? "none" : "fish";
@@ -130,6 +132,7 @@ const server = http.createServer(async (req, res) => {
     for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evState", event: evNode(ev, -1) })); return json(res, 200, { id: ev.id }); }
   if (p === "/mock/event/end") { evFinish(); return json(res, 200, {}); }
   if (p === "/mock/adminpay") { const id = +u.searchParams.get("id"), money = +u.searchParams.get("money") || 0, text = u.searchParams.get("text") || ""; const on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "adminPay", money, text }))); else { const e = adminPending.get(id) || { money: 0 }; e.money += money; if (text) e.text = text; adminPending.set(id, e); } return json(res, 200, { now: on.length > 0 }); }
+  if (p === "/mock/cash") { if (u.searchParams.has("pool")) cashPool = +u.searchParams.get("pool"); return json(res, 200, { pool: cashPool, led: Object.fromEntries(cashLed), pend: Object.fromEntries(cashPend), grank }); }
   if (p === "/mock/crank") { const id = +u.searchParams.get("id"); if (u.searchParams.has("a")) { const e = crank.get(id) || { a: 0, d: {} }; e.a = +u.searchParams.get("a"); if (u.searchParams.has("day")) e.d[u.searchParams.get("day")] = +u.searchParams.get("w"); crank.set(id, e); } return json(res, 200, Object.fromEntries(crank)); }
   if (p === "/mock/admingift") { const id = +u.searchParams.get("id"), items = [{ id: u.searchParams.get("item") || "f_bed", n: Math.max(1, Math.min(999, +u.searchParams.get("n") || 1)) }], text = u.searchParams.get("text") || ""; const on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "adminGift", items, text }))); else { const l = giftPending.get(id) || []; l.push({ items, text }); giftPending.set(id, l); } return json(res, 200, { now: on.length > 0 }); }
   if (p === "/mock/event") return json(res, 200, ev ? { ...ev, scores: Object.fromEntries(ev.scores) } : null);
@@ -167,8 +170,8 @@ wss.on("connection", s => {
       if (m.type !== "hello") return;
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
-      mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id);
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, players: [...sessions].filter(o => o !== s && o.pl).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
     if (m.type === "move") { if (!/^[A-Za-z0-9:,_\-]{1,40}$/.test(String(m.map || ""))) return; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }
@@ -181,6 +184,29 @@ wss.on("connection", s => {
       if (e.l === "cfarm") { const cur = shared.cfarm?.[e.k]; const o = cur ? +(cur.o || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const v = e.v; if (!(v.w >= 2 && v.h >= 2 && v.w <= 12 && v.h <= 12 && v.x >= 0 && v.y >= 0)) continue; e.v = { x: v.x | 0, y: v.y | 0, w: v.w | 0, h: v.h | 0, o: o > 0 ? o : s.pl.id, n: s.pl.name }; } }
       if (e.l === "houses") { const cur = shared.houses?.[e.k]; const o = cur ? +(cur.ownerId || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { if (typeof e.v !== "object") continue; e.v = { ...e.v, ownerId: o > 0 ? o : s.pl.id }; } }
       if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name }; } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
+    if (m.type === "grank") {
+      const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(0), from = jst(6);
+      const g = String(m.game || ""); if (/^[a-z0-9]{1,12}$/.test(g) && +m.score > 0) { const G = grank[g] = grank[g] || {}; const e = G[s.pl.id] = G[s.pl.id] || { b: 0, d: {} }; e.b = Math.max(e.b, +m.score); e.d[today] = Math.max(e.d[today] || 0, +m.score); }
+      const q = String(m.get || ""); if (/^[a-z0-9]{1,12}$/.test(q)) {
+        const G = grank[q] || {}, rows = accounts.filter(a => !a.deleted && G[a.id]).map(a => ({ id: a.id, name: a.name, b: G[a.id].b, w: Math.max(0, ...Object.entries(G[a.id].d).filter(([k]) => k >= from && k <= today).map(([, v]) => v)) }));
+        const me = {}, part = (k, tag) => { const L = rows.filter(r => r[k] > 0).sort((x, y) => y[k] - x[k] || x.id - y.id); const i = L.findIndex(r => r.id === s.pl.id); me[tag] = i >= 0 ? L[i][k] : 0; me[tag + "Rank"] = i + 1; return L.slice(0, 10).map(r => ({ name: r.name, v: r[k], ...(r.id === s.pl.id ? { me: true } : {}) })); };
+        s.send(JSON.stringify({ type: "grank", board: { all: part("b", "all"), week: part("w", "week"), me, game: q, from, to: today } }));
+      }
+    }
+    if (m.type === "pochi") {
+      const to = +m.to, n = Math.floor(+m.n || 0), f = Math.max(0, Math.min(n, Math.floor(+m.f || 0))), u = Math.max(0, Math.min(n - f, Math.floor(+m.u || 0))), tgt = accounts.find(a => a.id === to && !a.deleted);
+      const err = to === s.pl.id ? "自分には贈れないよ" : !(n >= 1 && n <= 200) ? "お札は1〜200枚で贈ってね" : !tgt ? "その人は見つからなかった" : null;
+      if (!err) { if (f) cashLed.set(s.pl.id + ">" + to, (cashLed.get(s.pl.id + ">" + to) || 0) + f); cashDeliver(to, { kind: "pochi", from: s.pl.id, name: s.pl.name, n, f, u, msg: String(m.msg || "").slice(0, 40) }); }
+      s.send(JSON.stringify({ type: "pochiOk", rid: String(m.rid || ""), ok: !err, ...(err ? { text: err } : {}) }));
+    }
+    if (m.type === "fakeRep") {
+      const o = +m.origin, k = o + ">" + s.pl.id, have = cashLed.get(k) || 0, n = Math.min(have, Math.floor(+m.n || 0));
+      if (o !== s.pl.id && n > 0) { cashLed.set(k, have - n); const on = accounts.find(a => a.id === o); cashDeliver(s.pl.id, { kind: "refund", n, name: on ? on.name : "だれか" }); cashDeliver(o, { kind: "police", n, by: s.pl.name }); }
+    }
+    if (m.type === "fake77") {
+      if (m.act === "pass") cashPool += Math.max(0, Math.min(200, Math.floor(+m.n || 0)));
+      if (m.act === "draw") { const want = Math.max(0, Math.min(200, Math.floor(+m.n || 0))), p = process.env.FAKE_P ? +process.env.FAKE_P : Math.min(.25, cashPool / (cashPool + 300)); let k = 0; for (let i = 0; i < want && k < cashPool; i++) if (Math.random() < p) k++; cashPool -= k; s.send(JSON.stringify({ type: "fake77", rid: String(m.rid || ""), k })); }
+    }
     if (m.type === "crank") {
       const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(+(process.env.CRANK_SHIFT || 0));
       if ("total" in m || "add" in m) { const e = crank.get(s.pl.id) || { a: 0, d: {} }; if (typeof m.total === "number") e.a = m.total; const add = Math.floor(+m.add || 0); if (add) e.d[today] = (e.d[today] || 0) + add; crank.set(s.pl.id, e); s.send(JSON.stringify({ type: "crank", ok: String(m.rid || "") })); }

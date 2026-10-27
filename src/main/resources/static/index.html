@@ -983,6 +983,65 @@ html, body { touch-action: manipulation; }
 .dk75r b { font-size: 1.05rem; } .dk75r em { font-style: normal; color: #ffd86a; font-weight: bold; font-size: 1.1rem; }
 .dk75r .small { font-size: .78rem; opacity: .8; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .dk75help { font-size: .72rem; line-height: 1.35; } .dk75 { gap: 4px; } }
+
+/* v76 スマホ */
+.mbox.ph76m { background: #1e2230; color: #eef2fa; border-color: #0e1018; box-shadow: inset 0 0 0 2px #5a6a8a; }
+.mbox.ph76m .mhead { border-bottom-color: #3a4560; }
+.mbox.ph76m .mtext, .mbox.ph76m .note { color: #dfe6f4; }
+.ph76 { max-width: 380px; margin: 0 auto; background: linear-gradient(160deg, #3a5a8a, #6a4a8a 55%, #c86a8a); border-radius: 22px; padding: 10px 12px 16px; box-shadow: inset 0 0 0 3px rgba(0, 0, 0, .35); }
+.ph76bar { display: flex; justify-content: space-between; font-size: .72rem; opacity: .9; padding: 0 4px 6px; }
+.ph76wall { text-align: center; padding: 6px 0 12px; }
+.ph76wall b { display: block; font-size: 2rem; letter-spacing: .05em; text-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+.ph76wall small { font-size: .74rem; opacity: .9; }
+.ph76grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 6px; }
+.ph76app { background: none; border: 0; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; cursor: pointer; font: inherit; }
+.ph76app i { position: relative; width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font-style: normal; font-size: 1.45rem; font-weight: bold; box-shadow: 0 3px 0 rgba(0, 0, 0, .25), inset 0 2px 0 rgba(255, 255, 255, .3); text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+.ph76app i em { position: absolute; top: -5px; right: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: #ff4a5a; color: #fff; font-size: .68rem; font-style: normal; display: grid; place-items: center; padding: 0 4px; }
+.ph76app span { font-size: .72rem; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+.ph76app:active i { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
+#ph76back { min-width: 0; padding-left: 12px; padding-right: 12px; margin-right: 8px; }
+.alb76 { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 8px; }
+.alb76 figure { margin: 0; background: rgba(0, 0, 0, .06); border-radius: 8px; padding: 4px; }
+.alb76 img { width: 100%; border-radius: 6px; display: block; cursor: zoom-in; }
+.alb76 figcaption { display: flex; gap: 6px; justify-content: center; margin-top: 4px; }
+.alb76 figcaption .btn { min-width: 0; padding: 4px 10px; font-size: .78rem; }
+.flash76 { position: fixed; inset: 0; background: #fff; z-index: 99; pointer-events: none; animation: flash76 .35s ease-out forwards; }
+@keyframes flash76 { from { opacity: .9; } to { opacity: 0; } }
+.big76 { position: fixed; inset: 0; z-index: 98; background: rgba(0, 0, 0, .85); display: grid; place-items: center; padding: 16px; cursor: zoom-out; }
+.big76 img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+@media (max-width: 820px) { #guideBtn54 { display: none; } }
+
+/* v77 こもれびブロック */
+.bk77 { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#bk77cv { width: min(100%, 360px); aspect-ratio: 200 / 248; max-height: calc(100dvh - 300px); image-rendering: pixelated; border-radius: 8px; touch-action: none; }
+.bk77pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: min(100%, 360px); }
+.bk77pad button { font: inherit; font-size: 1.15rem; padding: 12px 0; border-radius: 10px; border: 0; background: #3a4560; color: #fff; box-shadow: 0 3px 0 #1e2433; touch-action: none; user-select: none; -webkit-user-select: none; }
+.bk77pad button.on77 { transform: translateY(2px); box-shadow: 0 1px 0 #1e2433; background: #4a5a7a; }
+.bk77pad button.wide77 { grid-column: 1 / -1; background: #c86a40; box-shadow: 0 3px 0 #7a3a1e; font-size: 1rem; }
+.bk77pad button[data-k77="hold"] { font-size: .9rem; }
+.bk77menu h4 { margin: 10px 0 4px; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .bk77.w77 { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 14px; }
+  .bk77.w77 #bk77cv { height: min(calc(100dvh - 205px), 360px); width: auto; max-height: none; }
+  .bk77.w77 .bk77pad button { padding: 10px 0; }
+}
+
+/* v78 現金と偽札 */
+.sl78 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#sl78cv { width: min(100%, 420px); aspect-ratio: 240 / 130; image-rendering: pixelated; border-radius: 8px; border: 2px solid #3a2e2a; }
+#sl78go { min-width: 60%; padding-top: 14px; padding-bottom: 14px; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .sl78 { display: grid; grid-template-columns: auto minmax(9em, 1fr); grid-template-areas: "cv t" "cv go" "cv h"; align-items: start; align-content: start; column-gap: 12px; row-gap: 6px; }
+  #sl78cv { grid-area: cv; width: auto; height: min(calc(100dvh - 215px), 260px); }
+  .sl78 > .mtext:first-child { grid-area: t; margin: 0; font-size: .8rem; text-align: left; }
+  #sl78go { grid-area: go; min-width: 0; width: 100%; }
+  .sl78 > .mtext.small { display: none; }
+}
+.vip78 { background: radial-gradient(#3a6a3a, #1e3a1e); border-radius: 12px; padding: 10px; text-align: center; margin: 8px 0; box-shadow: inset 0 0 0 3px #c8a040; }
+.dice78 { display: flex; justify-content: center; align-items: center; gap: 10px; }
+.die78 { font-size: 2.6rem; line-height: 1; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, .5); }
+.dice78 b { font-size: 1.1rem; color: #ffd86a; margin-left: 8px; }
+.pl78w { color: #c83a3a; font-weight: bold; }
 </style>
 
 <header>
@@ -1109,7 +1168,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.40.0";
+  const VER = "0.41.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5552,7 +5611,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.40.0";
+const CLIENT_VERSION = "0.41.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7626,6 +7685,17 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.41.0", date: "2026/10/27", title: "スマホと、現金・偽札・警察", items: [
+    "スマホができた。上の「スマホ」ボタン（パソコンは J キー）で開ける。地図・チャット・フレンド・お便り・新聞・掲示板・証券・番付・称号・てびき・ゲーム・財布を、ここからまとめて使える",
+    "スマホのカメラで、いまの画面を写真にとれる（この端末に12枚まで。「保存」で画像として残せる）",
+    "スマホのゲーム「こもれびブロック」（落ちものパズル）。スコアは全期間と1週間のランキングで、みんなと競える。20,000点で称号「落ちものの達人」",
+    "現金（1,000G札）ができた。信用金庫の「現金の窓口」で、電子マネー（所持金）をお札に引き出したり、お札を預けたりできる。スマホの「財布」で見られる",
+    "現金だけで使えるもの：カジノの「VIPルーム」（サイコロの大小）、十日屋の「闇市」、ラウンジのチップ、フレンドへの「ポチ袋」、札束かざり（札束の山・札束の扇）",
+    "偽札：闇市で「偽札の版」と「インクと紙」を買うと、家の中で偽札を刷れる（1日10枚まで。クラフトの腕前が高いほど本物そっくり）。偽札は本物とまったく同じに見えて、ポチ袋やVIPルームの払い戻しで、知らないうちに財布にまざることも",
+    "偽札で払うときは、まぜる割合を選んで、店員のすきを見てお札をすべりこませる会計ミニゲーム。見つかると取り調べ。偽札の版を持っていたら一発アウト。知らなかった人は、うそをつかなければ偽札を回収されるだけ",
+    "鑑定ルーペ（よろず屋）で、いつでも財布の中の偽札を調べられる。見つけた偽札は、巡査に届ける（1枚100Gのお礼）・十日屋で洗う（手数料3割・たまに足がつく）・こっそり使う、から選べる",
+    "村の大通りを「巡査マモル」が見回るようになった。巡査の近くで作物を盗むと、見つかって労働施設へ。捕まると、3日間はずせない称号「偽札づくり」「偽札使用」がつく",
+  ] },
   { v: "0.40.0", date: "2026/10/27", title: "港の荷積みのバイトと、カジノの番付", items: [
     "みなと町に「港の荷積みのバイト」ができた。港の親方イカリに話しかけると、荷台（8×8）に届いた荷物を詰めていくパズルで働ける。たて・よこ1列がそろうと出荷されて消える。荷物は30個",
     "お給料は出荷した列の数で3段階（ふつう 300G・よくできた 600G＋野菜・完璧 1,000G＋野菜）。お給料が出るのは1日3回までで、それより後は練習になるよ。たまに、めずらしい家具「港の木箱」がもらえることも",
@@ -14978,6 +15048,930 @@ makePort = function () {
 };
 F75.ready = true;
 
+// =================== v76: スマホ（いろいろな機能をひとつに・カメラ・フレンド・チャット・称号） ===================
+var F76 = {};
+// アプリ：{ id, name, ch（アイコンの字）, c（色）, open, badge?, show? }。あとの機能もここに足していける
+F76.apps = [];
+F76.add = app => { const i = F76.apps.findIndex(a => a.id === app.id); if (i >= 0) F76.apps[i] = app; else F76.apps.push(app); };
+F76.fromPhone = false;
+const appGo76 = fn => () => { closeModal(); F76.fromPhone = true; setTimeout(() => { try { fn(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "phone app"); } }, 0); };
+function openPhone76() {
+  F76.fromPhone = false;
+  openModal("スマホ", "ph76m", body => {
+    const draw = () => {
+      if (!body.isConnected) return;
+      const apps = F76.apps.filter(a => !a.show || a.show());
+      body.innerHTML = `<div class="ph76"><div class="ph76bar"><span>${esc(clockStr())}</span><span>${esc(season())} ${dayOfSeason()}日目${F6?.ready ? " " + WEATHER[world.weather][1] : ""}</span><span>${F8.connected ? "オンライン" : "オフライン"}</span></div>
+        <div class="ph76wall"><b>${esc(clockStr())}</b><small>${esc(myName())}・所持金 ${fmt(world.money)}${F76.extraLine ? esc(F76.extraLine()) : ""}</small></div>
+        <div class="ph76grid">${apps.map(a => { const b = a.badge ? a.badge() : 0; return `<button type="button" class="ph76app" data-app76="${esc(a.id)}"><i style="background:${a.c}">${esc(a.ch)}${b ? `<em>${b > 9 ? "9+" : b}</em>` : ""}</i><span>${esc(a.name)}</span></button>`; }).join("")}</div></div>`;
+      body.querySelectorAll("[data-app76]").forEach(b => b.onclick = () => { const a = F76.apps.find(x => x.id === b.dataset.app76); if (a) appGo76(a.open)(); });
+    };
+    draw();
+  });
+}
+F76.open = openPhone76;
+// アプリから「スマホにもどる」
+setInterval(() => {
+  if (!F76.fromPhone) return;
+  if (!modalOpen) { F76.fromPhone = false; return; }
+  const head = document.querySelector("#mbox .mhead");
+  if (head && !head.querySelector("#ph76back") && $("mtitle").textContent !== "スマホ") { head.insertAdjacentHTML("afterbegin", `<button class="btn light" type="button" id="ph76back" aria-label="スマホにもどる">◀</button>`); head.querySelector("#ph76back").onclick = () => { closeModal(); openPhone76(); }; }
+}, 250);
+$("guideBtn54").insertAdjacentHTML("beforebegin", `<button class="btn ghost" id="phoneBtn76" type="button" aria-label="スマホ">スマホ</button>`);
+$("phoneBtn76").addEventListener("click", () => { if (modalOpen && $("mtitle").textContent === "スマホ") closeModal(); else if (!modalOpen) openPhone76(); });
+addEventListener("keydown", e => { if ((e.key === "j" || e.key === "J") && !e.repeat && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && !document.body.classList.contains("menu")) { if (modalOpen && $("mtitle").textContent === "スマホ") closeModal(); else if (!modalOpen) openPhone76(); } });
+// ---- 称号 ----
+F76.titleLock = () => { if (typeof F69 !== "undefined" && F69.thief && F69.thief()) return "盗人"; return F76.crimeTitle ? F76.crimeTitle() : ""; };
+function openTitles76() {
+  openModal("称号", "", body => {
+    const draw = () => {
+      const lock = F76.titleLock(), cur = world.title || "村の新入り", got = TITLES.filter(t => t[2]()).length;
+      body.innerHTML = `<p class="mtext">いまの称号：<b>「${esc(lock || cur)}」</b>${lock ? `<br><span class="note">「${esc(lock)}」がついているあいだは、つけかえられない</span>` : ""}</p>
+        <p class="note">${got} / ${TITLES.length} 個 獲得。つけた称号は、ほかの人の画面の名前にも出るよ</p>
+        <div class="list">${TITLES.map(([n, d, f]) => { const ok = f(); return `<div class="li tl71${ok ? "" : " no"}"><span class="nm">${ok ? "「" + esc(n) + "」" : "？？？"}<span class="sub2">${esc(d)}</span></span><span class="acts">${ok ? (cur === n ? `<b class="note">つけている</b>` : `<button class="btn light" type="button" data-tt76="${esc(n)}" ${lock ? "disabled" : ""}>つける</button>`) : ""}</span></div>`; }).join("")}</div>`;
+      body.querySelectorAll("[data-tt76]").forEach(b => b.onclick = () => { if (F76.titleLock()) return; world.title = b.dataset.tt76; saveWorld(); try { F7.renderVillage(); } catch (e) {} draw(); });
+    };
+    draw();
+  });
+}
+// ---- カメラ ----
+const ALBUM76 = "komorebi-album76";
+const album76 = () => { try { const a = JSON.parse(localStorage.getItem(ALBUM76) || "[]"); return Array.isArray(a) ? a.filter(x => x && typeof x.src === "string" && x.src.startsWith("data:image/")) : []; } catch (e) { return []; } };
+const saveAlbum76 = a => { try { localStorage.setItem(ALBUM76, JSON.stringify(a)); return true; } catch (e) { return false; } };
+function snap76() {
+  const g = $("game"); if (!g) return null;
+  const w = Math.min(720, g.width), h = Math.round(g.height * w / g.width), c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d"); x.imageSmoothingEnabled = false; x.drawImage(g, 0, 0, w, h);
+  x.fillStyle = "rgba(0,0,0,.45)"; x.fillRect(0, h - 18, w, 18); x.fillStyle = "#fff"; x.font = "12px sans-serif"; x.textBaseline = "middle";
+  x.fillText(`こもれび村　${season()} ${dayOfSeason()}日目 ${clockStr()}　${map.name || ""}`, 6, h - 9);
+  try { return c.toDataURL("image/jpeg", .85); } catch (e) { return null; }
+}
+const fname76 = t => { const d = new Date(t); const p = n => String(n).padStart(2, "0"); return `komorebi_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.jpg`; };
+function openCamera76() {
+  openModal("カメラ", "", body => {
+    const draw = msg => {
+      const A = album76();
+      body.innerHTML = `<p class="mtext">いまの画面を写真にとれるよ（いちばん新しい12枚まで、この端末にとっておける）。</p>
+        <div class="row2"><button class="btn" type="button" id="cam76">パシャッ（写真をとる）</button></div>${msg ? `<p class="mtext small">${esc(msg)}</p>` : ""}
+        <div class="alb76">${A.length ? A.slice().reverse().map((p, i) => `<figure><img src="${p.src}" alt="写真" data-big76="${A.length - 1 - i}"><figcaption><a class="btn light" href="${p.src}" download="${fname76(p.t)}">保存</a><button class="btn light" type="button" data-del76="${A.length - 1 - i}">消す</button></figcaption></figure>`).join("") : `<p class="note">まだ写真がないよ</p>`}</div>`;
+      body.querySelector("#cam76").onclick = () => {
+        // モーダルを一瞬かくして、いまの村をとる
+        $("modal").style.visibility = "hidden";
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const src = snap76(); $("modal").style.visibility = "";
+          if (!src) { draw("うまくとれなかった…"); return; }
+          const A2 = album76(); A2.push({ src, t: Date.now() }); while (A2.length > 12) A2.shift();
+          let ok = saveAlbum76(A2); while (!ok && A2.length > 1) { A2.shift(); ok = saveAlbum76(A2); }
+          se13("small"); const f = document.createElement("div"); f.className = "flash76"; document.body.appendChild(f); setTimeout(() => f.remove(), 350);
+          world.stats.photo76 = (world.stats.photo76 || 0) + 1; saveWorld();
+          draw(ok ? "とれた！「保存」で端末に残せるよ" : "写真はとれたけど、この端末にはとっておけなかった");
+        }));
+      };
+      body.querySelectorAll("[data-del76]").forEach(b => b.onclick = () => { const A2 = album76(); A2.splice(+b.dataset.del76, 1); saveAlbum76(A2); draw(); });
+      body.querySelectorAll("[data-big76]").forEach(im => im.onclick = () => { const p = album76()[+im.dataset.big76]; if (!p) return; const o = document.createElement("div"); o.className = "big76"; o.innerHTML = `<img src="${p.src}" alt="写真">`; o.onclick = () => o.remove(); document.body.appendChild(o); });
+    };
+    draw();
+  });
+}
+// ---- チャット ----
+function openChat76() {
+  openModal("チャット", "dark", body => {
+    body.innerHTML = F8.connected ? `<p class="mtext small">下の入力欄から、サーバーのみんなに話しかけられるよ。いまのチャットもここで読める。</p>` : `<p class="mtext">チャットは、オンラインにつないでいるときに使えるよ。</p>`;
+  });
+}
+// ---- フレンド（いまオンラインの人） ----
+const placeName76 = k => { k = String(k || ""); return k === "village" ? "こもれび村" : k.startsWith("room") || /^\d+,\d+$/.test(k) ? "家の中" : k === "casino" ? "カジノ" : k === "port" ? "みなと町" : k ? "おでかけ中" : "どこか"; };
+function openFriends76() {
+  openModal("フレンド", "", body => {
+    const draw = () => {
+      if (!body.isConnected) return;
+      const L = [...remotes.values()].filter(e => e && e.name);
+      body.innerHTML = !F8.connected ? `<p class="mtext">オンラインにつなぐと、いまいる人が見られるよ。</p>` : `<p class="mtext">いまオンラインの人：${L.length}人</p>
+        <div class="list">${L.length ? L.map(e => `<div class="li"><img src="${renderChar({ ...DEFAULT, ...(e.cfg || {}) }, "down", 0).toDataURL()}" alt=""><span class="nm">${e.cfg && e.cfg.tt ? `「${esc(e.cfg.tt)}」` : ""}${esc(e.name)}<span class="sub2">${esc(placeName76(e.rmap))}</span></span><span class="acts">${F76.friendActs ? F76.friendActs(e) : ""}</span></div>`).join("") : `<p class="note">いまはだれもいないみたい</p>`}</div>`;
+      if (F76.wireFriend) F76.wireFriend(body);
+    };
+    draw();
+  });
+}
+// ---- アプリの一覧 ----
+F76.add({ id: "map", name: "地図", ch: "地", c: "#4aa070", open: () => openMap13() });
+F76.add({ id: "chat", name: "チャット", ch: "話", c: "#4a8ae0", open: openChat76 });
+F76.add({ id: "friend", name: "フレンド", ch: "友", c: "#e07aa0", open: openFriends76, badge: () => F8.connected ? remotes.size : 0 });
+F76.add({ id: "mail", name: "お便り", ch: "便", c: "#e0a040", open: () => openFeedback(), badge: () => $("fbDot") && !$("fbDot").hidden ? 1 : 0 });
+F76.add({ id: "paper", name: "新聞", ch: "新", c: "#8a7a6a", open: () => openArchive42() });
+F76.add({ id: "board", name: "掲示板", ch: "掲", c: "#b8824a", open: () => openBoard() });
+F76.add({ id: "stock", name: "証券", ch: "株", c: "#3aa0a0", open: () => F66.open() });
+F76.add({ id: "rank", name: "番付", ch: "番", c: "#c83a3a", open: () => F74.open() });
+F76.add({ id: "title", name: "称号", ch: "称", c: "#a070d0", open: openTitles76 });
+F76.add({ id: "camera", name: "カメラ", ch: "撮", c: "#505a6a", open: openCamera76 });
+F76.add({ id: "guide", name: "てびき", ch: "引", c: "#6a9a3a", open: () => openGuide54(world.stats.guide54 || 0) });
+GUIDE54.push(["スマホ", "", `
+    <p>上の「スマホ」ボタン（パソコンは <b>J</b> キー）で、いつでもスマホが開ける。</p><ul>
+    <li>地図・チャット・フレンド（いまオンラインの人）・お便り・新聞・掲示板・証券・番付・称号・てびきを、ここからまとめて開ける</li>
+    <li><b>カメラ</b>：いまの画面を写真にとって、この端末に12枚までとっておける。「保存」で画像として残せる</li>
+    <li><b>ゲーム</b>：スマホの中で遊べるゲーム。スコアはランキングで、みんなと競える</li>
+    <li>アプリを開いたあと、左上の ◀ でスマホの画面にもどれる</li></ul>`]);
+F76.ready = true;
+
+// =================== v77: スマホのゲーム「こもれびブロック」（落ちものパズル）とランキング ===================
+var F77 = {};
+const BLK77 = {
+  I: { c: "#5ac8e8", d: "#2a8ab0", r: [[[0, 1], [1, 1], [2, 1], [3, 1]], [[2, 0], [2, 1], [2, 2], [2, 3]], [[0, 2], [1, 2], [2, 2], [3, 2]], [[1, 0], [1, 1], [1, 2], [1, 3]]] },
+  O: { c: "#f8d050", d: "#c09a20", r: [[[1, 0], [2, 0], [1, 1], [2, 1]]] },
+  T: { c: "#b07ae0", d: "#7a4aaa", r: [[[1, 0], [0, 1], [1, 1], [2, 1]], [[1, 0], [1, 1], [2, 1], [1, 2]], [[0, 1], [1, 1], [2, 1], [1, 2]], [[1, 0], [0, 1], [1, 1], [1, 2]]] },
+  S: { c: "#7ad070", d: "#4a9a40", r: [[[1, 0], [2, 0], [0, 1], [1, 1]], [[1, 0], [1, 1], [2, 1], [2, 2]], [[1, 1], [2, 1], [0, 2], [1, 2]], [[0, 0], [0, 1], [1, 1], [1, 2]]] },
+  Z: { c: "#f07a7a", d: "#b84a4a", r: [[[0, 0], [1, 0], [1, 1], [2, 1]], [[2, 0], [1, 1], [2, 1], [1, 2]], [[0, 1], [1, 1], [1, 2], [2, 2]], [[1, 0], [0, 1], [1, 1], [0, 2]]] },
+  J: { c: "#6a8ae8", d: "#3a5ab8", r: [[[0, 0], [0, 1], [1, 1], [2, 1]], [[1, 0], [2, 0], [1, 1], [1, 2]], [[0, 1], [1, 1], [2, 1], [2, 2]], [[1, 0], [1, 1], [0, 2], [1, 2]]] },
+  L: { c: "#f0a050", d: "#b87020", r: [[[2, 0], [0, 1], [1, 1], [2, 1]], [[1, 0], [1, 1], [1, 2], [2, 2]], [[0, 1], [1, 1], [2, 1], [0, 2]], [[0, 0], [1, 0], [1, 1], [1, 2]]] },
+};
+const BW77 = 10, BH77 = 20;
+const blk77 = () => { const b = world.blk77 = world.blk77 && typeof world.blk77 === "object" ? world.blk77 : {}; for (const k of ["best", "plays", "lines", "sent", "pend"]) b[k] = Number.isFinite(+b[k]) ? Math.floor(+b[k]) : 0; return b; };
+const BLK_TITLE77 = ["落ちものの達人", "スマホの「こもれびブロック」で20,000点をとる", () => (world.blk77?.best || 0) >= 20000];
+GTITLES42.push(BLK_TITLE77);
+TITLES.push([BLK_TITLE77[0], BLK_TITLE77[1], () => gotT42().includes(BLK_TITLE77[0]) || BLK_TITLE77[2]()]);
+// ゲームのしくみ（絵とは分けておく）
+function newBlk77(rand) {
+  const R = rand || Math.random;
+  const G = { grid: Array.from({ length: BH77 }, () => Array(BW77).fill(null)), bag: [], next: [], hold: null, held: false, cur: null, score: 0, lines: 0, level: 1, combo: -1, over: false, drops: 0 };
+  const refill = () => { const b = Object.keys(BLK77); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } G.bag.push(...b); };
+  const take = () => { if (G.bag.length < 7) refill(); return G.bag.shift(); };
+  G.cells = (p, x = p.x, y = p.y, r = p.r) => { const R2 = BLK77[p.t].r; return R2[r % R2.length].map(([a, b]) => [x + a, y + b]); };
+  G.fits = (p, x, y, r) => G.cells(p, x, y, r).every(([a, b]) => a >= 0 && a < BW77 && b < BH77 && (b < 0 || !G.grid[b][a]));
+  G.spawn = t => { const p = { t, x: 3, y: t === "I" ? -1 : 0, r: 0 }; G.cur = p; G.held = false; if (!G.fits(p, p.x, p.y, p.r)) G.over = true; };
+  G.nextPiece = () => { while (G.next.length < 4) G.next.push(take()); G.spawn(G.next.shift()); G.next.push(take()); };
+  G.move = dx => { const p = G.cur; if (p && G.fits(p, p.x + dx, p.y, p.r)) { p.x += dx; return true; } return false; };
+  G.rotate = dir => {
+    const p = G.cur; if (!p) return false; const n = BLK77[p.t].r.length; if (n === 1) return false;
+    const r = (p.r + dir + n) % n;
+    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [-2, 0], [2, 0], [0, 1]]) if (G.fits(p, p.x + dx, p.y + dy, r)) { p.x += dx; p.y += dy; p.r = r; return true; }
+    return false;
+  };
+  G.ghostY = () => { const p = G.cur; let y = p.y; while (G.fits(p, p.x, y + 1, p.r)) y++; return y; };
+  G.lock = () => {
+    const p = G.cur; let top = false;
+    for (const [a, b] of G.cells(p)) { if (b < 0) top = true; else G.grid[b][a] = p.t; }
+    const full = []; for (let y = 0; y < BH77; y++) if (G.grid[y].every(Boolean)) full.push(y);
+    for (const y of full) { G.grid.splice(y, 1); G.grid.unshift(Array(BW77).fill(null)); }
+    const n = full.length;
+    if (n) { G.combo++; G.score += [0, 100, 300, 500, 800][n] * G.level + Math.max(0, G.combo) * 50 * G.level; G.lines += n; G.level = 1 + Math.floor(G.lines / 10); } else G.combo = -1;
+    G.lastClear = full; G.cur = null;
+    if (top) { G.over = true; return n; }
+    G.nextPiece(); return n;
+  };
+  G.soft = () => { const p = G.cur; if (p && G.fits(p, p.x, p.y + 1, p.r)) { p.y++; G.score += 1; return true; } return false; };
+  G.hard = () => { const p = G.cur; if (!p) return 0; const y = G.ghostY(); G.score += (y - p.y) * 2; p.y = y; return G.lock(); };
+  G.doHold = () => { if (G.held || !G.cur) return false; const t = G.cur.t; if (G.hold) { const h = G.hold; G.hold = t; G.spawn(h); } else { G.hold = t; G.nextPiece(); } G.held = true; return true; };
+  G.speed = () => Math.max(.05, .8 * Math.pow(.85, G.level - 1));
+  G.nextPiece();
+  return G;
+}
+F77.newGame = newBlk77;
+// スコアを送る（オフラインのときは、つないだときに）
+F77.board = null; F77.tab = "all";
+// 1週間のランキングにも入るよう、自己ベストでなくても毎回のスコアを送る（つないでいないときは、いちばんいいスコアを取っておく）
+F77.sendScore = score => { const b = blk77(); score = Math.floor(+score || 0); if (score <= 0) return; if (F8.connected) send8({ type: "grank", game: "blk", score }); else { b.pend = Math.max(b.pend, score); saveWorld(); } };
+F77.sendBest = () => { const b = blk77(); if (!F8.connected) return; if (b.pend > 0) { send8({ type: "grank", game: "blk", score: b.pend }); b.pend = 0; saveWorld(); } else if (b.best > b.sent) { send8({ type: "grank", game: "blk", score: b.best }); b.sent = b.best; saveWorld(); } };
+const _handle77 = handle8;
+handle8 = m => {
+  if (m && m.type === "grank") { if (m.board && m.board.game === "blk") { F77.board = m.board; if (F77.render) F77.render(); } return; }
+  _handle77(m);
+  if (m && m.type === "welcome") setTimeout(() => F77.sendBest(), 2500);
+};
+function openBlkMenu77() {
+  F77.board = null;
+  if (F8.connected) { F77.sendBest(); setTimeout(() => send8({ type: "grank", get: "blk" }), 400); }
+  openModal("こもれびブロック", "dark", body => {
+    F77.render = () => {
+      if (!body.isConnected) { F77.render = null; return; }
+      const B = F77.board, T = F77.tab, b = blk77();
+      const rows = B ? B[T] : null, me = B ? B.me : null;
+      body.innerHTML = `<div class="bk77menu"><p class="mtext">上から落ちてくるブロックを動かして回して、横1列をそろえると消える。どんどん速くなるよ。</p>
+        <div class="row2"><button class="btn" type="button" id="bk77go">あそぶ</button></div>
+        <p class="mtext small">自己ベスト <b>${b.best.toLocaleString()}点</b>・あそんだ回数 ${b.plays}回・消した列 ${b.lines}列</p>
+        <h4>ランキング</h4><div class="cr74tabs"><button class="chip" type="button" data-t77="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t77="week" aria-pressed="${T === "week"}">この1週間</button></div>
+        ${!F8.connected ? `<p class="mtext small">ランキングは、オンラインのときに見られるよ</p>` : !B ? `<p class="mtext small">読みこんでいるよ…</p>` :
+          rows.length ? `<ol class="cr74l">${rows.map((r, i) => `<li class="${r.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(r.name)}</span><b class="wi74">${esc(String(r.v).replace(/\B(?=(\d{3})+(?!\d))/g, ","))}点</b></li>`).join("")}</ol>${me && me[T + "Rank"] ? `<p class="mtext small cr74me">あなたは <b>${me[T + "Rank"]}位</b></p>` : ""}` : `<p class="mtext small">まだだれもいないよ。いちばん乗りしよう</p>`}
+        <p class="mtext small">そうさ：← → 動かす・↓ ゆっくり落とす・↑ か X 回す（Z で逆回し）・Space で一気に落とす・C でキープ。スマホは下のボタン</p></div>`;
+      body.querySelector("#bk77go").onclick = () => { closeModal(); playBlk77(); };
+      body.querySelectorAll("[data-t77]").forEach(x => x.onclick = () => { F77.tab = x.dataset.t77; F77.render(); });
+    };
+    F77.render();
+  }, () => { F77.render = null; });
+}
+F77.open = openBlkMenu77;
+function playBlk77() {
+  const wide = matchMedia("(max-height: 560px) and (min-aspect-ratio: 4/3)").matches;
+  const C = 12, BX = 4, BY = 4, W = 200, H = 248;
+  const G = newBlk77(); let fall = 0, lockT = 0, stopped = false, ended = false, flash = [], last = performance.now();
+  const b = blk77(); b.plays++; saveWorld();
+  openModal("こもれびブロック", "ph76m", body => {
+    body.innerHTML = `<div class="bk77 ${wide ? "w77" : ""}"><canvas id="bk77cv" width="${W}" height="${H}"></canvas>
+      <div class="bk77pad"><button type="button" data-k77="hold">キープ</button><button type="button" data-k77="rl">↺</button><button type="button" data-k77="rr">↻</button>
+      <button type="button" data-k77="left">←</button><button type="button" data-k77="down">↓</button><button type="button" data-k77="right">→</button>
+      <button type="button" data-k77="hard" class="wide77">一気に落とす</button></div></div>`;
+  }, () => finish(true));
+  const cv = $("bk77cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const act = k => {
+    if (G.over || ended) return;
+    if (k === "left") G.move(-1); else if (k === "right") G.move(1);
+    else if (k === "down") { if (!G.soft()) lockT = Math.max(lockT, .4); fall = 0; }
+    else if (k === "rr") G.rotate(1); else if (k === "rl") G.rotate(-1);
+    else if (k === "hard") { const n = G.hard(); after(n); }
+    else if (k === "hold") G.doHold();
+  };
+  const after = n => { if (n) { flash = G.lastClear.map(y => ({ y, t: .25 })); se13(n >= 4 ? "big" : "harvest"); } else se13("small"); lockT = 0; fall = 0; if (G.over) setTimeout(() => finish(false), 500); };
+  // ボタンは押しっぱなしで連続
+  const rep = new Map();
+  cv.closest(".bk77").querySelectorAll("[data-k77]").forEach(el => {
+    const k = el.dataset.k77, repeat = ["left", "right", "down"].includes(k);
+    const stop = () => { const r = rep.get(el); if (r) { clearTimeout(r.t); clearInterval(r.i); rep.delete(el); } el.classList.remove("on77"); };
+    el.addEventListener("pointerdown", e => { e.preventDefault(); el.classList.add("on77"); act(k); if (repeat) { const r = { t: setTimeout(() => { r.i = setInterval(() => act(k), k === "down" ? 45 : 80); }, 170) }; rep.set(el, r); } });
+    el.addEventListener("pointerup", stop); el.addEventListener("pointerleave", stop); el.addEventListener("pointercancel", stop);
+  });
+  const KM = { ArrowLeft: "left", ArrowRight: "right", ArrowDown: "down", ArrowUp: "rr", x: "rr", X: "rr", z: "rl", Z: "rl", " ": "hard", c: "hold", C: "hold", Shift: "hold" };
+  const onKey = e => { if (/INPUT|TEXTAREA/.test(e.target.tagName)) return; const k = KM[e.key]; if (!k) return; e.preventDefault(); e.stopPropagation(); if (k === "hard" && e.repeat) return; if ((k === "rr" || k === "rl" || k === "hold") && e.repeat) return; act(k); };
+  addEventListener("keydown", onKey, true);
+  function finish(closed) {
+    if (ended) return; ended = true; removeEventListener("keydown", onKey, true);
+    for (const r of rep.values()) { clearTimeout(r.t); clearInterval(r.i); }
+    const B = blk77(), best = G.score > B.best; B.lines += G.lines; if (best) B.best = G.score; if (F8.connected && best) B.sent = B.best; saveWorld(); checkTitles42(); F77.sendScore(G.score);
+    if (closed || !$("bk77cv")) { if (G.score) F7.notify(`こもれびブロック：${G.score}点${best ? "（自己ベスト！）" : ""}`, null); return; }
+    $("mbody").innerHTML = `<div class="dk75r"><b>ゲームオーバー</b><span>スコア <em>${G.score.toLocaleString()}点</em>${best ? "・自己ベスト！" : ""}</span><span>消した列 ${G.lines}列・レベル ${G.level}</span><span class="small">自己ベスト ${B.best.toLocaleString()}点</span></div>
+      <div class="row2"><button class="btn" type="button" id="bk77again">もう一回</button><button class="btn light" type="button" id="bk77rank">ランキング</button></div>`;
+    $("bk77again").onclick = () => { closeModal(); playBlk77(); };
+    $("bk77rank").onclick = () => { closeModal(); openBlkMenu77(); };
+  }
+  const cell = (x, y, t, a = 1, s = C) => { const P = BLK77[t]; g.globalAlpha = a; g.fillStyle = P.d; g.fillRect(x, y, s, s); g.fillStyle = P.c; g.fillRect(x + 1, y + 1, s - 2, s - 2); g.fillStyle = "rgba(255,255,255,.45)"; g.fillRect(x + 1, y + 1, s - 2, 1); g.fillRect(x + 1, y + 1, 1, s - 2); g.globalAlpha = 1; };
+  const mini = (t, x, y) => { const s = 8, R2 = BLK77[t].r[0], mx = Math.min(...R2.map(c => c[0])), Mx = Math.max(...R2.map(c => c[0])), my = Math.min(...R2.map(c => c[1])), My = Math.max(...R2.map(c => c[1])); const ox = x + (32 - (Mx - mx + 1) * s) / 2 - mx * s, oy = y + (20 - (My - my + 1) * s) / 2 - my * s; for (const [a, b2] of R2) cell(ox + a * s, oy + b2 * s, t, 1, s); };
+  const loop = now => {
+    if (stopped || ended) return;
+    if (!cv.isConnected) { stopped = true; return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (!G.over && G.cur) {
+      fall += dt;
+      const onGround = !G.fits(G.cur, G.cur.x, G.cur.y + 1, G.cur.r);
+      if (onGround) { lockT += dt; if (lockT >= .5) after(G.lock()); }
+      else { lockT = 0; if (fall >= G.speed()) { fall = 0; G.cur.y++; } }
+    }
+    flash = flash.filter(f => (f.t -= dt) > 0);
+    g.fillStyle = "#1e2433"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#2a3346"; g.fillRect(BX - 2, BY - 2, BW77 * C + 4, BH77 * C + 4);
+    g.fillStyle = "#151a26"; g.fillRect(BX, BY, BW77 * C, BH77 * C);
+    g.fillStyle = "rgba(255,255,255,.04)"; for (let x = 1; x < BW77; x++) g.fillRect(BX + x * C, BY, 1, BH77 * C);
+    for (let y = 0; y < BH77; y++) for (let x = 0; x < BW77; x++) if (G.grid[y][x]) cell(BX + x * C, BY + y * C, G.grid[y][x]);
+    if (G.cur && !G.over) {
+      const gy = G.ghostY(); for (const [a, b2] of G.cells(G.cur, G.cur.x, gy)) if (b2 >= 0) cell(BX + a * C, BY + b2 * C, G.cur.t, .22);
+      for (const [a, b2] of G.cells(G.cur)) if (b2 >= 0) cell(BX + a * C, BY + b2 * C, G.cur.t);
+    }
+    for (const f of flash) { g.fillStyle = `rgba(255,240,170,${f.t * 3})`; g.fillRect(BX, BY + f.y * C, BW77 * C, C); }
+    // 右の情報
+    const SX = BX + BW77 * C + 8; g.fillStyle = "#c8d0e0"; g.font = "9px sans-serif"; g.textAlign = "left"; g.textBaseline = "top";
+    g.fillText("つぎ", SX, 4); for (let i = 0; i < 3; i++) { g.fillStyle = "#151a26"; g.fillRect(SX, 16 + i * 24, 64, 22); if (G.next[i]) mini(G.next[i], SX + 16, 17 + i * 24); }
+    g.fillStyle = "#c8d0e0"; g.fillText("キープ", SX, 92); g.fillStyle = "#151a26"; g.fillRect(SX, 104, 64, 22); if (G.hold) mini(G.hold, SX + 16, 105);
+    g.fillStyle = "#c8d0e0"; g.fillText("スコア", SX, 136); g.fillStyle = "#ffd86a"; g.font = "bold 12px sans-serif"; g.fillText(String(G.score), SX, 148);
+    g.fillStyle = "#c8d0e0"; g.font = "9px sans-serif"; g.fillText(`列 ${G.lines}`, SX, 170); g.fillText(`レベル ${G.level}`, SX, 184); g.fillText(`ベスト ${blk77().best}`, SX, 198);
+    if (G.over) { g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(BX, BY + 100, BW77 * C, 36); g.fillStyle = "#fff"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.fillText("ゲームオーバー", BX + BW77 * C / 2, BY + 110); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F77.G = G;
+}
+F77.play = playBlk77;
+F76.add({ id: "game", name: "ゲーム", ch: "遊", c: "#f07a40", open: openBlkMenu77 });
+F77.ready = true;
+
+// =================== v78: 現金（お札）と偽札・警察と牢獄・VIPルーム・闇市・ポチ袋 ===================
+var F78 = {};
+const BILL78 = 1000;
+// 財布：n＝お札の枚数、fk＝偽札だとわかっている分、fu＝知らずに持っている偽札、q＝わかっている偽札の出来（0〜1）、o＝ポチ袋でもらった偽札の出どころ {プレイヤーID: 枚数}
+const cash78 = () => {
+  const c = world.cash78 = world.cash78 && typeof world.cash78 === "object" ? world.cash78 : {};
+  const I = k => Number.isFinite(+c[k]) ? Math.max(0, Math.floor(+c[k])) : 0;
+  c.n = I("n"); c.fk = Math.min(I("fk"), c.n); c.fu = Math.min(I("fu"), c.n - c.fk); c.ink = I("ink");
+  c.q = Number.isFinite(+c.q) ? Math.max(0, Math.min(1, +c.q)) : .5;
+  for (const k of ["o", "rq", "crime", "tip"]) c[k] = c[k] && typeof c[k] === "object" && !Array.isArray(c[k]) ? c[k] : {};
+  for (const k of Object.keys(c.o)) { const v = Math.floor(+c.o[k] || 0); if (!(v > 0) || !/^\d+$/.test(k)) delete c.o[k]; else c.o[k] = v; }
+  let tot = Object.values(c.o).reduce((a, b) => a + b, 0); const fakes = c.fu + c.fk;
+  for (const k of Object.keys(c.o)) { if (tot <= fakes) break; const d = Math.min(c.o[k], tot - fakes); c.o[k] -= d; tot -= d; if (c.o[k] <= 0) delete c.o[k]; }
+  c.made = c.made && typeof c.made === "object" ? c.made : { day: -1, n: 0 };
+  return c;
+};
+F78.cash = cash78;
+const billTxt78 = n => `1,000G札×${n}`;
+function addCash78(n, o = {}) {
+  const c = cash78(); n = Math.max(0, Math.floor(n || 0)); if (!n) return;
+  const fk = Math.min(n, Math.max(0, Math.floor(o.fk || 0))), fu = Math.min(n - fk, Math.max(0, Math.floor(o.fu || 0)));
+  if (fk) c.q = (c.q * c.fk + (o.q ?? .5) * fk) / (c.fk + fk);
+  c.n += n; c.fk += fk; c.fu += fu;
+  if (o.origin && o.of > 0) c.o[o.origin] = (c.o[o.origin] || 0) + Math.min(o.of, fk + fu);
+  saveWorld(); updateHud(true);
+}
+/** n 枚とりだす。knownFake 枚はわざと「わかっている偽札」から。のこりは本物のつもりの中から（知らない偽札がまざっていることがある） */
+function drawCash78(n, knownFake = 0) {
+  const c = cash78(); n = Math.max(0, Math.min(c.n, Math.floor(n || 0))); const k = Math.max(0, Math.min(c.fk, knownFake, n));
+  let real = c.n - c.fk - c.fu, fu = c.fu, takeR = 0, takeU = 0;
+  for (let i = 0; i < n - k; i++) { if (Math.random() * (real + fu) < fu) { fu--; takeU++; } else { real--; takeR++; } }
+  const fakes = takeU + k, totF = c.fu + c.fk, origins = {};
+  if (fakes && totF) {
+    const pool = []; for (const [pid, v] of Object.entries(c.o)) for (let i = 0; i < v; i++) pool.push(pid); while (pool.length < totF) pool.push("");
+    for (let i = 0; i < fakes && pool.length; i++) { const pid = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; if (pid) { origins[pid] = (origins[pid] || 0) + 1; c.o[pid]--; if (c.o[pid] <= 0) delete c.o[pid]; } }
+  }
+  const q = c.q; c.n -= n; c.fk -= k; c.fu -= takeU;
+  saveWorld(); updateHud(true);
+  return { n, real: takeR, fu: takeU, fk: k, q, origins };
+}
+/** とりだしたお札をもどす（keepFakes なら偽札も） */
+function putBack78(d, keepFakes) {
+  const c = cash78(); c.n += d.real;
+  if (keepFakes) { c.n += d.fu + d.fk; c.fu += d.fu; c.fk += d.fk; for (const [pid, v] of Object.entries(d.origins || {})) c.o[pid] = (c.o[pid] || 0) + v; }
+  saveWorld(); updateHud(true);
+}
+// 偽札の出どころを通報する（つないでいないときは、あとで）
+function report78(origins) {
+  const c = cash78(); for (const [pid, v] of Object.entries(origins || {})) if (v > 0) c.rq[pid] = (c.rq[pid] || 0) + v;
+  flushReport78(); saveWorld();
+}
+function flushReport78() { if (!F8.connected) return; const c = cash78(); for (const [pid, v] of Object.entries(c.rq)) { if (v > 0) send8({ type: "fakeRep", origin: +pid, n: v }); delete c.rq[pid]; } }
+const passPool78 = n => { if (n > 0 && F8.connected) send8({ type: "fake77", act: "pass", n }); };
+// 払い戻しのうち、村に出回っている偽札が何枚まざるか（サーバーにきく）
+F78.drawWait = new Map();
+function drawPool78(n, cb) {
+  if (!F8.connected || n <= 0) { cb(0); return; }
+  const rid = Math.random().toString(36).slice(2, 10); let done = false;
+  const fin = k => { if (done) return; done = true; F78.drawWait.delete(rid); cb(Math.max(0, Math.min(n, Math.floor(+k || 0)))); };
+  F78.drawWait.set(rid, fin); send8({ type: "fake77", act: "draw", n, rid }); setTimeout(() => fin(0), 1500);
+}
+// ---- 絵 ----
+const SPR78 = {
+  bill: [16, 16, (s, r) => { r(1, 4, 14, 8, C13["#3a6a3a"]); r(2, 5, 12, 6, C13["#d8ecc8"]); r(3, 6, 3, 4, C13["#9ac888"]); r(10, 6, 3, 1, C13["#5a8a5a"]); r(10, 8, 3, 1, C13["#5a8a5a"]); s(7, 7, C13["#c8a040"]); s(8, 8, C13["#c8a040"]); }],
+  plate: [16, 16, (s, r) => { r(2, 3, 12, 10, C13["#7a4e26"]); r(3, 4, 10, 8, C13["#c8925a"]); for (let y = 5; y < 11; y += 2) r(4, y, 8, 1, C13["#8a5a2a"]); r(6, 6, 4, 3, C13["#5a3a1a"]); }],
+  ink: [16, 16, (s, r) => { r(1, 8, 9, 7, C13["#f4f0e4"]); r(1, 8, 9, 1, C13["#c8c0a8"]); r(9, 3, 5, 10, C13["#2a2a4a"]); r(10, 2, 3, 2, C13["#4a4a6a"]); r(10, 6, 3, 4, C13["#3a8a4a"]); }],
+  loupe: [16, 16, (s, r, P) => { ell13(s, 6, 6, 5, 5, C13["#c8a040"]); ell13(s, 6, 6, 3.6, 3.6, C13["#d8f0f8"]); s(4, 4, C13["#ffffff"]); for (let i = 0; i < 5; i++) { r(9 + i, 9 + i, 2, 2, C13["#5a3a22"]); } }],
+  pile: [16, 18, (s, r) => { for (let i = 0; i < 5; i++) { r(2, 12 - i * 2, 12, 3, C13["#3a6a3a"]); r(3, 12 - i * 2, 10, 2, C13["#d8ecc8"]); r(7, 12 - i * 2, 2, 2, C13["#c84a4a"]); } r(1, 15, 14, 3, C13["#5a3a22"]); }],
+  fan: [16, 16, (s, r) => { for (let i = -3; i <= 3; i++) { const a = i * .28; for (let t = 0; t < 10; t++) { const x = Math.round(8 + Math.sin(a) * t), y = Math.round(14 - Math.cos(a) * t); r(x - 1, y, 2, 1, C13[t > 7 ? "#3a6a3a" : "#d8ecc8"]); } } r(7, 13, 2, 3, C13["#c8a040"]); }],
+  counter: [32, 24, (s, r) => { r(0, 6, 32, 18, C13["#5a6a8a"]); r(1, 7, 30, 16, C13["#e8ecf4"]); r(0, 4, 32, 3, C13["#3a4a6a"]); r(4, 10, 10, 6, C13["#c8d8e8"]); r(18, 10, 10, 6, C13["#c8d8e8"]); r(6, 0, 6, 5, C13["#d8ecc8"]); r(7, 1, 4, 3, C13["#3a6a3a"]); }],
+  shelf: [32, 30, (s, r) => { r(0, 0, 32, 30, C13["#2a1e1e"]); r(1, 1, 30, 28, C13["#4a3434"]); for (const y of [9, 19]) r(1, y, 30, 2, C13["#2a1e1e"]); r(3, 3, 6, 6, C13["#7a4e26"]); r(11, 4, 5, 5, C13["#2a2a4a"]); r(19, 2, 8, 7, C13["#c8a040"]); r(4, 13, 10, 6, C13["#5a5a5a"]); r(17, 12, 6, 7, C13["#8a2a2a"]); r(25, 14, 4, 5, C13["#d8ecc8"]); r(6, 22, 20, 5, C13["#3a3a3a"]); }],
+  washer: [16, 30, (s, r) => { r(0, 4, 16, 26, C13["#c8ccd4"]); r(1, 5, 14, 24, C13["#eef0f4"]); r(1, 5, 14, 5, C13["#a8b0bc"]); ell13(s, 8, 18, 5, 5, C13["#5a6a8a"]); ell13(s, 8, 18, 3.6, 3.6, C13["#8ac8a0"]); r(6, 16, 4, 2, C13["#d8ecc8"]); r(3, 6, 2, 2, C13["#e04a4a"]); r(11, 6, 2, 2, C13["#4ae04a"]); }],
+  vip: [16, 32, (s, r) => { r(0, 0, 16, 32, C13["#3a1428"]); r(1, 1, 14, 31, C13["#8a1a3a"]); for (let x = 2; x < 15; x += 3) r(x, 2, 1, 30, C13["#a83a5a"]); r(0, 0, 16, 3, C13["#c8a040"]); r(0, 14, 16, 2, C13["#f8d860"]); r(2, 12, 3, 6, C13["#f8d860"]); r(11, 12, 3, 6, C13["#f8d860"]); }],
+};
+for (const [k, [w, h, fn]] of Object.entries(SPR78)) { IMG["s78_" + k] = pix13(w, h, fn); ASSETS["s78_" + k] = IMG["s78_" + k].toDataURL(); }
+Object.assign(ITEMS, {
+  plate78: { name: "偽札の版", icon: "s78_plate", price: 0 },
+  ink78: { name: "偽札用のインクと紙", icon: "s78_ink", price: 0 },
+  loupe78: { name: "鑑定ルーペ", icon: "s78_loupe", price: 3000 },
+});
+FURN.billpile78 = { name: "札束の山", w: 1, h: 1, oy: -2, price: 10000, img: "s78_pile" };
+FURN.billfan78 = { name: "札束の扇", w: 1, h: 1, oy: 0, wall: true, price: 5000, img: "s78_fan" };
+ITEMS.f_billpile78 = { name: "札束の山", icon: "s78_pile", furn: "billpile78", price: 0 };
+ITEMS.f_billfan78 = { name: "札束の扇", icon: "s78_fan", furn: "billfan78", price: 0 };
+{ const _h = F7.hideFurn; F7.hideFurn = k => k === "billpile78" || k === "billfan78" || _h(k); }
+SHOP_STOCK.push("loupe78");
+// よろず屋では、闇市の物と札束かざりは買い取らない
+{
+  const NOSELL = new Set(["plate78", "ink78", "f_billpile78", "f_billfan78"]);
+  const _shop78 = openShop;
+  openShop = function (tab) {
+    const r = _shop78.apply(this, arguments);
+    if (tab === "sell") document.querySelectorAll("#mbody [data-sell]").forEach(b => { if (NOSELL.has(b.dataset.sell)) { const li = b.closest(".li"); if (li) { li.querySelector(".acts").innerHTML = `<span class="note">買い取れない</span>`; } } });
+    return r;
+  };
+}
+// ---- HUD とスマホ ----
+const _hud78 = updateHud;
+updateHud = function () { const r = _hud78.apply(this, arguments); const n = cash78().n, el = $("money"); if (el && n > 0 && !el.textContent.includes("現金")) el.textContent += `・現金 ${n}枚`; return r; };
+F76.extraLine = () => { const n = cash78().n; return n ? `・現金 ${n}枚` : ""; };
+// ---- 罪と称号（3日間はずせない） ----
+const CRIME78 = { make: "偽札づくり", use: "偽札使用" };
+const CRIME_DAYS78 = 3;
+const crimeTitle78 = () => { const c = cash78().crime; if ((c.make || 0) > world.day) return CRIME78.make; if ((c.use || 0) > world.day) return CRIME78.use; return ""; };
+F76.crimeTitle = crimeTitle78;
+TITLES.push([CRIME78.make, "偽札をつくって捕まると、3日間はずせない", () => false]);
+TITLES.push([CRIME78.use, "偽札を使って捕まると、3日間はずせない", () => false]);
+const _tt78 = myTT69; myTT69 = function () { return crimeTitle78() || _tt78(); };
+const _tag78 = F7.tag; F7.tag = () => { const c = crimeTitle78(); return c ? `「${c}」${myName()}` : _tag78(); };
+const _rv78 = renderVillage;
+renderVillage = function () {
+  _rv78.apply(this, arguments);
+  const c = crimeTitle78(); if (!c) return;
+  const B = $("villageBody"); if (!B) return;
+  const bs = B.querySelectorAll("[data-title]"); bs.forEach(b => { b.disabled = true; });
+  if (bs.length && !B.querySelector(".crime78")) bs[0].parentElement.insertAdjacentHTML("beforebegin", `<p class="note crime78">いまは称号「${esc(c)}」がついていて、はずせない…（あと${Math.max(...Object.values(cash78().crime).map(d => d - world.day))}日）</p>`);
+};
+const setCrime78 = (...ks) => { const c = cash78().crime; for (const k of ks) c[k] = Math.max(c[k] || 0, world.day + CRIME_DAYS78); saveWorld(); };
+// ---- 牢獄（労働施設を使う。借金の返済にはならない） ----
+function jail78(quota, why) {
+  if (world.labor) { world.labor.quota += quota; saveWorld(); toast(null, `つとめが${quota}回ふえた…（${why}）`); return; }
+  world.labor = { quota, done: 0, extra: 0, crime: why, startDay: world.day, startTime: world.time };
+  laborRocks = new Set(LABOR_ROCKS.map(([x, y]) => x + "," + y)); rebuildSolid();
+  collector.active = false; world.stats.jail78 = (world.stats.jail78 || 0) + 1;
+  if (typeof setDecor === "function") setDecor(false);
+  enter(labor, 3, 8, "down"); placeAt(guard, 2, 8, "right"); saveWorld(); updateHud(true);
+  try { K.news41 && K.news41.add("crime", `${myName()}さんが「${why}」で捕まった`, 45); } catch (e) {}
+  F7.pending.push({ kind: "custom", show: () => showJail78() });
+}
+F78.jail = jail78;
+function showJail78() {
+  if (!world.labor || !world.labor.crime) return;
+  openModal("労働施設（つとめ）", "yami", body => {
+    body.innerHTML = staffSay13(charIcon13({ skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "ジャケット", topc: "青", bottom: "パンツ", bottomc: "黒", glasses: true }), `「${esc(world.labor.crime)}」か…。ここでしっかり、つとめを果たしてもらうぞ`)
+      + `<div class="stat"><span>つとめ</span><b>${world.labor.quota} 回</b><span>長くても</span><b>6時間で釈放</b></div>
+      <p class="mtext small">岩を砕く・荷物を運ぶ・仕分けで、つとめが進む（借金の返済にはならないよ）。逃げることもできるけど、見張りに見つかるとつとめが増えて、逃げきれても罪が重くなる（称号が1日のびる）。</p>
+      <div class="row2"><button class="btn" type="button" id="jl78">はい…</button></div>`;
+    body.querySelector("#jl78").onclick = closeModal;
+  });
+}
+const crimeJail78 = () => !!(world.labor && world.labor.crime);
+const _pay78 = payOverdue; payOverdue = function () { return crimeJail78() ? 0 : _pay78.apply(this, arguments); };
+const _mine78 = mineLabor;
+mineLabor = function (key, tx, ty) {
+  if (!crimeJail78()) return _mine78.apply(this, arguments);
+  laborRocks.delete(key); rebuildSolid(); dust(tx, ty, [170, 166, 160], 8); world.labor.done++;
+  if (laborRocks.size < 3) { LABOR_ROCKS.forEach(([x, y]) => { const k = x + "," + y; if (!(player.x === x && player.y === y) && !(guard.x === x && guard.y === y)) laborRocks.add(k); }); rebuildSolid(); }
+  toast("stone", `岩を砕いた（つとめ ${world.labor.done} / ${world.labor.quota}）`);
+  if (world.labor.done >= world.labor.quota) releaseLabor("つとめを終えて、釈放された");
+  updateHud(true); saveWorld();
+};
+const _ld78 = laborDone;
+laborDone = function (units, msg) {
+  if (!crimeJail78()) return _ld78.apply(this, arguments);
+  world.labor.done += units; toast(null, `${msg}（つとめ ${world.labor.done} / ${world.labor.quota}）`);
+  if (world.labor.done >= world.labor.quota) releaseLabor("つとめを終えて、釈放された");
+  updateHud(true); saveWorld();
+};
+const _rel78 = releaseLabor;
+releaseLabor = function (msg) {
+  if (!crimeJail78()) return _rel78.apply(this, arguments);
+  world.labor = null; saveWorld(); enter(village, 31, 7, "down");
+  toast(null, /6時間/.test(String(msg)) ? "6時間つとめた。今日はここまでで釈放された" : String(msg || "釈放された"));
+};
+const _esc78 = tryEscape;
+tryEscape = function () {
+  if (!crimeJail78()) return _esc78.apply(this, arguments);
+  const dist = Math.abs(guard.x - 14) + Math.abs(guard.y - 10);
+  if (dist >= 6) { world.stats.escapes++; world.labor = null; const c = cash78().crime; for (const k of Object.keys(c)) if (c[k] > world.day) c[k]++; saveWorld(); enter(village, 31, 7, "down"); toast(null, "脱走成功！…でも罪は重くなった（称号があと1日のびた）"); }
+  else { world.labor.quota = Math.min(world.labor.quota + 2, world.labor.done + 12); saveWorld(); placeAt(player, 3, 8, "down"); toast(null, `見張りに見つかった！ つとめ+2（${world.labor.done}/${world.labor.quota}）`); updateHud(true); }
+};
+// ---- こもれび村警察：巡査マモル ----
+const POLICE78 = { name: "巡査 マモル", cfg: { skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "スーツ", topc: "青", bottom: "パンツ", bottomc: "黒", hat: "キャップ", shoesc: "黒" } };
+const policeIcon78 = () => F78.picon || (F78.picon = charIcon13(POLICE78.cfg));
+const say78 = t => staffSay13(policeIcon78(), t);
+/** 「連れていかれる…」の画面。閉じても連れていかれる */
+function arrest78(text, go) {
+  let done = false; const run = () => { if (done) return; done = true; setTimeout(go, 0); };
+  openModal("こもれび村警察", "", body => {
+    body.innerHTML = say78(text) + `<div class="row2"><button class="btn" type="button" id="ar78go">連れていかれる…</button></div>`;
+    body.querySelector("#ar78go").onclick = () => closeModal();
+  }, run);
+}
+function evidence78() {
+  if (count("plate78") > 0) return true;
+  for (const r of Object.values(world.rooms || {})) for (const P of [r && r.storage, r && r.priv]) if (Array.isArray(P) && P.some(x => x && x.id === "plate78" && x.n > 0)) return true;
+  return false;
+}
+function takeEvidence78() {
+  const n = count("plate78"); if (n) removeItem("plate78", n);
+  for (const r of Object.values(world.rooms || {})) for (const P of [r && r.storage, r && r.priv]) if (Array.isArray(P)) for (let i = P.length - 1; i >= 0; i--) if (P[i] && P[i].id === "plate78") P.splice(i, 1);
+  saveWorld();
+}
+/** 取り調べ。o: { knowing, where, onEnd(guilty) } */
+function interrogate78(o) {
+  // 取り調べの画面を閉じても、逃げたことにはならない（そこまでで決まっていたとおりになる）
+  let verdict = null, done = false, cleared = false;
+  const apply = () => {
+    if (done) return; done = true;
+    if (verdict) { setCrime78(...verdict.ks); world.stats.arrest78 = (world.stats.arrest78 || 0) + 1; saveWorld(); setTimeout(() => jail78(verdict.quota, verdict.ks.includes("make") ? "偽札づくり" : "偽札使用"), 0); if (o.onEnd) o.onEnd(true); return; }
+    world.stats.innocent78 = (world.stats.innocent78 || 0) + 1; saveWorld(); if (o.onEnd) o.onEnd(false);
+  };
+  const guilty = (text, quota, ...ks) => {
+    verdict = { quota, ks };
+    body0().innerHTML = say78(text) + `<div class="row2"><button class="btn" type="button" id="iq78go">連れていかれる…</button></div>`;
+    $("iq78go").onclick = () => closeModal();
+  };
+  const body0 = () => $("mbody");
+  const onClose = () => {
+    // 答えずに閉じたとき：版があれば偽札づくり、知っていて使ったなら偽札使用、知らなかったなら無罪
+    if (!done && !verdict && !cleared) { if (evidence78()) { takeEvidence78(); verdict = { quota: 8, ks: ["make", "use"] }; } else if (o.knowing) verdict = { quota: 6, ks: ["use"] }; }
+    apply();
+  };
+  openModal("取り調べ", "", body => {
+    body.innerHTML = say78(`${esc(o.where)}で偽札が見つかった。…ちょっと話を聞かせてもらおうか。まずは持ち物と家を調べさせてもらうよ`) + `<div class="row2"><button class="btn" type="button" id="iq78a">わかった</button></div>`;
+    body.querySelector("#iq78a").onclick = () => {
+      if (evidence78()) { takeEvidence78(); guilty("……これは、偽札の版じゃないか！ 道具もっとるやないかい！ 偽札づくりと偽札使用で、労働施設に行ってもらう", 8, "make", "use"); return; }
+      body.innerHTML = say78("持ち物からは、あやしい物は出てこなかった。…では聞こう。このお札、偽札だと知っていて使ったのかな？") + `<div class="row2"><button class="btn light" type="button" id="iq78y">はい（正直に話す）</button><button class="btn" type="button" id="iq78n">いいえ（知らなかった）</button></div>`;
+      body.querySelector("#iq78y").onclick = () => guilty("正直に話してくれたね。…でも、罪は罪だ。少しのあいだ、つとめてもらうよ", 4, "use");
+      body.querySelector("#iq78n").onclick = () => {
+        if (o.knowing && Math.random() < .4) { guilty("……目が泳いでるね。うそはよくないな", 6, "use"); return; }
+        cleared = true;
+        body.innerHTML = say78(o.knowing ? "……そうか。今回は信じよう。偽札はあずかっておくよ" : "そうか…きみも、だれかにつかまされたのかもしれないね。偽札はあずかっておくよ。災難だったね") + `<div class="row2"><button class="btn" type="button" id="iq78ok">ほっとした</button></div>`;
+        body.querySelector("#iq78ok").onclick = () => closeModal();
+      };
+    };
+  }, onClose);
+}
+F78.interrogate = interrogate78;
+// ---- 会計ミニゲーム：店員のすきを見て、お札をすべりこませる ----
+const PLACE78 = { yami: ["十日屋の闇市", .34], lounge: ["ラウンジ", .30], vip: ["VIPルーム", .22], bank: ["信用金庫", .16] };
+function slip78(o) {
+  const W = 240, H = 130; let ended = false, t = 0, look = true, lookT = .9 + Math.random() * .6, pos = 0, dir = 1, last = performance.now(), msg = "";
+  const z0 = .1 + Math.random() * (.8 - o.W), z1 = z0 + o.W, speed = .55 + (o.place === "bank" || o.place === "vip" ? .25 : 0);
+  const clerk = new Image(); clerk.src = charIcon13(o.place === "lounge" ? { skin: "色白", hair: "ロング", hairc: "黒", top: "ドレス", topc: "紫" } : o.place === "yami" ? { skin: "小麦色", hair: "モヒカン", hairc: "黒", top: "ジャケット", topc: "黒", glasses: true } : { skin: "やや明るめ", hair: "ボブ", hairc: "ブラウン", top: "スーツ", topc: "青" });
+  openModal("会計", "", body => {
+    body.innerHTML = `<div class="sl78"><p class="mtext">${o.surprise ? "（……あれ？ このお札、なんだか手ざわりが……）<br>" : ""}店員がよそ見をしたすきに、緑のところでお札をすべりこませよう</p>
+      <canvas id="sl78cv" width="${W}" height="${H}"></canvas>
+      <button class="btn" type="button" id="sl78go">すべりこませる！</button><p class="mtext small">Space か Z でも押せる。見られているときに押すと、バレてしまう</p></div>`;
+  }, () => end(false, "途中でやめた"));
+  const cv = $("sl78cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const press = () => { if (ended) return; const ok = !look && pos >= z0 && pos <= z1; end(ok, ok ? "うまくいった…！" : look ? "見られていた！" : "タイミングがずれた！"); };
+  const onKey = e => { if (e.key === " " || e.key === "z" || e.key === "Z") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) press(); } };
+  addEventListener("keydown", onKey, true);
+  $("sl78go").onclick = press;
+  F78.slipNow = { get look() { return look; }, get pos() { return pos; }, z0, z1, press, get ended() { return ended; } };
+  function end(ok, m) {
+    if (ended) return; ended = true; msg = m; removeEventListener("keydown", onKey, true);
+    se13(ok ? "small" : "big");
+    setTimeout(() => { if ($("sl78cv")) closeModal(); setTimeout(() => o.onEnd(ok), 30); }, 650);
+  }
+  const loop = now => {
+    if (!cv.isConnected && !ended) { end(false, ""); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (!ended) {
+      t += dt; pos += dir * speed * dt; if (pos >= 1) { pos = 1; dir = -1; } if (pos <= 0) { pos = 0; dir = 1; }
+      lookT -= dt; if (lookT <= 0) { look = !look; lookT = look ? .7 + Math.random() * 1.1 : (.45 + Math.random() * .55) * (o.place === "bank" ? .75 : 1); }
+      if (t > 10) end(false, "もたもたしていたら、あやしまれた！");
+    }
+    g.fillStyle = "#3a2e2a"; g.fillRect(0, 0, W, H); g.fillStyle = "#6a4e3a"; g.fillRect(0, 70, W, 60); g.fillStyle = "#8a6a4a"; g.fillRect(0, 70, W, 4);
+    // 店員（よそ見すると後ろを向く）
+    g.save(); if (!look) { g.translate(200 + 24, 0); g.scale(-1, 1); g.translate(-(200 - 24) , 0); }
+    if (clerk.complete) g.drawImage(clerk, 176, 8, 48, 64); g.restore();
+    g.font = "bold 11px sans-serif"; g.textAlign = "center"; g.fillStyle = look ? "#ff9a9a" : "#9ae09a"; g.fillText(look ? "じーっ…" : "よそ見中", 200, 86);
+    // お札とメーター
+    g.fillStyle = "#d8ecc8"; g.fillRect(30, 30, 40, 22); g.fillStyle = "#3a6a3a"; g.fillRect(30, 30, 40, 2); g.fillRect(30, 50, 40, 2);
+    const BX = 12, BW = 160, BY = 100;
+    g.fillStyle = "#1e1a18"; g.fillRect(BX, BY, BW, 12);
+    g.fillStyle = look ? "rgba(122,224,122,.35)" : "#7ae07a"; g.fillRect(BX + z0 * BW, BY, (z1 - z0) * BW, 12);
+    g.fillStyle = "#ffd86a"; g.fillRect(BX + pos * BW - 1, BY - 4, 3, 20);
+    if (msg) { g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(0, 50, W, 26); g.fillStyle = "#fff"; g.font = "bold 14px sans-serif"; g.fillText(msg, W / 2, 68); }
+    if (!ended || msg) requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+F78.slip = slip78;
+/** 偽札をどれだけまぜるか選ぶ（わかっている偽札があるときだけ） */
+function chooseMix78(n, go) {
+  const c = cash78();
+  const opts = [["本物だけで払う", 0], ["偽札を2割まぜる", .2], ["偽札を5割まぜる", .5], ["ぜんぶ偽札で払う", 1]].map(([l, r]) => [l, r ? Math.max(1, Math.round(n * r)) : 0]).filter(([, k], i, a) => k <= c.fk && (i === 0 || k !== a[i - 1][1]));
+  openModal("偽札をまぜる？", "", body => {
+    body.innerHTML = `<p class="mtext">${billTxt78(n)} を払う。あなたは偽札を <b>${c.fk}枚</b> 持っている（わかっている分）。</p>
+      <p class="mtext small">偽札を多くまぜるほど、バレやすくなるよ。本物だけで払っても、知らない偽札がまざっていることもある…</p>
+      <div class="list">${opts.map(([l, k], i) => `<button class="btn ${i ? "light" : ""}" type="button" data-mx78="${k}">${l}${k ? `（偽札${k}枚）` : ""}</button>`).join("")}</div>`;
+    body.querySelectorAll("[data-mx78]").forEach(b => b.onclick = () => { closeModal(); go(+b.dataset.mx78); });
+  });
+}
+/** 現金で払う。onDone(ok, d) */
+function payCash78(place, n, onDone, opt = {}) {
+  const c = cash78(); if (c.n < n) { toast(null, `現金が足りないよ（いま${c.n}枚）`); return; }
+  const go = kf => {
+    const d = drawCash78(n, kf), fakes = d.fu + d.fk;
+    if (!fakes) { onDone(true, d); return; }
+    const ratio = fakes / Math.max(1, n), q = d.fk ? (d.q * d.fk + .6 * d.fu) / fakes : .6;
+    const W = Math.max(.03, Math.min(.45, PLACE78[place][1] * (.55 + .45 * q) * (1 - .85 * ratio)));
+    slip78({ place, W, surprise: !d.fk, onEnd: ok => {
+      if (ok) { passPool78(fakes); world.stats.fakePass78 = (world.stats.fakePass78 || 0) + fakes; saveWorld(); onDone(true, d); return; }
+      putBack78(d, false); report78(d.origins); world.stats.fakeCaught78 = (world.stats.fakeCaught78 || 0) + fakes; saveWorld();
+      toast(null, `偽札が${fakes}枚見つかって、回収された…`);
+      if (place === "lounge") { onDone(false, d); return; }
+      interrogate78({ knowing: d.fk > 0, where: PLACE78[place][0], onEnd: () => onDone(false, d) });
+    } });
+  };
+  if (c.fk > 0 && !opt.noMix) chooseMix78(n, go); else go(0);
+}
+F78.pay = payCash78;
+// ---- 財布（スマホのアプリ） ----
+const qName78 = q => q < .45 ? "雑" : q < .7 ? "まあまあ" : q < .85 ? "よくできた" : "本物そっくり";
+function appraise78() {
+  const c = cash78(); const u = c.fu;
+  if (u) { c.q = (c.q * c.fk + .6 * u) / (c.fk + u); c.fk += u; c.fu = 0; saveWorld(); }
+  world.stats.loupe78 = (world.stats.loupe78 || 0) + 1;
+  return u;
+}
+function openWallet78(msg) {
+  openModal("財布", "", body => {
+    const draw = m => {
+      const c = cash78(), hasL = count("loupe78") > 0, crime = crimeTitle78();
+      body.innerHTML = `<div class="stat"><span>所持金（電子マネー）</span><b>${fmt(world.money)}</b><span>現金</span><b>${billTxt78(c.n)}（${fmt(c.n * BILL78)}分）</b>${c.fk ? `<span>うち偽札（わかっている分）</span><b>${c.fk}枚・出来「${qName78(c.q)}」</b>` : ""}</div>
+        ${m ? `<p class="mtext"><b>${esc(m)}</b></p>` : ""}
+        <p class="mtext small">現金は、信用金庫の「現金の窓口」で引き出したり預けたりできる。VIPルーム・十日屋の闇市・ラウンジのチップ・ポチ袋は現金だけ。現金の中には、知らないうちに偽札がまざっていることもある…${hasL ? "" : "（よろず屋の「鑑定ルーペ」があれば、いつでも調べられる）"}</p>
+        ${crime ? `<p class="note">いまは称号「${esc(crime)}」がついている…</p>` : ""}
+        <div class="row2">${hasL ? `<button class="btn" type="button" id="wl78l">ルーペで調べる</button>` : ""}<button class="btn light" type="button" id="wl78p" ${c.n ? "" : "disabled"}>ポチ袋を贈る</button></div>
+        <h4>札束で飾りを作る</h4><div class="list">${[["f_billfan78", 5], ["f_billpile78", 10]].map(([id, k]) => itemLi(id, `${billTxt78(k)}から作る家具`, `<button class="btn light" type="button" data-wf78="${id}" data-k="${k}" ${c.n >= k ? "" : "disabled"}>作る</button>`)).join("")}</div>`;
+      body.querySelector("#wl78l")?.addEventListener("click", () => { const u = appraise78(); se13("small"); draw(u ? `……偽札が${u}枚まざっていた！` : (cash78().fk ? "新しく見つかった偽札はなかった" : "ぜんぶ本物だった。ほっ")); });
+      body.querySelector("#wl78p").onclick = () => { closeModal(); F76.fromPhone = true; openFriends76(); };
+      body.querySelectorAll("[data-wf78]").forEach(b => b.onclick = () => {
+        const id = b.dataset.wf78, k = +b.dataset.k; if (cash78().n < k) return;
+        drawCash78(k, 0); if (!addItem(id, 1, true)) homeStore18(id, 1); world.stats.billDeco78 = (world.stats.billDeco78 || 0) + 1; saveWorld();
+        draw(`「${ITEMS[id].name}」ができた！ 家の中で飾れるよ`);
+      });
+    };
+    draw(msg);
+  });
+}
+F78.openWallet = openWallet78;
+F76.add({ id: "wallet", name: "財布", ch: "財", c: "#3a8a5a", open: () => openWallet78() });
+// ---- 信用金庫：現金の窓口 ----
+function openCashDesk78(note) {
+  openModal("信用金庫 現金の窓口", "shop", body => {
+    const c = cash78(), believed = c.n - c.fk;
+    body.innerHTML = staffSay13(charIcon13({ skin: "色白", hair: "ボブ", hairc: "黒", top: "スーツ", topc: "白" }), "いらっしゃいませ。現金の引き出しとお預け入れはこちらです。お預かりするお札は、すべて機械で確かめさせていただきますね")
+      + `<p class="mtext">所持金 <b>${fmt(world.money)}</b>・現金 <b>${billTxt78(c.n)}</b>${c.fk ? `（うち偽札だとわかっている分 ${c.fk}枚）` : ""}</p>${note ? `<p class="mtext"><b>${esc(note)}</b></p>` : ""}
+      <h4>引き出す（電子マネー → お札）</h4><div class="row2">${[1, 5, 10, 50].map(k => `<button class="btn light" type="button" data-wd78="${k}" ${world.money >= k * BILL78 && c.n + k <= 9999 ? "" : "disabled"}>${k}枚（${fmt(k * BILL78)}）</button>`).join("")}</div>
+      <h4>預ける（お札 → 電子マネー）</h4><div class="row2">${[1, 5, 10].map(k => `<button class="btn light" type="button" data-dp78="${k}" ${believed >= k ? "" : "disabled"}>${k}枚</button>`).join("")}<button class="btn" type="button" data-dp78="${believed}" ${believed ? "" : "disabled"}>本物だと思う分をぜんぶ（${believed}枚）</button></div>
+      ${c.fk ? `<div class="row2"><button class="btn light" type="button" id="dp78f">偽札もまぜて、ぜんぶ預ける（バレたら捕まる）</button></div>` : ""}
+      <p class="mtext small">預けたお札に知らない偽札がまざっていたら、銀行が回収して、届けてくれたお礼に1枚につき100Gくれる。わざと偽札をまぜると、見破られたときに捕まるよ。</p>`;
+    body.querySelectorAll("[data-wd78]").forEach(b => b.onclick = () => { const k = +b.dataset.wd78; if (world.money < k * BILL78) return; addMoney(-k * BILL78); addCash78(k); se13("small"); closeModal(); openCashDesk78(`${billTxt78(k)} を引き出した`); });
+    body.querySelectorAll("[data-dp78]").forEach(b => b.onclick = () => { closeModal(); deposit78(+b.dataset.dp78, 0); });
+    body.querySelector("#dp78f")?.addEventListener("click", () => { closeModal(); deposit78(cash78().n, cash78().fk); });
+  });
+}
+function deposit78(n, kf) {
+  const d = drawCash78(n, kf); if (!d.n) return;
+  let note = "";
+  if (d.fu) { addMoney(d.fu * 100); report78(d.origins); world.stats.fakeFound78 = (world.stats.fakeFound78 || 0) + d.fu; note = `偽札が${d.fu}枚まざっていたので、回収された（お礼 ${fmt(d.fu * 100)}）。`; }
+  addMoney(d.real * BILL78);
+  if (!d.fk) { closeModal(); openCashDesk78(`${note}${fmt(d.real * BILL78)} を預けた`); return; }
+  const W = Math.max(.03, Math.min(.45, PLACE78.bank[1] * (.55 + .45 * d.q) * (1 - .85 * d.fk / d.n)));
+  slip78({ place: "bank", W, surprise: false, onEnd: ok => {
+    if (ok) { addMoney(d.fk * BILL78); passPool78(d.fk); world.stats.fakePass78 = (world.stats.fakePass78 || 0) + d.fk; saveWorld(); openCashDesk78(`${note}${fmt((d.real + d.fk) * BILL78)} を預けた…（偽札もまぎれこんだ）`); return; }
+    toast(null, `偽札が${d.fk}枚見つかって、回収された…`); world.stats.fakeCaught78 = (world.stats.fakeCaught78 || 0) + d.fk; saveWorld();
+    interrogate78({ knowing: true, where: "信用金庫" });
+  } });
+}
+F78.desk = openCashDesk78;
+const counter78 = IMG.s78_counter;
+const _mi78 = makeInterior;
+makeInterior = function (kind) {
+  const m = _mi78(kind);
+  if (kind === "bank" && !m.interact["1,3"]) {
+    m.objs.push({ cv: counter78, x: 1 * TS, y: 3 * TS - 8, sortY: 4 * TS - 1 }); m.base[3][1] = m.base[3][2] = true;
+    const e = entity(1, 2, { skin: "色白", hair: "ボブ", hairc: "黒", top: "スーツ", topc: "白" }, "窓口係 シオリ", "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
+    for (const k of ["1,3", "2,3", "1,2"]) m.interact[k] = () => openCashDesk78();
+    m.labels.push({ x: 2 * TS, y: 2 * TS - 4, text: "現金の窓口" });
+  }
+  if (kind === "yami" && !m.interact["1,2"]) {
+    m.objs.push({ cv: IMG.s78_shelf, x: 1 * TS, y: 2 * TS - 14, sortY: 3 * TS - 1 }); m.base[2][1] = m.base[2][2] = true;
+    const e = entity(1, 3, { skin: "小麦色", hair: "モヒカン", hairc: "黒", top: "ジャケット", topc: "黒", bottom: "パンツ", bottomc: "黒", glasses: true }, "闇市の男 カゲ", "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
+    for (const k of ["1,2", "2,2", "1,3"]) m.interact[k] = () => openYami78();
+    m.labels.push({ x: 2 * TS, y: 2 * TS - 18, text: "闇市" });
+    m.objs.push({ cv: IMG.s78_washer, x: 8 * TS, y: 2 * TS - 14, sortY: 3 * TS - 1 }); m.base[2][8] = true;
+    m.interact["8,2"] = () => openLaunder78();
+    m.labels.push({ x: 8 * TS + 8, y: 2 * TS - 18, text: "洗浄" });
+  }
+  if (kind === "casino" && !m.interact["15,5"]) {
+    m.objs.push({ cv: IMG.s78_vip, x: 15 * TS, y: 5 * TS - 16, sortY: 6 * TS - 1 }); m.base[5][15] = true;
+    m.interact["15,5"] = () => openVip78();
+    m.labels.push({ x: 14 * TS + 10, y: 5 * TS - 20, text: "VIPルーム" });
+  }
+  return m;
+};
+// ---- 十日屋の闇市（現金だけ） ----
+const YAMI78 = [["plate78", 30, "偽札を刷るための版。家の中で手に持ってAで使う。持っていると、取り調べで見つかったら一発でアウト"], ["ink78", 3, "1つで偽札を10枚刷れる"]];
+function openYami78(note) {
+  openModal("十日屋の闇市", "yami", body => {
+    const c = cash78();
+    body.innerHTML = staffSay13(charIcon13({ skin: "小麦色", hair: "モヒカン", hairc: "黒", top: "ジャケット", topc: "黒", glasses: true }), "……ここは現金しか使えねえ。電子マネーなんて、足がつくからな")
+      + `<p class="mtext">現金 <b>${billTxt78(c.n)}</b>${note ? `<br><b>${esc(note)}</b>` : ""}</p>
+      <div class="list">${YAMI78.map(([id, p, d]) => itemLi(id, `${billTxt78(p)}・${d}`, `<button class="btn" type="button" data-ym78="${id}" data-p="${p}" ${c.n >= p ? "" : "disabled"}>買う</button>`)).join("")}</div>
+      <p class="mtext small">偽札は1日10枚まで。出来はクラフトの腕前で決まるよ。</p>`;
+    body.querySelectorAll("[data-ym78]").forEach(b => b.onclick = () => {
+      const id = b.dataset.ym78, p = +b.dataset.p; closeModal();
+      payCash78("yami", p, ok => { if (!ok) return; if (!addItem(id, 1, true)) homeStore18(id, 1); saveWorld(); openYami78(`「${ITEMS[id].name}」を買った`); });
+    });
+  });
+}
+// ---- 洗浄（十日屋）：手数料3割で偽札を本物に。たまに足がつく ----
+function openLaunder78(note) {
+  openModal("十日屋の洗浄", "yami", body => {
+    const c = cash78();
+    body.innerHTML = staffSay13(charIcon13({ skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "スーツ", topc: "黒", glasses: true }), "うちの「洗濯」は、よく落ちるぜ。手数料は3割。……まあ、たまに足がつくこともあるがな")
+      + `<p class="mtext">偽札（わかっている分） <b>${c.fk}枚</b>${note ? `<br><b>${esc(note)}</b>` : ""}</p>
+      <div class="row2">${[1, 5, 10].map(k => `<button class="btn light" type="button" data-ln78="${k}" ${c.fk >= k ? "" : "disabled"}>${k}枚 洗う</button>`).join("")}<button class="btn" type="button" data-ln78="${c.fk}" ${c.fk ? "" : "disabled"}>ぜんぶ洗う</button></div>
+      <p class="mtext small">洗った偽札は、手数料3割を引いた分だけ本物のお札になって返ってくる（10枚なら7枚）。足がつくと、その場で捕まるよ。知らない偽札は洗えない（ルーペで調べてから）。</p>`;
+    body.querySelectorAll("[data-ln78]").forEach(b => b.onclick = () => {
+      const k = +b.dataset.ln78; if (!(k > 0) || cash78().fk < k) return;
+      const d = drawCash78(k, k), back = Math.floor(k * .7);
+      passPool78(k); world.stats.launder78 = (world.stats.launder78 || 0) + k;
+      if (Math.random() < .1) { closeModal(); setCrime78("use"); saveWorld(); arrest78("十日屋に出入りしているところを見ていたよ。偽札を洗っていたね？ 言いのがれはできないぞ", () => jail78(6, "偽札使用")); return; }
+      addCash78(back); saveWorld(); closeModal(); openLaunder78(`${k}枚を洗って、本物のお札${back}枚になった`);
+    });
+  });
+}
+// ---- 偽札を刷る（家の中で、偽札の版を手に持ってA） ----
+function openPrint78() {
+  const c = cash78(); if (c.made.day !== world.day) c.made = { day: world.day, n: 0 };
+  const capLeft = Math.max(0, 10 - c.made.n), inkLeft = c.ink + count("ink78") * 10, q = Math.min(.95, .25 + skLv("craft") * .075);
+  openModal("偽札を刷る", "yami", body => {
+    body.innerHTML = `<p class="mtext">版に特殊なインクをのせて、そっと紙を押しあてる……。</p>
+      <div class="stat"><span>今日あと刷れる</span><b>${capLeft}枚</b><span>インクと紙</span><b>${inkLeft}枚分</b><span>いまの出来</span><b>${qName78(q)}（クラフトLv${skLv("craft")}）</b></div>
+      <div class="row2">${[1, 5, 10].map(k => `<button class="btn light" type="button" data-pr78="${k}" ${k <= capLeft && k <= inkLeft ? "" : "disabled"}>${k}枚 刷る</button>`).join("")}</div>
+      <p class="mtext small">刷った偽札は、財布の中で本物とまったく同じに見える。クラフトの腕前が高いほど本物そっくりになって、バレにくくなるよ。偽札の版は、持っているだけで取り調べのときにアウト。</p>`;
+    body.querySelectorAll("[data-pr78]").forEach(b => b.onclick = () => {
+      const k = +b.dataset.pr78, C2 = cash78();
+      while (C2.ink < k && count("ink78") > 0) { removeItem("ink78", 1); C2.ink += 10; }
+      if (C2.ink < k) return;
+      C2.ink -= k; C2.made.n += k; addCash78(k, { fk: k, q }); addXp("craft", k * 2); world.stats.print78 = (world.stats.print78 || 0) + k; saveWorld();
+      closeModal(); toast("s78_bill", `偽札を${k}枚刷った（出来：${qName78(q)}）`);
+    });
+  });
+}
+F78.print = openPrint78;
+// 手に持った物で：偽札の版（家の中）・鑑定ルーペ
+const _act78 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving) {
+    const sel = world.inv[world.sel];
+    if (sel && sel.id === "plate78") { if (map === room && !room.data.visitor) openPrint78(); else toast(null, "偽札は、自分の家の中でこっそり刷ろう"); return; }
+    if (sel && sel.id === "loupe78") { const u = appraise78(); openWallet78(u ? `……偽札が${u}枚まざっていた！` : "調べてみた。新しく見つかった偽札はなかった"); return; }
+    if (map === village && police78.x >= 0) { const [tx, ty] = front(); if (tx === police78.x && ty === police78.y) { openPolice78(); return; } }
+  }
+  return _act78.apply(this, arguments);
+};
+// ---- 巡査：村の大通りを見回り。作物どろぼうを見ていると捕まえる ----
+const police78 = entity(20, 8, POLICE78.cfg, POLICE78.name, "police"); police78.home = village; police78.speed = .16;
+const PATROL78 = { y: 8, x0: 3, x1: 60, wait: 12, v: .7 };
+function patrolPos78(t) {
+  const L = PATROL78.x1 - PATROL78.x0, leg = L / PATROL78.v, P = 2 * (leg + PATROL78.wait); let u = (t / 1000) % P;
+  if (u < PATROL78.wait) return [PATROL78.x0, 0]; u -= PATROL78.wait;
+  if (u < leg) return [PATROL78.x0 + Math.floor(u * PATROL78.v), 1]; u -= leg;
+  if (u < PATROL78.wait) return [PATROL78.x1, 0]; u -= PATROL78.wait;
+  return [PATROL78.x1 - Math.floor(u * PATROL78.v), -1];
+}
+function updatePolice78(dt) {
+  const e = police78; if (map !== village) return;
+  let [tx, d] = patrolPos78(Date.now()); if (F78.fixX != null) { tx = F78.fixX; d = 0; }
+  if (!e.moving) {
+    if (Math.abs(tx - e.x) > 3 || e.y !== PATROL78.y) placeAt(e, tx, PATROL78.y, d > 0 ? "right" : d < 0 ? "left" : "down");
+    else if (tx !== e.x) { const s = tx > e.x ? 1 : -1; e.dir = s > 0 ? "right" : "left"; e.fx = e.x + s; e.fy = e.y; e.moving = true; e.prog = 0; }
+    else if (!d) e.dir = "down";
+  }
+  updateEnt(e, dt);
+}
+const _uc78 = updateCollector; updateCollector = function (dt) { _uc78.apply(this, arguments); try { updatePolice78(dt); } catch (e) {} };
+const _ev78 = F6.entsVillage; F6.entsVillage = () => [..._ev78(), police78];
+const policeNear78 = () => map === village && Math.abs(player.x - police78.x) + Math.abs(player.y - police78.y) <= 6;
+F78.police = police78; F78.near = policeNear78; F78.fixX = null;
+function openPolice78() {
+  const c = cash78(), crime = crimeTitle78(), thief = typeof F69 !== "undefined" && F69.thief && F69.thief();
+  openModal("こもれび村警察", "", body => {
+    body.innerHTML = say78(crime || thief ? "……きみのことは、ちゃんと見ているからね" : ["こもれび村の平和は、ぼくが守る！", "最近、偽札が出回っているらしい。気をつけてね", "作物どろぼうは、見つけたらすぐ捕まえるよ"][rnd(3)])
+      + `<div class="list"><div class="li"><img src="${ASSETS.s78_bill}" alt=""><span class="nm">偽札を届ける<span class="sub2">偽札だとわかっている分（${c.fk}枚）を届けると、1枚につき100Gのお礼</span></span><span class="acts"><button class="btn" type="button" id="pl78f" ${c.fk ? "" : "disabled"}>届ける</button></span></div></div>
+      <h4>こもれび村のきまり</h4><ul class="mtext small"><li>作物どろぼう：巡査の近く（6マス）で盗むと、見つかって労働施設へ</li><li>偽札づくり：偽札の版を持っていると、取り調べで一発アウト</li><li>偽札使用：偽札だと知っていて使うと、労働施設へ。知らずに持っていたなら、偽札を回収するだけ</li><li>捕まると、3日間はずせない称号がつく</li></ul>`;
+    body.querySelector("#pl78f").onclick = () => {
+      const k = cash78().fk; if (!k) return; const d = drawCash78(k, k); report78(d.origins); addMoney(k * 100);
+      world.stats.fakeTurnIn78 = (world.stats.fakeTurnIn78 || 0) + k; saveWorld(); closeModal(); toast("s78_bill", `偽札を${k}枚届けた。お礼に ${fmt(k * 100)} もらった`);
+    };
+  });
+}
+F78.openPolice = openPolice78;
+// 作物どろぼう：盗む前に注意、見られていたら捕まる
+setInterval(() => {
+  if (!modalOpen || $("mtitle").textContent !== "こっそり…？") return;
+  const b = $("mbody"); if (!b || b.querySelector(".pl78w")) return;
+  if (policeNear78()) b.querySelector(".row2")?.insertAdjacentHTML("beforebegin", `<p class="note pl78w">……近くに巡査がいる！ 見られたら捕まるよ</p>`);
+}, 200);
+document.addEventListener("click", e => { if (e.target && e.target.id === "st69yes") F78.seen = policeNear78(); }, true);
+// ---- VIPルーム（現金だけ）：大小 ----
+const VIP_BETS78 = [1, 5, 10, 50];
+function openVip78(res) {
+  F78.vip = F78.vip || { bet: 1, pick: "big" };
+  const V = F78.vip;
+  openModal("VIPルーム", "dark", body => {
+    const c = cash78(); if (V.bet > Math.max(1, c.n)) V.bet = VIP_BETS78.filter(b => b <= c.n).pop() || 1;
+    const die = v => `<span class="die78">${["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][v] || "?"}</span>`;
+    body.innerHTML = `<p class="mtext">「ようこそ、VIPルームへ。ここは現金だけのテーブルでございます」</p>
+      <p class="mtext small">サイコロ3つの合計が 11〜17 なら「大」、4〜10 なら「小」。当たれば賭けたお札が2倍（ゾロ目のときは、大も小もはずれ）。「ゾロ目」に賭けて当たれば31倍。</p>
+      <div class="vip78">${res ? `<div class="dice78">${res.d.map(die).join("")}<b>${res.sum}${res.triple ? "（ゾロ目）" : res.sum >= 11 ? "（大）" : "（小）"}</b></div><p class="mtext"><b>${esc(res.text)}</b></p>` : `<div class="dice78">${die(0)}${die(0)}${die(0)}</div>`}</div>
+      <p class="mtext">現金 <b>${billTxt78(c.n)}</b></p>
+      <div class="row2"><span>賭ける：</span>${VIP_BETS78.map(b => `<button class="chip" type="button" data-vb78="${b}" aria-pressed="${V.bet === b}" ${c.n >= b ? "" : "disabled"}>${b}枚</button>`).join("")}</div>
+      <div class="row2"><span>どれに：</span>${[["big", "大"], ["small", "小"], ["triple", "ゾロ目"]].map(([k, l]) => `<button class="chip" type="button" data-vp78="${k}" aria-pressed="${V.pick === k}">${l}</button>`).join("")}</div>
+      <div class="row2"><button class="btn" type="button" id="vr78" ${c.n >= V.bet ? "" : "disabled"}>サイコロをふる</button></div>
+      ${c.n ? "" : `<p class="mtext small">現金がないよ。信用金庫の「現金の窓口」で引き出してから来てね</p>`}`;
+    body.querySelectorAll("[data-vb78]").forEach(b => b.onclick = () => { V.bet = +b.dataset.vb78; closeModal(); openVip78(res); });
+    body.querySelectorAll("[data-vp78]").forEach(b => b.onclick = () => { V.pick = b.dataset.vp78; closeModal(); openVip78(res); });
+    body.querySelector("#vr78").onclick = () => {
+      const bet = V.bet; if (cash78().n < bet) return;
+      if (K.betAllowed && !K.betAllowed(bet * BILL78)) { toast(null, K.betMsg()); return; }
+      closeModal();
+      payCash78("vip", bet, ok => {
+        if (!ok) return;
+        const d = [1 + rnd(6), 1 + rnd(6), 1 + rnd(6)], sum = d[0] + d[1] + d[2], triple = d[0] === d[1] && d[1] === d[2];
+        const win = V.pick === "triple" ? triple : !triple && (V.pick === "big" ? sum >= 11 : sum <= 10);
+        const pay = win ? bet * (V.pick === "triple" ? 31 : 2) : 0, net = (pay - bet) * BILL78;
+        world.stats.gambleNet += net; if (K.gambleTrack) K.gambleTrack(net); world.stats.lastGamble = world.day; if (net > world.stats.bigWin) world.stats.bigWin = net; world.stats.vip78 = (world.stats.vip78 || 0) + 1;
+        const show = k => { if (pay) addCash78(pay, { fu: k }); saveWorld(); se13(win ? "big" : "small"); openVip78({ d, sum, triple, text: win ? `当たり！ ${billTxt78(pay)} を受けとった` : `はずれ… ${billTxt78(bet)} を失った` }); };
+        if (pay) drawPool78(pay, show); else show(0);
+      });
+    };
+  });
+}
+F78.vipOpen = openVip78;
+// ---- ラウンジのチップ（お札で） ----
+setInterval(() => {
+  if (!modalOpen) return; const t = $("mtitle").textContent; if (!t.startsWith("ラウンジ 月下　")) return;
+  const b = $("mbody"); if (!b || b.querySelector("#tip78")) return;
+  const n = t.slice("ラウンジ 月下　".length); if (!HOSTS13[n]) return;
+  b.insertAdjacentHTML("beforeend", `<div class="row2"><button class="btn light" type="button" id="tip78" ${cash78().n ? "" : "disabled"}>お札でチップをわたす（1枚）</button></div>`);
+  b.querySelector("#tip78").onclick = () => {
+    closeModal();
+    payCash78("lounge", 1, ok => {
+      const st = lounge13()[n], T = cash78().tip; if (!T[n] || T[n].day !== world.day) T[n] = { day: world.day, k: 0 };
+      if (ok) { if (T[n].k < 2) { st.hearts = Math.min(10, st.hearts + 1); T[n].k++; } F7.notify(`${n}「えっ、チップ？ ……ありがとう、うれしい」${T[n].k <= 2 ? "（好感度が上がった）" : ""}`, null); }
+      else { st.hearts = Math.max(0, st.hearts - 1); F7.notify(`${n}「……これ、偽札よね？ 今回は黙っててあげる。でも、がっかり」（好感度が下がった）`, null); }
+      world.stats.tip78 = (world.stats.tip78 || 0) + 1; saveWorld();
+      try { hostTalk45(n, false); } catch (e) {}
+    });
+  };
+}, 300);
+// ---- ポチ袋（フレンドへ） ----
+F76.friendActs = e => e.rid ? `<button class="btn light" type="button" data-pc78="${esc(String(e.rid))}" ${cash78().n ? "" : "disabled"}>ポチ袋</button>` : "";
+F76.wireFriend = body => body.querySelectorAll("[data-pc78]").forEach(b => b.onclick = () => { const e = remotes.get(+b.dataset.pc78) || remotes.get(b.dataset.pc78); if (e) { closeModal(); openPochi78(e.rid, e.name); } });
+F78.pochiWait = new Map();
+function openPochi78(to, name) {
+  const c = cash78();
+  openModal(`${name}さんにポチ袋`, "", body => {
+    const ns = [1, 2, 3, 5, 10, 20, 50].filter(k => k <= Math.min(c.n, 200));
+    body.innerHTML = `<p class="mtext">お札を袋に入れて、ひとこと添えて贈ろう。いま現金 <b>${billTxt78(c.n)}</b></p>
+      <label class="mtext">枚数 <select id="pc78n">${ns.map(k => `<option value="${k}">${k}枚（${fmt(k * BILL78)}）</option>`).join("")}</select></label>
+      ${c.fk ? `<label class="mtext">偽札をまぜる <select id="pc78f">${Array.from({ length: Math.min(c.fk, 50) + 1 }, (_, k) => `<option value="${k}">${k ? k + "枚まぜる" : "まぜない"}</option>`).join("")}</select></label><p class="note">わざと偽札をまぜると、相手が見つけたときに通報されて、罰金と労働施設が待っている…</p>` : ""}
+      <input id="pc78m" type="text" maxlength="40" placeholder="ひとこと（なくてもOK）" autocomplete="off">
+      <div class="row2"><button class="btn" type="button" id="pc78go" ${ns.length ? "" : "disabled"}>贈る</button></div><p class="mtext small" id="pc78msg"></p>`;
+    const inp = body.querySelector("#pc78m"); inp.addEventListener("keydown", e => e.stopPropagation());
+    body.querySelector("#pc78go").onclick = () => {
+      if (!F8.connected) { body.querySelector("#pc78msg").textContent = "オンラインのときだけ贈れるよ"; return; }
+      const n = +body.querySelector("#pc78n").value, kf = Math.min(n, +(body.querySelector("#pc78f")?.value || 0));
+      const d = drawCash78(n, kf), rid = Math.random().toString(36).slice(2, 10);
+      F78.pochiWait.set(rid, { d, name, at: Date.now() });
+      send8({ type: "pochi", to: +to, n: d.n, f: d.fk, u: d.fu, msg: inp.value.trim().slice(0, 40), rid });
+      setTimeout(() => { const w = F78.pochiWait.get(rid); if (w) { F78.pochiWait.delete(rid); putBack78(w.d, true); toast(null, "ポチ袋が届かなかった…お札はもどしたよ"); } }, 8000);
+      closeModal(); toast("s78_bill", `${name}さんにポチ袋を贈った（${billTxt78(n)}）`);
+    };
+  });
+}
+F78.pochi = openPochi78;
+// ---- サーバーからの知らせ ----
+function onCashEv78(ev) {
+  if (!ev || typeof ev !== "object") return;
+  const n = Math.max(0, Math.min(200, Math.floor(+ev.n || 0))), name = String(ev.name || ev.by || "だれか").slice(0, 16);
+  if (ev.kind === "pochi" && n) {
+    const f = Math.max(0, Math.min(n, Math.floor(+ev.f || 0))), u = Math.max(0, Math.min(n - f, Math.floor(+ev.u || 0)));
+    addCash78(n, { fu: f + u, origin: String(Math.floor(+ev.from || 0)), of: f });
+    const msg = String(ev.msg || "").slice(0, 40);
+    F7.notify(`${name}さんからポチ袋が届いた：${billTxt78(n)}${msg ? `「${msg}」` : ""}`, "s78_bill");
+  } else if (ev.kind === "refund" && n) {
+    addMoney(n * BILL78); F7.notify(`${name}さんからもらった偽札（${n}枚）の分、${fmt(n * BILL78)} が返ってきた`, "s78_bill");
+  } else if (ev.kind === "police" && n) {
+    const fine = n * BILL78, pay = Math.min(world.money, fine); addMoney(-pay); setCrime78("use");
+    F7.pending.push({ kind: "custom", show: () => arrest78(`${esc(name)}さんから通報があった。きみが贈ったポチ袋に、偽札が${n}枚まざっていたそうだね。罰金として${fmt(pay)}を受けとったよ。……そして、労働施設でつとめてもらう`, () => jail78(5, "偽札使用")) });
+  }
+}
+const _h78 = handle8;
+handle8 = m => {
+  if (m && m.type === "cash77") { onCashEv78(m.ev); return; }
+  if (m && m.type === "fake77") { const f = F78.drawWait.get(String(m.rid || "")); if (f) f(m.k); return; }
+  if (m && m.type === "pochiOk") {
+    const w = F78.pochiWait.get(String(m.rid || "")); if (!w) return; F78.pochiWait.delete(String(m.rid));
+    if (!m.ok) { putBack78(w.d, true); toast(null, String(m.text || "贈れなかった").slice(0, 40)); }
+    else world.stats.pochi78 = (world.stats.pochi78 || 0) + 1;
+    return;
+  }
+  if (m && m.type === "farmSteal" && m.ok && F78.seen) {
+    F78.seen = false; _h78(m);
+    const t = String(m.t || ""); if (ITEMS[t] && count(t) > 0) removeItem(t, 1);
+    world.stats.caughtSteal78 = (world.stats.caughtSteal78 || 0) + 1; saveWorld();
+    F7.pending.push({ kind: "custom", show: () => arrest78("こらっ！ いま、ほかの人の作物を盗んだね。ちゃんと見ていたよ。盗んだ物は返してもらう", () => jail78(5, "作物どろぼう")) });
+    return;
+  }
+  _h78(m);
+  if (m && m.type === "welcome") { if (Array.isArray(m.cash77)) setTimeout(() => m.cash77.slice(0, 50).forEach(onCashEv78), 600); setTimeout(flushReport78, 2000); }
+};
+// ---- てびき ----
+GUIDE54.push(["現金と偽札", "s78_bill", `
+    <p>所持金（G）は村の電子マネー。これとは別に、<b>現金（1,000G札）</b>を持てる。スマホの「財布」で、いまの現金が見られる。</p><ul>
+    <li>信用金庫の「現金の窓口」で、電子マネーをお札に引き出したり、お札を預けたりできる</li>
+    <li>現金だけで使えるもの：カジノの<b>VIPルーム</b>（大小）、十日屋の<b>闇市</b>、ラウンジの<b>チップ</b>、フレンドへの<b>ポチ袋</b>、<b>札束かざり</b>（札束の山・札束の扇）</li>
+    <li><b>偽札</b>は、本物のお札とまったく同じに見える。知らないうちに財布にまざっていることもある（ポチ袋や、VIPルームの払い戻しなど）</li>
+    <li>よろず屋の<b>鑑定ルーペ</b>があれば、いつでも財布の中の偽札を調べられる。銀行に預けると、知らない偽札は回収されて、1枚100Gのお礼がもらえる</li>
+    <li>偽札を見つけたら：巡査に届ける（1枚100Gのお礼）／十日屋で洗う（手数料3割・たまに足がつく）／こっそり使う（会計ミニゲームで勝負）</li>
+    <li><b>偽札づくり</b>：闇市で「偽札の版」と「インクと紙」を買って、家の中で版を手に持ってA。1日10枚まで。クラフトの腕前が高いほど本物そっくり</li>
+    <li>偽札で払うときは、まぜる割合を選べる。多くまぜるほど、会計ミニゲームの緑のところがせまくなる</li></ul>`]);
+GUIDE54.push(["警察と牢獄", "", `
+    <p>村の大通りを、<b>巡査マモル</b>が見回っている。話しかけると、偽札を届けたり、きまりを聞いたりできる。</p><ul>
+    <li><b>作物どろぼう</b>：巡査の近く（6マス）で盗むと、見つかって労働施設へ（盗んだ作物は返す）</li>
+    <li><b>偽札</b>が見つかると取り調べ。持ち物と家を調べられて、偽札の版が出てきたら一発アウト（称号「偽札づくり」と「偽札使用」）</li>
+    <li>版がなければ「知っていて使ったか」を聞かれる。正直に「はい」と言うか、「いいえ」で知らなかったと言うか。知っていたのにうそをつくと、ばれることも…</li>
+    <li>知らずに持っていた偽札なら、回収されるだけで捕まらない</li>
+    <li>ポチ袋にわざとまぜた偽札が相手に見つかると、通報されて罰金と労働施設。相手にはその分が返金される</li>
+    <li>捕まると、3日間はずせない称号がつく。労働施設では、つとめ（岩砕き・荷物運び・仕分け）を終えると釈放。借金の返済にはならない</li></ul>`]);
+F78.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -15438,7 +16432,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

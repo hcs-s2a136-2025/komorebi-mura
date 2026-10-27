@@ -841,6 +841,15 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .tug57g i em { position: absolute; top: 0; bottom: 0; background: rgba(122, 224, 122, .25); border-left: 2px solid #7ae07a; border-right: 2px solid #7ae07a; z-index: 2; pointer-events: none; }
 #tug57btn { min-width: 60%; touch-action: none; user-select: none; }
 #tug57btn.on57 { filter: brightness(1.15); transform: translateY(1px); }
+/* 横画面など、高さがせまいとき：絵を左、ゲージとボタンを右に並べる（ゲージが画面の下にかくれないように） */
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .tug57 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "cv g1" "cv g2" "cv btn" "help help"; align-items: center; gap: 6px 14px; }
+  #tug57cv { grid-area: cv; width: 100%; max-height: calc(100dvh - 190px); object-fit: contain; justify-self: center; }
+  .tug57 > .tug57g:nth-of-type(1) { grid-area: g1; } .tug57 > .tug57g:nth-of-type(2) { grid-area: g2; }
+  .tug57g { width: 100%; }
+  #tug57btn { grid-area: btn; min-width: 0; width: 100%; padding-top: 14px; padding-bottom: 14px; }
+  .tug57 > .mtext.small { grid-area: help; margin: 0; font-size: .72rem; line-height: 1.35; }
+}
 
 /* v58 雪合戦 */
 .sw58hud { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: none; background: rgba(20, 30, 50, .78); color: #fff; padding: 4px 14px; border-radius: 14px; font-size: .9rem; white-space: nowrap; }
@@ -939,6 +948,41 @@ html, body { touch-action: manipulation; }
 .tall71 .li.tl71 { grid-template-columns: 1fr auto; padding: 4px 10px; }
 .tall71 .list .li.tl71 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tall71 .list .li.tl71 .acts { flex: none; }
+
+/* v74 カジノの番付 */
+.cr74tabs { display: flex; gap: 8px; margin-bottom: 6px; }
+.cr74 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cr74 section { background: rgba(255, 255, 255, .06); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.cr74 h4 { margin: 0 0 6px; font-size: .95rem; display: flex; align-items: baseline; gap: 6px; }
+.cr74 h4 small { font-size: .72rem; opacity: .7; font-weight: normal; }
+.cr74l { list-style: none; margin: 0; padding: 0; }
+.cr74l li { display: grid; grid-template-columns: 1.8em minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 4px 2px; border-bottom: 1px dashed rgba(255, 255, 255, .12); font-size: .86rem; }
+.cr74l li em { font-style: normal; text-align: center; font-weight: bold; opacity: .8; }
+.cr74l li:nth-child(1) em { color: #f8d860; } .cr74l li:nth-child(2) em { color: #d8dce8; } .cr74l li:nth-child(3) em { color: #e0a070; }
+.cr74l li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr74l li b.wi74 { color: #8ae08a; } .cr74l li b.lo74 { color: #ff9a9a; }
+.cr74l li.me74 { background: rgba(255, 216, 106, .14); border-radius: 6px; }
+.cr74me b { color: #ffd86a; }
+@media (max-width: 480px) { .cr74 { grid-template-columns: 1fr; } }
+
+/* v75 港の荷積みのバイト */
+.dk75 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#dk75cv { width: min(100%, 420px); aspect-ratio: 180 / 236; max-height: calc(100dvh - 260px); image-rendering: pixelated; border-radius: 8px; border: 2px solid #2a4a6a; touch-action: none; user-select: none; }
+.dk75.w75 { display: grid; grid-template-columns: auto minmax(8.5em, 1fr); grid-template-areas: "cv h" "cv help" "cv q"; align-items: center; column-gap: 12px; row-gap: 4px; }
+.dk75.w75 #dk75cv { grid-area: cv; aspect-ratio: 300 / 172; height: min(calc(100dvh - 205px), 320px); width: auto; max-width: 100%; max-height: none; }
+.dk75.w75 .dk75h { grid-area: h; flex-direction: column; gap: 2px; align-items: flex-start; }
+.dk75.w75 .dk75help { grid-area: help; text-align: left; }
+.dk75.w75 .row2 { grid-area: q; margin: 0; }
+.dk75h { display: flex; gap: 14px; font-size: .86rem; flex-wrap: wrap; justify-content: center; }
+.dk75h b { color: #ffd86a; }
+.dk75help { margin: 0; text-align: center; }
+.dk75t { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
+.dk75t span { display: flex; flex-direction: column; align-items: center; background: rgba(0, 0, 0, .06); border-radius: 8px; padding: 6px 4px; font-size: .8rem; }
+.dk75t b { font-size: .92rem; } .dk75t em { font-style: normal; color: #b8742e; font-weight: bold; }
+.dk75r { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.dk75r b { font-size: 1.05rem; } .dk75r em { font-style: normal; color: #ffd86a; font-weight: bold; font-size: 1.1rem; }
+.dk75r .small { font-size: .78rem; opacity: .8; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .dk75help { font-size: .72rem; line-height: 1.35; } .dk75 { gap: 4px; } }
 </style>
 
 <header>
@@ -1065,7 +1109,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.39.2";
+  const VER = "0.40.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5508,7 +5552,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.39.2";
+const CLIENT_VERSION = "0.40.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7582,6 +7626,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.40.0", date: "2026/10/27", title: "港の荷積みのバイトと、カジノの番付", items: [
+    "みなと町に「港の荷積みのバイト」ができた。港の親方イカリに話しかけると、荷台（8×8）に届いた荷物を詰めていくパズルで働ける。たて・よこ1列がそろうと出荷されて消える。荷物は30個",
+    "お給料は出荷した列の数で3段階（ふつう 300G・よくできた 600G＋野菜・完璧 1,000G＋野菜）。お給料が出るのは1日3回までで、それより後は練習になるよ。たまに、めずらしい家具「港の木箱」がもらえることも",
+    "荷積みで「完璧」を5回とると、称号「荷運びの名人」",
+    "カジノの奥に「番付表」ができた。カジノでの収益ランキングと損失ランキングを、全期間とこの1週間で見られる（オンラインのとき）。記録タブの「お金」からも開けるよ",
+    "横画面のスマホで、ヌシとの綱引きの「糸の張り」や「たぐりよせ」のゲージとボタンが画面の下にかくれていたのを直した",
+    "オンラインのときに、家の収納箱へ入るはずの物（持ち物がいっぱいのときの大会のごほうびなど）が、消えてしまうことがあったのを直した",
+  ] },
   { v: "0.39.1", date: "2026/10/27", title: "持ち物が消える不具合を直した", items: [
     "ゲームを開いたときに、自転車・スケートボード・枯れ防止剤・ビニールハウスのキットが「知らない物」としてあずかられて、持ち物から消えていたのを直した。あずかっていた物は、持ち物に返すよ（入りきらない分は家の収納箱へ）",
     "つないでいないあいだに自分の家に置いた家具が、家に入ったときに古いサーバーの並びで消えてしまうことがあったのを直した",
@@ -14579,6 +14631,353 @@ handle8 = m => {
   if (m && m.type === "welcome" && Array.isArray(m.adminGift)) for (const g of m.adminGift.slice(0, 50)) if (g && typeof g === "object") applyAdminGift73(g.items, g.text);
 };
 
+// =================== v74: カジノの番付（収益・損失のランキング。全期間と1週間） ===================
+var F74 = {};
+// 送っていない勝ち負けの合計（オフラインで遊んだ分も、つないだときに今日の分として送る）
+const crank74 = () => { const c = world.crank74 = world.crank74 && typeof world.crank74 === "object" ? world.crank74 : {}; c.pend = Number.isFinite(+c.pend) ? Math.floor(+c.pend) : 0; return c; };
+// カジノの勝ち負けは、ぜんぶ trackGamble を通る（スロット・BJ・丁半・チンチロ・麻雀・競どんぐり・くじ など）
+const _track74 = trackGamble;
+trackGamble = function (net) {
+  const r = _track74.apply(this, arguments);
+  const n = Math.floor(+net || 0); if (n) crank74().pend += n;
+  return r;
+};
+F74.wait = null; F74.sentTotal = null; F74.board = null; F74.tab = "all";
+F74.flush = force => {
+  if (!F8.connected) return;
+  const c = crank74(), total = Math.floor(+world.stats.gambleNet || 0);
+  if (!force && !c.pend && F74.sentTotal === total) return;
+  if (F74.wait && Date.now() - F74.wait.at < 8000) return;
+  const rid = Math.random().toString(36).slice(2, 10);
+  F74.wait = { rid, add: c.pend, total, at: Date.now() };
+  send8({ type: "crank", total, add: c.pend, rid });
+};
+setInterval(() => F74.flush(false), 10000);
+const _handle74 = handle8;
+handle8 = m => {
+  if (m && m.type === "crank") {
+    if (typeof m.ok === "string" && F74.wait && m.ok === F74.wait.rid) { crank74().pend -= F74.wait.add; F74.sentTotal = F74.wait.total; F74.wait = null; saveWorld(); }
+    if (m.board && typeof m.board === "object") { F74.board = m.board; if (F74.render) F74.render(); }
+    return;
+  }
+  _handle74(m);
+  if (m && m.type === "welcome") { F74.wait = null; F74.sentTotal = null; setTimeout(() => F74.flush(true), 1500); }
+};
+const sg74 = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${fmt(Math.abs(v))}`;
+F74.open = () => {
+  F74.board = null;
+  if (F8.connected) { F74.wait = null; F74.flush(true); setTimeout(() => send8({ type: "crank", get: true }), 300); }
+  openModal("こもれびパレス 番付表", "dark", body => {
+    F74.render = () => {
+      if (!body.isConnected) { F74.render = null; return; }
+      const B = F74.board, T = F74.tab, my = Math.floor(+world.stats.gambleNet || 0);
+      const list = (rows, lose) => rows && rows.length ? `<ol class="cr74l">${rows.map((r, i) => `<li class="${r.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(r.name)}</span><b class="${lose ? "lo74" : "wi74"}">${sg74(r.v)}</b></li>`).join("")}</ol>` : `<p class="mtext small">まだだれもいないよ</p>`;
+      const P = B && B[T], me = B && B.me;
+      const mine = me ? `<p class="mtext small cr74me">あなたの${T === "all" ? "全期間" : "この1週間"}の収支：<b>${sg74(me[T] || 0)}</b>${me[T + "Win"] ? `（収益 ${me[T + "Win"]}位）` : me[T + "Lose"] ? `（損失 ${me[T + "Lose"]}位）` : ""}</p>` : "";
+      const per = B && T === "week" && B.from ? `<p class="mtext small">${esc(String(B.from).slice(5).replace("-", "/"))}〜${esc(String(B.to).slice(5).replace("-", "/"))}（今日をふくむ7日間・日本時間）の勝ち負け</p>` : T === "all" ? `<p class="mtext small">はじめてからの、カジノでの勝ち負けの合計（記録タブの「ギャンブル収支」と同じ）</p>` : "";
+      body.innerHTML = `<div class="cr74tabs"><button class="chip" type="button" data-t74="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t74="week" aria-pressed="${T === "week"}">この1週間</button></div>
+        ${per}
+        ${!F8.connected ? `<p class="mtext">番付は、オンラインにつないでいるときに見られるよ。<br>いまのあなたの全期間の収支は <b>${sg74(my)}</b></p>`
+          : !B ? `<p class="mtext">番付を読みこんでいるよ…</p>`
+          : `<div class="cr74"><section><h4>収益ランキング<small>勝ち頭</small></h4>${list(P.win, false)}</section><section><h4>損失ランキング<small>負け頭</small></h4>${list(P.lose, true)}</section></div>${mine}`}
+        <p class="mtext small">スロット・BJ・丁半・チンチロ・麻雀・競どんぐり・くじなど、カジノの賭けの勝ち負けで決まるよ。遊びすぎには気をつけてね</p>
+        <div class="row2"><button class="btn" type="button" id="cr74ok">閉じる</button></div>`;
+      body.querySelectorAll("[data-t74]").forEach(b => b.onclick = () => { F74.tab = b.dataset.t74; F74.render(); });
+      body.querySelector("#cr74ok").onclick = closeModal;
+    };
+    F74.render();
+  }, () => { F74.render = null; });
+};
+// カジノの奥（チンチロのとなりの壁ぎわ）に番付表
+const banzuke74 = pix13(18, 30, (set, rect) => {
+  rect(0, 0, 18, 24, C13["#5a3a22"]); rect(1, 1, 16, 22, C13["#f4ead2"]); rect(1, 1, 16, 4, C13["#c83a3a"]);
+  for (const x of [4, 8, 12]) rect(x, 2, 2, 2, C13["#f8d860"]);
+  for (let y = 7; y < 22; y += 3) { rect(3, y, 5, 1, C13["#3a2a1a"]); rect(10, y, 5, 1, C13["#3a2a1a"]); }
+  rect(8, 6, 2, 16, C13["#c8b890"]);
+  rect(3, 24, 2, 6, C13["#5a3a22"]); rect(13, 24, 2, 6, C13["#5a3a22"]);
+});
+const _makeInterior74 = makeInterior;
+makeInterior = function (kind) {
+  const m = _makeInterior74(kind);
+  if (kind === "casino" && !m.interact["14,2"]) {
+    m.objs.push({ cv: banzuke74, x: 14 * TS - 1, y: 2 * TS - 14, sortY: 3 * TS - 1 }); m.base[2][14] = true;
+    m.interact["14,2"] = () => F74.open();
+    m.labels.push({ x: 14 * TS + 8, y: 2 * TS - 20, text: "番付表" });
+  }
+  return m;
+};
+// 記録タブの「お金」から開ける
+const _renderLog74 = renderLog;
+renderLog = function () {
+  const r = _renderLog74.apply(this, arguments);
+  try {
+    const box = $("logBody")?.querySelector(".opt .stat"); const opt = box && box.closest(".opt");
+    if (opt && !opt.querySelector("#cr74log")) { const d = document.createElement("div"); d.className = "row2"; d.innerHTML = `<button class="btn light" type="button" id="cr74log">カジノの番付（ランキング）を見る</button>`; opt.appendChild(d); d.querySelector("button").onclick = () => F74.open(); }
+  } catch {}
+  return r;
+};
+F74.ready = true;
+
+// =================== v75: 港の荷積みのバイト（荷台に木箱を詰めて出荷するパズル） ===================
+var F75 = {};
+const DOCK_N75 = 8, DOCK_PIECES75 = 30, DOCK_PAID75 = 3;
+// 段階ごとのお給料（スコアには比例させない）
+const DOCK_TIER75 = [
+  { name: "ふつう", lines: 0, pay: 300, veg: 0 },
+  { name: "よくできた", lines: 7, pay: 600, veg: 2 },
+  { name: "完璧", lines: 10, pay: 1000, veg: 4 },
+];
+const DOCK_TITLE75 = ["荷運びの名人", "荷積みのバイトで「完璧」を5回とる", () => (world.dock75?.perfect || 0) >= 5];
+GTITLES42.push(DOCK_TITLE75);
+TITLES.push([DOCK_TITLE75[0], DOCK_TITLE75[1], () => gotT42().includes(DOCK_TITLE75[0]) || DOCK_TITLE75[2]()]);
+const dock75 = () => { const d = world.dock75 = world.dock75 && typeof world.dock75 === "object" ? world.dock75 : {}; for (const k of ["day", "paid", "best", "perfect", "plays", "lines", "crates"]) d[k] = Number.isFinite(+d[k]) ? Math.floor(+d[k]) : (k === "day" ? -1 : 0); return d; };
+const paidLeft75 = () => { const d = dock75(); return d.day === world.day ? Math.max(0, DOCK_PAID75 - d.paid) : DOCK_PAID75; };
+// ---- 荷物の形（回せない。そのまま置く） ----
+const SHAPES75 = (() => {
+  const L = [];
+  const add = (w, cells) => L.push({ w, cells });
+  add(3, [[0, 0]]);
+  add(3, [[0, 0], [1, 0]]); add(3, [[0, 0], [0, 1]]);
+  add(2, [[0, 0], [1, 0], [2, 0]]); add(2, [[0, 0], [0, 1], [0, 2]]);
+  add(1, [[0, 0], [1, 0], [2, 0], [3, 0]]); add(1, [[0, 0], [0, 1], [0, 2], [0, 3]]);
+  add(3, [[0, 0], [1, 0], [0, 1], [1, 1]]);
+  for (const c of [[[0, 0], [1, 0], [0, 1]], [[0, 0], [1, 0], [1, 1]], [[0, 0], [0, 1], [1, 1]], [[1, 0], [0, 1], [1, 1]]]) add(1.4, c);
+  for (const c of [[[0, 0], [0, 1], [0, 2], [1, 2]], [[1, 0], [1, 1], [1, 2], [0, 2]], [[0, 0], [1, 0], [0, 1], [0, 2]], [[0, 0], [1, 0], [1, 1], [1, 2]],
+                   [[0, 0], [1, 0], [2, 0], [0, 1]], [[0, 0], [1, 0], [2, 0], [2, 1]], [[0, 0], [0, 1], [1, 1], [2, 1]], [[2, 0], [0, 1], [1, 1], [2, 1]]]) add(.55, c);
+  for (const c of [[[0, 0], [1, 0], [2, 0], [1, 1]], [[1, 0], [0, 1], [1, 1], [2, 1]], [[0, 0], [0, 1], [0, 2], [1, 1]], [[1, 0], [1, 1], [1, 2], [0, 1]]]) add(.6, c);
+  for (const c of [[[1, 0], [2, 0], [0, 1], [1, 1]], [[0, 0], [1, 0], [1, 1], [2, 1]], [[0, 0], [0, 1], [1, 1], [1, 2]], [[1, 0], [1, 1], [0, 1], [0, 2]]]) add(.45, c);
+  add(.8, [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]]); add(.8, [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2]]);
+  add(.5, [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2]]);
+  for (const s of L) { s.cw = Math.max(...s.cells.map(c => c[0])) + 1; s.ch = Math.max(...s.cells.map(c => c[1])) + 1; }
+  return L;
+})();
+// 荷物の種類（見た目だけ）
+const CARGO75 = [
+  { name: "木箱", c: "#b8824a", d: "#7a4e26", l: "#dcac72" },
+  { name: "みかん箱", c: "#f0a030", d: "#b86a10", l: "#ffd070" },
+  { name: "キャベツのかご", c: "#7ab848", d: "#4a7a26", l: "#b0e080" },
+  { name: "魚の箱", c: "#e8f0f8", d: "#5a8ac8", l: "#ffffff" },
+  { name: "ミルク缶", c: "#c8d0dc", d: "#7a8494", l: "#f0f4f8" },
+];
+function newGame75(rand) {
+  const R = rand || Math.random;
+  const pick = () => { const tot = SHAPES75.reduce((a, s) => a + s.w, 0); let r = R() * tot; for (const s of SHAPES75) if ((r -= s.w) < 0) return s; return SHAPES75[0]; };
+  const G = { grid: Array.from({ length: DOCK_N75 }, () => Array(DOCK_N75).fill(null)), tray: [], left: DOCK_PIECES75, lines: 0, score: 0, combo: 0, over: false, why: "", placed: 0, best1: 0 };
+  G.deal = () => { G.tray = []; for (let i = 0; i < 3 && G.left > 0; i++) { G.tray.push({ s: pick(), k: Math.floor(R() * CARGO75.length) }); G.left--; } };
+  G.fits = (s, x, y) => s.cells.every(([a, b]) => { const X = x + a, Y = y + b; return X >= 0 && Y >= 0 && X < DOCK_N75 && Y < DOCK_N75 && !G.grid[Y][X]; });
+  G.anyFit = s => { for (let y = 0; y <= DOCK_N75 - s.ch; y++) for (let x = 0; x <= DOCK_N75 - s.cw; x++) if (G.fits(s, x, y)) return true; return false; };
+  /** 置く。消えた列の数を返す（置けなければ -1） */
+  G.place = (i, x, y) => {
+    const p = G.tray[i]; if (!p || G.over || !G.fits(p.s, x, y)) return -1;
+    for (const [a, b] of p.s.cells) G.grid[y + b][x + a] = { k: p.k };
+    G.tray[i] = null; G.placed++; G.score += p.s.cells.length;
+    const rows = [], cols = [];
+    for (let r = 0; r < DOCK_N75; r++) if (G.grid[r].every(Boolean)) rows.push(r);
+    for (let c = 0; c < DOCK_N75; c++) if (G.grid.every(row => row[c])) cols.push(c);
+    const n = rows.length + cols.length, gone = [];
+    for (const r of rows) for (let c = 0; c < DOCK_N75; c++) gone.push([c, r]);
+    for (const c of cols) for (let r = 0; r < DOCK_N75; r++) gone.push([c, r]);
+    for (const [c, r] of gone) G.grid[r][c] = null;
+    if (n) { G.combo++; G.lines += n; G.score += n * 10 * n + (G.combo - 1) * 5; G.best1 = Math.max(G.best1, n); } else G.combo = 0;
+    G.lastGone = gone;
+    if (G.tray.every(t => !t)) { if (G.left > 0) G.deal(); }
+    const rest = G.tray.filter(Boolean);
+    if (!rest.length && G.left <= 0) { G.over = true; G.why = "done"; }
+    else if (rest.length && !rest.some(t => G.anyFit(t.s))) { G.over = true; G.why = "full"; }
+    return n;
+  };
+  G.deal();
+  return G;
+}
+F75.newGame = newGame75; F75.SHAPES = SHAPES75;
+const tierOf75 = lines => { let t = 0; DOCK_TIER75.forEach((d, i) => { if (lines >= d.lines) t = i; }); return t; };
+F75.tierOf = tierOf75;
+// ---- 絵 ----
+function crate75(g, x, y, c, k, alpha) {
+  const C = CARGO75[k] || CARGO75[0]; g.globalAlpha = alpha ?? 1;
+  g.fillStyle = C.d; g.fillRect(x, y, c, c);
+  g.fillStyle = C.c; g.fillRect(x + 1, y + 1, c - 2, c - 2);
+  g.fillStyle = C.l; g.fillRect(x + 1, y + 1, c - 2, Math.max(1, Math.round(c / 8)));
+  g.fillStyle = C.d;
+  if (k === 0 || k === 1) { for (const f of [.36, .66]) g.fillRect(x + 1, y + Math.round(c * f), c - 2, 1); if (k === 1 && c >= 14) { g.fillStyle = "#fff4d8"; g.fillRect(x + Math.round(c * .3), y + Math.round(c * .42), Math.round(c * .4), Math.round(c * .2)); } }
+  else if (k === 2) { for (let i = 0; i < 3; i++) g.fillRect(x + Math.round(c * (.25 + i * .25)), y + 2, 1, c - 4); g.fillStyle = "#a8e070"; g.beginPath(); g.arc(x + c / 2, y + c * .42, c * .22, 0, 7); g.fill(); }
+  else if (k === 3) { g.fillRect(x + 1, y + Math.round(c * .45), c - 2, Math.max(1, Math.round(c / 6))); }
+  else { g.fillStyle = C.d; g.fillRect(x + Math.round(c * .3), y + 2, Math.round(c * .4), 2); g.fillRect(x + Math.round(c * .2), y + Math.round(c * .5), Math.round(c * .6), 1); }
+  g.globalAlpha = 1;
+}
+F75.paidLeft = paidLeft75;
+function dockGame75() {
+  const wide = matchMedia("(max-height: 560px) and (min-aspect-ratio: 4/3)").matches;
+  const CELL = 20, BX = wide ? 6 : 10, BY = 6, BW = CELL * DOCK_N75;
+  const W = wide ? 300 : 180, H = wide ? 172 : 236;
+  const slots = [0, 1, 2].map(i => wide ? { x: 176, y: 6 + i * 54, w: 118, h: 52 } : { x: 6 + i * 56, y: 174, w: 56, h: 58 });
+  const D = dock75(); if (D.day !== world.day) { D.day = world.day; D.paid = 0; }
+  const paid = D.paid < DOCK_PAID75; if (paid) D.paid++; D.plays++; saveWorld();
+  const G = newGame75();
+  let drag = null, sel = -1, cur = [3, 3], fx = [], msg = "", msgT = 0, finished = false, stopped = false;
+  const say = (m, t = 1.4) => { msg = m; msgT = t; };
+  openModal(paid ? "港の荷積みのバイト" : "荷積みの練習（お給料なし）", "dark", body => {
+    body.innerHTML = `<div class="dk75 ${wide ? "w75" : ""}"><canvas id="dk75cv" width="${W}" height="${H}"></canvas>
+      <div class="dk75h"><span>のこり荷物 <b id="dk75n"></b></span><span>出荷 <b id="dk75l"></b>列</span><span>スコア <b id="dk75s"></b></span></div>
+      <p class="mtext small dk75help">${wide ? "右の荷物を荷台へドラッグ（タップでえらんでタップでもOK）。列がそろうと出荷。" : "下の荷物を荷台にドラッグ（タップでえらんで、置きたい所をタップでもOK）。たて・よこ1列がそろうと出荷されて消えるよ。荷物は回せない。"}<br>よくできた ${DOCK_TIER75[1].lines}列〜・完璧 ${DOCK_TIER75[2].lines}列〜${paid ? "" : "（今日のお給料はもうおしまい。練習だよ）"}</p>
+      <div class="row2"><button class="btn light" type="button" id="dk75q">ここで切り上げる</button></div></div>`;
+  }, () => finish(true));
+  const cv = $("dk75cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const toCv = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
+  const pieceAt = (px, py) => slots.findIndex((s, i) => G.tray[i] && px >= s.x && px < s.x + s.w && py >= s.y && py < s.y + s.h);
+  const cellOf = (p, px, py) => [Math.round((px - BX) / CELL - p.s.cw / 2), Math.round((py - BY) / CELL - p.s.ch / 2)];
+  const tryPlace = (i, x, y) => {
+    const n = G.place(i, x, y);
+    if (n < 0) { say("そこには置けないよ", 1); return false; }
+    se13("small");
+    if (n > 0) { for (const [c, r] of G.lastGone) fx.push({ c, r, t: .45 }); say(n >= 2 ? `まとめて出荷！ ×${n}` : "出荷！"); se13(n >= 2 ? "big" : "harvest"); }
+    sel = -1; hud();
+    if (G.over) setTimeout(() => finish(false), 700);
+    return true;
+  };
+  cv.addEventListener("pointerdown", e => {
+    if (G.over || finished) return; e.preventDefault();
+    const [px, py] = toCv(e), i = pieceAt(px, py);
+    if (i >= 0) { drag = { i, px, py, sx: px, sy: py, touch: e.pointerType !== "mouse", moved: false }; cv.setPointerCapture(e.pointerId); return; }
+    if (sel >= 0 && G.tray[sel] && px >= BX && px < BX + BW && py >= BY && py < BY + BW) {
+      const p = G.tray[sel], x = Math.floor((px - BX) / CELL) - Math.floor((p.s.cw - 1) / 2), y = Math.floor((py - BY) / CELL) - Math.floor((p.s.ch - 1) / 2);
+      tryPlace(sel, x, y);
+    }
+  });
+  cv.addEventListener("pointermove", e => { if (!drag) return; const [px, py] = toCv(e); drag.px = px; drag.py = py; if (Math.hypot(px - drag.sx, py - drag.sy) > 5) drag.moved = true; });
+  const up = e => {
+    if (!drag) return; const d = drag; drag = null;
+    if (!d.moved) { sel = sel === d.i ? -1 : d.i; return; }
+    const p = G.tray[d.i]; if (!p) return;
+    const [x, y] = cellOf(p, d.px, d.py - (d.touch ? CELL * 1.8 : 0));
+    if (G.fits(p.s, x, y)) tryPlace(d.i, x, y); else say("そこには置けないよ", 1);
+  };
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", () => { drag = null; });
+  // キーボード：1〜3でえらぶ・矢印で動かす・Enter/Space で置く
+  const onKey = e => {
+    if (finished || e.target?.tagName === "INPUT") return;
+    if (["1", "2", "3"].includes(e.key)) { const i = +e.key - 1; if (G.tray[i]) sel = i; e.preventDefault(); e.stopPropagation(); return; }
+    const mv = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (mv) { e.preventDefault(); e.stopPropagation(); if (sel < 0) sel = G.tray.findIndex(Boolean); cur = [Math.max(0, Math.min(DOCK_N75 - 1, cur[0] + mv[0])), Math.max(0, Math.min(DOCK_N75 - 1, cur[1] + mv[1]))]; return; }
+    if ((e.key === "Enter" || e.key === " ") && sel >= 0) { e.preventDefault(); e.stopPropagation(); tryPlace(sel, cur[0], cur[1]); }
+  };
+  addEventListener("keydown", onKey, true);
+  $("dk75q").onclick = () => { if (!finished) { G.over = true; G.why = "quit"; finish(false); } };
+  function hud() {
+    const n = $("dk75n"); if (n) n.textContent = G.left + G.tray.filter(Boolean).length;
+    const l = $("dk75l"); if (l) l.textContent = G.lines;
+    const sc = $("dk75s"); if (sc) sc.textContent = G.score;
+  }
+  hud();
+  function finish(closed) {
+    if (finished) return; finished = true; removeEventListener("keydown", onKey, true);
+    const t = tierOf75(G.lines), T = DOCK_TIER75[t], D = dock75();
+    D.lines += G.lines; const newBest = G.lines > D.best; if (newBest) D.best = G.lines;
+    const got = [];
+    if (paid) {
+      addMoney(T.pay); got.push(`お給料 ${fmt(T.pay)}`);
+      if (t === 2) D.perfect++;
+      if (T.veg) {
+        const veg = CROPS7.filter(k => ITEMS[k] && (CROP_INFO[k]?.seasons || []).includes(season())), pool = veg.length ? veg : CROPS7.filter(k => ITEMS[k]);
+        const id = pool[Math.floor(Math.random() * pool.length)];
+        if (id) { if (!addItem(id, T.veg, true)) homeStore18(id, T.veg); got.push(`おすそわけの${ITEMS[id].name}×${T.veg}`); }
+      }
+      if (Math.random() < [.01, .04, .12][t]) { if (!addItem("f_crate75", 1, true)) homeStore18("f_crate75", 1); D.crates++; got.push("めずらしい「港の木箱」"); }
+    }
+    saveWorld(); updateHud(true); checkTitles42();
+    const head = G.why === "full" ? "荷台がいっぱいになった" : G.why === "quit" || closed ? "ここで切り上げた" : "ぜんぶ積みおわった！";
+    const text = `${head}　出荷 ${G.lines}列・${T.name}${paid ? `（${got.join("、")}）` : "（練習）"}${newBest ? "　自己ベスト！" : ""}`;
+    if (closed || !$("dk75cv")) { F7.notify(`荷積みのバイト：${text}`, "f_crate75" in ITEMS ? "s75_crate" : null); return; }
+    const body = $("mbody");
+    body.innerHTML = `${staffSay13(charIcon13(IKARI75.cfg), t === 2 ? "見事だ！ こんなにきれいに積めるやつは、そうそういねえ" : t === 1 ? "おう、いい仕事だったな。助かったぜ" : G.lines ? "ごくろうさん。慣れりゃもっと積めるさ" : "はじめはそんなもんだ。また来な")}
+      <div class="dk75r"><b>${esc(head)}</b><span>出荷した列 <em>${G.lines}</em>（${T.name}）${newBest ? "・自己ベスト！" : ""}</span><span>スコア ${G.score}</span>
+      ${paid ? `<span>もらった物：${got.map(esc).join("、")}</span>` : `<span>練習なので、お給料はなし</span>`}
+      <span class="small">今日のお給料が出るのは あと${paidLeft75()}回・自己ベスト ${D.best}列・完璧 ${D.perfect}回</span></div>
+      <div class="row2"><button class="btn" type="button" id="dk75again">${paidLeft75() ? "もう一回はたらく" : "練習する"}</button><button class="btn light" type="button" id="dk75end">おわる</button></div>`;
+    $("dk75again").onclick = () => { closeModal(); dockGame75(); };
+    $("dk75end").onclick = closeModal;
+    if (t === 2) se13("big");
+  }
+  let last = performance.now();
+  const loop = now => {
+    if (stopped) return;
+    if (!cv.isConnected) { stopped = true; return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    msgT = Math.max(0, msgT - dt); fx = fx.filter(f => (f.t -= dt) > 0);
+    g.fillStyle = "#2a3a4a"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "rgba(255,255,255,.08)"; for (let x = 0; x < W; x += 12) g.fillRect(x, H - 3 + Math.round(Math.sin(now / 300 + x) * 1), 6, 1);
+    // 荷台
+    g.fillStyle = "#5a3a1e"; g.fillRect(BX - 4, BY - 4, BW + 8, BW + 8);
+    g.fillStyle = "#8a5a32"; g.fillRect(BX, BY, BW, BW);
+    g.fillStyle = "#7a4e2a"; for (let i = 1; i < DOCK_N75; i++) { g.fillRect(BX + i * CELL, BY, 1, BW); g.fillRect(BX, BY + i * CELL, BW, 1); }
+    for (let r = 0; r < DOCK_N75; r++) for (let c = 0; c < DOCK_N75; c++) if (G.grid[r][c]) crate75(g, BX + c * CELL, BY + r * CELL, CELL, G.grid[r][c].k);
+    for (const f of fx) { g.fillStyle = `rgba(255,240,170,${f.t / .45})`; g.fillRect(BX + f.c * CELL, BY + f.r * CELL, CELL, CELL); }
+    // 置く場所の影
+    const ghost = (p, x, y) => { const ok = G.fits(p.s, x, y); for (const [a, b] of p.s.cells) { const X = x + a, Y = y + b; if (X < 0 || Y < 0 || X >= DOCK_N75 || Y >= DOCK_N75) continue; g.fillStyle = ok ? "rgba(140,230,140,.45)" : "rgba(255,110,110,.4)"; g.fillRect(BX + X * CELL, BY + Y * CELL, CELL, CELL); } };
+    if (drag && drag.moved && G.tray[drag.i]) { const p = G.tray[drag.i], oy = drag.touch ? CELL * 1.8 : 0, [x, y] = cellOf(p, drag.px, drag.py - oy); ghost(p, x, y); }
+    else if (sel >= 0 && G.tray[sel] && !drag) ghost(G.tray[sel], cur[0], cur[1]);
+    // 手もとの荷物
+    slots.forEach((sl, i) => {
+      g.fillStyle = i === sel ? "rgba(255,216,106,.22)" : "rgba(255,255,255,.06)"; g.fillRect(sl.x + 2, sl.y + 2, sl.w - 4, sl.h - 4);
+      const p = G.tray[i]; if (!p || (drag && drag.i === i && drag.moved)) return;
+      const c = Math.min(11, Math.floor((sl.w - 10) / p.s.cw), Math.floor((sl.h - 10) / p.s.ch)), ox = sl.x + (sl.w - p.s.cw * c) / 2, oy = sl.y + (sl.h - p.s.ch * c) / 2;
+      const can = G.anyFit(p.s);
+      for (const [a, b] of p.s.cells) crate75(g, Math.round(ox + a * c), Math.round(oy + b * c), c, p.k, can ? 1 : .35);
+    });
+    if (drag && drag.moved && G.tray[drag.i]) { const p = G.tray[drag.i], oy = drag.touch ? CELL * 1.8 : 0; for (const [a, b] of p.s.cells) crate75(g, Math.round(drag.px - p.s.cw * CELL / 2 + a * CELL), Math.round(drag.py - oy - p.s.ch * CELL / 2 + b * CELL), CELL, p.k, .9); }
+    if (msgT > 0 && msg) { g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(BX, BY + BW / 2 - 12, BW, 22); g.fillStyle = "#ffe27a"; g.fillText(msg, BX + BW / 2, BY + BW / 2 + 4); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F75.G = G;
+}
+F75.play = dockGame75;
+// ---- 港の親方 イカリ ----
+const IKARI75 = { name: "港の親方 イカリ", cfg: { skin: "小麦色", hair: "ぼうず", hairc: "黒", top: "Tシャツ", topc: "白", bottom: "パンツ", bottomc: "青" } };
+function openDock75() {
+  const D = dock75(), left = paidLeft75();
+  openModal("港の荷積みのバイト", "shop", body => {
+    body.innerHTML = staffSay13(charIcon13(IKARI75.cfg), left ? "おう、手が空いてるなら荷積みを手伝ってくれねえか。荷台にきっちり詰めてくれりゃ、そのぶん給料もはずむぜ" : "今日はもう十分はたらいてくれた。給料は出ねえが、練習ならいつでもいいぞ")
+      + `<p class="mtext">荷台（8×8）に、届いた荷物を詰めていくパズル。たて・よこ1列がそろうと、その列が出荷されて消える。荷物は${DOCK_PIECES75}個。置ける場所がなくなるか、ぜんぶ積みおえたらおしまい。</p>
+      <div class="dk75t">${DOCK_TIER75.map(t => `<span><b>${t.name}</b>${t.lines ? `${t.lines}列〜` : "出荷0列〜"}<em>${fmt(t.pay)}${t.veg ? `＋野菜${t.veg}こ` : ""}</em></span>`).join("")}</div>
+      <p class="mtext small">お給料が出るのは1日${DOCK_PAID75}回まで（今日はあと${left}回）。はじめた時点で1回分になるよ。たまに、めずらしい「港の木箱」（家具）をもらえることも。<br>「完璧」を5回とると、称号「荷運びの名人」。自己ベスト ${D.best}列・完璧 ${D.perfect}回・はたらいた回数 ${D.plays}回</p>
+      <div class="row2"><button class="btn" type="button" id="dk75go">${left ? "はたらく" : "練習する（お給料なし）"}</button><button class="btn light" type="button" id="dk75no">やめておく</button></div>`;
+    body.querySelector("#dk75go").onclick = () => { closeModal(); dockGame75(); };
+    body.querySelector("#dk75no").onclick = closeModal;
+  });
+}
+F75.open = openDock75;
+// ---- めずらしい家具「港の木箱」 ----
+{
+  const cv = pix13(16, 16, (set, rect) => {
+    rect(0, 2, 16, 14, C13["#7a4e26"]); rect(1, 3, 14, 12, C13["#b8824a"]); rect(1, 3, 14, 2, C13["#dcac72"]);
+    for (const y of [7, 11]) rect(1, y, 14, 1, C13["#7a4e26"]);
+    rect(4, 6, 8, 5, C13["#f4ead2"]); rect(5, 7, 6, 1, C13["#2a5a9a"]); rect(5, 9, 4, 1, C13["#c83a3a"]);
+    for (const [x, y] of [[1, 3], [14, 3], [1, 14], [14, 14]]) set(x, y, C13["#3a2a1a"]);
+  });
+  IMG.s75_crate = cv; ASSETS.s75_crate = cv.toDataURL();
+  FURN.crate75 = { name: "港の木箱", w: 1, h: 1, oy: 0, price: 2500, img: "s75_crate" };
+  ITEMS.f_crate75 = { name: "港の木箱", icon: "s75_crate", furn: "crate75", price: 2500 };
+  const _hide75 = F7.hideFurn; F7.hideFurn = k => k === "crate75" || _hide75(k);
+}
+// ---- みなと町：荷車と親方 ----
+const cart75 = pix13(34, 24, (set, rect) => {
+  rect(0, 4, 34, 12, C13["#6a4022"]); rect(1, 5, 32, 10, C13["#a06a3a"]); for (const x of [8, 16, 24]) rect(x, 5, 1, 10, C13["#6a4022"]);
+  rect(3, 1, 8, 6, C13["#b8824a"]); rect(3, 1, 8, 1, C13["#dcac72"]); rect(13, 2, 6, 5, C13["#f0a030"]); rect(21, 0, 9, 7, C13["#7ab848"]); rect(23, 1, 5, 2, C13["#a8e070"]);
+  for (const x of [6, 26]) { rect(x - 3, 15, 7, 7, C13["#3a2a1a"]); rect(x - 1, 17, 3, 3, C13["#8a6a4a"]); }
+  rect(0, 9, 2, 2, C13["#3a2a1a"]);
+});
+const _makePort75 = makePort;
+makePort = function () {
+  const m = _makePort75();
+  m.objs.push({ cv: cart75, x: 10 * TS - 1, y: 8 * TS - 10, sortY: 9 * TS }); m.base[8][10] = m.base[8][11] = true;
+  const e = entity(9, 7, IKARI75.cfg, IKARI75.name, "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
+  for (const k of ["9,7", "10,8", "11,8"]) m.interact[k] = () => openDock75();
+  m.labels.push({ x: 11 * TS + 4, y: 7 * TS + 4, text: "荷積みのバイト" });
+  return m;
+};
+F75.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -15039,7 +15438,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), F72tile: e => tileAt72(e), F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

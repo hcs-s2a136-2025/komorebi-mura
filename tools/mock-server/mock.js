@@ -37,7 +37,7 @@ if (fs.existsSync(BJ_CP)) {
   process.on("exit", () => bj.kill()); process.on("SIGTERM", () => { bj.kill(); process.exit(0); }); process.on("SIGINT", () => { bj.kill(); process.exit(0); });
 }
 // みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
-let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPending = new Map();
+let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPending = new Map(), crank = new Map();
 // イベント（本物は EventService.java。ここでは同じ約束をメモリだけで）
 let ev = null; let evNext = 1; const evRewards = new Map(); // playerId -> [{id,name,rank,total,reward}]
 const evAct = e => ["easter", "halloween", "christmas"].includes(e.kind) ? "collect" : e.kind === "fishing" ? "fish" : e.scoring === "collect" ? "collect" : e.scoring === "none" ? "none" : "fish";
@@ -130,6 +130,7 @@ const server = http.createServer(async (req, res) => {
     for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evState", event: evNode(ev, -1) })); return json(res, 200, { id: ev.id }); }
   if (p === "/mock/event/end") { evFinish(); return json(res, 200, {}); }
   if (p === "/mock/adminpay") { const id = +u.searchParams.get("id"), money = +u.searchParams.get("money") || 0, text = u.searchParams.get("text") || ""; const on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "adminPay", money, text }))); else { const e = adminPending.get(id) || { money: 0 }; e.money += money; if (text) e.text = text; adminPending.set(id, e); } return json(res, 200, { now: on.length > 0 }); }
+  if (p === "/mock/crank") { const id = +u.searchParams.get("id"); if (u.searchParams.has("a")) { const e = crank.get(id) || { a: 0, d: {} }; e.a = +u.searchParams.get("a"); if (u.searchParams.has("day")) e.d[u.searchParams.get("day")] = +u.searchParams.get("w"); crank.set(id, e); } return json(res, 200, Object.fromEntries(crank)); }
   if (p === "/mock/admingift") { const id = +u.searchParams.get("id"), items = [{ id: u.searchParams.get("item") || "f_bed", n: Math.max(1, Math.min(999, +u.searchParams.get("n") || 1)) }], text = u.searchParams.get("text") || ""; const on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "adminGift", items, text }))); else { const l = giftPending.get(id) || []; l.push({ items, text }); giftPending.set(id, l); } return json(res, 200, { now: on.length > 0 }); }
   if (p === "/mock/event") return json(res, 200, ev ? { ...ev, scores: Object.fromEntries(ev.scores) } : null);
   if (p === "/mock/event/rewards") return json(res, 200, Object.fromEntries(evRewards));
@@ -180,6 +181,15 @@ wss.on("connection", s => {
       if (e.l === "cfarm") { const cur = shared.cfarm?.[e.k]; const o = cur ? +(cur.o || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const v = e.v; if (!(v.w >= 2 && v.h >= 2 && v.w <= 12 && v.h <= 12 && v.x >= 0 && v.y >= 0)) continue; e.v = { x: v.x | 0, y: v.y | 0, w: v.w | 0, h: v.h | 0, o: o > 0 ? o : s.pl.id, n: s.pl.name }; } }
       if (e.l === "houses") { const cur = shared.houses?.[e.k]; const o = cur ? +(cur.ownerId || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { if (typeof e.v !== "object") continue; e.v = { ...e.v, ownerId: o > 0 ? o : s.pl.id }; } }
       if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name }; } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
+    if (m.type === "crank") {
+      const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(+(process.env.CRANK_SHIFT || 0));
+      if ("total" in m || "add" in m) { const e = crank.get(s.pl.id) || { a: 0, d: {} }; if (typeof m.total === "number") e.a = m.total; const add = Math.floor(+m.add || 0); if (add) e.d[today] = (e.d[today] || 0) + add; crank.set(s.pl.id, e); s.send(JSON.stringify({ type: "crank", ok: String(m.rid || "") })); }
+      if (m.get) {
+        const from = jst(+(process.env.CRANK_SHIFT || 0) + 6), rows = accounts.filter(a => !a.deleted && crank.has(a.id)).map(a => { const e = crank.get(a.id); return { id: a.id, name: a.name, a: e.a, w: Object.entries(e.d).filter(([k]) => k >= from && k <= today).reduce((x, [, v]) => x + v, 0) }; });
+        const me = {}, part = (k, tag) => { const win = rows.filter(r => r[k] > 0).sort((x, y) => y[k] - x[k] || x.id - y.id), lose = rows.filter(r => r[k] < 0).sort((x, y) => x[k] - y[k] || x.id - y.id); me[tag] = (rows.find(r => r.id === s.pl.id) || {})[k] || 0; me[tag + "Win"] = win.findIndex(r => r.id === s.pl.id) + 1; me[tag + "Lose"] = lose.findIndex(r => r.id === s.pl.id) + 1; const f = l => l.slice(0, 10).map(r => ({ name: r.name, v: r[k], ...(r.id === s.pl.id ? { me: true } : {}) })); return { win: f(win), lose: f(lose) }; };
+        s.send(JSON.stringify({ type: "crank", board: { all: part("a", "all"), week: part("w", "week"), me, from, to: today } }));
+      }
+    }
     if (m.type === "jp") { const n = +m.add || 0; if (n > 0 && n <= 30000) { jackpot += n; bc({ type: "jp", pot: jackpot }); } }
     if (m.type === "jpWin") { const won = jackpot; jackpot = 3000; bc({ type: "jp", pot: jackpot, won, by: s.pl.id, winner: s.pl.name }); }
     if (m.type === "gift") { const to = +m.to, amt = +m.amount, rid = String(m.rid || "").slice(0, 20); const t = [...sessions].find(o => o.pl && o.pl.id === to);

@@ -379,6 +379,15 @@ canvas, img { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .tug57g i em { position: absolute; top: 0; bottom: 0; background: rgba(122, 224, 122, .25); border-left: 2px solid #7ae07a; border-right: 2px solid #7ae07a; z-index: 2; pointer-events: none; }
 #tug57btn { min-width: 60%; touch-action: none; user-select: none; }
 #tug57btn.on57 { filter: brightness(1.15); transform: translateY(1px); }
+/* 横画面など、高さがせまいとき：絵を左、ゲージとボタンを右に並べる（ゲージが画面の下にかくれないように） */
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .tug57 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "cv g1" "cv g2" "cv btn" "help help"; align-items: center; gap: 6px 14px; }
+  #tug57cv { grid-area: cv; width: 100%; max-height: calc(100dvh - 190px); object-fit: contain; justify-self: center; }
+  .tug57 > .tug57g:nth-of-type(1) { grid-area: g1; } .tug57 > .tug57g:nth-of-type(2) { grid-area: g2; }
+  .tug57g { width: 100%; }
+  #tug57btn { grid-area: btn; min-width: 0; width: 100%; padding-top: 14px; padding-bottom: 14px; }
+  .tug57 > .mtext.small { grid-area: help; margin: 0; font-size: .72rem; line-height: 1.35; }
+}
 
 /* v58 雪合戦 */
 .sw58hud { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: none; background: rgba(20, 30, 50, .78); color: #fff; padding: 4px 14px; border-radius: 14px; font-size: .9rem; white-space: nowrap; }
@@ -477,3 +486,38 @@ html, body { touch-action: manipulation; }
 .tall71 .li.tl71 { grid-template-columns: 1fr auto; padding: 4px 10px; }
 .tall71 .list .li.tl71 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .tall71 .list .li.tl71 .acts { flex: none; }
+
+/* v74 カジノの番付 */
+.cr74tabs { display: flex; gap: 8px; margin-bottom: 6px; }
+.cr74 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cr74 section { background: rgba(255, 255, 255, .06); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.cr74 h4 { margin: 0 0 6px; font-size: .95rem; display: flex; align-items: baseline; gap: 6px; }
+.cr74 h4 small { font-size: .72rem; opacity: .7; font-weight: normal; }
+.cr74l { list-style: none; margin: 0; padding: 0; }
+.cr74l li { display: grid; grid-template-columns: 1.8em minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 4px 2px; border-bottom: 1px dashed rgba(255, 255, 255, .12); font-size: .86rem; }
+.cr74l li em { font-style: normal; text-align: center; font-weight: bold; opacity: .8; }
+.cr74l li:nth-child(1) em { color: #f8d860; } .cr74l li:nth-child(2) em { color: #d8dce8; } .cr74l li:nth-child(3) em { color: #e0a070; }
+.cr74l li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr74l li b.wi74 { color: #8ae08a; } .cr74l li b.lo74 { color: #ff9a9a; }
+.cr74l li.me74 { background: rgba(255, 216, 106, .14); border-radius: 6px; }
+.cr74me b { color: #ffd86a; }
+@media (max-width: 480px) { .cr74 { grid-template-columns: 1fr; } }
+
+/* v75 港の荷積みのバイト */
+.dk75 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#dk75cv { width: min(100%, 420px); aspect-ratio: 180 / 236; max-height: calc(100dvh - 260px); image-rendering: pixelated; border-radius: 8px; border: 2px solid #2a4a6a; touch-action: none; user-select: none; }
+.dk75.w75 { display: grid; grid-template-columns: auto minmax(8.5em, 1fr); grid-template-areas: "cv h" "cv help" "cv q"; align-items: center; column-gap: 12px; row-gap: 4px; }
+.dk75.w75 #dk75cv { grid-area: cv; aspect-ratio: 300 / 172; height: min(calc(100dvh - 205px), 320px); width: auto; max-width: 100%; max-height: none; }
+.dk75.w75 .dk75h { grid-area: h; flex-direction: column; gap: 2px; align-items: flex-start; }
+.dk75.w75 .dk75help { grid-area: help; text-align: left; }
+.dk75.w75 .row2 { grid-area: q; margin: 0; }
+.dk75h { display: flex; gap: 14px; font-size: .86rem; flex-wrap: wrap; justify-content: center; }
+.dk75h b { color: #ffd86a; }
+.dk75help { margin: 0; text-align: center; }
+.dk75t { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
+.dk75t span { display: flex; flex-direction: column; align-items: center; background: rgba(0, 0, 0, .06); border-radius: 8px; padding: 6px 4px; font-size: .8rem; }
+.dk75t b { font-size: .92rem; } .dk75t em { font-style: normal; color: #b8742e; font-weight: bold; }
+.dk75r { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.dk75r b { font-size: 1.05rem; } .dk75r em { font-style: normal; color: #ffd86a; font-weight: bold; font-size: 1.1rem; }
+.dk75r .small { font-size: .78rem; opacity: .8; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .dk75help { font-size: .72rem; line-height: 1.35; } .dk75 { gap: 4px; } }

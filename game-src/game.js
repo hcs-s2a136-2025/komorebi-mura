@@ -3933,7 +3933,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.45.0";
+const CLIENT_VERSION = "0.45.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -13791,7 +13791,7 @@ for (const [k, n, nm] of [["50", 50, "札束の大きな山"], ["100", 100, "札
 const DECO78 = [["f_billfan78", 5], ["f_billpile78", 10], ["f_billpile50_78", 50], ["f_billpile100_78", 100], ["f_billpile500_78", 500]];
 const DECOK78 = Object.fromEntries(DECO78);
 { const _h = F7.hideFurn; F7.hideFurn = k => DECO78.some(([id]) => ITEMS[id].furn === k) || _h(k); }
-SHOP_STOCK.push("loupe78");
+SHOP_STOCK.push("loupe78"); SHOP_BASE.push("loupe78");
 // よろず屋では、闇市の物と札束かざりは買い取らない
 {
   const NOSELL = new Set(["plate78", "ink78", ...DECO78.map(([id]) => id)]);

@@ -3923,7 +3923,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.41.0";
+const CLIENT_VERSION = "0.41.1";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5997,6 +5997,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.41.1", date: "2026/10/27", title: "信用金庫に入ると画面が止まる不具合を直した", items: [
+    "信用金庫に入ると、新しい窓口係の絵が描けずに、画面が止まってしまう不具合を直した",
+  ] },
   { v: "0.41.0", date: "2026/10/27", title: "スマホと、現金・偽札・警察", items: [
     "スマホができた。上の「スマホ」ボタン（パソコンは J キー）で開ける。地図・チャット・フレンド・お便り・新聞・掲示板・証券・番付・称号・てびき・ゲーム・財布を、ここからまとめて使える",
     "スマホのカメラで、いまの画面を写真にとれる（この端末に12枚まで。「保存」で画像として残せる）",
@@ -13353,7 +13356,7 @@ const _makePort75 = makePort;
 makePort = function () {
   const m = _makePort75();
   m.objs.push({ cv: cart75, x: 10 * TS - 1, y: 8 * TS - 10, sortY: 9 * TS }); m.base[8][10] = m.base[8][11] = true;
-  const e = entity(9, 7, IKARI75.cfg, IKARI75.name, "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
+  const e = entity(9, 7, { ...DEFAULT, ...IKARI75.cfg }, IKARI75.name, "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
   for (const k of ["9,7", "10,8", "11,8"]) m.interact[k] = () => openDock75();
   m.labels.push({ x: 11 * TS + 4, y: 7 * TS + 4, text: "荷積みのバイト" });
   return m;
@@ -14024,13 +14027,13 @@ makeInterior = function (kind) {
   const m = _mi78(kind);
   if (kind === "bank" && !m.interact["1,3"]) {
     m.objs.push({ cv: counter78, x: 1 * TS, y: 3 * TS - 8, sortY: 4 * TS - 1 }); m.base[3][1] = m.base[3][2] = true;
-    const e = entity(1, 2, { skin: "色白", hair: "ボブ", hairc: "黒", top: "スーツ", topc: "白" }, "窓口係 シオリ", "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
+    const e = entity(1, 2, { ...DEFAULT, skin: "色白", hair: "ボブ", hairc: "黒", top: "スーツ", topc: "白", bottom: "スカート", bottomc: "黒" }, "窓口係 シオリ", "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
     for (const k of ["1,3", "2,3", "1,2"]) m.interact[k] = () => openCashDesk78();
-    m.labels.push({ x: 2 * TS, y: 2 * TS - 4, text: "現金の窓口" });
+    m.labels.push({ x: 2 * TS, y: 1 * TS + 2, text: "現金の窓口" });
   }
   if (kind === "yami" && !m.interact["1,2"]) {
     m.objs.push({ cv: IMG.s78_shelf, x: 1 * TS, y: 2 * TS - 14, sortY: 3 * TS - 1 }); m.base[2][1] = m.base[2][2] = true;
-    const e = entity(1, 3, { skin: "小麦色", hair: "モヒカン", hairc: "黒", top: "ジャケット", topc: "黒", bottom: "パンツ", bottomc: "黒", glasses: true }, "闇市の男 カゲ", "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
+    const e = entity(1, 3, { ...DEFAULT, skin: "小麦色", hair: "モヒカン", hairc: "黒", top: "ジャケット", topc: "黒", bottom: "パンツ", bottomc: "黒", glasses: true }, "闇市の男 カゲ", "staff"); e.dir = "down"; e.home = m; m.statics.push(e);
     for (const k of ["1,2", "2,2", "1,3"]) m.interact[k] = () => openYami78();
     m.labels.push({ x: 2 * TS, y: 2 * TS - 18, text: "闇市" });
     m.objs.push({ cv: IMG.s78_washer, x: 8 * TS, y: 2 * TS - 14, sortY: 3 * TS - 1 }); m.base[2][8] = true;
@@ -14107,7 +14110,7 @@ act = function () {
   return _act78.apply(this, arguments);
 };
 // ---- 巡査：村の大通りを見回り。作物どろぼうを見ていると捕まえる ----
-const police78 = entity(20, 8, POLICE78.cfg, POLICE78.name, "police"); police78.home = village; police78.speed = .16;
+const police78 = entity(20, 8, { ...DEFAULT, ...POLICE78.cfg }, POLICE78.name, "police"); police78.home = village; police78.speed = .16;
 const PATROL78 = { y: 8, x0: 3, x1: 60, wait: 12, v: .7 };
 function patrolPos78(t) {
   const L = PATROL78.x1 - PATROL78.x0, leg = L / PATROL78.v, P = 2 * (leg + PATROL78.wait); let u = (t / 1000) % P;

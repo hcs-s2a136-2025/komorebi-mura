@@ -117,18 +117,34 @@ const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://x"); const p = u.pathname;
   if (p === "/" ) { res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }); return res.end(fs.readFileSync(INDEX)); }
   if (p === "/api/version") return json(res, 200, { app: "komorebi", version: VERSION, online: sessions.size });
-  if (p === "/api/join" && req.method === "POST") {
-    const b = await body(req); if (b.inviteCode !== "komorebi") return json(res, 403, { message: "招待コードがちがいます" });
+  // こもれび村に新しく入るときだけ招待コード。友だちの村は村の合言葉だけ。新しい村は /api/village/new（こもれび村にいる人だけ）
+  const enterV = (res, V, b, founding) => {
     const name = (String(b.name || "").trim() || "たびびと").slice(0, 8), pass = String(b.pass || "").trim();
     if ([...pass].length < 4 || [...pass].length > 32) return json(res, 400, { message: "合言葉は4〜32文字で決めてね" });
-    const nv = String(b.newVillage || "").trim().slice(0, 10), vc = String(b.villageCode || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); let V = villages[0];
-    if (nv) { if (villages.length - 1 >= 10) return json(res, 409, { message: "村はもういっぱい（10こまで）。管理人に相談してね" }); if (villages.some(v => v.name === nv)) return json(res, 409, { message: "その名前の村はもうあるよ" }); V = { id: vid++, name: nv, code: newCode(), owner: null }; villages.push(V); }
-    else if (vc) { V = villages.find(v => v.id !== 1 && v.code === vc); if (!V) return json(res, 404, { message: "村の合言葉がちがうみたい" }); }
-    const same = nv ? [] : accounts.filter(a => a.name === name && !a.deleted && vOf(a) === V.id); let pl = same.find(a => a.pass === pass), created = false;
+    const same = founding ? [] : accounts.filter(a => a.name === name && !a.deleted && vOf(a) === V.id); let pl = same.find(a => a.pass === pass), created = false;
     if (!pl) { if (same.some(a => a.pass)) return json(res, 409, { message: "このなまえはもう使われているか、合言葉がちがいます" }); pl = same[0]; if (!pl) { pl = { id: pid++, name, village: V.id }; accounts.push(pl); created = true; } pl.pass = pass; }
-    if (nv) V.owner = pl.id;
+    if (founding) V.owner = pl.id;
     for (const [t, a] of players) if (a === pl) players.delete(t);
     const token = crypto.randomBytes(18).toString("base64url"); players.set(token, pl); return json(res, 200, { token, id: pl.id, name: pl.name, created, village: vView(V, pl) });
+  };
+  if (p === "/api/join" && req.method === "POST") {
+    const b = await body(req);
+    if (String(b.newVillage || "").trim()) return json(res, 400, { message: "新しい村は、こもれび村にいる人が、スマホの「村」アプリから作れるよ" });
+    const vc = String(b.villageCode || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); let V = villages[0];
+    if (vc) { V = villages.find(v => v.id !== 1 && v.code === vc); if (!V) return json(res, 404, { message: "村の合言葉がちがうみたい" }); }
+    else if (b.inviteCode !== "komorebi") return json(res, 403, { message: "招待コードがちがいます" });
+    return enterV(res, V, b, false);
+  }
+  if (p === "/api/village/new" && req.method === "POST") {
+    const me = players.get(req.headers["x-player-token"]); if (!me) return json(res, 401, { message: "もう一度参加してください" });
+    const b = await body(req);
+    if (vOf(me) !== 1) return json(res, 403, { message: "新しい村を作れるのは、こもれび村にいる人だけだよ" });
+    const nv = String(b.village || "").trim().slice(0, 10); if (!nv) return json(res, 400, { message: "村の名前を入れてね" });
+    if ([...String(b.pass || "").trim()].length < 4) return json(res, 400, { message: "合言葉は4〜32文字で決めてね" });
+    if (villages.length - 1 >= 10) return json(res, 409, { message: "村はもういっぱい（10こまで）。管理人に相談してね" });
+    if (villages.some(v => v.name === nv)) return json(res, 409, { message: "その名前の村はもうあるよ" });
+    const V = { id: vid++, name: nv, code: newCode(), owner: null }; villages.push(V);
+    return enterV(res, V, b, true);
   }
   if (p === "/mock/delplayer") { const id = +u.searchParams.get("id"); const a = accounts.find(x => x.id === id && !x.deleted); if (!a) return json(res, 404, {}); a.deleted = true; a.pass = null; saves.delete(id);
     for (const [t, x] of [...players]) if (x === a) { players.delete(t); deletedTokens.add(t); }

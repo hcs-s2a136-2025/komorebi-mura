@@ -20,17 +20,29 @@ async def main():
                 await pg.evaluate("window.__errs=[]; window.__komoErr=(e,w)=>window.__errs.push(`[${w}] ${(e&&e.message)||e}`)")
                 await pg.evaluate(f"document.body.classList.remove('menu'); {G}.world.tut.done=true; {G}.world.tips21=true; document.getElementById('tut').hidden=true;")
                 if await pg.is_visible('#jCode'):
-                    await join(pg, name, mode, code, vname)
+                    if mode == "new":
+                        await join(pg, name + "M", "main"); await found(pg, name, vname)
+                    else:
+                        await join(pg, name, mode, code, vname)
                 return pg, ctx
             async def join(pg, name, mode="main", code="", vname=""):
-                await pg.fill('#jCode','komorebi'); await pg.fill('#jName',name); await pg.fill('#jPass','pass1234')
                 await pg.check(f'[name=vj88][value={mode}]')
-                if mode=="code": await pg.fill('#vj88c', code)
-                if mode=="new": await pg.fill('#vj88n', vname)
+                if mode=="code":
+                    # 友だちの村は、村の合言葉だけ（招待コードの欄は出ない）
+                    if await pg.is_visible('#jCode'): errs.append('jCode visible in code mode')
+                    await pg.fill('#vj88c', code)
+                else: await pg.fill('#jCode','komorebi')
+                await pg.fill('#jName',name); await pg.fill('#jPass','pass1234')
                 await pg.click('#jGo'); await pg.wait_for_timeout(2200)
                 msg = await pg.evaluate("(document.getElementById('jMsg')&&document.getElementById('jMsg').isConnected&&!document.getElementById('modal').hidden)?document.getElementById('jMsg').textContent:''")
                 if not msg: await pg.evaluate(f"if (document.getElementById('mtitle').textContent!=='村') window.KOMO.closeModal(); {G}.F7.pending.length=0;")
                 return msg
+            async def found(pg, name, vname):
+                # 新しい村は、こもれび村にいる人が「村」アプリから作る
+                await pg.evaluate(f"window.KOMO.closeModal(); {G}.F7.pending.length=0; {G}.F88.open()"); await pg.wait_for_timeout(200)
+                await pg.fill('#vn88v', vname); await pg.fill('#vn88n', name); await pg.fill('#vn88p', 'pass1234')
+                await pg.click('#vn88go'); await pg.wait_for_timeout(2200)
+                return await pg.evaluate("(document.getElementById('vl88m')&&document.getElementById('vl88m').isConnected)?document.getElementById('vl88m').textContent:''")
             T = lambda pg: pg.evaluate("document.getElementById('mtitle').textContent")
             Bd = lambda pg: pg.evaluate("document.getElementById('mbody').innerText.replace(/\\n+/g,' / ')")
             A, actx = await page('りこ')
@@ -67,12 +79,18 @@ async def main():
             await D.evaluate("window.KOMO.closeModal()"); await D.evaluate("window.KOMO.openJoin ? 0 : 0")
             # ふつうの C は村長じゃない
             await C.click('#phoneBtn76'); await C.click('[data-app76=village]'); await C.wait_for_timeout(200)
-            print('C app has owner tools', await C.evaluate("!!document.getElementById('vl88nb')"))
+            print('C app has owner tools', await C.evaluate("!!document.getElementById('vl88nb')"), 'create form', await C.evaluate("!!document.getElementById('vn88go')"))
+            r = await C.evaluate("""fetch('/api/village/new',{method:'POST',headers:{'Content-Type':'application/json','X-Player-Token':JSON.parse(localStorage.getItem('komorebi-online')).token},body:JSON.stringify({village:'ずるい村',name:'ぬん',pass:'pass1234'})}).then(r=>r.status)""")
+            print('C (friend village) create via API ->', r)
+            r = await C.evaluate("""fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({inviteCode:'komorebi',name:'ふるい',pass:'pass1234',newVillage:'ふるい村'})}).then(r=>r.status)""")
+            print('old client newVillage join ->', r)
+            r = await C.evaluate("""fetch('/api/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({inviteCode:'',name:'ぬすみ',pass:'pass1234'})}).then(r=>r.status)""")
+            print('main village without invite ->', r)
             await C.evaluate("window.KOMO.closeModal()")
             # 同じ端末で村を切りかえ：A のお金を 99999 にして、新しい村で新しいキャラ → まっさら。りこ に戻ると 99999
             await A.evaluate(f"{G}.world.money = 99999; window.KOMO.saveWorld && window.KOMO.saveWorld()"); await A.evaluate(f"{G}.F14.push(true)"); await A.wait_for_timeout(800)
             await A.evaluate("document.body.classList.add('menu')"); await A.evaluate(f"{G}.F88.open()"); await A.wait_for_timeout(200); await A.click('#vl88j'); await A.wait_for_timeout(300)
-            msg = await join(A, 'りこ2', 'new', vname='ひだまり村')
+            await A.evaluate("window.KOMO.closeModal()"); msg = await found(A, 'りこ2', 'ひだまり村')
             await A.wait_for_timeout(1500)
             print('A2', msg, await A.evaluate(f"JSON.stringify({G}.F88.v)"), 'money', await A.evaluate(f"{G}.world.money"))
             await A.evaluate("window.KOMO.closeModal()"); await A.evaluate(f"{G}.F88.open()"); await A.wait_for_timeout(200); await A.click('#vl88j'); await A.wait_for_timeout(300)

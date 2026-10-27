@@ -52,12 +52,16 @@ public class ApiController {
         this.villages = villages;
     }
 
-    /** villageCode：入りたい村の合言葉（こもれび村なら空）。newVillage：新しい村を作るときの村の名前 */
+    /** villageCode：入りたい村の合言葉（こもれび村なら空。合言葉があれば招待コードはいらない）。newVillage：古い版のゲーム用（いまは村を作れない） */
     public record JoinRequest(@Size(max = 64) String inviteCode, @Size(max = 32) String name, @Size(max = 64) String pass,
                               @Size(max = 20) String villageCode, @Size(max = 30) String newVillage) {
     }
 
     public record VillageNameRequest(@NotBlank @Size(max = 30) String name) {
+    }
+
+    /** 新しい村を作る：村の名前と、その村で使うキャラクターのなまえと合言葉 */
+    public record FoundRequest(@NotBlank @Size(max = 30) String village, @Size(max = 32) String name, @Size(max = 64) String pass) {
     }
 
     public record NameRequest(@NotBlank @Size(max = 32) String name) {
@@ -82,7 +86,6 @@ public class ApiController {
         // Cloudflare のトンネル経由だと、みんな同じ住所に見えるので、元の住所のヘッダーがあればそれを使う
         String ip = http.getHeader("CF-Connecting-IP");
         limiter.check("join:" + (ip != null && !ip.isBlank() ? ip.strip() : http.getRemoteAddr()), 20, 60 * 60 * 1000L);
-        if (req.newVillage() != null && !req.newVillage().isBlank()) limiter.check("village:" + (ip != null && !ip.isBlank() ? ip.strip() : http.getRemoteAddr()), 3, 24 * 60 * 60 * 1000L);
         PlayerService.Joined j = players.join(req.inviteCode(), req.name(), req.pass(), req.villageCode(), req.newVillage());
         return Map.of("token", j.token(), "id", j.player().getId(), "name", j.player().getName(), "created", j.created(), "village", villageView(j.village(), j.player()));
     }
@@ -104,6 +107,17 @@ public class ApiController {
         if (!v.main() && v.id() == p.getVillageId()) m.put("code", v.code());
         m.put("owner", v.ownerId() != null && v.ownerId().equals(p.getId()));
         return m;
+    }
+
+    /** 新しい村を作る（こもれび村にいる人だけ）。作った人は、その村の新しいキャラクターとして村長になる */
+    @PostMapping("/village/new")
+    public Map<String, Object> found(@RequestHeader(TOKEN) String token, @Valid @RequestBody FoundRequest req, jakarta.servlet.http.HttpServletRequest http) {
+        Player me = players.require(token);
+        String ip = http.getHeader("CF-Connecting-IP");
+        limiter.check("village:" + (ip != null && !ip.isBlank() ? ip.strip() : http.getRemoteAddr()), 3, 24 * 60 * 60 * 1000L);
+        limiter.check("villageBy:" + me.getId(), 2, 24 * 60 * 60 * 1000L);
+        PlayerService.Joined j = players.found(me, req.village(), req.name(), req.pass());
+        return Map.of("token", j.token(), "id", j.player().getId(), "name", j.player().getName(), "created", j.created(), "village", villageView(j.village(), j.player()));
     }
 
     /** 村長：村の名前を変える */

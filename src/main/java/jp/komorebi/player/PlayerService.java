@@ -51,23 +51,48 @@ public class PlayerService {
     }
 
     /**
-     * 参加する。villageCode があればその村に、newVillage（村の名前）があれば新しい村を作ってその村長として、どちらもなければこもれび村に。
+     * 参加する。villageCode（村の合言葉）があればその村に、なければこもれび村に。
+     * こもれび村に入るときだけ招待コードがいる。友だちの村は、村の合言葉だけで入れる（招待コードを人に教えなくていいように）。
+     * 新しい村は、ここでは作れない（こもれび村にいる人が {@link #found} で作る）。
      * 同じなまえと合言葉なら、その村の前のキャラクターに戻る（村がちがえば別のキャラクター）。
      */
     @Transactional
     public Joined join(String inviteCode, String name, String pass, String villageCode, String newVillage) {
-        byte[] expected = props.inviteCode().getBytes(StandardCharsets.UTF_8);
-        byte[] given = (inviteCode == null ? "" : inviteCode.trim()).getBytes(StandardCharsets.UTF_8);
-        if (!MessageDigest.isEqual(expected, given)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "招待コードがちがいます");
+        if (newVillage != null && !newVillage.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "新しい村は、こもれび村にいる人が、スマホの「村」アプリから作れるよ");
+        }
+        VillageService.Village v;
+        if (villageCode != null && !villageCode.isBlank()) {
+            v = villages.byCode(villageCode).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "村の合言葉がちがうみたい"));
+        } else {
+            byte[] expected = props.inviteCode().getBytes(StandardCharsets.UTF_8);
+            byte[] given = (inviteCode == null ? "" : inviteCode.trim()).getBytes(StandardCharsets.UTF_8);
+            if (!MessageDigest.isEqual(expected, given)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "招待コードがちがいます");
+            }
+            v = villages.find(Villages.MAIN).orElseThrow();
+        }
+        return enter(v, name, pass, false);
+    }
+
+    /**
+     * 新しい村を作る。作れるのは、こもれび村に住んでいる人だけ（founder）。
+     * 作った人は、その村に新しいキャラクター（name・pass）を作って村長になる。
+     */
+    @Transactional
+    public Joined found(Player founder, String villageName, String name, String pass) {
+        if (founder == null || founder.getVillageId() != Villages.MAIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "新しい村を作れるのは、こもれび村にいる人だけだよ");
         }
         String n = cleanName(name);
+        checkPass(pass);
+        VillageService.Village v = villages.create(villageName);
+        return enter(v, n, pass, true);
+    }
+
+    private Joined enter(VillageService.Village v, String name, String pass, boolean founding) {
+        String n = cleanName(name);
         String pw = checkPass(pass);
-        VillageService.Village v;
-        boolean founding = newVillage != null && !newVillage.isBlank();
-        if (founding) v = villages.create(newVillage);
-        else if (villageCode != null && !villageCode.isBlank()) v = villages.byCode(villageCode).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "村の合言葉がちがうみたい"));
-        else v = villages.find(Villages.MAIN).orElseThrow();
         List<Player> same = founding ? List.of() : players.findByNameAndVillageIdAndDeletedAtIsNullOrderByLastSeenDesc(n, v.id());
         Player p = null;
         for (Player c : same) if (c.hasPass() && encoder.matches(pw, c.getPassHash())) { p = c; break; }

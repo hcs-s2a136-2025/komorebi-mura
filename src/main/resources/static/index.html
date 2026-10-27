@@ -1218,7 +1218,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.46.0";
+  const VER = "0.47.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5673,7 +5673,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.46.0";
+const CLIENT_VERSION = "0.47.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7751,6 +7751,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.47.0", date: "2026/10/27", title: "友だちの村は、村の合言葉だけで入れるように", items: [
+    "友だちの村には、村の合言葉だけで入れるようになった（招待コードはいらない）。招待コードは、こもれび村に新しく入るときだけ使うよ",
+    "新しい村は、こもれび村にいる人が、スマホの「村」アプリの「新しい村を作る」から作るようになった。村の名前と、新しい村でのなまえ・合言葉を決めてね",
+  ] },
   { v: "0.46.0", date: "2026/10/27", title: "自分たちだけの村を作れるようになった", items: [
     "参加の画面で「新しい村を作る」を選ぶと、自分たちだけの村を作れる。作った人が村長。村はこもれび村のほかに10こまで",
     "できた村には「村の合言葉」（6文字）がある。友だちは参加の画面で「友だちの村」を選んで合言葉を入れると、その村に入れる",
@@ -17333,53 +17337,57 @@ handle8 = m => {
   }
 };
 // ---- 参加の画面に「どの村に入るか」を足す ----
+// こもれび村に新しく入るときだけ招待コードがいる。友だちの村は、村の合言葉だけで入れる。新しい村は、こもれび村にいる人が「村」アプリから作る
+const joinErr88 = (e, mode) => e.status === 403 ? (mode === "code" ? (e.message || "入れなかった…") : "招待コードがちがうみたい。もう一度確かめてね") : e.status === 404 ? "村の合言葉がちがうみたい。もう一度確かめてね"
+  : e.status === 409 ? (e.message && !/なまえ|合言葉がちがいます/.test(e.message) ? e.message : "このなまえはもう使われているか、合言葉がちがうみたい")
+  : e.status === 400 ? (e.message || "入力を確かめてね") : e.status === 429 ? "少し時間をおいてから、もう一度ためしてね" : "つなげなかった…電波を確かめて、もう一度ためしてね";
+// 新しいキャラクター（r）に切りかえる：いまの接続を切って、つなぎなおす
+function switchTo88(r) {
+  const prevId = cloud14 && cloud14.id;
+  F8.disconnect();
+  onl = { token: r.token, id: r.id, name: r.name, village: r.village || null }; store.set(ON_KEY, onl); cloudFor14 = null;
+  // この端末で前に別のキャラクターを使っていて、新しく作ったキャラクターなら、まっさらから
+  if (r.created && prevId && prevId !== r.id) loadSave({ world: defaultWorld(), player: { cfg, name: r.name } }, "別の村のキャラクターに切りかえる前（この端末）");
+  nameEl.value = r.name; changed();
+  if (r.village) applyVillage88(r.village);
+  stop8 = false;
+  connect8(); refreshUnread(); setStatus();
+}
+F88.switchTo = switchTo88;
+const pushNow88 = async () => { try { if (onl.token && onl.id && cloudReady14) await cloudPush14(true); } catch (e) {} };
 const _openJoin88 = openJoin;
 openJoin = function (after) {
   _openJoin88(after);
   const body = $("mbody"), msg = body && body.querySelector("#jMsg"); if (!msg || body.querySelector(".vj88")) return;
   const pv = onl.village && !onl.village.main ? onl.village : null;
   msg.insertAdjacentHTML("beforebegin", `<div class="vj88"><span class="lbl">どの村に入る？</span>
-    <div class="vj88r"><label><input type="radio" name="vj88" value="main" ${pv ? "" : "checked"}> こもれび村</label><label><input type="radio" name="vj88" value="code" ${pv ? "checked" : ""}> 友だちの村（村の合言葉）</label><label><input type="radio" name="vj88" value="new"> 新しい村を作る</label></div>
-    <div id="vj88code" ${pv ? "" : "hidden"}><label class="lbl" for="vj88c">村の合言葉（6文字）</label><input id="vj88c" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" value="${esc(pv && pv.code ? pv.code : "")}"></div>
-    <div id="vj88new" hidden><label class="lbl" for="vj88n">村の名前（10文字まで）</label><input id="vj88n" type="text" maxlength="10" autocomplete="off">
-      <p class="note">作った人が村長になるよ。できた村の「村の合言葉」を友だちに教えると、その村に入れる。村ごとに、別のキャラクターになるよ（持ち物やお金は村ごと）。</p></div></div>`);
+    <div class="vj88r"><label><input type="radio" name="vj88" value="main" ${pv ? "" : "checked"}> こもれび村</label><label><input type="radio" name="vj88" value="code" ${pv ? "checked" : ""}> 友だちの村（村の合言葉）</label></div>
+    <div id="vj88code" ${pv ? "" : "hidden"}><label class="lbl" for="vj88c">村の合言葉（6文字）</label><input id="vj88c" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" value="${esc(pv && pv.code ? pv.code : "")}">
+      <p class="note">友だちの村は、村の合言葉だけで入れるよ（招待コードはいらない）。村ごとに、別のキャラクターになるよ（持ち物やお金は村ごと）。</p></div>
+    <p class="note" id="vj88main">新しい村は、こもれび村にいる人が、スマホの「村」アプリから作れるよ。</p></div>`);
   const q = s => body.querySelector(s);
-  const sync = () => { const v = (body.querySelector("[name=vj88]:checked") || {}).value; q("#vj88code").hidden = v !== "code"; q("#vj88new").hidden = v !== "new"; };
-  body.querySelectorAll("[name=vj88]").forEach(r => r.onchange = sync);
-  for (const id of ["#vj88c", "#vj88n"]) q(id).addEventListener("keydown", e => e.stopPropagation());
+  const inv = [q("#jCode"), q('label[for="jCode"]')].filter(Boolean), intro = body.querySelector("p.mtext"), introH = intro ? intro.innerHTML : "";
+  const sync = () => { const v = (body.querySelector("[name=vj88]:checked") || {}).value; q("#vj88code").hidden = v !== "code"; q("#vj88main").hidden = v === "code"; inv.forEach(x => x.hidden = v === "code");
+    if (intro) intro.innerHTML = v === "code" ? introH.replace("招待コードと、", "") : introH; };
+  body.querySelectorAll("[name=vj88]").forEach(r => r.onchange = sync); sync();
+  q("#vj88c").addEventListener("keydown", e => e.stopPropagation());
   // 前の「参加する」をおきかえる（Enter で前のが動かないように、合言葉の欄も作りなおす）
   const oldPass = q("#jPass"), pass = oldPass.cloneNode(true); oldPass.replaceWith(pass);
   const go = async () => {
     const mode = (body.querySelector("[name=vj88]:checked") || {}).value || "main";
     const name = q("#jName").value.trim() || myName(), pw = pass.value;
-    const code = mode === "code" ? q("#vj88c").value.trim() : "", vname = mode === "new" ? q("#vj88n").value.trim() : "";
+    const code = mode === "code" ? q("#vj88c").value.trim() : "";
     if ([...pw.trim()].length < 4) { msg.textContent = "合言葉は4文字以上で決めてね"; return; }
     if (mode === "code" && !code) { msg.textContent = "村の合言葉を入れてね"; return; }
-    if (mode === "new" && !vname) { msg.textContent = "村の名前を入れてね"; return; }
-    msg.textContent = mode === "new" ? "村を作っています…" : "つないでいます…";
-    // いままでのキャラクターの続きを、先にサーバーへ
-    try { if (onl.token && onl.id && cloudReady14) await cloudPush14(true); } catch (e) {}
+    msg.textContent = "つないでいます…";
+    await pushNow88(); // いままでのキャラクターの続きを、先にサーバーへ
     try {
-      const r = await api("/api/join", { method: "POST", body: JSON.stringify({ inviteCode: q("#jCode").value, name, pass: pw, villageCode: code, newVillage: vname }) });
-      const prevId = cloud14 && cloud14.id;
-      // いまの接続（前のキャラクター）は切って、新しいキャラクターでつなぎなおす
-      F8.disconnect();
-      onl = { token: r.token, id: r.id, name: r.name, village: r.village || null }; store.set(ON_KEY, onl); cloudFor14 = null;
-      // この端末で前に別のキャラクターを使っていて、新しく作ったキャラクターなら、まっさらから
-      if (r.created && prevId && prevId !== r.id) loadSave({ world: defaultWorld(), player: { cfg, name: r.name } }, "別の村のキャラクターに切りかえる前（この端末）");
-      nameEl.value = r.name; changed();
-      if (r.village) applyVillage88(r.village);
-      stop8 = false; closeModal();
+      const r = await api("/api/join", { method: "POST", body: JSON.stringify({ inviteCode: mode === "code" ? "" : q("#jCode").value, name, pass: pw, villageCode: code }) });
+      switchTo88(r); closeModal();
       const vn = r.village && r.village.name ? r.village.name : "こもれび村";
       toast(null, r.created ? `ようこそ、${r.name}。「${vn}」へ。なまえと合言葉を覚えておいてね` : `おかえり、${r.name}。「${vn}」の続きから遊べるよ`);
-      connect8(); refreshUnread(); setStatus();
-      if (mode === "new" && r.village && r.village.code) F7.pending.push({ kind: "custom", show: () => openVillage88(`「${vn}」ができたよ。下の「村の合言葉」を友だちに教えると、この村に入れるよ`) });
       if (after) after();
-    } catch (e) {
-      msg.textContent = e.status === 403 ? "招待コードがちがうみたい。もう一度確かめてね" : e.status === 404 ? "村の合言葉がちがうみたい。もう一度確かめてね"
-        : e.status === 409 ? (mode === "new" && e.message && !/なまえ/.test(e.message) ? e.message : "このなまえはもう使われているか、合言葉がちがうみたい")
-        : e.status === 400 ? (e.message || "入力を確かめてね") : e.status === 429 ? "少し時間をおいてから、もう一度ためしてね" : "つなげなかった…電波を確かめて、もう一度ためしてね";
-    }
+    } catch (e) { msg.textContent = joinErr88(e, mode); }
   };
   q("#jGo").onclick = go; pass.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
   q("#jShow").onchange = e => { pass.type = e.target.checked ? "text" : "password"; };
@@ -17392,21 +17400,41 @@ function openVillage88(note) {
       const v = F88.v || { name: "こもれび村", main: true };
       body.innerHTML = `${note ? `<p class="mtext"><b>${esc(note)}</b></p>` : ""}
         <div class="vl88"><b>${esc(v.name)}</b>${v.main ? `<span>はじまりの村</span>` : v.owner ? `<span class="own88">あなたが村長</span>` : ""}</div>
-        ${!onl.token ? `<p class="mtext">オンラインにつなぐと、自分たちだけの村を作ったり、友だちの村に入ったりできるよ。</p>`
-          : v.main ? `<p class="mtext">いまは、みんなの「こもれび村」にいるよ。自分たちだけの村を作ったり、友だちの村に入ったりするときは、下の「ほかの村へ」から。</p>`
-          : `<p class="mtext">この村の合言葉：<b class="code88">${esc(v.code || "")}</b> <button class="btn light" type="button" id="vl88cp">コピー</button></p><p class="mtext small">この合言葉を友だちに教えると、参加の画面の「友だちの村」から、この村に入れるよ。</p>`}
+        ${!onl.token ? `<p class="mtext">オンラインにつなぐと、友だちの村に入ったり、自分たちだけの村を作ったりできるよ。</p>`
+          : v.main ? `<p class="mtext">いまは、みんなの「こもれび村」にいるよ。</p>
+            <h4>新しい村を作る</h4>
+            <p class="mtext small">自分たちだけの村を作れるよ。作った人が村長になって、できた村の「村の合言葉」を友だちに教えると、その友だちも入れる（招待コードはいらない）。新しい村では、別のキャラクターになるよ（いまのキャラクターの持ち物やお金は、こもれび村に残る）。</p>
+            <label class="lbl" for="vn88v">村の名前（10文字まで）</label><input id="vn88v" type="text" maxlength="10" autocomplete="off">
+            <label class="lbl" for="vn88n">新しい村でのなまえ（8文字まで）</label><input id="vn88n" type="text" maxlength="8" autocomplete="off" value="${esc(onl.name || myName())}">
+            <label class="lbl" for="vn88p">新しい村での合言葉（4文字以上）</label><input id="vn88p" type="password" maxlength="64" autocomplete="new-password">
+            <div class="row2"><button class="btn" type="button" id="vn88go">村を作る</button></div>`
+          : `<p class="mtext">この村の合言葉：<b class="code88">${esc(v.code || "")}</b> <button class="btn light" type="button" id="vl88cp">コピー</button></p><p class="mtext small">この合言葉を友だちに教えると、参加の画面の「友だちの村」から、この村に入れるよ（招待コードはいらない）。</p>`}
         ${onl.token && !v.main && v.owner ? `<h4>村長のしごと</h4>
           <div class="row2"><input id="vl88n" type="text" maxlength="10" placeholder="新しい村の名前" autocomplete="off"><button class="btn light" type="button" id="vl88nb">名前を変える</button></div>
           <div class="row2"><button class="btn light" type="button" id="vl88c">村の合言葉を作り直す</button></div>
           <p class="note">合言葉を作り直すと、前の合言葉では入れなくなるよ（もう住んでいる人はそのまま）。</p>` : ""}
         <p class="mtext small" id="vl88m"></p>
-        <div class="row2"><button class="btn light" type="button" id="vl88j">ほかの村へ（友だちの村・新しい村）</button></div>
-        <p class="note">村ごとに、別のキャラクターになるよ。いまのキャラクターの持ち物やお金は、この村に残る。もどってくるときは、同じなまえと合言葉で、この村を選んでね。</p>`;
+        <div class="row2"><button class="btn light" type="button" id="vl88j">ほかの村へ</button></div>
+        <p class="note">村ごとに、別のキャラクターになるよ。もどってくるときは、同じなまえと合言葉で、その村を選んでね。${!v.main && onl.token ? "新しい村を作れるのは、こもれび村にいる人だけだよ。" : ""}</p>`;
       const m = body.querySelector("#vl88m"), q = s => body.querySelector(s);
+      for (const id of ["#vl88n", "#vn88v", "#vn88n", "#vn88p"]) q(id)?.addEventListener("keydown", e => e.stopPropagation());
       q("#vl88cp")?.addEventListener("click", async () => { try { await navigator.clipboard.writeText(v.code); m.textContent = "コピーしたよ"; } catch (e) { m.textContent = "コピーできなかった…手で書きうつしてね"; } });
-      q("#vl88n")?.addEventListener("keydown", e => e.stopPropagation());
       q("#vl88nb")?.addEventListener("click", async () => { const name = q("#vl88n").value.trim(); if (!name) { m.textContent = "新しい名前を入れてね"; return; } try { applyVillage88(await api("/api/village/name", { method: "POST", body: JSON.stringify({ name }) })); F88.render(); } catch (e) { m.textContent = e.message || "変えられなかった…"; } });
       q("#vl88c")?.addEventListener("click", async () => { try { applyVillage88(await api("/api/village/code", { method: "POST" })); F88.render(); body.querySelector("#vl88m").textContent = "新しい合言葉にしたよ"; } catch (e) { m.textContent = e.message || "作り直せなかった…"; } });
+      q("#vn88go")?.addEventListener("click", async () => {
+        const village = q("#vn88v").value.trim(), name = q("#vn88n").value.trim() || myName(), pass = q("#vn88p").value;
+        if (!village) { m.textContent = "村の名前を入れてね"; return; }
+        if ([...pass.trim()].length < 4) { m.textContent = "合言葉は4文字以上で決めてね"; return; }
+        m.textContent = "村を作っています…";
+        await pushNow88();
+        try {
+          const r = await api("/api/village/new", { method: "POST", body: JSON.stringify({ village, name, pass }) });
+          switchTo88(r); closeModal();
+          const vn = r.village && r.village.name ? r.village.name : village;
+          toast(null, `ようこそ、${r.name}。「${vn}」ができたよ`);
+          F7.pending.push({ kind: "custom", show: () => openVillage88(`「${vn}」ができたよ。下の「村の合言葉」を友だちに教えると、この村に入れるよ`) });
+        } catch (e) { m.textContent = e.status === 429 ? "村を作るのは、1日にあと少しだけ。また明日ためしてね" : joinErr88(e, "new"); }
+      });
       q("#vl88j").onclick = () => { closeModal(); openJoin(); };
     };
     F88.render();

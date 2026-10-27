@@ -57,7 +57,7 @@ public class BoxHandler implements MessageHandler {
         ObjectNode others = hub.json().createObjectNode().put("type", "houseBox").put("key", key);
         others.setAll(houses.view(key, false));
         others.remove("layout");
-        hub.sendToMap("house:" + key, others, from);
+        hub.sendToHouse(key, others, from);
     }
 
     private static void ng(GameSocketHandler hub, PlayerSession to, String rid, String text) {

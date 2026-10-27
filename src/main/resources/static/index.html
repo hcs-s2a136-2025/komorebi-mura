@@ -1042,6 +1042,10 @@ html, body { touch-action: manipulation; }
 .die78 { font-size: 2.6rem; line-height: 1; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, .5); }
 .dice78 b { font-size: 1.1rem; color: #ffd86a; margin-left: 8px; }
 .pl78w { color: #c83a3a; font-weight: bold; }
+
+/* v80: スマホのアイコン（黒地に白い線） */
+.ph76app i.ln80 { background: #000; color: #fff; text-shadow: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), 0 3px 0 rgba(0, 0, 0, .4); }
+.ph76app i.ln80 svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 </style>
 
 <header>
@@ -1168,7 +1172,7 @@ html, body { touch-action: manipulation; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.42.0";
+  const VER = "0.43.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5611,7 +5615,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.42.0";
+const CLIENT_VERSION = "0.43.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -7429,7 +7433,7 @@ const mineHouse17 = key => { const h = houseOf17(key); return !h || !h.ownerId |
 /** 持ち主から「同居人」にえらばれた合鍵の人（模様替えできる） */
 const mateHouse17 = key => { const h = houseOf17(key); return !!(h && h.ownerId && F8.online && Array.isArray(h.keys) && h.keys.some(k => k && k.id === onl.id && k.edit === true)); };
 F17.shared = sharedHouse17; F17.mine = mineHouse17;
-const layoutOf17 = R => ({ wall: R.wall, floor: R.floor, furn: R.furn, aqua: R.aqua || {}, ...(R.plan ? { plan: R.plan } : {}), ...(R.lv38 ? { lv38: R.lv38 } : {}) });
+const layoutOf17 = R => ({ wall: R.wall, floor: R.floor, furn: R.furn, aqua: R.aqua || {}, ...(R.plan ? { plan: R.plan } : {}), ...(R.lv38 ? { lv38: R.lv38 } : {}), ...(R.up && R.up.length ? { up: R.up } : {}) });
 
 // ---- whose data the room shows: your own save, or (for friends' houses) what the server sends ----
 const _roomFor17 = roomFor;
@@ -7555,7 +7559,7 @@ function openBox17(which, local) {
       const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && !ITEMS[id].tool);
       body.innerHTML = `<p class="mtext">${desc}</p>
         <p class="mtext small dndhint21">${matchMedia("(pointer: coarse)").matches ? "長押ししてから指を動かすと、箱と持ち物の間で動かせるよ" : "ドラッグでも、箱と持ち物の間で動かせるよ"}</p>
-        <h3 class="lbl">箱の中（${list.reduce((a, s) => a + s.n, 0)}個）</h3>
+        <h3 class="lbl">箱の中（${list.reduce((a, s) => a + s.n, 0)}個${local ? "" : `・${list.length}/${F17.kinds80 || 300}種類`}）</h3>
         <div class="list dropbox21" data-drop="box">${list.length ? list.map(s => ITEMS[s.id] ? itemLi(s.id, `${s.n}個${s.r && (s.r[0] || s.r[1]) ? `（${s.r[1] ? "★3×" + s.r[1] : ""}${s.r[0] ? "★2×" + s.r[0] : ""}）` : ""}`, `<button class="btn light" type="button" data-bo="${esc(s.id)}" data-n="1">1個</button><button class="btn" type="button" data-bo="${esc(s.id)}" data-n="${s.n}">全部</button>`) : "").join("") : `<p class="mtext">からっぽ</p>`}</div>
         <h3 class="lbl">持ち物（道具以外）</h3>
         <div class="list dropbox21" data-drop="inv">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個`, `<button class="btn light" type="button" data-bi="${esc(id)}" data-n="1">1個</button><button class="btn" type="button" data-bi="${esc(id)}" data-n="all">全部</button>`)).join("") : `<p class="mtext">しまえる物がないよ</p>`}</div>
@@ -7685,6 +7689,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.43.0", date: "2026/10/27", title: "家の2・3階・台車・豪華な家具、電気の新しい使い道", items: [
+    "こもれび工務店の「2・3階」で、わが家に階を足せるようになった。階段（床の矢じるしのマス）を歩いて上り下りして、階ごとに間取り・壁紙・家具を変えられる",
+    "台車（よろず屋）：外で持ち物の台車を選んでⒶを押すと、引いて歩ける。持ち物がいっぱいになっても、拾った物は台車の荷台に積まれる（24種類まで）",
+    "家の箱（みんなの収納箱・自分だけの箱）に入れられる物の種類が、120から300にふえた",
+    "豪華な家具が10こふえた（天蓋つきベッド・ベルベットのソファ・ダイニングセット・飾り棚・大きな本棚・噴水・フロアランプ・シルクのラグ・鏡・名画）。お風呂も、ヒノキのお風呂と猫足のバスタブがふえた（よろず屋の家具）",
+    "電気の使い道がふえた：自動収穫機（毎朝、まわりの実った作物を取り入れる）・電気ボート（水のそばに置いて、1日1回、沖で魚をとる）。どちらもよろず屋の「建物」で買える",
+    "スマホのアイコンを、黒地に白い線の絵にした",
+  ] },
   { v: "0.42.0", date: "2026/10/27", title: "電気の使い道・つくりかたと、家のもの", items: [
     "まわし車（よろず屋の「建物」）：エサをあげた家畜が、次の朝ぐるぐる回して電気をつくる（1台で3頭まで・1頭で電気1つ）。回した家畜は、ちょっとなかよしに",
     "釣りのしかけ（よろず屋の「建物」）：水のそばに置くと、電気を1つ使って毎朝魚をとってくれる（8匹まで）。ごくまれに、ヌシがかかることも…？",
@@ -15073,7 +15085,7 @@ function openPhone76() {
       const apps = F76.apps.filter(a => !a.show || a.show());
       body.innerHTML = `<div class="ph76"><div class="ph76bar"><span>${esc(clockStr())}</span><span>${esc(season())} ${dayOfSeason()}日目${F6?.ready ? " " + WEATHER[world.weather][1] : ""}</span><span>${F8.connected ? "オンライン" : "オフライン"}</span></div>
         <div class="ph76wall"><b>${esc(clockStr())}</b><small>${esc(myName())}・所持金 ${fmt(world.money)}${F76.extraLine ? esc(F76.extraLine()) : ""}</small></div>
-        <div class="ph76grid">${apps.map(a => { const b = a.badge ? a.badge() : 0; return `<button type="button" class="ph76app" data-app76="${esc(a.id)}"><i style="background:${a.c}">${esc(a.ch)}${b ? `<em>${b > 9 ? "9+" : b}</em>` : ""}</i><span>${esc(a.name)}</span></button>`; }).join("")}</div></div>`;
+        <div class="ph76grid">${apps.map(a => { const b = a.badge ? a.badge() : 0; return `<button type="button" class="ph76app" data-app76="${esc(a.id)}"><i class="ln80">${F76.icon80 ? F76.icon80(a) : esc(a.ch)}${b ? `<em>${b > 9 ? "9+" : b}</em>` : ""}</i><span>${esc(a.name)}</span></button>`; }).join("")}</div></div>`;
       body.querySelectorAll("[data-app76]").forEach(b => b.onclick = () => { const a = F76.apps.find(x => x.id === b.dataset.app76); if (a) appGo76(a.open)(); });
     };
     draw();
@@ -16170,6 +16182,591 @@ F79.ready = true;
 F79.runDay = () => F6.onNewDay();
 F79.state = () => ({ elec: world.elec33 || 0, trap: JSON.parse(JSON.stringify(trap79())), wheel: world.stats.wheel79 || 0 });
 
+// =================== v80: 電気の使い道（自動収穫機・電気ボート）・家の2・3階・豪華な家具とお風呂・台車・スマホのアイコン ===================
+// 電気は「あったら便利」なおまけ（なくても困らない）。階は「わが家」にだけ足せる（R.up = 2階・3階。1階は R のまま）。
+var F80 = {};
+// ---------- 電気：自動収穫機・電気ボート ----------
+reg32("harv80", { name: "自動収穫機", w: 1, h: 1, ih: 26, money: 7000, mat: { ore: 6, stone: 4, wood: 6 }, desc: "電気を1つ使って、毎朝、まわり2マス（5×5）の実った作物を8個まで取り入れてくれる（中には24個まで）。植えなおしはしないので、畑仕事はあなたの楽しみのまま",
+  spr: (set, rect) => {
+    const M = C13["#8a949e"], L = C13["#c8d0d8"], D = C13["#5a646e"], Y = C13["#f2c84a"], G = C13["#6ab04a"];
+    rect(3, 24, 10, 2, C13["#6a6a70"]);
+    rect(5, 11, 6, 13, M); rect(5, 11, 1, 13, L); rect(10, 11, 1, 13, D);
+    rect(2, 6, 12, 6, Y); rect(2, 6, 12, 1, C13["#ffe98a"]); rect(2, 11, 12, 1, C13["#c8a030"]);
+    rect(3, 7, 5, 3, C13["#2a2a30"]); set(4, 8, G); set(5, 8, C13["#e2404e"]); set(6, 8, G);
+    rect(1, 2, 2, 5, D); rect(0, 2, 5, 1, D); rect(0, 7, 3, 1, L); set(0, 8, L); set(2, 8, L);
+    rect(11, 3, 2, 3, G); set(12, 2, G); set(10, 4, G);
+    set(9, 8, C13["#fff6c8"]); set(10, 8, C13["#fff6c8"]); set(9, 9, C13["#e8c860"]);
+  } });
+reg32("boat80", { name: "電気ボート", w: 2, h: 1, ih: 24, money: 9000, mat: { wood: 25, ore: 4 }, desc: "水のそば（池のふち）に置く。電気を1つ使って沖へ出ると、魚が3匹とれる（1日1回）。ヌシに会えるかも…？",
+  spr: (set, rect) => {
+    const H = C13["#a8602e"], HL = C13["#d08a4e"], W = C13["#f8f4ea"], BL = C13["#4a7ab0"], WV = C13["#8fd0ee"];
+    rect(1, 19, 30, 3, WV); rect(3, 21, 7, 1, C13["#c8ecfa"]); rect(20, 22, 8, 1, C13["#c8ecfa"]); rect(12, 19, 6, 1, C13["#c8ecfa"]);
+    rect(3, 12, 26, 7, H); rect(3, 12, 26, 1, HL); rect(5, 19, 22, 1, C13["#7a4620"]);
+    set(2, 12, H); set(1, 11, H); set(30, 12, H); set(29, 11, H);
+    rect(3, 15, 26, 1, W);
+    rect(10, 5, 11, 7, W); rect(10, 5, 11, 1, BL); rect(12, 7, 3, 3, C13["#a8d4ec"]); rect(17, 7, 3, 3, C13["#a8d4ec"]);
+    rect(15, 0, 1, 5, C13["#6a6a70"]); rect(16, 0, 5, 2, C13["#e2404e"]);
+    set(24, 13, C13["#f2d03a"]); set(25, 14, C13["#f2d03a"]); set(24, 15, C13["#f2d03a"]); set(5, 13, C13["#f2d03a"]);
+  } });
+const harv80 = () => world.harv80 || (world.harv80 = {});
+const boat80 = () => world.boat80 || (world.boat80 = {});
+const HCAP80 = 24, HPER80 = 8;
+const harvN80 = t => Object.values((t && t.f) || {}).reduce((a, n) => a + n, 0);
+const waterNear80 = (ax, ay) => waterNear79(ax, ay) || waterNear79(ax + 1, ay);
+// 電気ボートは、水のそばにだけ置ける
+const _canBuild80 = canBuild32;
+canBuild32 = function (id, ax, ay) { return _canBuild80.apply(this, arguments) && (id !== "boat80" || waterNear80(ax, ay)); };
+// ---------- 台車 ----------
+IMG.cart80 = pix13(16, 16, (set, rect) => {
+  rect(3, 6, 11, 4, C13["#c8924e"]); rect(3, 6, 11, 1, C13["#e0b070"]); rect(3, 9, 11, 1, C13["#8a5a3a"]);
+  rect(5, 3, 3, 3, C13["#e2a04a"]); rect(9, 4, 3, 2, C13["#8ad07a"]);
+  rect(1, 2, 1, 8, C13["#7a848e"]); rect(0, 2, 3, 1, C13["#9aa4ae"]); rect(1, 9, 3, 1, C13["#7a848e"]);
+  ell13(set, 6, 12, 2.4, 2.4, C13["#2a2a30"]); ell13(set, 6, 12, 1, 1, C13["#d8dde8"]);
+  ell13(set, 12, 12, 2.4, 2.4, C13["#2a2a30"]); ell13(set, 12, 12, 1, 1, C13["#d8dde8"]);
+});
+ASSETS.cart80 = IMG.cart80.toDataURL();
+ITEMS.cart80 = { name: "台車", icon: "cart80", price: 6000, tool: true };
+SHOP_STOCK.push("cart80"); SHOP_BASE.push("cart80");
+const CARTMAX80 = 24;
+const cartS80 = () => world.cart80 || (world.cart80 = { on: false, goods: [] });
+const cartOut80 = () => map === village || (typeof port !== "undefined" && port && map === port);
+const cartOn80 = () => !!(world.cart80 && world.cart80.on);
+// 持ち物がいっぱいのとき、台車を引いていれば、拾った物は台車へ
+const _addItem80 = addItem;
+let cartToastAt80 = 0;
+addItem = function (id, n = 1, quiet) {
+  if (_addItem80(id, n, true)) return true;
+  const C = world.cart80;
+  if (C && C.on && cartOut80() && ITEMS[id]) {
+    const g = C.goods.find(x => x.id === id);
+    if (g) g.n += n; else if (C.goods.length < CARTMAX80) C.goods.push({ id, n }); else { if (!quiet) toast(null, "持ち物も台車もいっぱい"); return false; }
+    saveWorld();
+    if (performance.now() - cartToastAt80 > 2500) { cartToastAt80 = performance.now(); toast("cart80", `持ち物がいっぱいなので、${ITEMS[id].name}を台車に積んだ`); }
+    return true;
+  }
+  if (!quiet) toast(null, "持ち物がいっぱい");
+  return false;
+};
+function openCart80() {
+  openModal("台車", "", body => {
+    const draw = () => {
+      const C = cartS80(), inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && !ITEMS[id].tool);
+      body.innerHTML = `<p class="mtext">台車を引いているあいだ、持ち物がいっぱいになったら、拾った物は台車の荷台に積まれます（${CARTMAX80}種類まで）。荷台の出し入れは、外にいるときにできます。</p>
+        <h3 class="lbl">荷台（${C.goods.length}/${CARTMAX80}種類・${C.goods.reduce((a, g) => a + g.n, 0)}個）</h3>
+        <div class="list">${C.goods.length ? C.goods.map((g, i) => itemLi(g.id, `${g.n}個`, `<button class="btn light" type="button" data-c80out="${i}" data-n="1">1個</button><button class="btn" type="button" data-c80out="${i}" data-n="all">全部</button>`)).join("") : `<p class="mtext">からっぽ</p>`}</div>
+        <h3 class="lbl">持ち物から積む</h3>
+        <div class="list">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個`, `<button class="btn light" type="button" data-c80in="${esc(id)}" data-n="1">1個</button><button class="btn" type="button" data-c80in="${esc(id)}" data-n="all">全部</button>`)).join("") : `<p class="mtext">積める物がありません。</p>`}</div>
+        <div class="row"><button class="btn light" type="button" id="c80off">${C.on ? "台車を置く（引くのをやめる）" : "台車を引いて歩く"}</button></div>
+        <p class="mtext small" id="c80msg"></p>`;
+      const msg = body.querySelector("#c80msg");
+      body.querySelectorAll("[data-c80out]").forEach(b => b.onclick = () => {
+        const g = C.goods[+b.dataset.c80out]; if (!g) return;
+        const n = b.dataset.n === "all" ? g.n : 1; let moved = 0;
+        for (let i = 0; i < n; i++) { if (!_addItem80(g.id, 1, true)) break; moved++; }
+        if (!moved) { msg.textContent = "持ち物がいっぱいで受け取れない"; return; }
+        g.n -= moved; if (g.n <= 0) C.goods.splice(C.goods.indexOf(g), 1); saveWorld(); draw();
+      });
+      body.querySelectorAll("[data-c80in]").forEach(b => b.onclick = () => {
+        const id = b.dataset.c80in, n = b.dataset.n === "all" ? count(id) : 1; if (!n) return;
+        const g = C.goods.find(x => x.id === id);
+        if (!g && C.goods.length >= CARTMAX80) { msg.textContent = `荷台に積めるのは${CARTMAX80}種類まで`; return; }
+        removeItem(id, n); if (g) g.n += n; else C.goods.push({ id, n }); saveWorld(); draw();
+      });
+      body.querySelector("#c80off").onclick = () => { C.on = !C.on; saveWorld(); toast("cart80", C.on ? "台車を引いて歩く" : "台車を置いた（荷台の物はそのまま）"); closeModal(); };
+    };
+    draw();
+  });
+}
+F80.openCart = openCart80;
+// 台車を持って向かうとき（外のみ）
+const _act80 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving) {
+    const sel = world.inv[world.sel];
+    if (sel && sel.id === "cart80") {
+      if (!cartOut80()) { toast("cart80", "台車は、外（村・みなと町）で使うよ"); return; }
+      if (!cartS80().on) { cartS80().on = true; saveWorld(); toast("cart80", "台車を引いて歩く"); }
+      openCart80(); return;
+    }
+    if (map === village) {
+      const item = sel && ITEMS[sel.id];
+      if (item?.place === "build32" && item.decor === "boat80") {
+        const [ax, ay] = anchor32("boat80");
+        if (_canBuild79("boat80", ax, ay) && !waterNear80(ax, ay)) { toast(item.icon, "電気ボートは、水のそば（池のふち）に置こう"); return; }
+      }
+    }
+  }
+  return _act80.apply(this, arguments);
+};
+// 台車の絵（引いているあいだ、うしろをついてくる）
+const cartPos80 = { x: 0, y: 0, snap: true };
+function cartUpdate80(dt) {
+  if (!cartOn80() || !cartOut80()) { cartPos80.snap = true; return; }
+  const off = { up: [0, 11], down: [0, -11], left: [12, 1], right: [-12, 1] }[player.dir] || [0, 11];
+  const tx = player.px + off[0], ty = player.py + off[1];
+  if (cartPos80.snap || Math.abs(tx - cartPos80.x) > 48 || Math.abs(ty - cartPos80.y) > 48) { cartPos80.x = tx; cartPos80.y = ty; cartPos80.snap = false; return; }
+  const k = 1 - Math.exp(-dt * 12); cartPos80.x += (tx - cartPos80.x) * k; cartPos80.y += (ty - cartPos80.y) * k;
+}
+// ---------- 朝：自動収穫機 ----------
+function cleanHarv80() {
+  const H = harv80();
+  for (const k of Object.keys(H)) {
+    const d = world.decor && world.decor[k]; if (d && d.id === "harv80" && myDecor27(d)) continue;
+    for (const [g, n] of Object.entries(H[k].f || {})) if (n > 0 && ITEMS[g]) homeStore18(g, n);
+    delete H[k];
+  }
+}
+const _f6newday80 = F6.onNewDay;
+F6.onNewDay = () => {
+  _f6newday80();
+  try {
+    cleanHarv80();
+    const H = harv80(); let used = 0, total = 0;
+    for (const k of mine32("harv80")) {
+      if (!(world.elec33 > 0)) break;
+      const t = H[k] || (H[k] = { f: {} });
+      if (harvN80(t) >= HCAP80) continue;
+      const [x, y] = k.split(",").map(Number); let got = 0;
+      for (let yy = y - 2; yy <= y + 2 && got < HPER80; yy++) for (let xx = x - 2; xx <= x + 2 && got < HPER80; xx++) {
+        if (harvN80(t) >= HCAP80) break;
+        const ck = xx + "," + yy, c = world.crops[ck];
+        if (!c || c.dead || c.stage < 2 || !ITEMS[c.type]) continue;
+        delete world.crops[ck]; t.f[c.type] = (t.f[c.type] || 0) + 1; got++; world.stats.harvest++;
+      }
+      if (got) { world.elec33--; used++; total += got; }
+    }
+    if (used) { world.stats.harv80 = (world.stats.harv80 || 0) + total; saveWorld(); setTimeout(() => F7.notify(`自動収穫機が、実った作物を${total}個、取り入れていた`, null), 1300); }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "harv80"); }
+};
+const _fresh80 = freshShared18;
+freshShared18 = function (why) { for (const [, t] of Object.entries(harv80())) for (const [g, n] of Object.entries(t.f || {})) if (n > 0 && ITEMS[g]) homeStore18(g, n); world.harv80 = {}; _fresh80(why); };
+// ---------- 建物の中（自動収穫機・電気ボート） ----------
+const _extra80 = F32.extra, _wire80 = F32.wire;
+F32.extra = (d, k, mine) => {
+  let h = _extra80 ? _extra80(d, k, mine) : "";
+  if (!mine) return h;
+  const bar = `<p class="mtext">ためてある電気 <b>${world.elec33 || 0}</b> / ${elecCap33()}</p>`;
+  if (d.id === "harv80") {
+    const t = harv80()[k] || { f: {} }, list = Object.entries(t.f).filter(([g, n]) => n > 0 && ITEMS[g]);
+    h += bar + `<p class="mtext">毎朝、電気を1つ使って、まわり2マス（5×5）の実った作物を${HPER80}個まで取り入れます（中には${HCAP80}個まで）。植えなおしはしません。電気がない日はおやすみ。${world.stats.harv80 ? `これまでに${world.stats.harv80}個。` : ""}</p>
+      <h3 class="lbl">取り入れた作物（${harvN80(t)}/${HCAP80}）</h3><div class="list">${list.length ? list.map(([g, n]) => itemLi(g, `${n}個`, "")).join("") : `<p class="mtext">まだ空っぽ。</p>`}</div>
+      <button class="btn" type="button" id="h80get" ${list.length ? "" : "disabled"}>ぜんぶ取り出す</button>`;
+  }
+  if (d.id === "boat80") {
+    const b = boat80()[k] || {}, done = b.day === world.day, last = Object.entries(b.last || {}).filter(([g, n]) => n > 0 && ITEMS["fish_" + g]);
+    h += bar + `<p class="mtext">電気を1つ使って沖へ出て、魚を3匹とってきます（1日1回）。ヌシに会えることも…？ ${world.stats.boat80 ? `これまでに${world.stats.boat80}回、出航した。` : ""}</p>
+      ${done && last.length ? `<h3 class="lbl">今日の釣果</h3><div class="list">${last.map(([g, n]) => itemLi("fish_" + g, `${n}匹`, "")).join("")}</div>` : ""}
+      <button class="btn" type="button" id="b80go" ${done || !(world.elec33 > 0) ? "disabled" : ""}>${done ? "今日はもう出航した" : world.elec33 > 0 ? "沖へ出る（電気1つ）" : "電気がないので出られない"}</button>`;
+  }
+  return h;
+};
+F32.wire = (body, d, k, mine) => {
+  if (_wire80) _wire80(body, d, k, mine);
+  if (!mine) return;
+  if (d.id === "harv80") body.querySelector("#h80get")?.addEventListener("click", () => {
+    const t = harv80()[k]; if (!t) return;
+    let n = 0; const left = {};
+    for (const [g, c] of Object.entries(t.f || {})) { let keep = c; for (let i = 0; i < c; i++) { if (!_addItem80(g, 1, true)) break; keep--; n++; } if (keep > 0) left[g] = keep; }
+    t.f = left; saveWorld(); closeModal(); openBuild32(k);
+    toast("b32_harv80", n ? `作物を${n}個、取り出した` : "持ち物がいっぱいで、取り出せない");
+  });
+  if (d.id === "boat80") body.querySelector("#b80go")?.addEventListener("click", () => {
+    const B = boat80(), e = B[k] || (B[k] = {});
+    if (e.day === world.day || !(world.elec33 > 0)) return;
+    world.elec33--; e.day = world.day; e.last = {}; let nushi = false;
+    for (let i = 0; i < 3; i++) {
+      const g = pickFish("pond"), id = "fish_" + g; if (!ITEMS[id]) continue;
+      if (_addItem80(id, 1, true)) { const t = rollTier(.25, .08); if (t > 1) addRare(id, t, 1); } else homeStore18(id, 1);
+      world.dex[g] = (world.dex[g] || 0) + 1; e.last[g] = (e.last[g] || 0) + 1; if (g === "ヌシ") nushi = true;
+    }
+    world.stats.boat80 = (world.stats.boat80 || 0) + 1; if (nushi) world.stats.boatNushi80 = (world.stats.boatNushi80 || 0) + 1;
+    saveWorld(); closeModal(); openBuild32(k);
+    toast("b32_boat80", nushi ? "沖で、なにか大きな魚がかかった！（ヌシだ！）" : "沖で魚をとってきた（3匹）。持ち物がいっぱいの分は、家の収納箱へ");
+  });
+};
+ACH.push(["沖の船長", "電気ボートで、沖へ5回出る", () => (world.stats.boat80 || 0) >= 5]);
+ACH_REWARD["沖の船長"] = ["money", 2500];
+ACH.push(["自動で収穫", "自動収穫機で、作物を50個取り入れる", () => (world.stats.harv80 || 0) >= 50]);
+ACH_REWARD["自動で収穫"] = ["money", 2000];
+
+// ---------- 家の2階・3階 ----------
+let roomFloor = 0, lastTile80 = "";
+const FLOOR80 = [{ money: 60000, mat: { wood: 60, stone: 30, ore: 5 } }, { money: 150000, mat: { wood: 100, stone: 60, ore: 15, gem: 2 } }];
+const baseRoom80 = key => { const s = roomFloor; roomFloor = 0; try { return roomFor(key); } finally { roomFloor = s; } };
+function tagFloor80(F, R0) {
+  Object.defineProperty(F, "_par80", { value: R0, enumerable: false, writable: true, configurable: true });
+  Object.defineProperty(F, "visitor", { get: () => !!(F._par80 && F._par80.visitor), enumerable: false, configurable: true });
+  Object.defineProperty(F, "home", { get: () => !!(F._par80 && F._par80.home), enumerable: false, configurable: true });
+  return F;
+}
+const _roomFor80 = roomFor;
+roomFor = function (key) {
+  if (roomFloor > 0 && key === roomKey) {
+    const R0 = _roomFor80(key), F = R0 && Array.isArray(R0.up) ? R0.up[roomFloor - 1] : null;
+    if (F) { if (F._par80 !== R0) tagFloor80(F, R0); return F; }
+  }
+  return _roomFor80(key);
+};
+// 階段：下の階にある「のぼり階段」（床の上を歩くと2階へ）と、上の階の入口のマス「くだり階段」
+IMG.stairs80 = pix13(16, 16, (set, rect) => {
+  rect(1, 1, 14, 14, C13["#8a5a32"]);
+  for (let i = 0; i < 4; i++) { rect(1, 2 + i * 3, 14, 2, i % 2 ? C13["#c8924e"] : C13["#d9a874"]); rect(1, 4 + i * 3, 14, 1, C13["#5a3a22"]); }
+  rect(7, 4, 2, 8, C13["#fff6d8"]); rect(5, 6, 6, 1, C13["#fff6d8"]); rect(6, 5, 4, 1, C13["#fff6d8"]); rect(4, 7, 8, 1, C13["#fff6d8"]);
+});
+ASSETS.stairs80 = IMG.stairs80.toDataURL();
+FURN.stairs80 = { name: "階段（のぼり）", img: "stairs80", w: 1, h: 1, oy: 0, floor: true, price: 0 };
+ITEMS.f_stairs80 = { name: "階段（のぼり）", icon: "stairs80", furn: "stairs80", price: 0 };
+{ const _h = F7.hideFurn; F7.hideFurn = k => k === "stairs80" || _h(k); }
+function drawStairsDn80(x, y) {
+  const s = TS / 16, px = x * TS, py = y * TS;
+  ctx.fillStyle = "#2a1a10"; ctx.fillRect(px, py, TS, TS);
+  for (let i = 0; i < 4; i++) { ctx.fillStyle = i % 2 ? "#6a4a2a" : "#8a6238"; ctx.fillRect(px + s, py + (1 + i * 3.5) * s, 14 * s, 3 * s); }
+  ctx.fillStyle = "#fff6d8"; ctx.fillRect(px + 7 * s, py + 3 * s, 2 * s, 6 * s); ctx.fillRect(px + 5 * s, py + 8 * s, 6 * s, s); ctx.fillRect(px + 6 * s, py + 9 * s, 4 * s, s); ctx.fillRect(px + 7 * s, py + 10 * s, 2 * s, s);
+}
+const _makeRoomMap80 = makeRoomMap;
+makeRoomMap = function (key) {
+  const m = _makeRoomMap80(key);
+  if (roomFloor > 0 && key === roomKey && m.exit) {
+    const [ex, ey] = m.exit, g = String(m.ground[ey][ex]);
+    m.exits = {}; m.stairsDn80 = [ex, ey]; m.floor80 = roomFloor;
+    m.ground[ey][ex] = "stairsd@" + (g.includes("@") ? g.split("@")[1] : "0");
+  }
+  return m;
+};
+const _enterRoom80 = enterRoom;
+enterRoom = function (key, back) { roomFloor = 0; lastTile80 = ""; return _enterRoom80.apply(this, arguments); };
+const _enter80 = enter;
+enter = function (m, x, y, dir) { if (m !== room) roomFloor = 0; return _enter80.apply(this, arguments); };
+const _mapKey80 = mapKey;
+mapKey = function () { const k = _mapKey80(); return map === room && roomFloor > 0 && String(k).startsWith("house:") ? k + "_f" + roomFloor : k; };
+const _where80 = where49;
+where49 = function (e) { return _where80({ ...e, rmap: String(e.rmap || "").replace(/_f\d$/, "") }); };
+// 階段で上り下りする
+function goFloor80(n, how) {
+  if (map !== room) return false;
+  const R0 = baseRoom80(roomKey), top = (R0.up || []).length;
+  if (!(n >= 0 && n <= top) || n === roomFloor) return false;
+  setDecor(false);
+  roomFloor = n;
+  room = makeRoomMap(roomKey); map = room; rebuildSolid();
+  let x, y, dir;
+  if (how === "up") {
+    const [ex, ey] = room.exit; dir = "up";
+    [x, y] = [[ex, ey - 1], [ex - 1, ey - 1], [ex + 1, ey - 1], [ex - 1, ey], [ex + 1, ey]].find(([a, b]) => a >= 0 && b >= 0 && a < room.w && b < room.h && !blocked(room, a, b, player)) || freeNear(room, ex, ey);
+  }
+  else {
+    const st = room.data.furn.find(f => f.id === "stairs80"), fx = st ? st.x : 1, fy = st ? st.y : 2; dir = "down";
+    [x, y] = [[fx, fy + 1], [fx - 1, fy], [fx + 1, fy], [fx, fy - 1]].find(([a, b]) => a >= 0 && b >= 0 && a < room.w && b < room.h && !blocked(room, a, b, player)) || freeNear(room, fx, fy);
+  }
+  placeAt(player, x, y, dir); lastTile80 = x + "," + y;
+  world.stats.floor80 = Math.max(world.stats.floor80 || 0, n + 1);
+  updateHud(true); if (!$("pane-build").hidden) syncBuild();
+  toast(null, `${n + 1}階`); if (typeof se13 === "function") se13("small");
+  return true;
+}
+function stairCheck80() {
+  if (map !== room) return;
+  if (modalOpen || player.moving || busy || decor) return;
+  const k = player.x + "," + player.y; if (k === lastTile80) return;
+  lastTile80 = k;
+  if (room.data.furn.some(f => f.id === "stairs80" && f.x === player.x && f.y === player.y)) goFloor80(roomFloor + 1, "up");
+  else if (roomFloor > 0 && room.stairsDn80 && room.stairsDn80[0] === player.x && room.stairsDn80[1] === player.y) goFloor80(roomFloor - 1, "down");
+}
+const _f6update80 = F6.update;
+F6.update = dt => {
+  _f6update80(dt);
+  try { stairCheck80(); cartUpdate80(dt); } catch (e) { if (window.__komoErr) window.__komoErr(e, "v80"); }
+};
+const _addToList80 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList80(list, now);
+  if (map === room && room.stairsDn80) { const [x, y] = room.stairsDn80; list.push({ s: -1e6 + y, d: () => drawStairsDn80(x, y) }); }
+  if (cartOn80() && cartOut80() && !cartPos80.snap) list.push({ s: cartPos80.y + TS - 3, d: () => ctx.drawImage(IMG.cart80, Math.round(cartPos80.x), Math.round(cartPos80.y)) });
+};
+// 階段を置く場所：その階の、ものがない床のマス（上のほう・右よりから）
+function stairSpot80(X) {
+  const P = X.plan && validPlan38(X.plan) ? X.plan : null, w = P ? P.g[0].length : X.w, h = P ? P.g.length : X.h;
+  const occ = (x, y) => X.furn.some(f => { const F = FURN[f.id]; return F && !F.wall && x >= f.x && x < f.x + F.w && y >= f.y && y < f.y + F.h; });
+  const floorAt = (x, y) => P ? (P.g[y]?.[x] >= "0" && P.g[y]?.[x] <= "9") : (x >= 0 && x < w && y >= 2 && y < h - 1);
+  let any = null;
+  for (let y = 0; y < h; y++) for (let x = w - 1; x >= 0; x--) { if (!floorAt(x, y)) continue; if (!any) any = [x, y]; if (!occ(x, y)) return [x, y, false]; }
+  return any ? [any[0], any[1], true] : null;
+}
+function placeStairs80(X) {
+  if (X.furn.some(f => f.id === "stairs80")) return;
+  const s = stairSpot80(X); if (!s) return;
+  if (s[2]) for (const f of X.furn.filter(f => { const F = FURN[f.id]; return F && !F.wall && !F.floor && s[0] >= f.x && s[0] < f.x + F.w && s[1] >= f.y && s[1] < f.y + F.h; })) { X.furn.splice(X.furn.indexOf(f), 1); if (!_addItem80("f_" + f.id, 1, true)) homeStore18("f_" + f.id, 1); }
+  X.furn.push({ id: "stairs80", x: s[0], y: s[1] });
+}
+// 階段は動かせない・階段の上には置けない
+const _decorAct80 = decorAct;
+decorAct = function (tx, ty) {
+  if (map === room) {
+    const R = room.data;
+    if (R.furn.some(f => f.id === "stairs80" && f.x === tx && f.y === ty)) { toast("stairs80", "階段は動かせないよ"); return; }
+    const sel = world.inv[world.sel], it = sel && ITEMS[sel.id], F = it?.furn ? FURN[it.furn] : null;
+    if (F && !F.wall && R.furn.some(f => f.id === "stairs80" && f.x >= tx && f.x < tx + F.w && f.y >= ty && f.y < ty + F.h)) { toast("stairs80", "階段の上には置けないよ"); return; }
+  }
+  return _decorAct80.apply(this, arguments);
+};
+// 間取りを変えたら、階段も置きなおす（階段は持ち物にもどさない）
+const _choosePlan80 = choosePlan38;
+choosePlan38 = function (type) {
+  if (!canEditRoom38()) return;
+  const R = room.data, before = R.plan, stairs = R.furn.filter(f => f.id === "stairs80");
+  R.furn = R.furn.filter(f => f.id !== "stairs80");
+  _choosePlan80.call(this, type);
+  if (R.plan === before) { R.furn.push(...stairs); return; }
+  if (stairs.length) { placeStairs80(R); saveWorld(); remakeRoom38(); }
+};
+// 階の広さ・部屋の数は、わが家の増築にそろえる
+const _planLimit80 = planLimit38, _planDims80 = planDims38;
+planLimit38 = function (key, R) { return _planLimit80.call(this, key, R && R._par80 ? R._par80 : R); };
+planDims38 = function (key, R) { return _planDims80.call(this, key, R && R._par80 ? R._par80 : R); };
+// 届いた間取りの上の階
+function cleanUp80(list) {
+  const out = [];
+  for (const u of Array.isArray(list) ? list.slice(0, 2) : []) {
+    if (!u || typeof u !== "object") continue;
+    const F = { w: Math.max(4, Math.min(48, u.w | 0)), h: Math.max(4, Math.min(40, u.h | 0)), wall: WALLPAPERS.includes(u.wall) ? u.wall : "クリーム", floor: FLOORS.includes(u.floor) ? u.floor : "木", storage: [], furn: [], aqua: u.aqua && typeof u.aqua === "object" ? u.aqua : {} };
+    if (u.plan && validPlan38(u.plan)) { F.plan = u.plan; F.w = u.plan.g[0].length; F.h = u.plan.g.length; }
+    if (Number.isInteger(u.legacyW38)) F.legacyW38 = u.legacyW38; if (Number.isInteger(u.legacyH38)) F.legacyH38 = u.legacyH38;
+    F.furn = cleanFurn17(u.furn, F);
+    out.push(F);
+  }
+  return out;
+}
+const _applyPlan80 = applyPlan38;
+applyPlan38 = function (R, L, key) {
+  _applyPlan80(R, L, key);
+  try {
+    if (!L || !L.furn) return;
+    const next = cleanUp80(L.up);
+    if (JSON.stringify(next) === JSON.stringify(R.up || [])) return;
+    R.up = next;
+    if (map === room && roomKey === key && roomFloor > 0) { if (!R.up[roomFloor - 1]) roomFloor = 0; remakeRoom38(); }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "applyUp80"); }
+};
+// 工務店：「2・3階」
+const _builderTabs80 = builderTabs38;
+builderTabs38 = function (tab) {
+  let h = _builderTabs80(tab);
+  if (tab === "fl80") h = h.replace("わが家を広くしたいって？ 増築すると、間取りで選べる部屋の数がふえますよ", "上にも階を足したいのかい？ 階段もいっしょに作っておくよ");
+  const i = h.lastIndexOf("</div>");
+  return i < 0 ? h : h.slice(0, i) + `<button class="chip" type="button" data-b38="fl80" aria-pressed="${tab === "fl80"}">2・3階</button>` + h.slice(i);
+};
+const _openBuilder80 = openBuilder38;
+openBuilder38 = function (tab) { if (tab === "fl80") { openFloors80(); return; } return _openBuilder80.apply(this, arguments); };
+function addFloor80(free) {
+  const R = baseRoom80("home"), n = (R.up || []).length; if (n >= 2) return false;
+  const nx = FLOOR80[n];
+  if (!free) { if (world.money < nx.money || !Object.entries(nx.mat).every(([m, q]) => count(m) >= q)) return false; addMoney(-nx.money); for (const [m, q] of Object.entries(nx.mat)) removeItem(m, q); }
+  if (!R.up) R.up = [];
+  R.up.push({ w: R.w, h: R.h, wall: R.wall, floor: R.floor, storage: [], furn: [], aqua: {} });
+  placeStairs80(n === 0 ? R : R.up[n - 1]);
+  saveWorld();
+  if (typeof homeShared17 === "function" && homeShared17("home") && H17.loaded.home) { const L = layoutOf17(R); H17.lastPut.home = JSON.stringify(L); send8({ type: "house", act: "put", key: "home", layout: L }); }
+  return true;
+}
+function openFloors80() {
+  openModal("こもれび工務店", "shop", body => {
+    const R = roomFor("home"), n = (R.up || []).length, next = FLOOR80[n];
+    const loaded = !(typeof homeShared17 === "function" && homeShared17("home")) || H17.loaded.home;
+    const ok = next && world.money >= next.money && Object.entries(next.mat).every(([m, q]) => count(m) >= q);
+    body.innerHTML = builderTabs38("fl80") + `<p class="mtext">所持金 <b>${fmt(world.money)}</b>・木材 ${count("wood")}・石 ${count("stone")}・鉱石 ${count("ore")}・アメジスト ${count("gem")}</p>
+      <div class="stat"><span>いまのわが家</span><b>${n + 1}階建て</b></div>
+      ${next ? `<div class="li"><img src="${ASSETS.stairs80}" alt=""><span class="nm">${n + 2}階を作る（階段つき）<span class="sub2">${fmt(next.money)}＋${Object.entries(next.mat).map(([m, q]) => `${ITEMS[m].name}${q}`).join("・")}</span></span><span class="acts"><button class="btn" type="button" id="fl80go" ${ok && loaded ? "" : "disabled"}>作る</button></span></div>
+        ${loaded ? "" : `<p class="mtext small">オンラインのみんなの家は、一度わが家に入ってから来てね（家の中のようすを読みこむため）。</p>`}` : `<p class="mtext">もう3階建て。いちばん高いわが家です。</p>`}
+      <p class="note">作った階には、わが家の中の階段（床の矢じるしのマス）を歩いて上がれます。上の階の入口のマスが、下りの階段です。階の間取り・家具・壁紙は、1階とは別に模様替えできます。${typeof homeShared17 === "function" && homeShared17("home") ? "オンラインでは、わが家はみんなの家なので、階もみんなのものになります。" : ""}</p>`;
+    wireBuilderTabs38();
+    body.querySelector("#fl80go")?.addEventListener("click", () => {
+      if (addFloor80(false)) { toast("stairs80", `わが家に${n + 2}階ができた！ 階段でのぼれるよ`); closeModal(); openFloors80(); }
+    });
+  });
+}
+const _syncBuild80 = syncBuild;
+syncBuild = function () {
+  _syncBuild80();
+  const box = $("plan38"); if (!box || map !== room) return;
+  const R0 = baseRoom80(roomKey), top = (R0.up || []).length;
+  if (top > 0) box.insertAdjacentHTML("afterbegin", `<p class="mtext small">いまいる階：<b>${roomFloor + 1}階</b>（${top + 1}階建て）。階段のマスを歩くと、ほかの階へ行けます。壁紙・床・間取り・家具は、階ごとに変えられます。</p>`);
+};
+ACH.push(["二階の住人", "わが家の2階にのぼる", () => (world.stats.floor80 || 0) >= 2]);
+ACH_REWARD["二階の住人"] = ["money", 1000];
+ACH.push(["てっぺんの眺め", "わが家の3階にのぼる", () => (world.stats.floor80 || 0) >= 3]);
+ACH_REWARD["てっぺんの眺め"] = ["money", 2000];
+
+// ---------- 豪華な家具・お風呂 ----------
+const FURN80 = {
+  canopy80: { name: "天蓋つきベッド", w: 2, h: 2, oy: -12, price: 30000, say: ["天蓋のカーテンの中は、ふかふかで静か。お姫さまになった気分", "シルクのシーツ。ぐっすり眠れそう"],
+    spr: (set, rect) => {
+      const Rd = C13["#b8434a"], Dk = C13["#8a2a3a"], Gd = C13["#e8c050"], Wd = C13["#6a4028"], Wl = C13["#8a5a3a"];
+      rect(1, 3, 2, 38, Wl); rect(29, 3, 2, 38, Wl); rect(1, 3, 30, 4, Dk); rect(1, 3, 30, 1, Rd); for (let x = 2; x < 30; x += 3) set(x, 7, Gd);
+      rect(3, 7, 5, 20, Rd); rect(24, 7, 5, 20, Rd); rect(3, 7, 1, 20, C13["#d0636a"]); rect(24, 7, 1, 20, C13["#d0636a"]); rect(7, 12, 1, 15, Dk); rect(24, 12, 1, 15, Dk);
+      rect(3, 20, 26, 7, Wl); rect(3, 20, 26, 1, C13["#a87443"]);
+      rect(4, 27, 24, 9, C13["#f4efe4"]); rect(6, 27, 9, 4, C13["#ffffff"]); rect(17, 27, 9, 4, C13["#ffffff"]);
+      rect(4, 31, 24, 8, Rd); rect(4, 31, 24, 1, C13["#d0636a"]); rect(4, 34, 24, 1, Gd);
+      rect(1, 39, 30, 4, Wd); rect(1, 39, 30, 1, Wl);
+    } },
+  velvet80: { name: "ベルベットのソファ", w: 3, h: 1, oy: -8, price: 18000, say: ["ベルベットの手ざわり。ふわっと沈みこむ", "豪華なソファで、ゆったりくつろいだ"],
+    spr: (set, rect) => {
+      const P = C13["#6a3a8a"], D = C13["#52286e"], L = C13["#8a5aaa"], Gd = C13["#e8c050"];
+      rect(4, 1, 40, 11, P); rect(4, 1, 40, 1, L); for (let x = 12; x < 44; x += 10) { set(x, 5, Gd); set(x, 8, Gd); }
+      rect(0, 6, 8, 15, D); rect(40, 6, 8, 15, D); rect(0, 6, 8, 1, P); rect(40, 6, 8, 1, P);
+      rect(8, 11, 32, 9, L); rect(8, 11, 32, 1, C13["#a87aca"]); rect(18, 11, 1, 9, D); rect(29, 11, 1, 9, D);
+      rect(2, 20, 3, 4, Gd); rect(43, 20, 3, 4, Gd); rect(10, 5, 5, 5, C13["#f2d070"]); set(12, 7, C13["#e8b840"]);
+    } },
+  dining80: { name: "豪華なダイニングセット", w: 3, h: 2, oy: -4, price: 26000, say: ["きらきらの食卓。ろうそくの火がゆれている", "ごちそうが似合いそうなテーブルだ"],
+    spr: (set, rect) => {
+      const Wd = C13["#6a4028"], Wl = C13["#8a5a3a"], Rd = C13["#8a2a3a"];
+      rect(10, 1, 7, 9, Rd); rect(31, 1, 7, 9, Rd); rect(10, 1, 7, 1, C13["#b8434a"]); rect(31, 1, 7, 1, C13["#b8434a"]);
+      rect(4, 10, 40, 14, Wd); rect(4, 10, 40, 2, Wl); rect(8, 14, 32, 5, C13["#f4efe4"]); rect(8, 14, 32, 1, C13["#ffffff"]);
+      rect(23, 6, 2, 8, C13["#f4efe4"]); set(23, 5, C13["#ffd05a"]); set(24, 4, C13["#ffe898"]); rect(21, 13, 6, 1, C13["#e8c050"]);
+      ell13(set, 14, 17, 2.6, 1.4, C13["#ffffff"]); ell13(set, 34, 17, 2.6, 1.4, C13["#ffffff"]); set(14, 17, C13["#e2404e"]);
+      rect(6, 24, 3, 7, Wd); rect(39, 24, 3, 7, Wd);
+      rect(10, 26, 7, 8, Rd); rect(31, 26, 7, 8, Rd); rect(10, 26, 7, 1, C13["#b8434a"]); rect(31, 26, 7, 1, C13["#b8434a"]);
+    } },
+  cabinet80: { name: "ガラスの飾り棚", w: 1, h: 1, oy: -26, price: 12000, say: ["きれいな食器や置物がならんでいる", "ガラスごしに、宝物がきらきら光る"],
+    spr: (set, rect) => {
+      const Wd = C13["#6a4028"], Wl = C13["#8a5a3a"], Gl = C13["#a8d4ec"];
+      rect(1, 2, 14, 38, Wd); rect(0, 0, 16, 3, Wl); rect(0, 0, 16, 1, C13["#a87443"]);
+      rect(3, 5, 10, 17, Gl); rect(3, 5, 10, 1, C13["#e8f4fa"]); rect(3, 13, 10, 1, Wd);
+      ell13(set, 6, 11, 1.6, 2, C13["#e2404e"]); rect(5, 8, 2, 1, C13["#e2404e"]); rect(9, 9, 3, 4, C13["#f4efe4"]); set(11, 10, C13["#e2404e"]);
+      ell13(set, 8, 19, 3, 1.6, C13["#e8c050"]); rect(4, 17, 2, 3, C13["#7ac8e8"]);
+      rect(3, 24, 10, 13, Wl); rect(3, 24, 10, 1, C13["#a87443"]); rect(7, 24, 2, 13, Wd); set(6, 30, C13["#e8c050"]); set(9, 30, C13["#e8c050"]);
+      rect(1, 40, 3, 2, Wd); rect(12, 40, 3, 2, Wd);
+    } },
+  library80: { name: "大きな本棚", w: 2, h: 1, oy: -28, price: 16000, say: ["むずかしそうな本が、ぎっしり", "背表紙をながめるだけで、かしこくなった気がする"],
+    spr: (set, rect) => {
+      const Wd = C13["#6a4028"], Wl = C13["#8a5a3a"], cols = ["#b8434a", "#4a7ab0", "#6ab04a", "#e8c050", "#8a5aaa", "#e07a40", "#3a8a8a"];
+      rect(1, 2, 30, 40, Wd); rect(0, 0, 32, 3, Wl); rect(0, 0, 32, 1, C13["#a87443"]);
+      for (let r = 0; r < 4; r++) {
+        const y0 = 4 + r * 9; rect(2, y0 + 8, 28, 1, Wl);
+        for (let x = 3, i = r; x < 29; i++) { const bw = 2 + (i * 7 % 3), bh = 6 + (i * 5 % 3); if (x + bw > 29) break; rect(x, y0 + 8 - bh, bw, bh, C13[cols[(i * 3 + r) % cols.length]]); x += bw + 0; }
+      }
+      rect(1, 42, 4, 2, Wd); rect(27, 42, 4, 2, Wd);
+    } },
+  fountain80: { name: "室内の噴水", w: 2, h: 2, oy: -8, price: 35000, say: ["さらさらと水の音。心が落ちつく", "水しぶきが、きらきら光っている"],
+    spr: (set, rect) => {
+      ell13(set, 16, 31, 15, 7, C13["#b8c4cc"]); ell13(set, 16, 30, 13, 5.6, C13["#8fd0ee"]); ell13(set, 12, 29, 4, 1.6, C13["#c8ecfa"]);
+      rect(14, 15, 4, 14, C13["#d4dce2"]); rect(14, 15, 1, 14, C13["#f4f8fa"]);
+      ell13(set, 16, 15, 7.5, 3.2, C13["#d4dce2"]); ell13(set, 16, 14, 5.6, 2.2, C13["#8fd0ee"]);
+      rect(15, 5, 2, 9, C13["#c8ecfa"]); set(13, 8, C13["#e8f4fa"]); set(18, 9, C13["#e8f4fa"]); set(12, 11, C13["#c8ecfa"]); set(19, 11, C13["#c8ecfa"]); set(15, 3, C13["#ffffff"]); set(16, 2, C13["#ffffff"]);
+    } },
+  crystal80: { name: "クリスタルのフロアランプ", w: 1, h: 1, oy: -22, price: 9000, say: ["クリスタルが、やさしい光をちりばめる", "ぽわっと明るくて、おしゃれなランプ"],
+    spr: (set, rect) => {
+      const Gd = C13["#e8c050"], Cr = C13["#bfe6f4"], Wh = C13["#ffffff"];
+      rect(5, 34, 6, 3, Gd); rect(7, 16, 2, 18, Gd); rect(7, 16, 1, 18, C13["#fff0a0"]);
+      for (let i = 0; i < 9; i++) { const hw = i < 5 ? i + 2 : 11 - i - 1; rect(8 - hw, 4 + i, hw * 2, 1, i % 2 ? Cr : Wh); }
+      set(8, 2, Wh); set(8, 3, Cr); set(3, 8, Wh); set(13, 8, Wh); set(8, 14, Cr);
+    } },
+  silkrug80: { name: "シルクのラグ", w: 3, h: 2, oy: 0, floor: true, price: 14000,
+    spr: (set, rect) => {
+      const Rd = C13["#9a2a3a"], Lt = C13["#b8434a"], Gd = C13["#e8c050"];
+      rect(0, 0, 48, 32, Rd); rect(1, 1, 46, 30, Gd); rect(2, 2, 44, 28, Rd); rect(4, 4, 40, 24, Lt);
+      ell13(set, 24, 16, 14, 8, Gd); ell13(set, 24, 16, 12, 6.4, Rd); ell13(set, 24, 16, 6, 3.6, Gd); ell13(set, 24, 16, 4, 2.2, Lt);
+      for (const [x, y] of [[8, 8], [40, 8], [8, 24], [40, 24]]) { rect(x - 1, y, 3, 1, Gd); rect(x, y - 1, 1, 3, Gd); }
+      for (let y = 1; y < 32; y += 2) { set(0, y, C13["#f4efe4"]); set(47, y, C13["#f4efe4"]); }
+    } },
+  mirror80: { name: "金ぶちの大きな鏡", w: 1, h: 1, oy: 0, wall: true, price: 8000, say: ["きれいな金ぶちの鏡。今日もいい感じ", "鏡の中の自分と、目があった"],
+    spr: (set, rect) => {
+      const Gd = C13["#e8c050"], Dk = C13["#b08a28"];
+      rect(3, 1, 10, 14, Gd); rect(4, 0, 8, 1, Gd); rect(3, 1, 1, 14, C13["#fff0a0"]); rect(12, 1, 1, 14, Dk); rect(4, 15, 8, 1, Dk);
+      rect(5, 2, 6, 12, C13["#bfe6f4"]); set(6, 3, C13["#ffffff"]); set(7, 4, C13["#ffffff"]); set(6, 5, C13["#e8f4fa"]); set(10, 11, C13["#e8f4fa"]);
+    } },
+  painting80: { name: "名画の額ぶち", w: 1, h: 1, oy: 0, wall: true, price: 10000, say: ["見ているだけで、旅に出たような気持ちになる", "さすが名画。味わい深い"],
+    spr: (set, rect) => {
+      const Gd = C13["#e8c050"], Dk = C13["#b08a28"];
+      rect(1, 2, 14, 12, Gd); rect(1, 2, 14, 1, C13["#fff0a0"]); rect(1, 13, 14, 1, Dk);
+      rect(2, 3, 12, 10, C13["#8ec8e8"]); rect(2, 9, 12, 4, C13["#5a9a4a"]); ell13(set, 8, 11, 6, 2.4, C13["#4a8a3a"]);
+      ell13(set, 11, 5, 1.6, 1.6, C13["#f8d84a"]); rect(4, 8, 4, 3, C13["#f4efe4"]); rect(4, 7, 4, 1, C13["#c8403a"]); set(5, 10, C13["#6a4028"]);
+    } },
+  hinoki80: { name: "ヒノキのお風呂", w: 2, h: 1, oy: -8, price: 9000, say: ["ヒノキのいい香り。身も心もほぐれる", "とろけるような、いいお湯だ"],
+    spr: (set, rect) => {
+      const W = C13["#d8b078"], D = C13["#a88048"], L = C13["#ecd0a0"];
+      rect(1, 8, 30, 14, W); rect(0, 7, 32, 2, L); rect(0, 7, 32, 1, C13["#fff0d0"]); for (let x = 5; x < 30; x += 5) rect(x, 9, 1, 13, D); rect(1, 21, 30, 1, D);
+      rect(3, 9, 26, 5, C13["#8fd0ee"]); rect(5, 10, 8, 1, C13["#c8ecfa"]); set(20, 11, C13["#ffffff"]); set(25, 12, C13["#ffffff"]);
+      rect(3, 22, 3, 2, D); rect(26, 22, 3, 2, D);
+      for (const [x, y] of [[10, 5], [12, 3], [11, 1], [18, 4], [20, 2]]) set(x, y, C13["#e8f4fa"]);
+    } },
+  clawfoot80: { name: "猫足のバスタブ", w: 2, h: 1, oy: -8, price: 12000, say: ["猫足のバスタブで、ゆったりバブルバス", "ふわふわの泡につつまれて、うっとり"],
+    spr: (set, rect) => {
+      const W = C13["#fafafa"], S = C13["#d8dde8"], Gd = C13["#e8c050"];
+      ell13(set, 6, 15, 5, 7, W); ell13(set, 26, 15, 5, 7, W); rect(6, 9, 20, 13, W); rect(5, 8, 22, 2, S); rect(5, 8, 22, 1, C13["#ffffff"]);
+      rect(6, 10, 20, 5, C13["#8fd0ee"]); for (const [x, y] of [[8, 9], [12, 10], [16, 9], [20, 10], [10, 11], [18, 11], [23, 9]]) ell13(set, x, y, 1.6, 1.2, C13["#ffffff"]);
+      rect(6, 21, 20, 1, S);
+      ell13(set, 5, 22, 1.8, 1.8, Gd); ell13(set, 27, 22, 1.8, 1.8, Gd); rect(4, 22, 2, 2, Gd); rect(26, 22, 2, 2, Gd);
+      rect(2, 2, 2, 7, Gd); rect(2, 2, 6, 2, Gd); set(7, 4, C13["#8fd0ee"]);
+    } },
+};
+for (const [k, f] of Object.entries(FURN80)) {
+  const key = "s80_" + k;
+  IMG[key] = pix13(f.w * 16, f.h * 16 - f.oy, f.spr); ASSETS[key] = IMG[key].toDataURL();
+  FURN[k] = { name: f.name, img: key, w: f.w, h: f.h, oy: f.oy, price: f.price, ...(f.wall ? { wall: true } : {}), ...(f.floor ? { floor: true } : {}) };
+  ITEMS["f_" + k] = { name: f.name, icon: key, furn: k, price: f.price };
+}
+const _furnAct80 = F6.act;
+F6.act = (tx, ty, key, sel, item, other) => {
+  if (map === room && !decor && !modalOpen) {
+    const f = furnAt(room.data, tx, ty, "obj") || furnAt(room.data, tx, ty, "wall");
+    if (f && FURN80[f.id] && FURN80[f.id].say) {
+      if (f.id === "hinoki80" || f.id === "clawfoot80") { if (world.bathDay79 !== world.day) { world.bathDay79 = world.day; world.stats.bath79 = (world.stats.bath79 || 0) + 1; saveWorld(); } }
+      const say = FURN80[f.id].say; toast(FURN[f.id].img, say[rnd(say.length)]); return true;
+    }
+  }
+  return _furnAct80(tx, ty, key, sel, item, other);
+};
+
+// ---------- 家の箱：しまえる種類をふやす（サーバーの HouseBook.MAX_KINDS と同じ） ----------
+F17.kinds80 = 300;
+
+// ---------- スマホ：白い線のアイコン ----------
+const ICON80 = {
+  map: `<path d="M16 29s-9-8.2-9-15a9 9 0 0 1 18 0c0 6.8-9 15-9 15z"/><circle cx="16" cy="14" r="3.4"/>`,
+  chat: `<path d="M5 6h22a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H15l-6 5v-5H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/>`,
+  friend: `<path d="M16 28S4 20.5 4 12.2A6.2 6.2 0 0 1 16 9.6 6.2 6.2 0 0 1 28 12.2C28 20.5 16 28 16 28z"/>`,
+  mail: `<rect x="3.5" y="7" width="25" height="18" rx="2.5"/><path d="M4.5 9.5L16 18l11.5-8.5"/>`,
+  paper: `<rect x="4" y="5" width="24" height="22" rx="2.5"/><path d="M9 10h14M9 15h6M9 20h6"/><rect x="18" y="14" width="6" height="7" rx="1"/>`,
+  board: `<rect x="4" y="6" width="24" height="20" rx="2.5"/><rect x="8" y="10" width="7" height="6" rx="1"/><path d="M19 11h5M19 15h5M9 21h14"/>`,
+  stock: `<path d="M4 5v22h24"/><path d="M8 21l6-6 4 4 8-9"/><path d="M21 10h5v5"/>`,
+  rank: `<path d="M16 4l3.7 7.8 8.3 1-6.1 5.8 1.6 8.4L16 22.9 8.5 27l1.6-8.4L4 12.8l8.3-1z"/>`,
+  title: `<circle cx="16" cy="19" r="7"/><path d="M11.4 13.4L8 4h6l2 5M20.6 13.4L24 4h-6l-2 5"/><path d="M16 15.5l1.2 2.4 2.6.3-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.3z"/>`,
+  camera: `<path d="M4 11a2 2 0 0 1 2-2h4l2-3h8l2 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="16" cy="17" r="5"/>`,
+  guide: `<path d="M16 8c-3-2.2-7-2.6-12-2v18c5-.6 9-.2 12 2 3-2.2 7-2.6 12-2V6c-5-.6-9-.2-12 2z"/><path d="M16 8v18"/>`,
+  game: `<path d="M9 9h14a6 6 0 0 1 6 6v3a4 4 0 0 1-7 2.5L20.5 19h-9L10 20.5A4 4 0 0 1 3 18v-3a6 6 0 0 1 6-6z"/><path d="M10 12.5v5M7.5 15h5"/><path d="M21 14.2h.01M24 16.4h.01"/>`,
+  wallet: `<path d="M5 9a2 2 0 0 1 2-2h17v4"/><rect x="4" y="9" width="24" height="17" rx="2.5"/><path d="M28 15h-6a2.5 2.5 0 0 0 0 5h6"/>`,
+};
+F76.icon80 = a => ICON80[a.id] ? `<svg viewBox="0 0 32 32" aria-hidden="true">${ICON80[a.id]}</svg>` : esc(a.ch);
+
+// ---------- 確かめ用 ----------
+F80.addFloor = addFloor80; F80.go = goFloor80; F80.floor = () => roomFloor; F80.cart = cartS80;
+F80.demo = () => {
+  const R = baseRoom80("home");
+  while ((R.up || []).length < 2) addFloor80(true);
+  enterRoom("home", [7, 9]); goFloor80(1, "up"); goFloor80(2, "up"); goFloor80(1, "down"); goFloor80(0, "down");
+};
+F80.cartDemo = () => {
+  const C = cartS80(); C.on = true; enter(village, 20, 9, "down");
+  for (let i = 0; i < world.inv.length; i++) if (!world.inv[i]) world.inv[i] = { id: "stone", n: 1 };
+  addItem("wood", 3); C.goods.length = 0; C.on = false;
+};
+GUIDE54.push(["家の階・台車", "stairs80", `
+    <p>こもれび工務店の「2・3階」で、わが家に階を足せる。足した階には、床に矢じるしのマス（階段）ができる。</p><ul>
+    <li><b>上がる</b>：下の階の、矢じるしの床のマスを歩く。<b>下りる</b>：上の階の入口のマス（階段の絵）を歩く</li>
+    <li>階段は動かせない（模様替えで片付けられない）。階ごとに、壁紙・床・間取り・家具を変えられる</li>
+    <li><b>台車</b>（よろず屋）：外で持ち物の台車を選んでⒶで引いて歩ける。持ち物がいっぱいになっても、拾った物は台車に積まれる</li>
+    <li>家の箱（みんなの収納箱・自分だけの箱）には、300種類まで入れられる</li></ul>`]);
+{
+  const g = GUIDE54.find(x => x[0] === "電気");
+  if (g) g[2] = `
+    <p>電気は、あると便利な<b>おまけ</b>。なくても困ることはないし、使うかどうかは自由。電気は自分のぶんだけ（ほかの人とは分けない）。</p><ul>
+    <li><b>つくる</b>：避雷針（雷雨の日に雷が落ちる）／まわし車（エサをあげた家畜が、次の朝ぐるぐる回す）。ためておくのは蓄電池</li>
+    <li><b>つかう</b>：スプリンクラー（毎朝の水まき）／自動販売機／釣りのしかけ（水のそばで、毎朝魚）／自動収穫機（毎朝、まわりの実った作物を取り入れる）／電気ボート（水のそばに置いて、1日1回、沖で魚をとる）。どれも1回に電気1つ</li>
+    <li>どれも、よろず屋の「建物」で買える</li>
+    <li>スマホは太陽の光で充電するから、電池切れの心配はいらない</li></ul>`;
+}
+F80.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -16630,7 +17227,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

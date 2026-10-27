@@ -156,6 +156,16 @@ public class GameSocketHandler extends TextWebSocketHandler {
         for (PlayerSession o : sessions.values()) if (o != except && o.isAuthed() && map.equals(o.map())) sendRaw(o, text);
     }
 
+    /** 家の中にいる人みんなへ（上の階 "house:キー_f2" にいる人もふくむ）。本人（except）には送らない */
+    public void sendToHouse(String key, ObjectNode msg, PlayerSession except) {
+        String text = msg.toString(), base = "house:" + key;
+        for (PlayerSession o : sessions.values()) {
+            if (o == except || !o.isAuthed() || o.map() == null) continue;
+            String m = o.map();
+            if (m.equals(base) || (m.startsWith(base + "_f") && m.length() == base.length() + 3)) sendRaw(o, text);
+        }
+    }
+
     public void sendToPlayer(Long playerId, ObjectNode msg) {
         String text = msg.toString();
         for (PlayerSession o : sessions.values()) if (playerId.equals(o.playerId)) sendRaw(o, text);

@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public final class HouseBook {
 
-    public static final int MAX_LAYOUT = 30_000, MAX_KINDS = 120;
+    public static final int MAX_LAYOUT = 80_000, MAX_KINDS = 300;
     public static final long MAX_COUNT = 99_999, MAX_MOVE = 9_999;
     /** 建てた家（"48,21"）、みんなの家（"home"）、ひとりずつの箱（"me:プレイヤーID"） */
     private static final Pattern KEY = Pattern.compile("\\d{1,3},\\d{1,3}|home|me:\\d{1,12}");

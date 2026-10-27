@@ -81,7 +81,7 @@ public class HouseHandler implements MessageHandler {
                 if (!houses.book().putLayout(key, text, seedShared, seedPriv)) return;
                 houses.save(key);
                 hub.send(from, reply(hub, key, owner, me));
-                hub.sendToMap("house:" + key, reply(hub, key, false, me), from);
+                hub.sendToHouse(key, reply(hub, key, false, me), from);
             }
             default -> { }
         }

@@ -15,6 +15,7 @@ const canEnter = (k, id) => { const h = houseOf(k); return !!h && (isOwner(k, id
 const toList = m => Object.entries(m).map(([id, n]) => ({ id, n }));
 const hview = (k, owner, me) => { const r = rooms.get(k); const v = { layout: r && r.layout ? JSON.parse(r.layout) : null, storage: toList(r ? r.shared : {}) }; if (owner) { const pr = k === "home" ? rooms.get("me:" + me) : r; v.priv = toList(pr ? pr.priv : {}); } return v; };
 const addTo = (box, id, n) => { if (!ITEMRE.test(id) || !(n >= 1)) return -1; if (!(id in box) && Object.keys(box).length >= 60) return -1; box[id] = Math.min(99999, (box[id] || 0) + n); return box[id]; };
+const toHouse = (k, msg, ex) => { const t = JSON.stringify(msg), b = "house:" + k; for (const o of sessions) if (o !== ex && o.pl && (o.map === b || o.map === b + "_f1" || o.map === b + "_f2")) o.send(t); };
 const toMap = (map, msg, ex) => { const t = JSON.stringify(msg); for (const o of sessions) if (o !== ex && o.pl && o.map === map) o.send(t); };
 // みんなのBJ：本物と同じ BjGame.java を小さな橋渡し（bj/BjBridge.java）で動かす。BJ_CP にコンパイル先を入れる
 const path = require("path"), { spawn } = require("child_process");
@@ -266,10 +267,10 @@ wss.on("connection", s => {
         for (const [id, n] of Object.entries(m.items || {})) { const v = Math.min(9999, Math.floor(+n || 0)); if (v > 0 && addTo(r.priv, id, v) >= 0) ok[id] = v; }
         s.send(JSON.stringify({ type: "houseImport", rid: String(m.rid || "").slice(0, 20), ok })); const b = { type: "houseBox", key: k, ...hview(k, true, me) }; delete b.layout; s.send(JSON.stringify(b)); return; }
       if (m.act === "get") { if (!canEnter(k, me)) return s.send(JSON.stringify({ type: "house", key: k, locked: true })); return s.send(JSON.stringify(rep(owner))); }
-      if (m.act === "put" && (owner || canEdit(k, me)) && m.layout && typeof m.layout === "object") { const text = JSON.stringify(m.layout); if (text.length > 30000) return;
+      if (m.act === "put" && (owner || canEdit(k, me)) && m.layout && typeof m.layout === "object") { const text = JSON.stringify(m.layout); if (text.length > 80000) return;
         let r = rooms.get(k); const fresh = !r; if (fresh) { r = { layout: null, shared: {}, priv: {} }; rooms.set(k, r); } r.layout = text;
         if (fresh && owner && m.seed && k !== "home") { for (const [id, n] of Object.entries(m.seed.storage || {})) addTo(r.shared, id, +n); for (const [id, n] of Object.entries(m.seed.priv || {})) addTo(r.priv, id, +n); }
-        s.send(JSON.stringify(rep(owner))); toMap("house:" + k, rep(false), s); } }
+        s.send(JSON.stringify(rep(owner))); toHouse(k, rep(false), s); } }
     if (m.type === "box") { const k = String(m.key || ""), id = String(m.id || ""), n = Math.floor(+m.n || 0), rid = String(m.rid || "").slice(0, 20), me = s.pl.id, priv = m.box === "priv";
       const ng = t => s.send(JSON.stringify({ type: "boxNg", rid, text: t }));
       if (!KEYRE.test(k) || !houseOf(k)) return ng("その家は見つからなかった");
@@ -283,7 +284,7 @@ wss.on("connection", s => {
       s.send(JSON.stringify({ type: "boxOk", rid, act: m.act, id, n }));
       const mine = { type: "houseBox", key: k, ...hview(k, owner, me) }; delete mine.layout; s.send(JSON.stringify(mine));
       if (bk !== k) return;
-      const oth = { type: "houseBox", key: k, ...hview(k, false) }; delete oth.layout; toMap("house:" + k, oth, s); }
+      const oth = { type: "houseBox", key: k, ...hview(k, false) }; delete oth.layout; toHouse(k, oth, s); }
     if (m.type === "tchat") { const t = String(m.text || "").slice(0, 60).trim(); if (!t) return; const rid = String(tSeq++), bridges = [mj, bj].filter(Boolean);
       if (!bridges.length) { s.send(JSON.stringify({ type: "tchatNg" })); return; }
       tReq.set(rid, { from: s.pl.id, s, left: bridges.length, msg: { type: "tchat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() } });

@@ -22,6 +22,8 @@ STEPS = [
     ("財布", f"window.KOMO.closeModal(); {G}.F78.openWallet()"),
     ("現金の窓口", f"window.KOMO.closeModal(); {G}.F78.desk()"),
     ("巡査", f"window.KOMO.closeModal(); {G}.F78.openPolice()"),
+    ("台車", f"window.KOMO.closeModal(); {G}.F80.cartDemo()"),
+    ("2・3階", f"window.KOMO.closeModal(); {G}.F80.demo()"),
 ]
 async def main():
     bad = 0

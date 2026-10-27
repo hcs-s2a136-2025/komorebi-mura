@@ -1,0 +1,1 @@
+package jp.komorebi.world; public class SharedWorldService { public void putSystem(String n, com.fasterxml.jackson.databind.JsonNode v){} public com.fasterxml.jackson.databind.JsonNode getSystem(String n){return null;} }

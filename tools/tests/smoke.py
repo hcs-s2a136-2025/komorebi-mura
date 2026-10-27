@@ -1,0 +1,47 @@
+"""ひとり用の1ファイル版を開いて、主な場所と画面をひととおり回り、エラーが出ないか確かめる。
+ゲームの中でつかまえて続けたエラー（絵のエラーなど。画面は止まらないが、毎フレーム出る）も window.__komoErr で拾う。
+使い方: python3 game-src/build.py && python3 tools/tests/smoke.py   （PC・スマホ縦・スマホ横の3つで回す）
+新しい場所や画面を足したら、STEPS に1行足す。"""
+import asyncio, pathlib, sys
+from playwright.async_api import async_playwright
+HTML = (pathlib.Path(__file__).resolve().parents[2] / "game-src" / "komorebi.html").as_uri()
+G = "window.__game"
+STEPS = [
+    ("村", f"{G}.enter({G}.village2, 8, 10, 'down')"),
+    ("家", f"{G}.enterRoom('home', [7, 9])"),
+    ("カジノ", f"{G}.enter({G}.makeInterior('casino'), 8, 10, 'up')"),
+    ("よろず屋", f"{G}.enter({G}.makeInterior('shop'), 6, 7, 'up')"),
+    ("信用金庫", f"{G}.enter({G}.makeInterior('bank'), 5, 6, 'up')"),
+    ("十日屋", f"{G}.enter({G}.makeInterior('yami'), 5, 6, 'up')"),
+    ("みなと町", f"{G}.enter({G}.makePort(), 12, 5, 'down')"),
+    ("村にもどる", f"{G}.enter({G}.village2, 20, 9, 'down')"),
+    ("スマホ", "document.getElementById('phoneBtn76').click()"),
+    ("番付", f"window.KOMO.closeModal(); {G}.F74.open()"),
+    ("荷積み", f"window.KOMO.closeModal(); {G}.F75.play()"),
+    ("こもれびブロック", f"window.KOMO.closeModal(); {G}.F77.play()"),
+    ("財布", f"window.KOMO.closeModal(); {G}.F78.openWallet()"),
+    ("現金の窓口", f"window.KOMO.closeModal(); {G}.F78.desk()"),
+    ("巡査", f"window.KOMO.closeModal(); {G}.F78.openPolice()"),
+]
+async def main():
+    bad = 0
+    async with async_playwright() as p:
+        b = await p.chromium.launch()
+        for w, h, mobile, name in [(1280, 900, False, "PC"), (390, 844, True, "スマホ縦"), (844, 390, True, "スマホ横")]:
+            ctx = await b.new_context(viewport={"width": w, "height": h}, is_mobile=mobile, has_touch=mobile)
+            pg = await ctx.new_page(); errs = []
+            pg.on("pageerror", lambda e: errs.append("pageerror: " + str(e)[:200]))
+            await pg.goto(HTML); await pg.wait_for_timeout(1500)
+            await pg.evaluate("window.__errs = []; window.__komoErr = (e, w) => window.__errs.push(`[${w}] ${(e && e.message) || e}`)")
+            await pg.evaluate(f"document.body.classList.remove('menu'); {G}.world.tut.done = true; document.getElementById('tut').hidden = true; window.KOMO.closeModal(); {G}.F7.pending.length = 0;")
+            for label, js in STEPS:
+                try: await pg.evaluate(js)
+                except Exception as e: errs.append(f"{label}: {str(e)[:160]}")
+                await pg.wait_for_timeout(500)
+                k = await pg.evaluate("[...new Set(window.__errs.filter(x => x !== '[undefined] null'))]")
+                if k: errs.append(f"{label}: " + " / ".join(k[:3])); await pg.evaluate("window.__errs = []")
+            print(name, "OK" if not errs else "NG"); [print("  ", e) for e in errs]; bad += len(errs)
+            await ctx.close()
+        await b.close()
+    sys.exit(1 if bad else 0)
+asyncio.run(main())

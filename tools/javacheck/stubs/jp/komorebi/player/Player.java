@@ -1,0 +1,1 @@
+package jp.komorebi.player; public class Player { Long id; String name; public Player(){} public Player(Long i, String n){id=i;name=n;} public Long getId(){return id;} public String getName(){return name;} }

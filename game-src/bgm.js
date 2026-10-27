@@ -26,6 +26,15 @@ const BGM = (() => {
         "G5 - F5 Eb5 D5 - C5 -", "D5 - Bb4 - G4 - A4 B4", "C5 Eb5 G5 - F5 - Eb5 A4", "Bb4 - - - . . . ."],
       lead: "sax", comp: true, bass: "walk", hat: "ride",
     },
+    vip: {
+      title: "ハイローラーの夜", bpm: 76, swing: .58,
+      chords: [["D4 F4 A4 C5", "G3 B3 D4 F4"], ["C4 E4 G4 B4", "A3 C#4 E4 G4"], ["D4 F4 A4 C5", "G3 B3 D4 F4"], ["C4 E4 G4 B4", "C4 E4 G4 B4"],
+               ["F4 A4 C5 E5", "Bb3 D4 F4 A4"], ["E4 G4 B4 D5", "A3 C#4 E4 G4"], ["D4 F4 A4 C5", "G3 B3 D4 F4"], ["C4 E4 G4 B4", "G3 B3 D4 F4"]],
+      melody: [
+        "A4 - D5 - F5 - E5 D5", "E5 - - - C5 - D5 E5", "F5 - A5 - G5 - F5 D5", "E5 - - - . . G4 A4",
+        "A4 - C5 - F5 - E5 C5", "B4 - - - G4 - A4 B4", "D5 - F5 - A5 - G5 F5", "E5 - - - . . . ."],
+      lead: "sax", comp: true, bass: "walk", hat: "ride",
+    },
     dark: {
       title: "十日目の夜", bpm: 70, swing: 0,
       chords: [["A2 E3 A3"], ["F2 C3 A3"], ["D3 F3 A3"], ["E2 B2 G#3"], ["A2 E3 A3"], ["F2 C3 A3"], ["D3 F3 A3"], ["E2 B2 E3"]],

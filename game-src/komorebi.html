@@ -1037,10 +1037,6 @@ html, body { touch-action: manipulation; }
   #sl78go { grid-area: go; min-width: 0; width: 100%; }
   .sl78 > .mtext.small { display: none; }
 }
-.vip78 { background: radial-gradient(#3a6a3a, #1e3a1e); border-radius: 12px; padding: 10px; text-align: center; margin: 8px 0; box-shadow: inset 0 0 0 3px #c8a040; }
-.dice78 { display: flex; justify-content: center; align-items: center; gap: 10px; }
-.die78 { font-size: 2.6rem; line-height: 1; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, .5); }
-.dice78 b { font-size: 1.1rem; color: #ffd86a; margin-left: 8px; }
 .pl78w { color: #c83a3a; font-weight: bold; }
 
 /* v80: スマホのアイコン（黒地に白い線） */
@@ -1092,6 +1088,57 @@ html, body { touch-action: manipulation; }
 body.watch88 #hotbar { visibility: hidden; }
 .cr74tabs.sc88 .chip[aria-pressed="true"] { background: #6aa84a; color: #fff; }
 body.watch88 #tut { display: none !important; }
+
+/* v90: VIPルーム（サイコロの卓・勝ったときの演出） */
+.mbox.vip90 { background: linear-gradient(#2a0f1e, #1a0a14); color: #fbeee0; border-color: #0e0509; box-shadow: inset 0 0 0 2px #c8a040, inset 0 0 22px rgba(200, 160, 64, .18); }
+.mbox.vip90 .mhead { border-bottom-color: #7a5a22; }
+.mbox.vip90 .mtext { color: #f3e2cf; }
+.mbox.vip90 .chip { background: #3a1a2c; color: #fbeee0; border-color: #7a5a22; }
+.mbox.vip90 .chip[aria-pressed="true"] { background: #f0c040; color: #2a0f1e; border-color: #fff0a0; }
+.mbox.vip90 .chip:disabled { opacity: .38; }
+.mbox.vip90 .lbl { color: #e8c060; min-width: 3.2em; display: inline-block; }
+.vp90 { display: block; }
+.vp90-stage { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 8px 0 4px; padding: 12px 8px; border-radius: 12px; background: radial-gradient(ellipse at 50% 35%, #2f8a5e, #164c36 70%); box-shadow: inset 0 0 0 3px #c8a040, inset 0 0 0 5px #5a3a10; }
+.vp90-sum { color: #ffe27a; font-size: 1.05rem; margin-left: 6px; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.vd90 { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 54px; height: 54px; padding: 8px; box-sizing: border-box; border-radius: 11px; background: linear-gradient(145deg, #fffdf4, #e6dcc0); box-shadow: inset 0 0 0 2px #d8b24a, 0 3px 6px rgba(0, 0, 0, .55); }
+.vd90 i { display: block; place-self: center; width: 9px; height: 9px; border-radius: 50%; }
+.vd90 i.on { background: radial-gradient(circle at 35% 30%, #5a5a6a, #14121a); }
+.vd90[data-v="1"] i.on { background: radial-gradient(circle at 35% 30%, #ff6a6a, #b01428); width: 13px; height: 13px; }
+.vd90 em { position: absolute; inset: 0; display: grid; place-items: center; font-style: normal; font-weight: bold; font-size: 1.5rem; color: #b8841c; }
+.vd90.roll { animation: vd90roll .22s linear infinite; }
+.vd90.land { animation: vd90land .32s ease-out; }
+@keyframes vd90roll { 0% { transform: translateY(0) rotate(-14deg); } 25% { transform: translateY(-9px) rotate(10deg); } 50% { transform: translateY(0) rotate(18deg); } 75% { transform: translateY(-5px) rotate(-8deg); } 100% { transform: translateY(0) rotate(-14deg); } }
+@keyframes vd90land { 0% { transform: translateY(-14px) scale(1.18); } 60% { transform: translateY(2px) scale(.96); } 100% { transform: none; } }
+.vp90-res { min-height: 1.5em; text-align: center; font-weight: bold; margin: 4px 0; }
+.vp90-res.win { color: #ffe27a; text-shadow: 0 0 10px rgba(255, 210, 80, .7); }
+.vp90-res.lose { color: #d8b8c8; }
+.vp90-note { color: #cbb3a0; font-size: .85em; }
+.vp90-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; }
+.vp90-row.sub { margin-top: 2px; }
+.vp90-row .chip.sm { padding: 4px 8px; min-width: 2.2em; }
+.vp90-odds { margin: 6px 0 4px; }
+.vp90-go { min-width: 60%; padding-top: 14px; padding-bottom: 14px; background: linear-gradient(#f6d060, #d89a20); color: #2a0f1e; border-color: #fff0a0; font-weight: bold; letter-spacing: .1em; }
+.vp90-go:disabled { opacity: .45; }
+.vp90-rules { padding-left: 1.2em; margin: 8px 0; }
+.vp90-rules li { margin: 4px 0; }
+.fx90 { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 9000; cursor: pointer; touch-action: manipulation; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .mbox.vip90 { width: min(780px, 100%); }
+  .mbox.vip90 .mhead { padding: 6px 12px; }
+  .mbox.vip90 .mbody { padding: 8px 12px 10px; gap: 6px; }
+  .vp90 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: 14px; align-items: start; }
+  .vp90 .say13 { padding: 4px 8px; margin-bottom: 4px; gap: 8px; }
+  .vp90 .say13 img { width: 34px; height: 34px; }
+  .vp90 .say13 p { font-size: .76rem; line-height: 1.4; }
+  .vp90-stage { margin: 4px 0; padding: 8px 6px; gap: 8px; }
+  .vd90 { width: 42px; height: 42px; padding: 6px; border-radius: 9px; }
+  .vd90 i { width: 7px; height: 7px; }
+  .vp90 .mtext { margin: 2px 0; font-size: .8rem; }
+  .vp90-r .vp90-row { margin: 3px 0; gap: 4px; }
+  .vp90-r .chip { padding: 4px 8px; font-size: .78rem; }
+  .vp90-odds { font-size: .7rem !important; margin: 2px 0 !important; }
+  .vp90-go { min-width: 0; width: 100%; padding-top: 9px; padding-bottom: 9px; }
+}
 </style>
 
 <header>
@@ -1218,7 +1265,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.48.0";
+  const VER = "0.49.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -1447,6 +1494,15 @@ const BGM = (() => {
       melody: [
         "F5 - D5 Eb5 F5 - . Bb4", "D5 - - C5 Bb4 - G4 -", "Eb5 - C5 D5 Eb5 F5 G5 -", "F5 - - - . D5 E5 F#5",
         "G5 - F5 Eb5 D5 - C5 -", "D5 - Bb4 - G4 - A4 B4", "C5 Eb5 G5 - F5 - Eb5 A4", "Bb4 - - - . . . ."],
+      lead: "sax", comp: true, bass: "walk", hat: "ride",
+    },
+    vip: {
+      title: "ハイローラーの夜", bpm: 76, swing: .58,
+      chords: [["D4 F4 A4 C5", "G3 B3 D4 F4"], ["C4 E4 G4 B4", "A3 C#4 E4 G4"], ["D4 F4 A4 C5", "G3 B3 D4 F4"], ["C4 E4 G4 B4", "C4 E4 G4 B4"],
+               ["F4 A4 C5 E5", "Bb3 D4 F4 A4"], ["E4 G4 B4 D5", "A3 C#4 E4 G4"], ["D4 F4 A4 C5", "G3 B3 D4 F4"], ["C4 E4 G4 B4", "G3 B3 D4 F4"]],
+      melody: [
+        "A4 - D5 - F5 - E5 D5", "E5 - - - C5 - D5 E5", "F5 - A5 - G5 - F5 D5", "E5 - - - . . G4 A4",
+        "A4 - C5 - F5 - E5 C5", "B4 - - - G4 - A4 B4", "D5 - F5 - A5 - G5 F5", "E5 - - - . . . ."],
       lead: "sax", comp: true, bass: "walk", hat: "ride",
     },
     dark: {
@@ -5673,7 +5729,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.48.0";
+const CLIENT_VERSION = "0.49.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7751,6 +7807,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.49.0", date: "2026/10/27", title: "カジノの奥に、現金だけのVIPルームができた", items: [
+    "こもれびパレスの右がわの紫のカーテン（「VIPルーム」）から、奥の部屋に入れるようになった。金のシャンデリア・大理石の柱・ワイン色のソファ・金のどんぐり像のある、ぜいたくな部屋。ここで遊べるのは現金（1,000G札）だけで、電子マネーは使えない",
+    "部屋の中央に、高額のサイコロの卓。賭けられるのは10・50・100・500枚（これまでのVIPの10倍まで）。「大・小」（×2）に加えて、「ゾロ目」（どの目でも×35）・「合計ぴったり」（×7〜×68）・「指定ゾロ目」（×210）が選べる。払い戻しは最高5,000枚まで",
+    "勝つと、サイコロがころがってから、部屋が光って画面いっぱいに金貨が降る。大きく当てるほど演出が豪華になって、WIN・BIG WIN・SUPER WIN・MEGA JACKPOT の4段階。タップかEscで、途中でとじられる",
+    "支配人ルナに話しかけると、VIPルームのきまりと倍率の表が見られる。てびきに「VIPルーム」を足した",
+    "称号「VIPの常連」「ハイローラー」「ゾロ目の王」を足した。VIPルームのBGMも新しくした"
+  ] },
   { v: "0.48.0", date: "2026/10/27", title: "スプリンクラーと自動収穫機を、同じ場所に置けるようになった", items: [
     "スプリンクラーと自動収穫機を、同じマスにまとめて置けるようになった。置いてあるほうを向いて、もう片方のキットを持ってAボタン（置けるときは、向いているマスがうすい緑になる）",
     "まとめた建物は、5×5の同じ畑に、水まきと収穫のどちらもしてくれる（電気は、それぞれ1つずつ使う）。向いてAボタンで、中を見たり、それぞれのキットに戻したりできる",
@@ -15909,7 +15972,7 @@ makeInterior = function (kind) {
   }
   if (kind === "casino" && !m.interact["15,5"]) {
     m.objs.push({ cv: IMG.s78_vip, x: 15 * TS, y: 5 * TS - 16, sortY: 6 * TS - 1 }); m.base[5][15] = true;
-    m.interact["15,5"] = () => openVip78();
+    m.interact["15,5"] = () => F90.enter();
     m.labels.push({ x: 14 * TS + 10, y: 5 * TS - 20, text: "VIPルーム" });
   }
   return m;
@@ -16020,41 +16083,7 @@ setInterval(() => {
   if (policeNear78()) b.querySelector(".row2")?.insertAdjacentHTML("beforebegin", `<p class="note pl78w">……近くに巡査がいる！ 見られたら捕まるよ</p>`);
 }, 200);
 document.addEventListener("click", e => { if (e.target && e.target.id === "st69yes") F78.seen = policeNear78(); }, true);
-// ---- VIPルーム（現金だけ）：大小 ----
-const VIP_BETS78 = [1, 5, 10, 50];
-function openVip78(res) {
-  F78.vip = F78.vip || { bet: 1, pick: "big" };
-  const V = F78.vip;
-  openModal("VIPルーム", "dark", body => {
-    const c = cash78(); if (V.bet > Math.max(1, c.n)) V.bet = VIP_BETS78.filter(b => b <= c.n).pop() || 1;
-    const die = v => `<span class="die78">${["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][v] || "?"}</span>`;
-    body.innerHTML = `<p class="mtext">「ようこそ、VIPルームへ。ここは現金だけのテーブルでございます」</p>
-      <p class="mtext small">サイコロ3つの合計が 11〜17 なら「大」、4〜10 なら「小」。当たれば賭けたお札が2倍（ゾロ目のときは、大も小もはずれ）。「ゾロ目」に賭けて当たれば31倍。</p>
-      <div class="vip78">${res ? `<div class="dice78">${res.d.map(die).join("")}<b>${res.sum}${res.triple ? "（ゾロ目）" : res.sum >= 11 ? "（大）" : "（小）"}</b></div><p class="mtext"><b>${esc(res.text)}</b></p>` : `<div class="dice78">${die(0)}${die(0)}${die(0)}</div>`}</div>
-      <p class="mtext">現金 <b>${billTxt78(c.n)}</b></p>
-      <div class="row2"><span>賭ける：</span>${VIP_BETS78.map(b => `<button class="chip" type="button" data-vb78="${b}" aria-pressed="${V.bet === b}" ${c.n >= b ? "" : "disabled"}>${b}枚</button>`).join("")}</div>
-      <div class="row2"><span>どれに：</span>${[["big", "大"], ["small", "小"], ["triple", "ゾロ目"]].map(([k, l]) => `<button class="chip" type="button" data-vp78="${k}" aria-pressed="${V.pick === k}">${l}</button>`).join("")}</div>
-      <div class="row2"><button class="btn" type="button" id="vr78" ${c.n >= V.bet ? "" : "disabled"}>サイコロをふる</button></div>
-      ${c.n ? "" : `<p class="mtext small">現金がないよ。信用金庫の「現金の窓口」で引き出してから来てね</p>`}`;
-    body.querySelectorAll("[data-vb78]").forEach(b => b.onclick = () => { V.bet = +b.dataset.vb78; closeModal(); openVip78(res); });
-    body.querySelectorAll("[data-vp78]").forEach(b => b.onclick = () => { V.pick = b.dataset.vp78; closeModal(); openVip78(res); });
-    body.querySelector("#vr78").onclick = () => {
-      const bet = V.bet; if (cash78().n < bet) return;
-      if (K.betAllowed && !K.betAllowed(bet * BILL78)) { toast(null, K.betMsg()); return; }
-      closeModal();
-      payCash78("vip", bet, ok => {
-        if (!ok) return;
-        const d = [1 + rnd(6), 1 + rnd(6), 1 + rnd(6)], sum = d[0] + d[1] + d[2], triple = d[0] === d[1] && d[1] === d[2];
-        const win = V.pick === "triple" ? triple : !triple && (V.pick === "big" ? sum >= 11 : sum <= 10);
-        const pay = win ? bet * (V.pick === "triple" ? 31 : 2) : 0, net = (pay - bet) * BILL78;
-        world.stats.gambleNet += net; if (K.gambleTrack) K.gambleTrack(net); world.stats.lastGamble = world.day; if (net > world.stats.bigWin) world.stats.bigWin = net; world.stats.vip78 = (world.stats.vip78 || 0) + 1;
-        const show = k => { if (pay) addCash78(pay, { fu: k }); saveWorld(); se13(win ? "big" : "small"); openVip78({ d, sum, triple, text: win ? `当たり！ ${billTxt78(pay)} を受けとった` : `はずれ… ${billTxt78(bet)} を失った` }); };
-        if (pay) drawPool78(pay, show); else show(0);
-      });
-    };
-  });
-}
-F78.vipOpen = openVip78;
+// ---- VIPルーム：v90 の部屋（こもれびパレスの奥）に引っこした ----
 // ---- ラウンジのチップ（お札で） ----
 setInterval(() => {
   if (!modalOpen) return; const t = $("mtitle").textContent; if (!t.startsWith("ラウンジ 月下　")) return;
@@ -16138,7 +16167,7 @@ handle8 = m => {
 GUIDE54.push(["現金と偽札", "s78_bill", `
     <p>所持金（G）は村の電子マネー。これとは別に、<b>現金（1,000G札）</b>を持てる。スマホの「財布」で、いまの現金が見られる。</p><ul>
     <li>信用金庫の「現金の窓口」で、電子マネーをお札に引き出したり、お札を預けたりできる</li>
-    <li>現金だけで使えるもの：カジノの<b>VIPルーム</b>（大小）、十日屋の<b>闇市</b>、ラウンジの<b>チップ</b>、フレンドへの<b>ポチ袋</b>、<b>札束かざり</b>（札束の扇・札束の山）</li>
+    <li>現金だけで使えるもの：カジノの奥の<b>VIPルーム</b>（高額のサイコロ）、十日屋の<b>闇市</b>、ラウンジの<b>チップ</b>、フレンドへの<b>ポチ袋</b>、<b>札束かざり</b>（札束の扇・札束の山）</li>
     <li><b>札束かざり</b>は、財布の「札束で飾りを作る」で作る。扇は5枚、山は10・50・100・500枚の4つの大きさ。財布の「飾りを現金に戻す」で、お札に戻せる（まざっていた偽札も、そのまま戻る）。扇は手に持つと、同じ場所にいる人にも見える</li>
     <li><b>偽札</b>は、本物のお札とまったく同じに見える。知らないうちに財布にまざっていることもある（ポチ袋や、VIPルームの払い戻しなど）</li>
     <li>よろず屋の<b>鑑定ルーペ</b>があれば、いつでも財布の中の偽札を調べられる。銀行に預けると、知らない偽札は回収されて、1枚100Gのお礼がもらえる</li>
@@ -17531,6 +17560,418 @@ F7.addToList = (list, now) => {
 }
 F89.ready = true;
 
+// =================== v90: こもれびパレスのVIPルーム（現金だけ・高額のサイコロ・豪華な勝ち演出） ===================
+var F90 = {};
+// カジノの奥の「VIPルーム」。部屋に入って、サイコロの卓で遊ぶ。賭けも払い戻しも現金（1,000G札）だけ。電子マネーは使えない。
+// 賭け：10・50・100・500枚。払い戻しの上限は MAXPAY90 枚（賭けた枚数×倍率がこえる賭け方は選べない）。どの賭けも、還元率は約97%以下。
+const BETS90 = [10, 50, 100, 500], MAXPAY90 = 5000;
+const SUMM90 = { 4: 68, 5: 34, 6: 20, 7: 14, 8: 10, 9: 8, 10: 7, 11: 7, 12: 8, 13: 10, 14: 14, 15: 20, 16: 34, 17: 68 };
+const PICK90 = {
+  big: { name: "大", mult: () => 2, win: (d, s, t) => !t && s >= 11, hint: "合計が11〜17（ゾロ目はのぞく）" },
+  small: { name: "小", mult: () => 2, win: (d, s, t) => !t && s <= 10, hint: "合計が4〜10（ゾロ目はのぞく）" },
+  any: { name: "ゾロ目", mult: () => 35, win: (d, s, t) => t, hint: "3つとも同じ目（どの目でも）" },
+  total: { name: "合計ぴったり", mult: n => SUMM90[n] || 0, win: (d, s, t, n) => s === n, hint: "3つの合計が、選んだ数になる" },
+  exact: { name: "指定ゾロ目", mult: () => 210, win: (d, s, t, n) => t && d[0] === n, hint: "選んだ目が3つそろう" },
+};
+const vs90 = () => {
+  const V = F90.v = F90.v || { bet: 10, pick: "big", num: 10, face: 6 };
+  if (!PICK90[V.pick]) V.pick = "big";
+  V.num = Math.max(4, Math.min(17, V.num | 0 || 10)); V.face = Math.max(1, Math.min(6, V.face | 0 || 6)); if (!BETS90.includes(V.bet)) V.bet = BETS90[0];
+  return V;
+};
+const arg90 = V => V.pick === "total" ? V.num : V.pick === "exact" ? V.face : 0;
+const mult90 = V => PICK90[V.pick].mult(arg90(V));
+const betOk90 = (b, V) => b * mult90(V) <= MAXPAY90;
+const tier90 = (win, pay, mult) => !win ? 0 : mult >= 100 ? 4 : (mult >= 30 || pay >= 2500) ? 3 : (mult >= 7 || pay >= 1000) ? 2 : 1;
+F90.PICK = PICK90; F90.SUMM = SUMM90; F90.BETS = BETS90; F90.MAXPAY = MAXPAY90; F90.tier = tier90; F90.state = vs90;
+
+// ---- 称号 ----
+const TTL90 = [
+  ["VIPの常連", "VIPルームで、50回勝負する", () => (world.stats.vip78 || 0) >= 50],
+  ["ハイローラー", "VIPルームで、1回に1,000枚以上の払い戻しを受けとる", () => (world.stats.vipBest90 || 0) >= 1000],
+  ["ゾロ目の王", "VIPルームで、指定ゾロ目を当てる", () => (world.stats.vipExact90 || 0) >= 1],
+];
+for (const t of TTL90) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
+// ---- 床・壁 ----
+const TILE90 = {
+  "@vwall": R => { R("#3d1028", 0, 0, 16, 13); R("#501836", 0, 0, 16, 3); R("#e8c060", 0, 3, 16, 1); R("#a8842c", 0, 4, 16, 1); for (const a of [3, 11]) { R("#5c1c40", a, 6, 2, 6); R("#e8c060", a, 8, 2, 1); R("#e8c060", a, 11, 2, 1); } R("#e8c060", 0, 12, 16, 1); R("#a8842c", 0, 13, 16, 1); R("#241018", 0, 14, 16, 2); },
+  "@vfloor": R => { R("#201c28", 0, 0, 16, 16); R("#2c2736", 0, 0, 8, 8); R("#2c2736", 8, 8, 8, 8); R("#3c3648", 2, 2, 3, 1); R("#3c3648", 10, 11, 3, 1); R("#5a4824", 0, 0, 16, 1); R("#5a4824", 0, 0, 1, 16); },
+  "@vcarpetL": R => { R("#9a1634", 0, 0, 16, 16); R("#b8224a", 3, 0, 13, 1); R("#e8c060", 0, 0, 2, 16); R("#6a0c22", 2, 0, 1, 16); R("#e8c060", 11, 5, 2, 6); R("#e8c060", 9, 7, 6, 2); R("#6a0c22", 11, 14, 2, 1); },
+  "@vcarpetR": R => { R("#9a1634", 0, 0, 16, 16); R("#b8224a", 0, 0, 13, 1); R("#e8c060", 14, 0, 2, 16); R("#6a0c22", 13, 0, 1, 16); R("#e8c060", 3, 5, 2, 6); R("#e8c060", 1, 7, 6, 2); R("#6a0c22", 3, 14, 2, 1); },
+};
+const _intTile90 = intTile;
+intTile = function (name) {
+  if (!TILE90[name]) return _intTile90(name);
+  if (intCache.has(name)) return intCache.get(name);
+  const c = document.createElement("canvas"); c.width = c.height = 16; const x = c.getContext("2d");
+  TILE90[name]((col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); });
+  intCache.set(name, c); return c;
+};
+
+// ---- 絵 ----
+const txt90 = (set, x0, y0, rows, col) => rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === "X") set(x0 + i, y0 + j, col); }));
+const SPR90 = {
+  // サイコロの卓（64×34）：金のふち・緑のフェルト・ガラスのカップと3つのサイコロ・チップ・ワイン色の前板
+  table: [64, 34, (s, r) => {
+    r(1, 1, 62, 22, C13["#4a2a14"]); r(2, 2, 60, 20, C13["#b8841c"]); r(2, 2, 60, 1, C13["#fff0a0"]); r(3, 3, 58, 18, C13["#3a1e10"]);
+    r(5, 5, 54, 14, C13["#1f6a4a"]); r(5, 5, 54, 2, C13["#2f8a5e"]); r(5, 17, 54, 2, C13["#164c36"]);
+    r(7, 7, 50, 1, C13["#f0c040"]); r(7, 16, 50, 1, C13["#f0c040"]); r(7, 7, 1, 10, C13["#f0c040"]); r(56, 7, 1, 10, C13["#f0c040"]);
+    ell13(s, 32, 12, 10, 5, C13["#7ab0c0"]); ell13(s, 32, 12, 8.6, 4, C13["#cfeaf2"]); ell13(s, 30, 10.6, 3, 1.4, C13["#ffffff"]);
+    for (const [dx, dy] of [[27, 11], [31, 12], [35, 11]]) { r(dx, dy, 3, 3, C13["#fffaf0"]); s(dx + 1, dy + 1, C13["#1a1620"]); }
+    r(10, 12, 4, 2, C13["#d83a3a"]); r(10, 10, 4, 2, C13["#f2f2f2"]); r(10, 8, 4, 2, C13["#2a2630"]); r(15, 12, 4, 2, C13["#2a2630"]);
+    r(46, 12, 4, 2, C13["#f0c040"]); r(46, 10, 4, 2, C13["#2a2630"]); r(46, 8, 4, 2, C13["#d83a3a"]); r(51, 12, 4, 2, C13["#f0c040"]);
+    r(2, 22, 60, 1, C13["#7a5410"]);
+    r(2, 23, 60, 9, C13["#8a1a3a"]); r(2, 23, 60, 1, C13["#f0c040"]); r(2, 24, 60, 1, C13["#c8304f"]);
+    for (let x = 6; x < 62; x += 12) r(x, 25, 1, 7, C13["#f0c040"]);
+    r(2, 31, 60, 1, C13["#b8841c"]); r(2, 32, 60, 1, C13["#5a0f26"]); r(4, 32, 4, 2, C13["#7a5410"]); r(56, 32, 4, 2, C13["#7a5410"]);
+  }],
+  // 大理石の柱（16×36）
+  pillar: [16, 36, (s, r) => {
+    r(2, 32, 12, 3, C13["#b8841c"]); r(2, 32, 12, 1, C13["#fff0a0"]); r(3, 30, 10, 2, C13["#f0c040"]);
+    r(4, 6, 8, 24, C13["#ece6d6"]); r(4, 6, 2, 24, C13["#fffaf0"]); r(10, 6, 2, 24, C13["#c8c0a8"]); r(7, 6, 1, 24, C13["#d8d0bc"]);
+    r(4, 18, 8, 1, C13["#f0c040"]); r(2, 3, 12, 3, C13["#b8841c"]); r(2, 3, 12, 1, C13["#fff0a0"]); r(3, 1, 10, 2, C13["#f0c040"]);
+  }],
+  // シャンデリア（28×18）
+  chandelier: [28, 18, (s, r) => {
+    r(13, 0, 2, 5, C13["#7a5410"]); r(10, 5, 8, 2, C13["#f0c040"]); r(12, 7, 4, 2, C13["#b8841c"]);
+    r(2, 9, 24, 2, C13["#f0c040"]); r(2, 9, 24, 1, C13["#fff0a0"]);
+    for (const x of [3, 13, 23]) { r(x, 5, 2, 3, C13["#ffe27a"]); r(x, 8, 2, 2, C13["#fffaf0"]); }
+    for (let i = 0; i < 6; i++) { const x = 4 + i * 4; r(x, 11, 1, 4, C13["#cfeaff"]); r(x, 15, 1, 2, C13["#8fc8e8"]); }
+  }],
+  // ワイン色のソファ（32×20）
+  sofa: [32, 20, (s, r) => {
+    r(1, 2, 30, 9, C13["#8a1a3a"]); r(1, 2, 30, 2, C13["#c8304f"]); for (let x = 5; x < 30; x += 6) { s(x, 6, C13["#5a0f26"]); s(x, 7, C13["#5a0f26"]); }
+    r(0, 6, 4, 12, C13["#c8304f"]); r(28, 6, 4, 12, C13["#c8304f"]); r(0, 6, 4, 1, C13["#e0506e"]); r(28, 6, 4, 1, C13["#e0506e"]);
+    r(4, 10, 24, 6, C13["#b0284a"]); r(4, 10, 24, 1, C13["#e0506e"]); r(16, 10, 1, 6, C13["#5a0f26"]); r(3, 16, 26, 2, C13["#5a0f26"]);
+    r(2, 18, 3, 2, C13["#b8841c"]); r(27, 18, 3, 2, C13["#b8841c"]);
+  }],
+  // シャンパンタワー（16×30）
+  champagne: [16, 30, (s, r) => {
+    ell13(s, 8, 22, 7, 2.4, C13["#f4e6a0"]); ell13(s, 8, 16, 5, 2, C13["#f8eebc"]); ell13(s, 8, 10, 3, 1.8, C13["#fff6cc"]);
+    r(7, 12, 2, 3, C13["#f0c040"]); r(7, 18, 2, 3, C13["#f0c040"]); r(7, 5, 2, 4, C13["#fff0a0"]); s(8, 3, C13["#ffffff"]);
+    r(2, 25, 12, 2, C13["#b8841c"]); r(4, 27, 8, 2, C13["#7a5410"]); s(5, 21, C13["#ffffff"]); s(11, 15, C13["#ffffff"]);
+  }],
+  // 金のどんぐり像（16×32）
+  statue: [16, 32, (s, r) => {
+    r(1, 21, 14, 2, C13["#fffaf0"]); r(2, 23, 12, 7, C13["#ece6d6"]); r(1, 29, 14, 2, C13["#c8c0a8"]); r(5, 25, 6, 3, C13["#f0c040"]);
+    ell13(s, 8, 14, 5, 6, C13["#f0c040"]); ell13(s, 6, 13, 2, 3, C13["#fff0a0"]); ell13(s, 10.5, 16, 2, 3, C13["#b8841c"]);
+    r(3, 6, 10, 4, C13["#7a5410"]); r(4, 5, 8, 1, C13["#b8841c"]); for (const [x, y] of [[5, 7], [8, 8], [11, 7], [7, 6]]) s(x, y, C13["#b8841c"]); r(7, 2, 2, 3, C13["#7a5410"]);
+  }],
+  // 壁の絵（16×14）：夜のどんぐりの木
+  frame: [16, 14, (s, r) => {
+    r(0, 0, 16, 14, C13["#f0c040"]); r(1, 1, 14, 12, C13["#7a5410"]); r(2, 2, 12, 10, C13["#1a2a4a"]); r(2, 9, 12, 3, C13["#1f5a3a"]);
+    r(7, 6, 2, 4, C13["#6a3a1a"]); ell13(s, 8, 5, 4, 3, C13["#3a8a4a"]); s(4, 4, C13["#fffaf0"]); s(12, 3, C13["#fffaf0"]); s(11, 6, C13["#ffe27a"]);
+  }],
+  // 「VIP」の看板（32×11）
+  sign: [32, 11, (s, r) => {
+    r(0, 1, 32, 9, C13["#1a1620"]); r(0, 1, 32, 1, C13["#f0c040"]); r(0, 9, 32, 1, C13["#f0c040"]); r(0, 1, 1, 9, C13["#f0c040"]); r(31, 1, 1, 9, C13["#f0c040"]);
+    const rows = { V: ["X...X", "X...X", "X...X", ".X.X.", ".X.X.", "..X.."], I: ["XXX", ".X.", ".X.", ".X.", ".X.", "XXX"], P: ["XXX.", "X..X", "XXX.", "X...", "X...", "X..."] };
+    txt90(s, 9, 3, rows.V, C13["#b8841c"]); txt90(s, 15, 3, rows.I, C13["#b8841c"]); txt90(s, 19, 3, rows.P, C13["#b8841c"]);
+    txt90(s, 9, 2, rows.V, C13["#ffe27a"]); txt90(s, 15, 2, rows.I, C13["#ffe27a"]); txt90(s, 19, 2, rows.P, C13["#ffe27a"]);
+    s(4, 5, C13["#fff0a0"]); s(27, 5, C13["#fff0a0"]); s(3, 5, C13["#b8841c"]); s(28, 5, C13["#b8841c"]);
+  }],
+};
+for (const [k, [w, h, fn]] of Object.entries(SPR90)) { IMG["s90_" + k] = pix13(w, h, fn); ASSETS["s90_" + k] = IMG["s90_" + k].toDataURL(); }
+
+// ---- 部屋 ----
+const NPC90 = {
+  dealer: { name: "VIPディーラー レイ", cfg: { skin: "色白", hair: "ショート", hairc: "黒", top: "スーツ", topc: "黒", bottom: "パンツ", bottomc: "黒" } },
+  manager: { name: "支配人 ルナ", cfg: { skin: "色白", hair: "ロング", hairc: "銀", top: "ドレス", topc: "紫", bottom: "スカート", bottomc: "黒" } },
+};
+const CH90 = [[40, 11], [184, 11]];   // シャンデリアの中心（ピクセル）
+const _mi90 = makeInterior;
+makeInterior = function (kind) {
+  if (kind !== "vip") return _mi90(kind);
+  const w = 14, h = 11, m = blankMap(w, h, "こもれびパレス VIPルーム");
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m.ground[y][x] = y < 2 ? "@vwall" : y >= 6 && y < h - 1 && x === 6 ? "@vcarpetL" : y >= 6 && y < h - 1 && x === 7 ? "@vcarpetR" : "@vfloor";
+  solidRect(m, 0, 0, w, 2);
+  m.isInterior = true; m.kind = "vip"; m.floorT = "@vfloor"; m.statics = []; m.interact = {}; m.labels = []; m.music = "vip";
+  const ex = Math.floor(w / 2); m.exit = [ex, h - 1]; m.exits = { [ex + "," + (h - 1)]: true }; m.ground[h - 1][ex] = "@exit";
+  const spr = (k, x, y, sortY) => m.objs.push({ img: "s90_" + k, x, y, sortY: sortY ?? y + IMG["s90_" + k].height });
+  const solid = tiles => tiles.forEach(([a, b]) => m.base[b][a] = true);
+  const on = (tiles, fn) => tiles.forEach(([a, b]) => m.interact[a + "," + b] = fn);
+  const npc = (d, x, y, dir) => { const e = entity(x, y, { ...DEFAULT, ...d.cfg }, d.name, "staff"); e.dir = dir; e.home = m; m.statics.push(e); return e; };
+  // 壁
+  spr("frame", 4 * TS, 7, TS); spr("frame", 9 * TS, 7, TS); spr("sign", 7 * TS - 16, 5, TS);
+  for (const [cx, cy] of CH90) spr("chandelier", cx - 14, cy - 11, 2 * TS);
+  // 卓とディーラー
+  m.objs.push({ img: "s90_table", x: 5 * TS, y: 4 * TS - 2, sortY: 6 * TS - 1 });
+  const table = [[5, 4], [6, 4], [7, 4], [8, 4], [5, 5], [6, 5], [7, 5], [8, 5]]; solid(table);
+  npc(NPC90.dealer, 7, 3, "down");
+  on([...table, [7, 3]], () => openVip90());
+  m.labels.push({ x: 7 * TS, y: 3 * TS - 22, text: "サイコロの卓" });
+  // 柱
+  for (const [x, y] of [[3, 2], [10, 2], [3, 8], [10, 8]]) { spr("pillar", x * TS, (y + 1) * TS - 36, (y + 1) * TS - 1); solid([[x, y]]); }
+  // くつろぎの場所
+  for (const x of [1, 11]) { spr("sofa", x * TS, 6 * TS - 20, 6 * TS - 1); solid([[x, 5], [x + 1, 5]]); on([[x, 5], [x + 1, 5]], () => toast(null, "ふかふかのソファ。座ると立ちたくなくなる…")); }
+  spr("champagne", 1 * TS, 3 * TS - 30, 3 * TS - 1); solid([[1, 2]]); on([[1, 2]], () => toast(null, "シャンパンタワー。のぞきこむと、きらきらの自分がうつる"));
+  spr("statue", 12 * TS, 3 * TS - 32, 3 * TS - 1); solid([[12, 2]]); on([[12, 2]], () => toast(null, "金のどんぐり像。ぴかぴかで、さわるのがもったいない"));
+  for (const x of [0, 13]) { m.objs.push({ img: "plant", x: x * TS, y: 9 * TS - 8, sortY: 9 * TS - 8 + IMG.plant.height }); solid([[x, 9]]); }
+  npc(NPC90.manager, 2, 7, "right"); on([[2, 7]], () => openManager90());
+  return m;
+};
+// カジノからVIPルームへ（出るときは、カジノのVIPルームの前にもどる）
+F90.enter = function () {
+  const back = map; if (!back || !back.isInterior || back.kind !== "casino") return;
+  const v = makeInterior("vip"); v.back = back.back; v.backCasino90 = back;
+  interior = v; rebuildSolid(); enter(v, v.exit[0], v.exit[1] - 1, "up");
+  toast(null, "VIPルーム。ここは現金（1,000G札）だけのお店");
+};
+const _tryMove90 = tryMove;
+tryMove = function (dir) {
+  if (map && map.backCasino90 && map.exits[player.x + "," + player.y] && dir === "down") {
+    const c = map.backCasino90; interior = c; rebuildSolid(); enter(c, 14, 5, "left"); return;
+  }
+  return _tryMove90(dir);
+};
+INT49.vip = "こもれびパレス VIPルーム";
+// シャンデリアのきらめきと、勝ったときの部屋の光
+F90.shine = null;
+const shine90 = tier => { F90.shine = { t0: performance.now(), dur: [0, 1500, 2600, 3800, 5200][tier] || 1500, tier }; };
+const _fx90 = drawInteriorFx;
+drawInteriorFx = function (now) {
+  _fx90.apply(this, arguments);
+  if (map !== interior || !interior || interior.kind !== "vip") return;
+  const pn = performance.now();
+  for (const [cx, cy] of CH90) {
+    ctx.fillStyle = `rgba(255,226,140,${.07 + .03 * Math.sin(pn / 400 + cx)})`; ctx.beginPath(); ctx.arc(cx, cy + 6, 22, 0, 6.2832); ctx.fill();
+    for (let k = 0; k < 6; k++) { ctx.fillStyle = (k + Math.floor(pn / 260)) % 3 ? "#cfeaff" : "#ffffff"; ctx.fillRect(cx - 10 + k * 4, cy + 4 + ((k + Math.floor(pn / 260)) % 2), 1, 1); }
+  }
+  const S = F90.shine; if (!S) return;
+  const t = pn - S.t0; if (t > S.dur) { F90.shine = null; return; }
+  const a = 1 - t / S.dur;
+  ctx.fillStyle = `rgba(255,232,160,${.2 * a * (.65 + .35 * Math.sin(t / 90))})`; ctx.fillRect(0, 0, interior.w * TS, interior.h * TS);
+  if (Math.random() < .5 + S.tier * .12) particles.push({ x: 4 * TS + Math.random() * 6 * TS, y: 3 * TS + Math.random() * 4 * TS, vx: (Math.random() - .5) * 30, vy: -10 - Math.random() * 30, life: .5 + Math.random() * .5, col: [255, 220 + (Math.random() * 30 | 0), 90 + (Math.random() * 90 | 0)] });
+};
+
+// ---- 勝ったときの豪華な演出（画面いっぱい）。tier 1 WIN／2 BIG WIN／3 SUPER WIN／4 MEGA JACKPOT ----
+F90.fx = null;
+function winFx90(o, done) {
+  const T = o.tier | 0; if (!T) { if (done) done(); return; }
+  if (F90.fx) F90.fx.end();
+  const calm = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches), K1 = calm ? .3 : 1;
+  const dur = [0, 2000, 3400, 4800, 6600][T];
+  const cv = document.createElement("canvas"); cv.className = "fx90"; cv.setAttribute("aria-hidden", "true"); document.body.appendChild(cv);
+  const g = cv.getContext("2d"), dpr = Math.min(2, window.devicePixelRatio || 1); let W = 0, H = 0, raf = 0, ended = false;
+  const fit = () => { W = innerWidth; H = innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  fit();
+  const coins = [], conf = [], sparks = [], stars = [];
+  const CONF = ["#ffd84a", "#ff5f8a", "#ffffff", "#7ad8ff", "#b48cff", "#ff9a4a"], FW = ["#ffd84a", "#ff7aa8", "#7ad8ff", "#b8ff9a", "#ffffff"];
+  const unit = Math.max(.8, Math.min(1.5, Math.min(W, H) / 420));
+  const rain = () => coins.push({ x: Math.random() * W, y: -20 - Math.random() * 40, vx: (Math.random() - .5) * 50, vy: 90 + Math.random() * 130, r: (6 + Math.random() * 5) * unit, rot: Math.random() * 6.28, vr: 4 + Math.random() * 8 });
+  const fountain = () => coins.push({ x: W / 2 + (Math.random() - .5) * 50, y: H * .8, vx: (Math.random() - .5) * W * .55, vy: -H * (.75 + Math.random() * .55), r: (6 + Math.random() * 5) * unit, rot: Math.random() * 6.28, vr: 6 + Math.random() * 8 });
+  const confetti = () => conf.push({ x: Math.random() * W, y: -10, vx: (Math.random() - .5) * 40, vy: 70 + Math.random() * 90, w: (4 + Math.random() * 4) * unit, h: (7 + Math.random() * 5) * unit, rot: Math.random() * 6.28, vr: 3 + Math.random() * 6, ph: Math.random() * 6.28, col: CONF[rnd(CONF.length)] });
+  const burst = () => {
+    const x = W * (.15 + Math.random() * .7), y = H * (.12 + Math.random() * .38), col = FW[rnd(FW.length)], n = 26 + rnd(14);
+    for (let i = 0; i < n; i++) { const a = i / n * 6.2832 + Math.random() * .2, v = (90 + Math.random() * 90) * unit; sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1 + Math.random() * .5, max: 1.5, col }); }
+  };
+  const star = () => stars.push({ x: Math.random() * W, y: Math.random() * H * .8, t: 0, life: .5 + Math.random() * .5, s: (6 + Math.random() * 10) * unit });
+  const rate = [0, 18, 40, 60, 90][T] * K1, rainFor = [0, 1200, 2200, 3200, 4600][T];
+  let acc = 0, fAcc = 0, wAcc = 0, cAcc = 0, sAcc = 0;
+  const t0 = performance.now(); let last = t0;
+  const label = ["", "WIN!", "BIG WIN!!", "SUPER WIN!!", "MEGA JACKPOT!!"][T];
+  const money = n => n.toLocaleString("ja-JP");
+  function end() {
+    if (ended) return; ended = true; cancelAnimationFrame(raf); cv.remove(); removeEventListener("keydown", onKey, true); removeEventListener("resize", fit);
+    if (F90.fx && F90.fx.cv === cv) F90.fx = null; if (done) done();
+  }
+  const onKey = e => { if (performance.now() - t0 > 450 && (e.key === "Escape" || e.key === " " || e.key === "Enter")) { e.preventDefault(); e.stopPropagation(); end(); } };
+  addEventListener("keydown", onKey, true); addEventListener("resize", fit);
+  cv.addEventListener("pointerdown", () => { if (performance.now() - t0 > 450) end(); });
+  F90.fx = { cv, end, tier: T };
+  if (T === 1) se13("win"); else if (T === 2) se13("big"); else se13("jackpot");
+  const loop = now => {
+    if (ended) return;
+    if (!cv.isConnected) { end(); return; }
+    const t = now - t0, dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (t > dur) { end(); return; }
+    g.clearRect(0, 0, W, H);
+    const A = Math.max(0, Math.min(1, t / 250, (dur - t) / 600));
+    g.fillStyle = `rgba(22,6,16,${.5 * A})`; g.fillRect(0, 0, W, H);
+    const rg = g.createRadialGradient(W / 2, H * .4, 10, W / 2, H * .4, Math.max(W, H) * .7); rg.addColorStop(0, `rgba(255,214,90,${.5 * A})`); rg.addColorStop(1, "rgba(255,214,90,0)"); g.fillStyle = rg; g.fillRect(0, 0, W, H);
+    if (T >= 2 && !calm) {
+      g.save(); g.translate(W / 2, H * .4); g.rotate(t / (T >= 4 ? 2600 : 4000)); const n = T >= 4 ? 16 : 10, L = Math.max(W, H);
+      for (let i = 0; i < n; i++) { g.rotate(6.2832 / n); g.fillStyle = `rgba(255,232,150,${(T >= 3 ? .16 : .11) * A})`; g.beginPath(); g.moveTo(0, 0); g.lineTo(L, -L * .06); g.lineTo(L, L * .06); g.closePath(); g.fill(); }
+      g.restore();
+    }
+    if (t < 400 && !calm) { g.fillStyle = `rgba(255,248,214,${.5 * (1 - t / 400)})`; g.fillRect(0, 0, W, H); }
+    // 出す
+    if (t < rainFor) { acc += rate * dt; while (acc >= 1) { acc--; if (coins.length < 360) rain(); } }
+    if (T >= 2 && t < 500) { fAcc += dt * 40 * K1; while (fAcc >= 1) { fAcc--; fountain(); } }
+    if (T >= 3 && t < rainFor - 200) { fAcc += dt * (T >= 4 ? 30 : 14) * K1; while (fAcc >= 1) { fAcc--; if (coins.length < 360) fountain(); } }
+    if (T >= 3 && t < rainFor - 400) { cAcc += dt * (T >= 4 ? 110 : 55) * K1; while (cAcc >= 1) { cAcc--; if (conf.length < 320) confetti(); } }
+    if (T >= 3 && t > 300 && t < dur - 1200 && !calm) { wAcc += dt * (T >= 4 ? 3 : 1.7); while (wAcc >= 1) { wAcc--; burst(); } }
+    if (T >= 4 && !calm) { sAcc += dt * 14; while (sAcc >= 1) { sAcc--; star(); } }
+    // 動かして描く
+    for (let i = coins.length - 1; i >= 0; i--) {
+      const c = coins[i]; c.vy += 520 * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.rot += c.vr * dt; if (c.y > H + 30) { coins.splice(i, 1); continue; }
+      const w = Math.max(1.2, Math.abs(Math.cos(c.rot)) * c.r);
+      g.fillStyle = "#f0b030"; g.beginPath(); g.ellipse(c.x, c.y, w, c.r, 0, 0, 6.2832); g.fill();
+      g.fillStyle = "#ffe27a"; g.beginPath(); g.ellipse(c.x - w * .15, c.y - c.r * .1, w * .62, c.r * .72, 0, 0, 6.2832); g.fill();
+      g.strokeStyle = "#8a5a10"; g.lineWidth = 1; g.beginPath(); g.ellipse(c.x, c.y, w, c.r, 0, 0, 6.2832); g.stroke();
+    }
+    for (let i = conf.length - 1; i >= 0; i--) {
+      const c = conf[i]; c.y += c.vy * dt; c.x += (c.vx + Math.sin(t / 300 + c.ph) * 30) * dt; c.rot += c.vr * dt; if (c.y > H + 20) { conf.splice(i, 1); continue; }
+      g.save(); g.translate(c.x, c.y); g.rotate(c.rot); g.scale(1, Math.abs(Math.cos(c.rot * .7)) * .9 + .15); g.fillStyle = c.col; g.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); g.restore();
+    }
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const p = sparks[i]; p.life -= dt; if (p.life <= 0) { sparks.splice(i, 1); continue; }
+      p.vy += 140 * dt; p.vx *= .985; p.x += p.vx * dt; p.y += p.vy * dt;
+      g.globalAlpha = Math.min(1, p.life / .6); g.fillStyle = p.col; g.fillRect(p.x - 1.5, p.y - 1.5, 3 * unit * .8, 3 * unit * .8);
+    }
+    g.globalAlpha = 1;
+    for (let i = stars.length - 1; i >= 0; i--) {
+      const s = stars[i]; s.t += dt; if (s.t > s.life) { stars.splice(i, 1); continue; }
+      const k = Math.sin(s.t / s.life * Math.PI), r = s.s * k; g.fillStyle = `rgba(255,248,200,${k})`;
+      g.beginPath(); g.moveTo(s.x, s.y - r); g.lineTo(s.x + r * .22, s.y - r * .22); g.lineTo(s.x + r, s.y); g.lineTo(s.x + r * .22, s.y + r * .22); g.lineTo(s.x, s.y + r); g.lineTo(s.x - r * .22, s.y + r * .22); g.lineTo(s.x - r, s.y); g.lineTo(s.x - r * .22, s.y - r * .22); g.closePath(); g.fill();
+    }
+    // 文字
+    const k0 = Math.min(1, t / 500), ease = 1 - Math.pow(1 - k0, 3), sc = (.25 + .75 * ease) * (k0 < 1 ? 1 : 1 + .025 * Math.sin(t / 170));
+    const fs = Math.min(84, W * .9 / (label.length * .66)), FONT = `"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif`;
+    g.save(); g.globalAlpha = A; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
+    g.translate(W / 2, H * .34); g.scale(sc, sc); g.font = `900 ${fs}px ${FONT}`;
+    g.strokeStyle = "#5a2a00"; g.lineWidth = fs * .17; g.strokeText(label, 0, 0);
+    const tg = g.createLinearGradient(0, -fs / 2, 0, fs / 2); tg.addColorStop(0, "#fff8c8"); tg.addColorStop(.45, "#ffd84a"); tg.addColorStop(.55, "#f0a020"); tg.addColorStop(1, "#ffe27a");
+    g.shadowColor = "rgba(255,200,60,.95)"; g.shadowBlur = calm ? 6 : 20; g.fillStyle = tg; g.fillText(label, 0, 0); g.shadowBlur = 0;
+    g.font = `700 ${Math.round(fs * .34)}px ${FONT}`; g.lineWidth = fs * .06; g.strokeStyle = "#3a1a00"; g.fillStyle = "#fff6dc";
+    g.strokeText(o.label || "", 0, fs * .72); g.fillText(o.label || "", 0, fs * .72);
+    g.restore();
+    const cu = Math.min(1, Math.max(0, (t - 350) / Math.min(2200, dur - 900))), n = Math.round(o.pay * (1 - Math.pow(1 - cu, 3)));
+    g.save(); g.globalAlpha = A * Math.min(1, Math.max(0, (t - 250) / 300)); g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
+    g.font = `900 ${Math.round(fs * .62)}px ${FONT}`; g.strokeStyle = "#3a1a00"; g.lineWidth = fs * .12; g.fillStyle = "#fff0a0";
+    g.strokeText(`+${money(n)}枚`, W / 2, H * .34 + fs * 1.38); g.fillText(`+${money(n)}枚`, W / 2, H * .34 + fs * 1.38);
+    g.font = `700 ${Math.round(fs * .3)}px ${FONT}`; g.lineWidth = fs * .06; g.fillStyle = "#ffffff";
+    g.strokeText(`（+${money(n * BILL78)} G）`, W / 2, H * .34 + fs * 1.9); g.fillText(`（+${money(n * BILL78)} G）`, W / 2, H * .34 + fs * 1.9);
+    if (t > 1300) { g.globalAlpha = .65 * A; g.font = `600 ${Math.max(11, Math.round(fs * .2))}px ${FONT}`; g.lineWidth = 0; g.fillStyle = "#ffe9b0"; g.fillText("タップでとじる", W / 2, H - 22); }
+    g.restore();
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+}
+F90.winFx = winFx90;
+
+// ---- サイコロの卓 ----
+// 勝ち負けは先に決めてセーブするけれど、画面のすみの現金の表示は、サイコロが止まるまで変えない（先にわかってしまわないように）
+F90.hold = false;
+const _uh90 = updateHud;
+updateHud = function () { if (F90.hold) return; return _uh90.apply(this, arguments); };
+const release90 = () => { if (!F90.hold) return; F90.hold = false; updateHud(true); };
+const PIPS90 = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
+const dieHtml90 = (v, cls = "") => `<span class="vd90 ${cls}" data-v="${v}">${Array.from({ length: 9 }, (_, i) => `<i${(PIPS90[v] || []).includes(i) ? ' class="on"' : ""}></i>`).join("")}${v ? "" : "<em>?</em>"}</span>`;
+function setDie90(el, v) { el.dataset.v = v; el.querySelectorAll("i").forEach((p, i) => p.classList.toggle("on", (PIPS90[v] || []).includes(i))); const q = el.querySelector("em"); if (q) q.remove(); }
+const dealerLine90 = (res, c) => {
+  if (c.n < BETS90[0] && !res) return "ここは現金だけのテーブルでございます。信用金庫の「現金の窓口」で、お札をお引き出しくださいませ";
+  if (!res) return "ようこそ、VIPルームへ。ここは現金だけのテーブルでございます。お好きなお賭けをどうぞ";
+  if (!res.win) return ["残念でございます。……運は巡るものでございます", "惜しゅうございました。サイコロは気まぐれですので", "今のは、わたくしにも読めませんでした"][rnd(3)];
+  return res.tier >= 4 ? "……恐れ入りました。今夜の主役は、あなたさまでございます" : res.tier >= 3 ? "お見事でございます！ こんな瞬間に立ち会えて光栄です" : res.tier >= 2 ? "素晴らしいお賭けでございました。おめでとうございます" : "当たりでございます。おめでとうございます";
+};
+function openVip90(res) {
+  const TITLE = "VIPルーム　サイコロの卓";
+  openModal(TITLE, "dark vip90", body => paint(body, res));
+  function paint(body, res) {
+    const V = vs90(), c = cash78(), P = PICK90[V.pick], mult = mult90(V);
+    if (!betOk90(V.bet, V)) V.bet = BETS90.filter(b => betOk90(b, V)).pop() || BETS90[0];
+    const busy = !!(res && (res.busy || res.anim)), shown = res && !busy, cashN = busy && res.cashPre != null ? res.cashPre : c.n;
+    const dice = busy ? [1 + rnd(6), 1 + rnd(6), 1 + rnd(6)] : res ? res.d : [0, 0, 0];
+    const pickLabel = V.pick === "total" ? `合計${V.num}ぴったり` : V.pick === "exact" ? `${V.face}のゾロ目` : P.name;
+    const potential = V.bet * mult;
+    body.innerHTML = `<div class="vp90">
+      <div class="vp90-l">
+        ${staffSay13(charIcon13(NPC90.dealer.cfg), esc(busy ? "……さあ、サイコロが回ります" : dealerLine90(res, c)))}
+        <div class="vp90-stage" id="vp90st">${dice.map(v => dieHtml90(v)).join("")}${shown ? `<b class="vp90-sum">${res.sum}${res.triple ? "（ゾロ目）" : res.sum >= 11 ? "（大）" : "（小）"}</b>` : ""}</div>
+        <p class="mtext vp90-res ${shown ? (res.win ? "win" : "lose") : ""}" id="vp90res">${busy ? "　" : shown ? esc(res.text) : "お賭けを選んでください"}</p>
+        <p class="mtext">現金 <b>${billTxt78(cashN)}</b>（${fmt(cashN * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
+      </div>
+      <div class="vp90-r">
+        <div class="vp90-row"><span class="lbl">賭ける</span>${BETS90.map(b => `<button class="chip" type="button" data-vb90="${b}" aria-pressed="${V.bet === b}" ${!busy && c.n >= b && betOk90(b, V) ? "" : "disabled"}>${b}枚</button>`).join("")}</div>
+        <div class="vp90-row"><span class="lbl">どれに</span>${Object.entries(PICK90).map(([k, p]) => `<button class="chip" type="button" data-vp90="${k}" aria-pressed="${V.pick === k}" ${busy ? "disabled" : ""}>${p.name}</button>`).join("")}</div>
+        ${V.pick === "total" ? `<div class="vp90-row sub"><span class="lbl">合計</span>${Object.keys(SUMM90).map(n => `<button class="chip sm" type="button" data-vn90="${n}" aria-pressed="${V.num === +n}" ${busy ? "disabled" : ""}>${n}</button>`).join("")}</div>` : ""}
+        ${V.pick === "exact" ? `<div class="vp90-row sub"><span class="lbl">出目</span>${[1, 2, 3, 4, 5, 6].map(n => `<button class="chip sm" type="button" data-vf90="${n}" aria-pressed="${V.face === n}" ${busy ? "disabled" : ""}>${n}${n}${n}</button>`).join("")}</div>` : ""}
+        <p class="mtext small vp90-odds"><b>${esc(pickLabel)}</b>：${esc(P.hint)}。当たると <b>×${mult}</b>（${billTxt78(potential)}・${fmt(potential * BILL78)}）。賭けられる上限は、払い戻しが${MAXPAY90.toLocaleString("ja-JP")}枚までの範囲</p>
+        <div class="row2"><button class="btn vp90-go" type="button" id="vp90go" ${!busy && c.n >= V.bet ? "" : "disabled"}>${busy ? "…" : "勝負！"}</button></div>
+        ${c.n >= BETS90[0] ? "" : `<p class="mtext small">現金が足りないよ（最低${BETS90[0]}枚）。信用金庫の「現金の窓口」で引き出してから来てね</p>`}
+      </div></div>`;
+    const re = () => paint(body, res);
+    body.querySelectorAll("[data-vb90]").forEach(b => b.onclick = () => { V.bet = +b.dataset.vb90; re(); });
+    body.querySelectorAll("[data-vp90]").forEach(b => b.onclick = () => { V.pick = b.dataset.vp90; re(); });
+    body.querySelectorAll("[data-vn90]").forEach(b => b.onclick = () => { V.num = +b.dataset.vn90; re(); });
+    body.querySelectorAll("[data-vf90]").forEach(b => b.onclick = () => { V.face = +b.dataset.vf90; re(); });
+    body.querySelector("#vp90go").onclick = () => {
+      const bet = V.bet; if (cash78().n < bet || !betOk90(bet, V)) return;
+      if (K.betAllowed && !K.betAllowed(bet * BILL78)) { toast(null, K.betMsg()); return; }
+      closeModal();
+      payCash78("vip", bet, ok => { if (ok) play90(V, bet); });
+    };
+    if (res && res.anim) {
+      res.anim = false; res.busy = true;
+      const stage = body.querySelector("#vp90st"), els = [...stage.querySelectorAll(".vd90")];
+      els.forEach(e => e.classList.add("roll")); try { if (typeof SFX !== "undefined") SFX.diceRoll(1.5); } catch (e) { }
+      const stopAt = [650, 1050, 1450], s0 = performance.now(); let iv = 0;
+      iv = setInterval(() => {
+        if (!stage.isConnected) { clearInterval(iv); res.busy = false; release90(); toast(null, res.text); if (res.win) shine90(res.tier); return; }
+        const t = performance.now() - s0;
+        els.forEach((e, i) => { if (t >= stopAt[i]) { if (!e.dataset.fin) { e.dataset.fin = "1"; setDie90(e, res.d[i]); e.classList.remove("roll"); e.classList.add("land"); } } else setDie90(e, 1 + rnd(6)); });
+        if (t >= stopAt[2] + 150) {
+          clearInterval(iv); res.busy = false; release90();
+          if ($("mtitle").textContent === TITLE) paint(body, res);
+          if (res.win) { shine90(res.tier); winFx90({ tier: res.tier, pay: res.pay, label: res.label }); } else se13("miss");
+        }
+      }, 70);
+    }
+  }
+}
+F90.table = openVip90;
+/** サイコロをふって、勝ち負けをその場で決める（払い戻しとお金の動きは、演出の前に終わらせる） */
+function play90(V, bet) {
+  const d = [1 + rnd(6), 1 + rnd(6), 1 + rnd(6)], sum = d[0] + d[1] + d[2], triple = d[0] === d[1] && d[1] === d[2];
+  const P = PICK90[V.pick], arg = arg90(V), mult = P.mult(arg), win = !!P.win(d, sum, triple, arg), pay = win ? bet * mult : 0;
+  const label = V.pick === "total" ? `合計${arg}ぴったり` : V.pick === "exact" ? `指定ゾロ目　${arg}・${arg}・${arg}` : P.name;
+  const fin = k => {
+    F90.hold = true; setTimeout(release90, 6000);
+    const cashPre = cash78().n;
+    const c = cash78(), room = Math.max(0, 9999 - c.n), inCash = Math.min(pay, room), over = pay - inCash, fkIn = Math.min(k, inCash), fkOut = k - fkIn;
+    if (inCash) addCash78(inCash, { fu: fkIn });
+    const overG = Math.max(0, over - fkOut); if (overG) addMoney(overG * BILL78);
+    const net = (pay - bet) * BILL78, st = world.stats;
+    st.gambleNet += net; if (K.gambleTrack) K.gambleTrack(net); st.lastGamble = world.day; if (net > st.bigWin) st.bigWin = net;
+    st.vip78 = (st.vip78 || 0) + 1; st.gambles = (st.gambles || 0) + 1;
+    if (win) { st.vipWin90 = (st.vipWin90 || 0) + 1; st.vipBest90 = Math.max(st.vipBest90 || 0, pay); st.gambleWins = (st.gambleWins || 0) + 1; st.loseStreak = 0; if (V.pick === "exact") st.vipExact90 = (st.vipExact90 || 0) + 1; }
+    else { st.loseStreak = (st.loseStreak || 0) + 1; st.loseStreakMax = Math.max(st.loseStreakMax || 0, st.loseStreak); }
+    saveWorld(); updateHud(true); try { checkTitles42(); } catch (e) { }
+    const tier = tier90(win, pay, mult);
+    const text = win ? `当たり！ ${billTxt78(pay)}（${fmt(pay * BILL78)}）を受けとった${over ? `。お札が入りきらない分（${over}枚）は、口座に振り込んでおいたよ` : ""}` : `はずれ… ${billTxt78(bet)} を失った`;
+    openVip90({ d, sum, triple, win, pay, bet, mult, tier, label, text, over, cashPre, anim: true });
+  };
+  if (pay) drawPool78(pay, fin); else fin(0);
+}
+
+// ---- 支配人 ルナ：VIPルームのきまり ----
+function openManager90() {
+  const st = world.stats, rows = [[4, 17], [5, 16], [6, 15], [7, 14], [8, 13], [9, 12], [10, 11]];
+  openModal("支配人 ルナ", "dark vip90", body => {
+    body.innerHTML = staffSay13(charIcon13(NPC90.manager.cfg), "いらっしゃいませ。VIPルームは、現金だけのお客さまの場所でございます。きまりを、ご案内いたしますね")
+      + `<ul class="mtext small vp90-rules">
+        <li>使えるのは<b>現金（1,000G札）だけ</b>。電子マネーはお取り扱いしておりません</li>
+        <li>賭けられるのは <b>${BETS90.join("・")}枚</b>。払い戻しは、<b>最高${MAXPAY90.toLocaleString("ja-JP")}枚</b>まで（賭けた枚数×倍率がこえる賭け方はできません）</li>
+        <li><b>大・小</b>：×2　<b>ゾロ目</b>（どの目でも）：×35　<b>指定ゾロ目</b>：×210</li>
+        <li><b>合計ぴったり</b>：${rows.map(([a, b]) => `${a}か${b} ×${SUMM90[a]}`).join("、")}</li>
+        <li>どの賭けも、長く遊ぶほど、お札は少しずつ減るようにできています（還元率は約97%以下）</li>
+        <li>お札は9,999枚まで持てます。入りきらない分は、電子マネーで口座にお振り込みします</li>
+        <li>偽札のお支払いには、とくに目を光らせております。ご注意くださいませ</li>
+        <li>「今日の負け上限」を決めている方は、それをこえる賭けはできません</li></ul>
+      <p class="mtext small">あなたの記録：勝負 ${(st.vip78 || 0)}回・勝ち ${st.vipWin90 || 0}回・最高の払い戻し ${(st.vipBest90 || 0).toLocaleString("ja-JP")}枚</p>`;
+  });
+}
+F90.manager = openManager90;
+GUIDE54.push(["VIPルーム", "s78_vip", `
+    <p>こもれびパレスの奥の<b>VIPルーム</b>（カジノの右がわの紫のカーテンから入る）。<b>現金（1,000G札）だけ</b>で遊べる、高額のサイコロの卓があるよ。</p><ul>
+    <li>賭けられるのは10・50・100・500枚。大・小・ゾロ目・合計ぴったり・指定ゾロ目から選ぶ。払い戻しは最高5,000枚まで</li>
+    <li>当たると、部屋が光って、画面いっぱいに金貨が降る。大きく当てるほど、演出も豪華になる（WIN → BIG WIN → SUPER WIN → MEGA JACKPOT）</li>
+    <li>支配人ルナに話しかけると、きまりと倍率の表が見られる。称号は「VIPの常連」「ハイローラー」「ゾロ目の王」</li>
+    <li>お会計で偽札を使うのは、いちばんきびしい（見つかると取り調べ）</li></ul>`]);
+F90.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -17976,7 +18417,7 @@ function animPreview(now) {
 }
 window.claude?.hot?.snapshot?.(() => ({ cfg, name: nameEl.value, world, pos: (map.isDungeon || map.isPort) ? { map: "village", x: 7, y: 9, dir: "down" } : { map: map === room ? "room" : map === labor ? "labor" : map.isInterior ? "int:" + map.kind : "village", back: map.back, roomKey, lastBack, x: player.x, y: player.y, dir: player.dir } }));
 if (world.labor) { laborRocks = new Set(LABOR_ROCKS.map(([x, y]) => x + "," + y)); rebuildSolid(); map = labor; placeAt(player, 3, 8, "down"); }
-if (hotData?.pos && !world.labor) {
+if (hotData?.pos && !world.labor && (!String(hotData.pos.map).startsWith("int:") || BUILDINGS.some(b => "int:" + b.kind === hotData.pos.map))) {   // 美容室・VIPルームなど、村の建物ではない中の場所は、最後にいたカジノなどの位置から始める（下の restorePos53）
   const p = hotData.pos;
   if (p.map && p.map.startsWith("int:")) { const b = BUILDINGS.find(b => b.kind === p.map.slice(4)); interior = makeInterior(b.kind); interior.back = [b.col, b.row + 1]; rebuildSolid(); map = interior; }
   else if (p.map === "room") { roomKey = p.roomKey || "home"; lastBack = p.lastBack || [7, 7]; room = makeRoomMap(roomKey); rebuildSolid(); map = room; } else if (!map.isInterior) map = village;
@@ -17991,7 +18432,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

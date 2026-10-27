@@ -575,10 +575,6 @@ html, body { touch-action: manipulation; }
   #sl78go { grid-area: go; min-width: 0; width: 100%; }
   .sl78 > .mtext.small { display: none; }
 }
-.vip78 { background: radial-gradient(#3a6a3a, #1e3a1e); border-radius: 12px; padding: 10px; text-align: center; margin: 8px 0; box-shadow: inset 0 0 0 3px #c8a040; }
-.dice78 { display: flex; justify-content: center; align-items: center; gap: 10px; }
-.die78 { font-size: 2.6rem; line-height: 1; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, .5); }
-.dice78 b { font-size: 1.1rem; color: #ffd86a; margin-left: 8px; }
 .pl78w { color: #c83a3a; font-weight: bold; }
 
 /* v80: スマホのアイコン（黒地に白い線） */
@@ -630,3 +626,54 @@ html, body { touch-action: manipulation; }
 body.watch88 #hotbar { visibility: hidden; }
 .cr74tabs.sc88 .chip[aria-pressed="true"] { background: #6aa84a; color: #fff; }
 body.watch88 #tut { display: none !important; }
+
+/* v90: VIPルーム（サイコロの卓・勝ったときの演出） */
+.mbox.vip90 { background: linear-gradient(#2a0f1e, #1a0a14); color: #fbeee0; border-color: #0e0509; box-shadow: inset 0 0 0 2px #c8a040, inset 0 0 22px rgba(200, 160, 64, .18); }
+.mbox.vip90 .mhead { border-bottom-color: #7a5a22; }
+.mbox.vip90 .mtext { color: #f3e2cf; }
+.mbox.vip90 .chip { background: #3a1a2c; color: #fbeee0; border-color: #7a5a22; }
+.mbox.vip90 .chip[aria-pressed="true"] { background: #f0c040; color: #2a0f1e; border-color: #fff0a0; }
+.mbox.vip90 .chip:disabled { opacity: .38; }
+.mbox.vip90 .lbl { color: #e8c060; min-width: 3.2em; display: inline-block; }
+.vp90 { display: block; }
+.vp90-stage { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 8px 0 4px; padding: 12px 8px; border-radius: 12px; background: radial-gradient(ellipse at 50% 35%, #2f8a5e, #164c36 70%); box-shadow: inset 0 0 0 3px #c8a040, inset 0 0 0 5px #5a3a10; }
+.vp90-sum { color: #ffe27a; font-size: 1.05rem; margin-left: 6px; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.vd90 { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 54px; height: 54px; padding: 8px; box-sizing: border-box; border-radius: 11px; background: linear-gradient(145deg, #fffdf4, #e6dcc0); box-shadow: inset 0 0 0 2px #d8b24a, 0 3px 6px rgba(0, 0, 0, .55); }
+.vd90 i { display: block; place-self: center; width: 9px; height: 9px; border-radius: 50%; }
+.vd90 i.on { background: radial-gradient(circle at 35% 30%, #5a5a6a, #14121a); }
+.vd90[data-v="1"] i.on { background: radial-gradient(circle at 35% 30%, #ff6a6a, #b01428); width: 13px; height: 13px; }
+.vd90 em { position: absolute; inset: 0; display: grid; place-items: center; font-style: normal; font-weight: bold; font-size: 1.5rem; color: #b8841c; }
+.vd90.roll { animation: vd90roll .22s linear infinite; }
+.vd90.land { animation: vd90land .32s ease-out; }
+@keyframes vd90roll { 0% { transform: translateY(0) rotate(-14deg); } 25% { transform: translateY(-9px) rotate(10deg); } 50% { transform: translateY(0) rotate(18deg); } 75% { transform: translateY(-5px) rotate(-8deg); } 100% { transform: translateY(0) rotate(-14deg); } }
+@keyframes vd90land { 0% { transform: translateY(-14px) scale(1.18); } 60% { transform: translateY(2px) scale(.96); } 100% { transform: none; } }
+.vp90-res { min-height: 1.5em; text-align: center; font-weight: bold; margin: 4px 0; }
+.vp90-res.win { color: #ffe27a; text-shadow: 0 0 10px rgba(255, 210, 80, .7); }
+.vp90-res.lose { color: #d8b8c8; }
+.vp90-note { color: #cbb3a0; font-size: .85em; }
+.vp90-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; }
+.vp90-row.sub { margin-top: 2px; }
+.vp90-row .chip.sm { padding: 4px 8px; min-width: 2.2em; }
+.vp90-odds { margin: 6px 0 4px; }
+.vp90-go { min-width: 60%; padding-top: 14px; padding-bottom: 14px; background: linear-gradient(#f6d060, #d89a20); color: #2a0f1e; border-color: #fff0a0; font-weight: bold; letter-spacing: .1em; }
+.vp90-go:disabled { opacity: .45; }
+.vp90-rules { padding-left: 1.2em; margin: 8px 0; }
+.vp90-rules li { margin: 4px 0; }
+.fx90 { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 9000; cursor: pointer; touch-action: manipulation; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .mbox.vip90 { width: min(780px, 100%); }
+  .mbox.vip90 .mhead { padding: 6px 12px; }
+  .mbox.vip90 .mbody { padding: 8px 12px 10px; gap: 6px; }
+  .vp90 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: 14px; align-items: start; }
+  .vp90 .say13 { padding: 4px 8px; margin-bottom: 4px; gap: 8px; }
+  .vp90 .say13 img { width: 34px; height: 34px; }
+  .vp90 .say13 p { font-size: .76rem; line-height: 1.4; }
+  .vp90-stage { margin: 4px 0; padding: 8px 6px; gap: 8px; }
+  .vd90 { width: 42px; height: 42px; padding: 6px; border-radius: 9px; }
+  .vd90 i { width: 7px; height: 7px; }
+  .vp90 .mtext { margin: 2px 0; font-size: .8rem; }
+  .vp90-r .vp90-row { margin: 3px 0; gap: 4px; }
+  .vp90-r .chip { padding: 4px 8px; font-size: .78rem; }
+  .vp90-odds { font-size: .7rem !important; margin: 2px 0 !important; }
+  .vp90-go { min-width: 0; width: 100%; padding-top: 9px; padding-bottom: 9px; }
+}

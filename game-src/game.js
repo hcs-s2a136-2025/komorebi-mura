@@ -3935,7 +3935,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.47.0";
+const CLIENT_VERSION = "0.48.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6013,6 +6013,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.48.0", date: "2026/10/27", title: "スプリンクラーと自動収穫機を、同じ場所に置けるようになった", items: [
+    "スプリンクラーと自動収穫機を、同じマスにまとめて置けるようになった。置いてあるほうを向いて、もう片方のキットを持ってAボタン（置けるときは、向いているマスがうすい緑になる）",
+    "まとめた建物は、5×5の同じ畑に、水まきと収穫のどちらもしてくれる（電気は、それぞれ1つずつ使う）。向いてAボタンで、中を見たり、それぞれのキットに戻したりできる",
+    "財布で札束かざりを作ったあとに、つかった枚数とのこりの枚数が出るようになった。続けて2回押してしまっても、2つ作られないようにした"
+  ] },
   { v: "0.47.0", date: "2026/10/27", title: "友だちの村は、村の合言葉だけで入れるように", items: [
     "友だちの村には、村の合言葉だけで入れるようになった（招待コードはいらない）。招待コードは、こもれび村に新しく入るときだけ使うよ",
     "新しい村は、こもれび村にいる人が、スマホの「村」アプリの「新しい村を作る」から作るようになった。村の名前と、新しい村でのなまえ・合言葉を決めてね",
@@ -8113,7 +8118,8 @@ function reg32(id, b) {
 for (const [id, b] of Object.entries(B32)) reg32(id, b);
 const foot32 = (k, d) => { const [x, y] = k.split(",").map(Number), b = B32[d.id]; return { x0: x, y0: y - b.h + 1, x1: x + b.w - 1, y1: y }; };
 const builds32 = () => Object.entries(world.decor || {}).filter(([, d]) => B32[d.id]);
-const mine32 = id => builds32().filter(([, d]) => d.id === id && myDecor27(d)).map(([k]) => k);
+const COMBO32 = { sprharv80: ["sprinkler33", "harv80"] }; // 同じマスに重ねた建物（v0.48.0）。中の建物ぜんぶの仕事をする
+const mine32 = id => builds32().filter(([, d]) => (d.id === id || (COMBO32[d.id] || []).includes(id)) && myDecor27(d)).map(([k]) => k);
 const buildAt32 = (x, y) => builds32().find(([k, d]) => { const f = foot32(k, d); return x >= f.x0 && x <= f.x1 && y >= f.y0 && y <= f.y1; });
 F32.cap = () => 8 + 6 * Math.min(2, mine32("barn32").length);
 F32.mine = mine32;
@@ -8202,7 +8208,7 @@ function openBuild32(k) {
     if (mine && d.id === "pethouse32") html += `<p class="mtext">${world.pets.length ? `ペット ${world.pets.length}匹が、毎朝ここで休んで、なつき度が1つ上がります。` : "まだペットがいません。こもれび牧場で迎えられます。"}${world.stats.presents32 ? `これまでのおみやげ ${world.stats.presents32}回` : ""}</p>`;
     if (mine && d.id === "coop32") { const n = world.animals.filter(a => a.type === "chicken" || a.type === "duck").length; html += `<p class="mtext">${n ? `ニワトリとアヒル ${n}羽。エサをあげた日の次の朝、半分くらいの確率でもう1個、小屋のそばに卵を置いてくれます。` : "ニワトリかアヒルを飼うと、卵がふえます。"}</p>`; }
     if (F32.extra) html += F32.extra(d, k, mine);
-    if (mine) html += `<p class="mtext small">場所を変えたいときは、キットに戻して置きなおせます${d.id === "silo32" && world.silo32 ? "（サイロの飼料は持ち物に戻ります）" : ""}。</p><button class="btn light" type="button" id="b32back">キットに戻す</button>`;
+    if (mine) html += `<p class="mtext small">場所を変えたいときは、キットに戻して置きなおせます${d.id === "silo32" && world.silo32 ? "（サイロの飼料は持ち物に戻ります）" : ""}${COMBO32[d.id] ? "（それぞれのキットに分かれて戻ります）" : ""}。</p><button class="btn light" type="button" id="b32back">${COMBO32[d.id] ? "それぞれのキットに戻す" : "キットに戻す"}</button>`;
     body.innerHTML = html;
     if (F32.wire) F32.wire(body, d, k, mine);
     body.querySelector("#b32feed")?.addEventListener("click", () => {
@@ -8217,9 +8223,10 @@ function openBuild32(k) {
       const n = Math.min(10, world.silo32 || 0); if (!addItem("feed", n)) return; world.silo32 -= n; saveWorld(); closeModal(); openBuild32(k);
     });
     body.querySelector("#b32back")?.addEventListener("click", () => {
-      if (!world.inv.some(x => !x || x.id === "deco_" + d.id)) { toast(null, "持ち物がいっぱいで片付けられない"); return; }
+      const kits = COMBO32[d.id] ? COMBO32[d.id].map(x => "deco_" + x) : ["deco_" + d.id];
+      if (kits.length > 1 ? world.inv.filter(x => !x).length < kits.length : !world.inv.some(x => !x || x.id === kits[0])) { toast(null, "持ち物がいっぱいで片付けられない"); return; }
       if (d.id === "silo32" && mine32("silo32").length === 1 && world.silo32) { if (!addItem("feed", world.silo32)) { toast(null, "飼料を持ちきれない"); return; } world.silo32 = 0; }
-      delete world.decor[k]; addItem("deco_" + d.id, 1, true); rebuildSolid(); saveWorld(); closeModal(); toast("b32_" + d.id, `${b.name}をキットに戻した`);
+      delete world.decor[k]; for (const kit of kits) addItem(kit, 1, true); rebuildSolid(); saveWorld(); closeModal(); toast("b32_" + d.id, `${b.name}をキットに戻した`);
     });
   });
 }
@@ -8254,7 +8261,7 @@ const _openShop32 = openShop;
 openShop = function (tab) {
   if (tab !== "build32") { _openShop32(tab); return; }
   openModal("よろず屋", "shop", body => {
-    const have = Object.keys(B32).filter(id => id !== "boat80").map(id => [id, mine32(id).length + count("deco_" + id)]);
+    const have = Object.keys(B32).filter(id => id !== "boat80" && !COMBO32[id]).map(id => [id, mine32(id).length + count("deco_" + id)]);
     body.innerHTML = shopTabs13("build32") + `<p class="mtext">所持金 <b>${fmt(world.money)}</b>・木材 ${count("wood")}・石 ${count("stone")}</p>
       <p class="mtext small">建物のキットを買って、持ったまま村の草地や道を向いてAボタンで建てます。建物を向いてAボタンで中を見たり、キットに戻したりできます。オンラインでは、建物はみんなの村に建ち、はたらきは建てた人の動物とペットに効きます。</p>
       <div class="list">${have.map(([id, n]) => { const b = B32[id], mat = Object.entries(b.mat).map(([m, q]) => `${ITEMS[m].name}${q}`).join("・"), ok = world.money >= b.money && Object.entries(b.mat).every(([m, q]) => count(m) >= q);
@@ -8333,7 +8340,7 @@ F32.extra = (d, k, mine) => {
   const bar = `<p class="mtext">ためてある電気 <b>${world.elec33 || 0}</b> / ${elecCap33()}　（避雷針 ${mine32("rod33").length}・蓄電池 ${mine32("battery33").length}・スプリンクラー ${mine32("sprinkler33").length}・自動販売機 ${mine32("vending33").length}）</p>`;
   if (d.id === "rod33") return bar + `<p class="mtext small">雷雨（⚡）の日に村の上で雷が鳴ると、ときどきこの避雷針に落ちて電気が2つたまります。家にいたりして見ていなかった雷雨の日も、次の朝に少したまっています。${world.stats.strikes33 ? `これまでに${world.stats.strikes33}回落ちた。` : ""}</p>`;
   if (d.id === "battery33") return bar;
-  if (d.id === "sprinkler33") { const [x, y] = k.split(",").map(Number); let n = 0; for (let yy = y - 2; yy <= y + 2; yy++) for (let xx = x - 2; xx <= x + 2; xx++) if (world.tilled[xx + "," + yy]) n++; return bar + `<p class="mtext">まわり2マスの畑：${n}マス。${world.spr33 === world.day ? "今朝は水をまいた。" : (world.elec33 ? "明日の朝から水をまきます。" : "電気がないので動いていません。")}</p>`; }
+  if (d.id === "sprinkler33" || COMBO32[d.id]) { const [x, y] = k.split(",").map(Number); let n = 0; for (let yy = y - 2; yy <= y + 2; yy++) for (let xx = x - 2; xx <= x + 2; xx++) if (world.tilled[xx + "," + yy]) n++; return bar + `<p class="mtext">まわり2マスの畑：${n}マス。${world.spr33 === world.day ? "今朝は水をまいた。" : (world.elec33 ? "明日の朝から水をまきます。" : "電気がないので動いていません。")}</p>`; }
   if (d.id === "vending33") {
     const v = vend33(), inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => !ITEMS[id].tool && !ITEMS[id].place && sellPrice(id) > 0 && id !== "feed");
     return bar + `<p class="mtext">売上 <b>${fmt(v.earned)}</b> <button class="btn" type="button" id="v33get" ${v.earned ? "" : "disabled"}>受け取る</button>　これまでに売れた数 ${v.sold || 0}個</p>
@@ -14101,7 +14108,7 @@ function openWallet78(msg) {
       body.querySelector("#wl78p").onclick = () => { closeModal(); F76.fromPhone = true; openFriends76(); };
       body.querySelectorAll("[data-wf78]").forEach(b => b.onclick = () => {
         const id = b.dataset.wf78; if (!makeDeco78(id)) return;
-        draw(`「${ITEMS[id].name}」ができた！ 家の中で飾れるよ${id === "f_billfan78" ? "。手に持つと、まわりの人にも見える" : ""}`);
+        draw(`「${ITEMS[id].name}」ができた！ 家の中で飾れるよ${id === "f_billfan78" ? "。手に持つと、まわりの人にも見える" : ""}（${billTxt78(F89.lastUsed)}をつかった。のこり ${cash78().n}枚）`);
       });
       body.querySelectorAll("[data-wb78]").forEach(b => b.onclick = () => {
         const id = b.dataset.wb78, want = b.dataset.n === "all" ? count(id) : +b.dataset.n || 1, n = unmakeDeco78(id, want);
@@ -14727,7 +14734,7 @@ function cartUpdate80(dt) {
 function cleanHarv80() {
   const H = harv80();
   for (const k of Object.keys(H)) {
-    const d = world.decor && world.decor[k]; if (d && d.id === "harv80" && myDecor27(d)) continue;
+    const d = world.decor && world.decor[k]; if (d && (d.id === "harv80" || (COMBO32[d.id] || []).includes("harv80")) && myDecor27(d)) continue;
     for (const [g, n] of Object.entries(H[k].f || {})) if (n > 0 && ITEMS[g]) homeStore18(g, n);
     delete H[k];
   }
@@ -14762,9 +14769,9 @@ F32.extra = (d, k, mine) => {
   let h = _extra80 ? _extra80(d, k, mine) : "";
   if (!mine) return h;
   const bar = `<p class="mtext">ためてある電気 <b>${world.elec33 || 0}</b> / ${elecCap33()}</p>`;
-  if (d.id === "harv80") {
+  if (d.id === "harv80" || COMBO32[d.id]) {
     const t = harv80()[k] || { f: {} }, list = Object.entries(t.f).filter(([g, n]) => n > 0 && ITEMS[g]);
-    h += bar + `<p class="mtext">毎朝、電気を1つ使って、まわり2マス（5×5）の実った作物を${HPER80}個まで取り入れます（中には${HCAP80}個まで）。植えなおしはしません。電気がない日はおやすみ。${world.stats.harv80 ? `これまでに${world.stats.harv80}個。` : ""}</p>
+    h += (COMBO32[d.id] ? "" : bar) + `<p class="mtext">毎朝、電気を1つ使って、まわり2マス（5×5）の実った作物を${HPER80}個まで取り入れます（中には${HCAP80}個まで）。植えなおしはしません。電気がない日はおやすみ。${world.stats.harv80 ? `これまでに${world.stats.harv80}個。` : ""}</p>
       <h3 class="lbl">取り入れた作物（${harvN80(t)}/${HCAP80}）</h3><div class="list">${list.length ? list.map(([g, n]) => itemLi(g, `${n}個`, "")).join("") : `<p class="mtext">まだ空っぽ。</p>`}</div>
       <button class="btn" type="button" id="h80get" ${list.length ? "" : "disabled"}>ぜんぶ取り出す</button>`;
   }
@@ -14779,7 +14786,7 @@ F32.extra = (d, k, mine) => {
 F32.wire = (body, d, k, mine) => {
   if (_wire80) _wire80(body, d, k, mine);
   if (!mine) return;
-  if (d.id === "harv80") body.querySelector("#h80get")?.addEventListener("click", () => {
+  if (d.id === "harv80" || COMBO32[d.id]) body.querySelector("#h80get")?.addEventListener("click", () => {
     const t = harv80()[k]; if (!t) return;
     let n = 0; const left = {};
     for (const [g, c] of Object.entries(t.f || {})) { let keep = c; for (let i = 0; i < c; i++) { if (!_addItem80(g, 1, true)) break; keep--; n++; } if (keep > 0) left[g] = keep; }
@@ -15727,6 +15734,65 @@ if (WATCH88) setTimeout(() => {
 }, 0);
 F88.ready = true;
 
+// =================== v89: スプリンクラーと自動収穫機を同じ場所に置ける（まとめる）・札束かざりの使った枚数を出す ===================
+var F89 = {};
+// 同じマスに重ねた建物（id "sprharv80"）。中の2つ（COMBO32）の仕事をぜんぶする。置いた人は同じ人のまま（サーバーの変更なし：飾りの id を1つ足すだけ）
+reg32("sprharv80", { name: "スプリンクラー＋自動収穫機", w: 1, h: 1, ih: 26, money: 0, mat: {}, desc: "スプリンクラーと自動収穫機を、同じ場所にまとめた物。まわり2マス（5×5）に水をまき、実った作物も取り入れる（電気はそれぞれ1つずつ使う）",
+  spr: (set, rect) => {
+    const M = C13["#8a949e"], L = C13["#c8d0d8"], D = C13["#5a646e"], Y = C13["#f2c84a"], G = C13["#6ab04a"], W = C13["#a8e0f6"];
+    rect(3, 24, 10, 2, C13["#6a6a70"]);
+    rect(5, 11, 6, 13, M); rect(5, 11, 1, 13, L); rect(10, 11, 1, 13, D);
+    rect(2, 6, 12, 6, Y); rect(2, 6, 12, 1, C13["#ffe98a"]); rect(2, 11, 12, 1, C13["#c8a030"]);
+    rect(3, 7, 5, 3, C13["#2a2a30"]); set(4, 8, G); set(5, 8, C13["#e2404e"]); set(6, 8, G);
+    rect(1, 2, 2, 5, D); rect(0, 2, 5, 1, D); rect(0, 7, 3, 1, L);
+    rect(9, 3, 4, 1, C13["#7a848e"]); rect(10, 4, 2, 2, C13["#9aa4ae"]);       // 水まきの頭
+    set(8, 2, W); set(13, 2, W); set(14, 1, W); set(7, 3, C13["#7ac8e8"]); set(14, 3, C13["#7ac8e8"]); set(11, 0, W); set(12, 1, W);
+  } });
+delete ITEMS.deco_sprharv80; // 合体はキットでは持たない（片付けると、それぞれのキットに分かれて戻る）
+// 家の収納箱へ戻すときなど、"deco_sprharv80" が来たら、2つのキットに分けて戻す
+{ const _hs89 = homeStore18; homeStore18 = function (id, n) { if (id === "deco_sprharv80") { _hs89("deco_sprinkler33", n); return _hs89("deco_harv80", n); } return _hs89.apply(this, arguments); }; }
+// いま向いているマスに、自分の「もう片方」の建物があれば、そのマスの座標を返す（スプリンクラー↔自動収穫機）
+function mergeTarget89(it) {
+  if (!it || it.place !== "build32" || (it.decor !== "sprinkler33" && it.decor !== "harv80")) return null;
+  const [tx, ty] = front(), hit = buildAt32(tx, ty), other = it.decor === "sprinkler33" ? "harv80" : "sprinkler33";
+  if (!hit || hit[0] !== tx + "," + ty || hit[1].id !== other || !myDecor27(hit[1])) return null;
+  return { k: hit[0], x: tx, y: ty, d: hit[1] };
+}
+F89.mergeTarget = mergeTarget89;
+const _act89 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+    const sel = world.inv[world.sel], item = sel && ITEMS[sel.id], t = mergeTarget89(item);
+    if (t) {
+      world.decor[t.k] = { id: "sprharv80", o: t.d.o, n: t.d.n }; // もとの置いた人のまま
+      removeItem(sel.id, 1); rebuildSolid(); saveWorld(); SFX.small(); dust(t.x, t.y, [200, 230, 250], 8);
+      toast("b32_sprharv80", "スプリンクラーと自動収穫機を、同じ場所にまとめた。5×5の同じ畑に、どちらもはたらく");
+      return;
+    }
+  }
+  return _act89.apply(this, arguments);
+};
+// まとめられるときは、向いているマスをうすい緑でしめす（建物のキットの赤い四角の上から）
+const _addToList89 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList89(list, now);
+  if (map !== village || modalOpen) return;
+  const t = mergeTarget89(world.inv[world.sel] && ITEMS[world.inv[world.sel].id]); if (!t) return;
+  list.push({ s: 1e9 + 1, d: () => { ctx.globalAlpha = .55; ctx.fillStyle = "#7ad07a"; ctx.fillRect(t.x * TS, t.y * TS, TS, TS); ctx.globalAlpha = 1; } });
+};
+// 札束かざり：作ったあとに、使った枚数とのこりを出す。あわせて、連打で2つ作ってしまわないよう、ほんの少しだけ間をあける
+{
+  const _mk89 = makeDeco78;
+  makeDeco78 = function (id) {
+    if (Date.now() - (F89.lastMake || 0) < 450) return false;
+    const before = cash78().n, ok = _mk89.apply(this, arguments);
+    if (ok) { F89.lastMake = Date.now(); F89.lastUsed = before - cash78().n; }
+    return ok;
+  };
+  F78.makeDeco = makeDeco78;
+}
+F89.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -16187,5 +16253,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

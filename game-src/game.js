@@ -3364,20 +3364,30 @@ function showHeartEvent(n, th) {
 
 // ---- gambling links: medals, prize counter, loss limit ----
 const PRIZES = [["f_trophy", 20], ["gem", 8], ["goldbar", 40], ["f_chandelier", 60], ["hat:シルクハット", 80], ["f_piano", 150], ["f_goldstatue", 300]];
+const prizeQty = {};
 function openPrize() {
   openModal("景品交換所", "shop", body => {
-    body.innerHTML = `<p class="mtext">「勝ったぶんは、ここで形にしていきませんか？」</p>
-      <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚）</span></p>
+    const maxQ = c => Math.max(1, Math.min(99, Math.floor(world.medals / c)));
+    const draw = () => {
+      body.innerHTML = `<p class="mtext">「勝ったぶんは、ここで形にしていきませんか？」</p>
+      <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、まとめて交換できます）</span></p>
       <div class="list">${PRIZES.map(([id, c]) => {
         if (id.startsWith("hat:")) { const h = id.slice(4); return `<div class="li"><img src="${renderChar({ ...cfg, hat: h }, "down", 0).toDataURL()}" alt=""><span class="nm">${h}（着せ替え）<span class="sub2">メダル${c}枚</span></span><span class="acts">${hatUnlocked(h) ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換</button>`}</span></div>`; }
-        return itemLi(id, `メダル${c}枚${ITEMS[id].furn ? "・家具" : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換</button>`);
+        const q = Math.max(1, Math.min(maxQ(c), prizeQty[id] || 1)); prizeQty[id] = q;
+        return itemLi(id, `メダル${c}枚（1個）${ITEMS[id].furn ? "・家具" : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><b class="pzq">${q}</b><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${c * q}枚）</button>`);
       }).join("")}</div>`;
-    body.querySelectorAll("[data-pz]").forEach(b => b.onclick = () => {
-      const id = b.dataset.pz, c = +b.dataset.c; if (world.medals < c) return;
-      if (id.startsWith("hat:")) unlock(id.slice(4)); else if (!addItem(id, 1)) return;
-      world.medals -= c; world.stats.prizes = (world.stats.prizes || 0) + 1; saveWorld();
-      toast(id.startsWith("hat:") ? null : ITEMS[id].icon, `${id.startsWith("hat:") ? id.slice(4) : ITEMS[id].name}と交換した`); closeModal(); openPrize();
-    });
+      body.querySelectorAll("[data-pzd]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzd] = Math.max(1, (prizeQty[b.dataset.pzd] || 1) - 1); draw(); });
+      body.querySelectorAll("[data-pzu]").forEach(b => b.onclick = () => { const c = +b.dataset.c; prizeQty[b.dataset.pzu] = Math.min(maxQ(c), (prizeQty[b.dataset.pzu] || 1) + 1); draw(); });
+      body.querySelectorAll("[data-pzx]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzx] = maxQ(+b.dataset.c); draw(); });
+      body.querySelectorAll("[data-pz]").forEach(b => b.onclick = () => {
+        const id = b.dataset.pz, c = +b.dataset.c, hat = id.startsWith("hat:"), q = hat ? 1 : Math.max(1, prizeQty[id] || 1);
+        if (world.medals < c * q) return;
+        if (hat) unlock(id.slice(4)); else if (!addItem(id, q)) return;
+        world.medals -= c * q; world.stats.prizes = (world.stats.prizes || 0) + q; prizeQty[id] = 1; saveWorld();
+        toast(hat ? null : ITEMS[id].icon, `${hat ? id.slice(4) : ITEMS[id].name}${q > 1 ? "を" + q + "個" : "と"}交換した`); draw();
+      });
+    };
+    draw();
   });
 }
 F7.openPrize = openPrize;
@@ -3923,7 +3933,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.43.0";
+const CLIENT_VERSION = "0.44.0";
 const ON_KEY = "komorebi-online";
 let onl = store.get(ON_KEY) || {};
 const remotes = new Map();
@@ -5867,10 +5877,10 @@ function openBox17(which, local) {
       const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && !ITEMS[id].tool);
       body.innerHTML = `<p class="mtext">${desc}</p>
         <p class="mtext small dndhint21">${matchMedia("(pointer: coarse)").matches ? "長押ししてから指を動かすと、箱と持ち物の間で動かせるよ" : "ドラッグでも、箱と持ち物の間で動かせるよ"}</p>
-        <h3 class="lbl">箱の中（${list.reduce((a, s) => a + s.n, 0)}個${local ? "" : `・${list.length}/${F17.kinds80 || 300}種類`}）</h3>
-        <div class="list dropbox21" data-drop="box">${list.length ? list.map(s => ITEMS[s.id] ? itemLi(s.id, `${s.n}個${s.r && (s.r[0] || s.r[1]) ? `（${s.r[1] ? "★3×" + s.r[1] : ""}${s.r[0] ? "★2×" + s.r[0] : ""}）` : ""}`, `<button class="btn light" type="button" data-bo="${esc(s.id)}" data-n="1">1個</button><button class="btn" type="button" data-bo="${esc(s.id)}" data-n="${s.n}">全部</button>`) : "").join("") : `<p class="mtext">からっぽ</p>`}</div>
+        <h3 class="lbl">箱の中（${list.reduce((a, s) => a + s.n, 0)}個${local ? "" : `・${list.length}/${kindsCap86(key, which)}種類`}）</h3>
+        <div class="list dropbox21" data-drop="box">${list.length ? list.map(s => ITEMS[s.id] ? itemLi(s.id, `${s.n}個${s.r && (s.r[0] || s.r[1]) ? `（${s.r[1] ? "★3×" + s.r[1] : ""}${s.r[0] ? "★2×" + s.r[0] : ""}）` : ""}`, `${qty86("bo", s.id, s.n)}<button class="btn" type="button" data-bo="${esc(s.id)}" data-n="${s.n}">全部</button>`) : "").join("") : `<p class="mtext">からっぽ</p>`}</div>
         <h3 class="lbl">持ち物（道具以外）</h3>
-        <div class="list dropbox21" data-drop="inv">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個`, `<button class="btn light" type="button" data-bi="${esc(id)}" data-n="1">1個</button><button class="btn" type="button" data-bi="${esc(id)}" data-n="all">全部</button>`)).join("") : `<p class="mtext">しまえる物がないよ</p>`}</div>
+        <div class="list dropbox21" data-drop="inv">${inv.length ? inv.map(id => itemLi(id, `${count(id)}個`, `${qty86("bi", id, count(id))}<button class="btn" type="button" data-bi="${esc(id)}" data-n="all">全部</button>`)).join("") : `<p class="mtext">しまえる物がないよ</p>`}</div>
         <p class="mtext small" id="boxMsg"></p>`;
       const msg = body.querySelector("#boxMsg");
       const go = (act, id, n, slot) => {
@@ -5908,8 +5918,9 @@ function openBox17(which, local) {
           send8({ type: "box", key, box: which, act, id: rKey(id, t), n: k, rid }); msg.textContent = "…";
         }
       };
-      body.querySelectorAll("[data-bi]").forEach(b => b.onclick = () => { const id = b.dataset.bi, n = b.dataset.n === "all" ? count(id) : 1; if (n > 0) go("put", id, Math.min(n, 9999)); });
+      body.querySelectorAll("[data-bi]").forEach(b => b.onclick = () => { const id = b.dataset.bi, n = b.dataset.n === "all" ? count(id) : Math.max(1, Math.floor(+b.dataset.n) || 1); if (n > 0) go("put", id, Math.min(n, 9999)); });
       body.querySelectorAll("[data-bo]").forEach(b => b.onclick = () => go("take", b.dataset.bo, Math.min(+b.dataset.n, 9999)));
+      wireQty86(body, key, which, local);
       // ドラッグ用：箱の中の行と持ち物の行に、何をいくつ動かすかを書いておく
       body.querySelectorAll("[data-bo]").forEach(b => { if (b.dataset.n !== "1") { const li = b.closest(".li"); if (li) { li.dataset.dragId = b.dataset.bo; li.dataset.dragN = b.dataset.n; li.dataset.dragFrom = "box"; } } });
       body.querySelectorAll("[data-bi]").forEach(b => { if (b.dataset.n === "all") { const li = b.closest(".li"); if (li) { li.dataset.dragId = b.dataset.bi; li.dataset.dragN = count(b.dataset.bi); li.dataset.dragFrom = "inv"; } } });
@@ -5997,6 +6008,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.44.0", date: "2026/10/27", title: "電気ボートはみなと町へ・建てた家の階・ステージのダンスライブ・スロットの演出", items: [
+    "電気ボートは、みなと町の桟橋の船着き場で使うことになった。村にあった船は、みなと町に入ると自動でお引っこしする。沖でしか釣れない魚が5種類（トビウオ・シイラ・カンパチ・ヨシキリザメ・アカムツ）ふえて、全部とると称号がもらえる",
+    "自分で建てた家にも、2・3階を足せるようになった。家の縦の大きさ（48ドット以上で2階・80ドット以上で3階まで）と広さで、建てられる階と値段が変わる",
+    "カジノの景品交換で、交換する数を選べるようになった（−／＋／最大）",
+    "スロットに、まれにおこる演出がふえた：フリーズ・確変（連続でチャンス）・全回転",
+    "野外ステージに立つと、見て、まねるダンスライブのミニゲームで遊べる（8ラウンド・おひねりは1日2回まで）。称号が3つ",
+    "収納箱・鍵つきの箱：同じ家に箱を置いた数だけ、しまえる種類がふえる（1個で300種類・5個で1500種類）。出し入れは、個数の欄に好きな数を入れて指定できる",
+  ] },
   { v: "0.43.0", date: "2026/10/27", title: "家の2・3階・台車・豪華な家具、電気の新しい使い道", items: [
     "こもれび工務店の「2・3階」で、わが家に階を足せるようになった。階段（床の矢じるしのマス）を歩いて上り下りして、階ごとに間取り・壁紙・家具を変えられる",
     "台車（よろず屋）：外で持ち物の台車を選んでⒶを押すと、引いて歩ける。持ち物がいっぱいになっても、拾った物は台車の荷台に積まれる（24種類まで）",
@@ -8213,7 +8232,7 @@ const _openShop32 = openShop;
 openShop = function (tab) {
   if (tab !== "build32") { _openShop32(tab); return; }
   openModal("よろず屋", "shop", body => {
-    const have = Object.keys(B32).map(id => [id, mine32(id).length + count("deco_" + id)]);
+    const have = Object.keys(B32).filter(id => id !== "boat80").map(id => [id, mine32(id).length + count("deco_" + id)]);
     body.innerHTML = shopTabs13("build32") + `<p class="mtext">所持金 <b>${fmt(world.money)}</b>・木材 ${count("wood")}・石 ${count("stone")}</p>
       <p class="mtext small">建物のキットを買って、持ったまま村の草地や道を向いてAボタンで建てます。建物を向いてAボタンで中を見たり、キットに戻したりできます。オンラインでは、建物はみんなの村に建ち、はたらきは建てた人の動物とペットに効きます。</p>
       <div class="list">${have.map(([id, n]) => { const b = B32[id], mat = Object.entries(b.mat).map(([m, q]) => `${ITEMS[m].name}${q}`).join("・"), ok = world.money >= b.money && Object.entries(b.mat).every(([m, q]) => count(m) >= q);
@@ -8578,11 +8597,8 @@ function useProj35(id) {
     return;
   }
   if (id === "stage35") {
-    if (today) { toast("p35_stage35", "今日のライブは終わった。また明日ね"); return; }
-    if (world.time < 540 || world.time >= 1320) { toast("p35_stage35", "ライブは9:00〜22:00のあいだにできるよ"); return; }
-    d[id] = world.day; const tip = 150 + Math.min(600, repLv() * 110) + rnd(20) * 10; addMoney(tip); addRep(2); world.stats.live35 = (world.stats.live35 || 0) + 1; saveWorld();
-    const fans = friends.filter(f => !f.hidden && f.x >= 0).slice(0, 4); fans.forEach((f, i) => setTimeout(() => { f.say = { text: ["♪", "アンコール！", "すてき！", "ブラボー"][i % 4], until: performance.now() + 2200 }; }, 300 + i * 350));
-    toast("p35_stage35", `ステージでライブをした。村の人たちからおひねり ${fmt(tip)}`); return;
+    if (world.time < 540 || world.time >= 1320) { toast("p35_stage35", "ステージに立てるのは9:00〜22:00のあいだだよ"); return; }
+    F85.open(); return;
   }
   if (id === "ferris35") {
     if (world.money < 100) { toast("p35_ferris35", "観覧車は1回100G"); return; }
@@ -14484,7 +14500,7 @@ GUIDE54.push(["電気", "b32_rod33", `
     <p>電気は、あると便利な<b>おまけ</b>。なくても困ることはないし、使うかどうかは自由。電気は自分のぶんだけ（ほかの人とは分けない）。</p><ul>
     <li><b>つくる</b>：避雷針（雷雨の日に雷が落ちる）／まわし車（エサをあげた家畜が、次の朝ぐるぐる回す）。ためておくのは蓄電池</li>
     <li><b>つかう</b>：スプリンクラー（毎朝の水まき）／自動販売機／釣りのしかけ（水のそばに置くと、毎朝魚をとってくれる）。どれも1日に電気1つ</li>
-    <li>どれも、よろず屋の「建物」で買える</li>
+    <li>電気ボート以外は、よろず屋の「建物」で買える。電気ボートは、みなと町の船着き場で手に入れる</li>
     <li>スマホは太陽の光で充電するから、電池切れの心配はいらない</li></ul>`]);
 F79.ready = true;
 F79.runDay = () => F6.onNewDay();
@@ -14505,7 +14521,7 @@ reg32("harv80", { name: "自動収穫機", w: 1, h: 1, ih: 26, money: 7000, mat:
     rect(11, 3, 2, 3, G); set(12, 2, G); set(10, 4, G);
     set(9, 8, C13["#fff6c8"]); set(10, 8, C13["#fff6c8"]); set(9, 9, C13["#e8c860"]);
   } });
-reg32("boat80", { name: "電気ボート", w: 2, h: 1, ih: 24, money: 9000, mat: { wood: 25, ore: 4 }, desc: "水のそば（池のふち）に置く。電気を1つ使って沖へ出ると、魚が3匹とれる（1日1回）。ヌシに会えるかも…？",
+reg32("boat80", { name: "電気ボート", w: 2, h: 1, ih: 24, money: 9000, mat: { wood: 25, ore: 4 }, desc: "みなと町の船着き場で使う（村には置かない）。電気を1つ使って沖へ出ると、魚が3匹とれる（1日1回）",
   spr: (set, rect) => {
     const H = C13["#a8602e"], HL = C13["#d08a4e"], W = C13["#f8f4ea"], BL = C13["#4a7ab0"], WV = C13["#8fd0ee"];
     rect(1, 19, 30, 3, WV); rect(3, 21, 7, 1, C13["#c8ecfa"]); rect(20, 22, 8, 1, C13["#c8ecfa"]); rect(12, 19, 6, 1, C13["#c8ecfa"]);
@@ -15069,11 +15085,352 @@ GUIDE54.push(["家の階・台車", "stairs80", `
   if (g) g[2] = `
     <p>電気は、あると便利な<b>おまけ</b>。なくても困ることはないし、使うかどうかは自由。電気は自分のぶんだけ（ほかの人とは分けない）。</p><ul>
     <li><b>つくる</b>：避雷針（雷雨の日に雷が落ちる）／まわし車（エサをあげた家畜が、次の朝ぐるぐる回す）。ためておくのは蓄電池</li>
-    <li><b>つかう</b>：スプリンクラー（毎朝の水まき）／自動販売機／釣りのしかけ（水のそばで、毎朝魚）／自動収穫機（毎朝、まわりの実った作物を取り入れる）／電気ボート（水のそばに置いて、1日1回、沖で魚をとる）。どれも1回に電気1つ</li>
-    <li>どれも、よろず屋の「建物」で買える</li>
+    <li><b>つかう</b>：スプリンクラー（毎朝の水まき）／自動販売機／釣りのしかけ（水のそばで、毎朝魚）／自動収穫機（毎朝、まわりの実った作物を取り入れる）／電気ボート（みなと町の桟橋の船着き場で、1日1回、沖で魚をとる。沖でしか釣れない魚も）。どれも1回に電気1つ</li>
+    <li>電気ボート以外は、よろず屋の「建物」で買える。電気ボートは、みなと町の船着き場で手に入れる</li>
     <li>スマホは太陽の光で充電するから、電池切れの心配はいらない</li></ul>`;
 }
 F80.ready = true;
+
+// =================== v81: 電気ボートはみなと町の船着き場へ・沖でしか釣れない魚 ===================
+// 船は村に建てず、みなと町の桟橋の船着き場で使う。釣りのしかけ（村の池の魚）と差をつけるため、沖でしか釣れない魚を5種類。
+var F81 = {};
+const BOATFISH81 = [
+  { n: "トビウオ", w: 14, p: 160, base: 30, s: ["夏", "秋"], spr: fishSpr17("#3a6ab0", "#e8f0f8", "#9ac0e8", (s, r) => { r(5, 4, 5, 1, C17("#bcd8f4")); r(6, 5, 4, 1, C17("#9ac0e8")); r(5, 11, 4, 1, C17("#bcd8f4")); }) },
+  { n: "シイラ", w: 10, p: 240, base: 100, s: ["夏", "秋"], spr: fishSpr17("#5ab07a", "#f2e070", "#2f7a8a", (s, r) => { r(3, 5, 2, 3, C17("#5ab07a")); for (const [x, y] of [[7, 7], [9, 8], [11, 7], [8, 6]]) s(x, y, C17("#2f7a8a")); }) },
+  { n: "カンパチ", w: 10, p: 320, base: 80, spr: fishSpr17("#7a9ab4", "#f0f0e8", "#5a7a94", (s, r) => { r(4, 6, 9, 1, C17("#f0c840")); r(4, 7, 1, 1, C17("#3a3a46")); r(5, 5, 3, 1, C17("#3a3a46")); }) },
+  { n: "ヨシキリザメ", w: 3.5, p: 800, base: 200, spr: (s, r, e) => { e(8, 9, 7, 2.8, C17("#4a5a8a")); e(8, 10.4, 6, 1.4, C17("#e8ecf4")); r(7, 3, 2, 3, C17("#3a4872")); s(8, 3, C17("#3a4872")); s(6, 5, C17("#3a4872")); r(13, 7, 2, 4, C17("#3a4872")); s(15, 6, C17("#3a4872")); s(15, 11, C17("#3a4872")); s(3, 8, C17("#ffffff")); s(3, 9, C17("#1a1a2a")); r(4, 11, 3, 1, C17("#ffffff")); } },
+  { n: "アカムツ", w: 2.5, p: 1100, base: 30, time: "night", spr: fishSpr17("#d84a3a", "#f6c8b8", "#a8302a", (s, r) => { s(4, 7, C17("#fff6c8")); s(4, 8, C17("#2a1a1a")); r(6, 6, 6, 1, C17("#e8705a")); r(5, 10, 6, 1, C17("#f6a898")); }) },
+];
+for (const f of BOATFISH81) {
+  addSpr17("fish_" + f.n, f.spr);
+  FISH6.push({ n: f.n, at: "boat", w: f.w, p: f.p, ...(f.s ? { s: f.s } : {}), ...(f.time ? { time: f.time } : {}) });
+  ITEMS["fish_" + f.n] = { name: f.n, icon: "fish_" + f.n, price: f.p, fish: true, food: 8 };
+  FISHBASE28[f.n] = f.base;
+}
+const _fishHint81 = fishHint;
+fishHint = f => f.at === "boat" ? ["電気ボートで沖へ出たとき（みなと町）", ...(f.s ? [f.s.join("・")] : []), ...(f.time === "night" ? ["夜"] : [])].join("／") : _fishHint81(f);
+// 魚博士は、これまでどおり池と海の魚だけ。沖の魚は「沖の大物」で
+{ const a = ACH.find(x => x[0] === "魚博士"); if (a) a[2] = () => FISH6.filter(f => !f.debt && !f.rod && f.at !== "boat").every(f => world.dex[f.n]); }
+ACH.push(["沖の大物", "電気ボートでしか釣れない魚を、ぜんぶとる", () => BOATFISH81.every(f => world.dex[f.n])]);
+ACH_REWARD["沖の大物"] = ["money", 6000];
+
+const bs81 = () => { const b = world.boat81 = world.boat81 && typeof world.boat81 === "object" ? world.boat81 : {}; if (typeof b.own !== "boolean") b.own = false; return b; };
+const BOATCOST81 = () => B32.boat80;
+// 村に置いてあった船・持っていたキットは、船着き場の船にお引っこし（みなと町に入ったとき・朝・船を開いたとき）
+function boatMig81() {
+  try {
+    const B = bs81(); let moved = false;
+    for (const k of mine32("boat80")) {
+      const old = (world.boat80 || {})[k];
+      if (old && old.day === world.day && B.day !== world.day) { B.day = old.day; B.last = old.last || {}; }
+      delete world.decor[k]; if (world.boat80) delete world.boat80[k]; moved = true;
+    }
+    const kits = count("deco_boat80");
+    if (kits) { removeItem("deco_boat80", kits); moved = true; }
+    if (moved) { B.own = true; rebuildSolid(); saveWorld(); setTimeout(() => F7.notify("電気ボートは、みなと町の船着き場へ移ったよ。みなと町の桟橋から出航できる", null), 1500); }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "boatMig81"); }
+}
+// 沖の魚（半分）と、みなと町の海の魚（半分）。釣り竿につけたえさは使わない
+function pickBoat81() {
+  const pool = FISH6.filter(f => f.at === "boat" && fishOk(f));
+  if (pool.length && Math.random() < .5) {
+    let t = pool.reduce((a, f) => a + f.w, 0) * Math.random();
+    for (const f of pool) if ((t -= f.w) < 0) return f.n;
+    return pool[0].n;
+  }
+  const b = world.bait; world.bait = null;
+  try { return pickFish("sea"); } finally { world.bait = b; }
+}
+function openBoat81() {
+  boatMig81();
+  openModal("電気ボート", "shop", body => {
+    const draw = () => {
+      const B = bs81(), bc = BOATCOST81();
+      const dexH = `<h3 class="lbl">沖でしか釣れない魚（${BOATFISH81.filter(f => world.dex[f.n]).length} / ${BOATFISH81.length}）</h3><div class="dex">${BOATFISH81.map(f => `<div class="${world.dex[f.n] ? "" : "no"}" title="${esc(fishHint(FISH6.find(x => x.n === f.n)))}"><img src="${ASSETS["fish_" + f.n]}" alt="">${world.dex[f.n] ? f.n + "<br>×" + world.dex[f.n] : "？？？"}</div>`).join("")}</div>`;
+      if (!B.own) {
+        const mat = Object.entries(bc.mat).map(([m, q]) => `${ITEMS[m].name}${q}`).join("・"), ok = world.money >= bc.money && Object.entries(bc.mat).every(([m, q]) => count(m) >= q);
+        body.innerHTML = `<p class="mtext">桟橋につないである、電気で動く小さな船。手に入れると、電気を1つ使って、1日1回、沖へ出て魚を3匹とってこられる。沖では、釣り竿では釣れない魚もかかる。</p>
+          <p class="mtext">${fmt(bc.money)}＋${mat}（いま 所持金 <b>${fmt(world.money)}</b>・木材 ${count("wood")}・鉱石 ${count("ore")}）</p>${dexH}
+          <div class="row2"><button class="btn" type="button" id="b81buy" ${ok ? "" : "disabled"}>船を手に入れる</button></div>`;
+        body.querySelector("#b81buy").onclick = () => {
+          if (world.money < bc.money || !Object.entries(bc.mat).every(([m, q]) => count(m) >= q)) return;
+          addMoney(-bc.money); for (const [m, q] of Object.entries(bc.mat)) removeItem(m, q);
+          B.own = true; saveWorld(); toast("b32_boat80", "電気ボートを手に入れた！"); draw();
+        };
+        return;
+      }
+      const done = B.day === world.day, last = Object.entries(B.last || {}).filter(([g, n]) => n > 0 && ITEMS["fish_" + g]);
+      body.innerHTML = `<p class="mtext">ためてある電気 <b>${world.elec33 || 0}</b> / ${elecCap33()}</p>
+        <p class="mtext">電気を1つ使って沖へ出て、魚を3匹とってきます（1日1回）。沖でしか釣れない魚もかかる。ヌシ級に会えることも…？ ${world.stats.boat80 ? `これまでに${world.stats.boat80}回、出航した。` : ""}</p>
+        ${done && last.length ? `<h3 class="lbl">今日の釣果</h3><div class="list">${last.map(([g, n]) => itemLi("fish_" + g, `${n}匹`, "")).join("")}</div>` : ""}${dexH}
+        <div class="row2"><button class="btn" type="button" id="b81go" ${done || !(world.elec33 > 0) ? "disabled" : ""}>${done ? "今日はもう出航した" : world.elec33 > 0 ? "沖へ出る（電気1つ）" : "電気がないので出られない"}</button></div>`;
+      body.querySelector("#b81go").onclick = () => {
+        if (B.day === world.day || !(world.elec33 > 0)) return;
+        world.elec33--; B.day = world.day; B.last = {}; let nushi = false;
+        for (let i = 0; i < 3; i++) {
+          const g = pickBoat81(), id = "fish_" + g; if (!ITEMS[id]) continue;
+          if (_addItem80(id, 1, true)) { const t = rollTier(.25, .08); if (t > 1) addRare(id, t, 1); } else homeStore18(id, 1);
+          world.dex[g] = (world.dex[g] || 0) + 1; B.last[g] = (B.last[g] || 0) + 1;
+          if (g === "ヌシ" || FISH6.find(x => x.n === g)?.nushi) nushi = true;
+        }
+        world.stats.boat80 = (world.stats.boat80 || 0) + 1; if (nushi) world.stats.boatNushi80 = (world.stats.boatNushi80 || 0) + 1;
+        saveWorld(); toast("b32_boat80", nushi ? "沖で、なにか大きな魚がかかった！（ヌシ級だ！）" : "沖で魚をとってきた（3匹）。持ち物がいっぱいの分は、家の収納箱へ"); draw();
+      };
+    };
+    draw();
+  });
+}
+F81.openBoat = openBoat81;
+// みなと町の桟橋に、船をつなぐ
+const _makePort81 = makePort;
+makePort = function () {
+  const m = _makePort81();
+  m.objs.push({ img: "b32_boat80", x: 19 * TS, y: 13 * TS - 24, sortY: 13 * TS });
+  for (const k of ["19,12", "20,12"]) m.interact[k] = () => openBoat81();
+  m.labels.push({ x: 20 * TS, y: 11 * TS - 2, text: "電気ボート" });
+  setTimeout(boatMig81, 0);
+  return m;
+};
+// 桟橋から船を向いてⒶ（素潜りより先に、船を開く）
+const _act81 = act;
+act = function () {
+  if (port && map === port && !modalOpen && !placing && !fish && !busy && !player.moving) {
+    const [tx, ty] = front();
+    if (ty === 12 && (tx === 19 || tx === 20) && port.ground[player.y]?.[player.x] === "pier") { openBoat81(); return; }
+  }
+  return _act81.apply(this, arguments);
+};
+const _newday81 = F6.onNewDay;
+F6.onNewDay = () => { _newday81(); boatMig81(); };
+// 村に建てたままの昔の船の中は、お引っこしのお知らせだけ
+{
+  const _extra81 = F32.extra;
+  F32.extra = (d, k, mine) => d.id === "boat80" ? `<p class="mtext">この電気ボートは、みなと町の桟橋にある船着き場へお引っこしするよ。みなと町に行くと、自動で船着き場の船になる（村の船は消えて、船着き場から出航できる）。</p>` : (_extra81 ? _extra81(d, k, mine) : "");
+}
+F81.ready = true;
+
+// =================== v82: 建てた家の2・3階（家の縦の大きさに合わせて） ===================
+// 建てた家は、縦の大きさ（H）で建てられる階の数が決まる：H 48〜79 は2階まで／80以上は3階まで／47以下は平屋のみ。
+// 階の広さは、その家の部屋にそろう。かかる費用は、家の広さ（W×H）に合わせて変わる（標準の 72×64 がわが家と同じ）。
+// サーバーは間取りの文字列をそのまま預かるので、そのまま届く（家の箱・間取りの送りかたは v80 と同じ）。
+var F82 = {};
+const FLOORK82 = h => Math.max(.5, Math.min(2.5, (h.W * h.H) / 4608));
+const upMax82 = key => { if (key === "home") return 2; const h = houseOf17(key); return !h ? 0 : h.H >= 80 ? 2 : h.H >= 48 ? 1 : 0; };
+function floorCost82(key, n) {
+  const base = FLOOR80[n]; if (key === "home" || !base) return base;
+  const h = houseOf17(key), k = h ? FLOORK82(h) : 1;
+  return { money: Math.round(base.money * k / 1000) * 1000, mat: Object.fromEntries(Object.entries(base.mat).map(([m, q]) => [m, Math.max(1, Math.round(q * k))])) };
+}
+const myHouses82 = () => [{ key: "home", label: typeof homeShared17 === "function" && homeShared17("home") ? "みんなの家" : "わが家" },
+  ...world.houses.filter(h => h && Number.isFinite(h.W) && Number.isFinite(h.H) && mineHouse17(h.col + "," + h.row)).map(h => ({ key: h.col + "," + h.row, label: houseLabel(h) }))];
+function addFloor82(key, free) {
+  const R = baseRoom80(key), n = (R.up || []).length; if (!R || n >= upMax82(key)) return false;
+  const nx = floorCost82(key, n);
+  if (!free) { if (world.money < nx.money || !Object.entries(nx.mat).every(([m, q]) => count(m) >= q)) return false; addMoney(-nx.money); for (const [m, q] of Object.entries(nx.mat)) removeItem(m, q); }
+  if (!R.up) R.up = [];
+  R.up.push({ w: R.w, h: R.h, wall: R.wall, floor: R.floor, storage: [], furn: [], aqua: {} });
+  placeStairs80(n === 0 ? R : R.up[n - 1]);
+  saveWorld();
+  if (sharedHouse17(key) && H17.loaded[key]) { const L = layoutOf17(R); R.ts64 = Date.now(); H17.lastPut[key] = JSON.stringify(L); send8({ type: "house", act: "put", key, layout: { ...L, ts: R.ts64 } }); }
+  return true;
+}
+addFloor80 = function (free) { return addFloor82("home", free); };
+let floorSel82 = "home";
+openFloors80 = function () {
+  openModal("こもれび工務店", "shop", body => {
+    const hs = myHouses82(); if (!hs.some(x => x.key === floorSel82)) floorSel82 = "home";
+    const key = floorSel82, h = houseOf17(key), R = baseRoom80(key), n = (R.up || []).length, max = upMax82(key), next = n < max ? floorCost82(key, n) : null;
+    const loaded = !sharedHouse17(key) || H17.loaded[key];
+    const ok = next && world.money >= next.money && Object.entries(next.mat).every(([m, q]) => count(m) >= q);
+    const size = h ? `縦${h.H}ドット（約${(h.H / 16).toFixed(1)}マス）・横${h.W}ドット` : "";
+    const why = !h ? "" : max === 0 ? `この家は縦が低い（${h.H}ドット）から、階は足せない。縦48ドット以上の家なら2階、80ドット以上なら3階まで建てられるよ。` : n >= max ? (max === 1 ? `この家の縦（${h.H}ドット）だと、${max + 1}階建てまで。80ドット以上の家なら3階まで建てられるよ。` : "") : "";
+    body.innerHTML = builderTabs38("fl80") + `<div class="mtabs">${hs.map(x => `<button class="chip" type="button" data-fl82="${esc(x.key)}" aria-pressed="${x.key === key}">${esc(x.label)}</button>`).join("")}</div>
+      <p class="mtext">所持金 <b>${fmt(world.money)}</b>・木材 ${count("wood")}・石 ${count("stone")}・鉱石 ${count("ore")}・アメジスト ${count("gem")}</p>
+      <div class="stat"><span>${esc(hs.find(x => x.key === key).label)}</span><b>${n + 1}階建て${size ? `（${size}）` : ""}</b></div>
+      ${next ? `<div class="li"><img src="${ASSETS.stairs80}" alt=""><span class="nm">${n + 2}階を作る（階段つき）<span class="sub2">${fmt(next.money)}＋${Object.entries(next.mat).map(([m, q]) => `${ITEMS[m].name}${q}`).join("・")}${h ? `（この家の広さに合わせた値段）` : ""}</span></span><span class="acts"><button class="btn" type="button" id="fl80go" ${ok && loaded ? "" : "disabled"}>作る</button></span></div>
+        ${loaded ? "" : `<p class="mtext small">オンラインの家は、一度その家に入ってから来てね（家の中のようすを読みこむため）。</p>`}` : `<p class="mtext">${why || `もう${max + 1}階建て。いちばん高い家です。`}</p>`}
+      <p class="note">作った階には、家の中の階段（床の矢じるしのマス）を歩いて上がれます。上の階の入口のマスが、下りの階段です。階の間取り・家具・壁紙は、1階とは別に模様替えできます。建てた家は、縦の大きさで建てられる階がきまります。</p>`;
+    wireBuilderTabs38();
+    body.querySelectorAll("[data-fl82]").forEach(b => b.onclick = () => { floorSel82 = b.dataset.fl82; closeModal(); openFloors80(); });
+    body.querySelector("#fl80go")?.addEventListener("click", () => {
+      if (addFloor82(key, false)) { toast("stairs80", `${hs.find(x => x.key === key).label}に${n + 2}階ができた！ 階段でのぼれるよ`); closeModal(); openFloors80(); }
+    });
+  });
+};
+// 建てた家の階を試す（テスト用）
+F82.demo = () => {
+  const key = "11,9";
+  if (!world.houses.some(h => h.col + "," + h.row === key)) world.houses.push({ W: 96, H: 96, roof: "赤", wall: "生成り", col: 11, row: 9, owner: myName() });
+  const R = baseRoom80(key);
+  while ((R.up || []).length < upMax82(key)) addFloor82(key, true);
+  enterRoom(key, [11, 10]); goFloor80(1, "up"); goFloor80(2, "up"); goFloor80(1, "down"); goFloor80(0, "down");
+};
+F82.max = upMax82; F82.cost = floorCost82; F82.open = key => { if (key) floorSel82 = key; openFloors80(); };
+{
+  const g = GUIDE54.find(x => x[0] === "家の階・台車");
+  if (g) g[2] = g[2].replace("工務店の「2・3階」で、わが家に階を足せる。", "工務店の「2・3階」で、わが家や、自分で建てた家に階を足せる。建てた家は、縦の大きさ（48ドット以上で2階・80ドット以上で3階まで）と広さで、建てられる階と値段が変わる。");
+}
+F82.ready = true;
+
+// =================== v84: スロットの割り込みイベント（フリーズ・確変・全回転）の称号 ===================
+// 本体は casino.js（setupSlot）。ごくまれに起こる。勝ち負けは gambleResult を通る。
+var F84 = {};
+ACH.push(["フリーズ体験", "スロットでフリーズを引く", () => (world.stats.slotFreeze84 || 0) >= 1]);
+ACH_REWARD["フリーズ体験"] = ["medal", 10];
+ACH.push(["確変の風", "スロットで確変に入る", () => (world.stats.slotKaku84 || 0) >= 1]);
+ACH_REWARD["確変の風"] = ["medal", 10];
+ACH.push(["全回転！", "スロットで全回転を引く", () => (world.stats.slotZen84 || 0) >= 1]);
+ACH_REWARD["全回転！"] = ["medal", 20];
+F84.ready = true;
+
+// =================== v85: 野外ステージのダンスライブ（自分で遊べるミニゲーム） ===================
+// 共同プロジェクトの野外ステージに立つと、「見て、まねる」ダンスのミニゲームで遊べる。
+// 矢印の順番を見て、同じ順番で押す。クリアするたびに1つ長くなる（8ラウンドまで）。3回まちがえたら終わり。
+// おひねりは1日2回まで（それ以降は練習）。時間は 9:00〜22:00。
+var F85 = {};
+const STG_PAID85 = 2, STG_MAXR85 = 8, STG_LIVES85 = 3;
+const STG_DIRS85 = [["left", "←", "ArrowLeft", "a"], ["up", "↑", "ArrowUp", "w"], ["down", "↓", "ArrowDown", "s"], ["right", "→", "ArrowRight", "d"]];
+const stg85 = () => { const d = world.stage85 = world.stage85 && typeof world.stage85 === "object" ? world.stage85 : {}; for (const k of ["day", "paid", "best", "plays"]) if (!Number.isFinite(d[k])) d[k] = 0; return d; };
+const stgPaidLeft85 = () => { const d = stg85(); return d.day === world.day ? Math.max(0, STG_PAID85 - d.paid) : STG_PAID85; };
+const stgTip85 = (cleared, perfect) => cleared < 1 ? 0 : Math.round((120 + Math.min(600, repLv() * 90)) * cleared / 4 * (perfect ? 1.5 : 1) / 10) * 10;
+
+function openStage85() {
+  let alive = true, keyH = null;
+  openModal("野外ステージ", "", body => {
+    const intro = () => {
+      const left = stgPaidLeft85(), d = stg85();
+      body.innerHTML = `<p class="mtext">ステージに上がると、村のみんなが集まってくる。矢印の順番を見て、同じ順番でステップをふもう。クリアするたびに、1つ長くなるよ（${STG_MAXR85}ラウンドまで）。${STG_LIVES85}回まちがえたら、ライブは終わり。</p>
+        <p class="mtext small">操作：ボタン／矢印キー（WASD）</p>
+        <div class="stat"><span>今日のおひねり</span><b>あと${left}回（1日${STG_PAID85}回まで）</b></div>
+        <div class="stat"><span>これまでの最高</span><b>${d.best}ラウンド</b></div>
+        <div class="row2"><button class="btn" type="button" id="s85go">${left ? "ステージに立つ" : "練習する（おひねりはなし）"}</button></div>`;
+      body.querySelector("#s85go").onclick = () => play(left > 0);
+    };
+    const play = paid => {
+      const timers = []; let round = 0, seq = [], pos = 0, lives = STG_LIVES85, miss = 0, combo = 0, cleared = 0, phase = "show", idleT = 0;
+      const later = (fn, ms) => { const t = setTimeout(() => { if (alive) fn(); }, ms); timers.push(t); return t; };
+      body.innerHTML = `<div class="stg85"><div class="stg85top"><span id="s85r">ラウンド 1</span><span id="s85l"></span></div>
+        <div class="stg85gauge"><i id="s85g"></i></div>
+        <div class="stg85stage"><canvas id="s85cv" width="16" height="16"></canvas></div>
+        <div class="stg85seq" id="s85seq"></div>
+        <p class="mtext stg85msg" id="s85msg">よく見てね</p>
+        <div class="stg85pad">${STG_DIRS85.map(([, a], i) => `<button class="btn light stg85b" type="button" data-d="${i}" aria-label="${a}">${a}</button>`).join("")}</div></div>`;
+      const cv = body.querySelector("#s85cv"), cx = cv.getContext("2d"), msg = body.querySelector("#s85msg"), seqEl = body.querySelector("#s85seq");
+      const pads = [...body.querySelectorAll("[data-d]")];
+      const pose = (dir, f = 0) => { cx.clearRect(0, 0, 16, 16); cx.drawImage(renderChar(cfg, dir, f), 0, 0); };
+      const hud = () => { body.querySelector("#s85r").textContent = `ラウンド ${Math.max(1, round)}／${STG_MAXR85}`; body.querySelector("#s85l").textContent = "♥".repeat(lives) + "♡".repeat(STG_LIVES85 - lives); body.querySelector("#s85g").style.width = Math.round(cleared / STG_MAXR85 * 100) + "%"; };
+      const boxes = lit => { seqEl.innerHTML = seq.map((d, k) => `<b class="${lit === k ? "on" : ""}">${phase === "input" && k < pos ? STG_DIRS85[d][1] : phase === "show" && lit === k ? STG_DIRS85[d][1] : "？"}</b>`).join(""); };
+      const flash = (i, ms = 220) => { pads[i].classList.add("on"); later(() => pads[i].classList.remove("on"), ms); };
+      pose("down");
+      const showSeq = () => {
+        phase = "show"; pos = 0; clearTimeout(idleT); msg.textContent = "よく見てね"; hud(); boxes(-1);
+        const step = Math.max(300, 560 - round * 30);
+        seq.forEach((d, k) => later(() => { pose(STG_DIRS85[d][0], k % 2); flash(d, step * .7); boxes(k); se13("small"); }, 700 + k * step));
+        later(() => { pose("down"); startInput(); }, 700 + seq.length * step + 200);
+      };
+      const startInput = () => { phase = "input"; pos = 0; msg.textContent = "同じ順番で！"; boxes(-1); armIdle(); };
+      const armIdle = () => { clearTimeout(idleT); idleT = later(() => { if (phase === "input") fail("じかんぎれ…"); }, 5000); };
+      const nextRound = () => { round++; while (seq.length < round + 2) seq.push(Math.floor(Math.random() * 4)); showSeq(); };
+      const fail = why => {
+        phase = "between"; clearTimeout(idleT); lives--; miss++; combo = 0; se13("miss"); hud();
+        msg.textContent = lives > 0 ? `${why}　もう一度、見せるよ` : `${why}`;
+        if (lives > 0) later(showSeq, 1200); else later(() => end(false), 1100);
+      };
+      const press = i => {
+        if (phase !== "input") return;
+        pose(STG_DIRS85[i][0], pos % 2); flash(i, 150);
+        if (i === seq[pos]) {
+          pos++; se13("small"); boxes(-1);
+          if (pos >= seq.length) {
+            phase = "between"; clearTimeout(idleT); cleared++; combo++; hud(); se13("win");
+            msg.textContent = combo >= 3 ? `ナイス！ ${combo}れんぞく！` : "ナイス！";
+            const fans = friends.filter(f => !f.hidden && f.x >= 0).slice(0, 4); if (cleared % 2 === 0) fans.forEach((f, k) => setTimeout(() => { f.say = { text: ["♪", "いいぞ！", "すてき！", "ブラボー"][k % 4], until: performance.now() + 1800 }; }, 200 + k * 250));
+            if (cleared >= STG_MAXR85) later(() => end(true), 900); else later(nextRound, 900);
+          } else armIdle();
+        } else fail("あっ、まちがえた！");
+      };
+      pads.forEach((b, i) => b.addEventListener("click", () => press(i)));
+      if (keyH) removeEventListener("keydown", keyH, true);
+      F85.peek = () => seq.slice();
+      keyH = e => {
+        const k = String(e.key || "").toLowerCase(), i = STG_DIRS85.findIndex(d => d[2].toLowerCase() === k || d[3] === k);
+        if (i < 0) return; e.preventDefault(); e.stopPropagation(); press(i);
+      };
+      addEventListener("keydown", keyH, true);
+      const end = clear => {
+        phase = "over"; timers.forEach(clearTimeout);
+        const d = stg85(), perfect = clear && miss === 0, tip = paid ? stgTip85(cleared, perfect) : 0;
+        d.plays++; d.best = Math.max(d.best, cleared);
+        if (paid && cleared >= 1) {
+          if (d.day !== world.day) { d.day = world.day; d.paid = 0; }
+          const first = d.paid === 0; d.paid++;
+          if (tip) addMoney(tip); if (first) addRep(2);
+          world.stats.live35 = (world.stats.live35 || 0) + 1;
+        }
+        if (clear) world.stats.stageClear85 = (world.stats.stageClear85 || 0) + 1;
+        if (perfect) world.stats.stagePerfect85 = (world.stats.stagePerfect85 || 0) + 1;
+        saveWorld();
+        const fans = friends.filter(f => !f.hidden && f.x >= 0).slice(0, 4); fans.forEach((f, k) => setTimeout(() => { f.say = { text: ["♪", "アンコール！", "すてき！", "ブラボー"][k % 4], until: performance.now() + 2200 }; }, 300 + k * 350));
+        se13(clear ? "jackpot" : cleared >= 3 ? "win" : "small");
+        body.innerHTML = `<p class="mtext"><b>${perfect ? "パーフェクト！ 会場は大さわぎ！" : clear ? "ぜんぶ決めた！ アンコールの声がやまない" : cleared >= 3 ? "いいライブだった！" : "ちょっと緊張したかな…"}</b></p>
+          <div class="stat"><span>決めたラウンド</span><b>${cleared}／${STG_MAXR85}</b></div>
+          <div class="stat"><span>まちがえた回数</span><b>${miss}</b></div>
+          <div class="stat"><span>おひねり</span><b>${paid ? (cleared >= 1 ? fmt(tip) : "なし") : "練習なので、なし"}</b></div>
+          ${paid && cleared < 1 ? `<p class="mtext small">1ラウンドも決められなかったので、今日の回数は使わないよ。</p>` : ""}
+          <div class="row2"><button class="btn" type="button" id="s85again">${stgPaidLeft85() > 0 ? "もう一度ステージへ" : "練習する"}</button><button class="btn light" type="button" id="s85end">おりる</button></div>`;
+        body.querySelector("#s85again").onclick = intro;
+        body.querySelector("#s85end").onclick = () => closeModal();
+      };
+      hud(); later(nextRound, 500);
+    };
+    intro();
+  }, () => { alive = false; if (keyH) removeEventListener("keydown", keyH, true); });
+}
+F85.open = openStage85; F85.paidLeft = stgPaidLeft85; F85.tip = stgTip85;
+PROJ35.stage35.desc = "広場にステージができる。ステージに立って、ダンスライブ（見て、まねるミニゲーム）。村の人がおひねりをくれる";
+PROJECTS.stage35 = [PROJ35.stage35.name, PROJ35.stage35.desc];
+ACH.push(["ステージデビュー", "野外ステージでダンスライブをする", () => (world.stage85?.plays || 0) >= 1]);
+ACH_REWARD["ステージデビュー"] = ["money", 500];
+ACH.push(["アンコールの声", "ステージで8ラウンドぜんぶ決める", () => (world.stats.stageClear85 || 0) >= 1]);
+ACH_REWARD["アンコールの声"] = ["money", 3000];
+ACH.push(["花形スター", "ステージで、まちがえずにパーフェクトを決める", () => (world.stats.stagePerfect85 || 0) >= 1]);
+ACH_REWARD["花形スター"] = ["money", 5000];
+F85.ready = true;
+
+// =================== v86: 収納箱の個数指定・箱を置いた数だけ入る種類がふえる ===================
+// 箱（収納箱・鍵つきの箱）の出し入れは「個数の欄」で好きな数を指定できる。
+// 同じ家に箱を何個か置くと、しまえる種類がふえる（1個で300種類・5個で1500種類。サーバーの HouseBook.boxes と同じ数え方。
+// 2・3階に置いた箱も数える）。中身はどの箱を開いても同じ（箱ごとには分けない）。
+var F86 = {};
+const MAXBOX86 = 5, KINDS86 = 300;
+function boxCount86(key, which) {
+  const R = baseRoom80(key); if (!R) return 1;
+  const id = which === "priv" ? "lockbox" : "chest";
+  let n = (R.furn || []).filter(f => f.id === id).length;
+  for (const u of R.up || []) n += (u.furn || []).filter(f => f.id === id).length;
+  return Math.max(1, Math.min(MAXBOX86, n));
+}
+function kindsCap86(key, which) { return KINDS86 * boxCount86(key, which); }
+const qty86 = (kind, id, max) => `<span class="qty86"><input class="qin86" type="number" min="1" max="${Math.min(9999, Math.max(1, max))}" value="1" inputmode="numeric" aria-label="個数"><button class="btn light" type="button" data-${kind}="${esc(id)}" data-n="1">${kind === "bi" ? "入れる" : "出す"}</button></span>`;
+function wireQty86(body, key, which, local) {
+  body.querySelectorAll(".qin86").forEach(inp => {
+    const b = inp.nextElementSibling, max = +inp.max || 1;
+    const sync = () => { const v = Math.max(1, Math.min(max, Math.floor(+inp.value) || 1)); b.dataset.n = String(v); };
+    inp.addEventListener("input", sync); inp.addEventListener("change", () => { sync(); inp.value = b.dataset.n; });
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); sync(); b.click(); } });
+    inp.addEventListener("focus", () => inp.select());
+  });
+  if (!local) {
+    const n = boxCount86(key, which), h = body.querySelector("h3.lbl"), nm = which === "priv" ? "鍵つきの箱" : "収納箱";
+    if (h) h.insertAdjacentHTML("afterend", `<p class="mtext small">この家には${nm}が${n}個。${n >= MAXBOX86 ? `${MAXBOX86}個までふやせる・いまが最大。` : `${nm}を置く数をふやすと、しまえる種類がふえるよ（1個で${KINDS86}種類・${MAXBOX86}個まで）。`}</p>`);
+  }
+}
+F86.kindsCap = kindsCap86; F86.boxCount = boxCount86;
+{
+  const g = GUIDE54.find(x => x[0] === "家の階・台車");
+  if (g) g[2] = g[2].replace("<li>家の箱（みんなの収納箱・自分だけの箱）には、300種類まで入れられる</li>", "<li>家の箱（みんなの収納箱・自分だけの箱）には、1個で300種類まで入れられる。同じ家に箱を何個か置くと、しまえる種類がふえる（5個で1500種類）。出し入れは、個数の欄に好きな数を入れて指定できる</li>");
+}
+F86.ready = true;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -15535,5 +15892,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

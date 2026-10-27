@@ -46,7 +46,7 @@ public class BoxHandler implements MessageHandler {
         if ("put".equals(act)) left = houses.book().put(bookKey, priv, id, n);
         else if ("take".equals(act)) left = houses.book().take(bookKey, priv, id, n);
         else return;
-        if (left < 0) { ng(hub, from, rid, "put".equals(act) ? "箱がいっぱいみたい" : "箱にそれだけ入っていないみたい"); return; }
+        if (left < 0) { ng(hub, from, rid, "put".equals(act) ? "箱がいっぱいみたい（同じ家に箱を置く数をふやすと、しまえる種類がふえるよ）" : "箱にそれだけ入っていないみたい"); return; }
         houses.save(bookKey);
         hub.send(from, hub.json().createObjectNode().put("type", "boxOk").put("rid", rid).put("act", act).put("id", id).put("n", n));
         ObjectNode mine = hub.json().createObjectNode().put("type", "houseBox").put("key", key);

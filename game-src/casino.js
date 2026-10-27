@@ -69,12 +69,28 @@ function lineWin(sy) {
   return CHERRY[n];
 }
 K.SLOT = { STRIPS, PAY3, CHERRY, LINES, lineWin };
+// ---- 割り込みイベント（フリーズ・確変・全回転）。ごくまれに起こる。還元率を足しても約99%に収まるようにしている ----
+//   フリーズ 1/600：賭け金の3倍（60%）・8倍（30%）・30倍（10%）／確変 1/500：次の6回、そろった配当が2倍／全回転 1/1500：9マスぜんぶ同じ絵柄（全ラインが当たる）
+const EV84 = { zen: 1 / 1500, freeze: 1 / 600, kaku: 1 / 500 };
+const FREEZE_PRIZE84 = [[3, .6], [8, .3], [30, .1]];
+const ZEN_SYM84 = [["M", .5], ["F", .3], ["L", .15], ["B", .045], ["7", .005]];
+const KK_SPINS84 = 6;
+const pickW84 = list => { let r = Math.random(); for (const [v, w] of list) if ((r -= w) < 0) return v; return list[0][0]; };
+const slotEv84 = () => (K.world.slot84 = K.world.slot84 && typeof K.world.slot84 === "object" ? K.world.slot84 : { kk: 0 });
+function rollSlotEv84(kkOn) {
+  const u = Math.random();
+  if (u < EV84.zen) return "zen";
+  if (u < EV84.zen + EV84.freeze) return "freeze";
+  if (!kkOn && u < EV84.zen + EV84.freeze + EV84.kaku) return "kaku";
+  return null;
+}
+K.SLOT.EV = EV84; K.SLOT.FREEZE_PRIZE = FREEZE_PRIZE84; K.SLOT.ZEN_SYM = ZEN_SYM84; K.SLOT.KK_SPINS = KK_SPINS84;
 const slot = { pos: [0, 7, 14], lines: 5 };
 function symAt(r, top, row) { return STRIPS[r][(top + row) % 21]; }
 function setupSlot(cb, body) {
-  cb.innerHTML = `<div class="slotrow12"><div class="slotbox"><canvas id="slotcv" width="60" height="58"></canvas><div class="reach" id="reach" hidden>リーチ！</div></div><button class="btn spin12" type="button" id="spin2" aria-label="スピン">スピン</button></div>
+  cb.innerHTML = `<div class="slotrow12"><div class="slotbox"><canvas id="slotcv" width="60" height="58"></canvas><div class="reach" id="reach" hidden>リーチ！</div><div class="reach slev84" id="slev" hidden></div></div><button class="btn spin12" type="button" id="spin2" aria-label="スピン">スピン</button></div>
     <div class="row2 stops"><button class="btn light" type="button" data-stop="0">STOP</button><button class="btn light" type="button" data-stop="1">STOP</button><button class="btn light" type="button" data-stop="2">STOP</button></div>
-    <div class="result" id="res">ラインと賭け金を決めてスピン</div>
+    <div class="kkbar84" id="kkbar" hidden></div><div class="result" id="res">ラインと賭け金を決めてスピン</div>
     <div class="betrow"><span class="lbl" style="margin:0">ライン</span>${[1, 3, 5].map(n => `<button class="chip" type="button" data-lines="${n}" aria-pressed="${slot.lines === n}">${n}ライン</button>`).join("")}
       <label class="chk"><input type="checkbox" id="meoshi"> 目押しする</label></div>
     ${betRow("bet", "1ラインの賭け金", Math.max(1, Math.min(S.lastBet || 20, K.world.money || 1)))}
@@ -82,12 +98,18 @@ function setupSlot(cb, body) {
     <details class="paytable"><summary>配当表とルール</summary>
       <div class="pay">${Object.entries(PAY3).map(([s, m]) => `<span><img src="${K.ASSETS[SYM[s]]}" alt="">${SYM_NAME[s]}×3　${m}倍</span>`).join("")}
       <span><img src="${K.ASSETS.tomato}" alt="">トマト左から1つ　1倍</span><span><img src="${K.ASSETS.tomato}" alt="">左から2つ　3倍</span><span><img src="${K.ASSETS.tomato}" alt="">3つ　10倍</span></div>
-      <p class="mtext">5ラインで中段に7が3つそろうとジャックポットも獲得。賭け金の3%がジャックポットに積み立てられます。各リールは21コマで、理論上の還元率は約95.6%。止まる位置はスピンした瞬間に決まり、目押しは止めるタイミングの演出です。</p></details>`;
+      <p class="mtext">5ラインで中段に7が3つそろうとジャックポットも獲得。賭け金の3%がジャックポットに積み立てられます。各リールは21コマで、理論上の還元率は約95.6%（下の割り込みイベントをふくめると約99%）。止まる位置はスピンした瞬間に決まり、目押しは止めるタイミングの演出です。</p>
+      <p class="mtext"><b>特別な割り込み</b>（ごくまれに起こります）<br>・フリーズ：リールが止まって……ボーナス（賭け金の3〜30倍）<br>・確変：次の6回、そろった配当が2倍<br>・全回転：9マスぜんぶが同じ絵柄にそろい、全ラインが当たる（7なら…！）</p></details>`;
   wireBets(body); warnIfBroke(cb);
   cb.querySelector("#seBtn").onclick = e => { SFX.setOn(!SFX.on); e.target.setAttribute("aria-pressed", String(SFX.on)); e.target.textContent = `効果音 ${SFX.on ? "ON" : "OFF"}`; if (SFX.on) SFX.small(); };
   const cv = cb.querySelector("#slotcv"), ctx = cv.getContext("2d");
   const reels = [0, 1, 2].map(i => ({ pos: slot.pos[i], spinning: false, target: 0, remain: -1, speed: 16 }));
-  let wins = [], coins = [], flash = 0, raf = 0;
+  let wins = [], coins = [], flash = 0, raf = 0, frozen = false, zenSym = null;
+  const evEl = cb.querySelector("#slev"), box = cb.querySelector(".slotbox");
+  let bnTimer = 0;
+  const banner = (text, ms = 1800) => { evEl.textContent = text; evEl.hidden = false; clearTimeout(bnTimer); bnTimer = setTimeout(() => { if (!frozen) evEl.hidden = true; }, ms); };
+  const kkSync = () => { const n = slotEv84().kk, bar = cb.querySelector("#kkbar"); bar.hidden = !(n > 0); bar.textContent = n > 0 ? `確変中！ あと${n}回、そろった配当が2倍` : ""; box.classList.toggle("kk84", n > 0); };
+  kkSync();
   const totalEl = cb.querySelector("#total");
   const updTotal = () => { const b = readBet(cb); totalEl.textContent = b > 0 ? `合計 ${fmt(b * slot.lines)}` : ""; };
   cb.querySelector("#bet").addEventListener("input", updTotal); updTotal();
@@ -101,7 +123,7 @@ function setupSlot(cb, body) {
       const p = reels[r].pos, base = Math.floor(p), frac = p - base;
       ctx.save(); ctx.beginPath(); ctx.rect(x, 2, 18, 54); ctx.clip();
       for (let row = -1; row < 4; row++) {
-        const s = STRIPS[r][((base + row) % 21 + 21) % 21];
+        const s = zenSym && !reels[r].spinning ? zenSym : STRIPS[r][((base + row) % 21 + 21) % 21];
         const y = 3 + Math.round((row - frac) * 18);
         ctx.drawImage(K.IMG[SYM[s]], x + 1, y);
       }
@@ -121,7 +143,7 @@ function setupSlot(cb, body) {
   let last = performance.now();
   function loop(now) {
     const dt = Math.min(.05, (now - last) / 1000); last = now;
-    for (const r of reels) if (r.spinning) {
+    for (const r of reels) if (r.spinning && !frozen) {
       let mv = r.speed * dt;
       if (r.remain >= 0) { mv = Math.min(mv, r.remain); r.remain -= mv; }
       r.pos = (r.pos + mv) % 21;
@@ -149,7 +171,7 @@ function setupSlot(cb, body) {
     if (stopped === 3) finish();
   }
   let cur = null;
-  cb.querySelectorAll("[data-stop]").forEach(b => b.onclick = () => { if (cur && cb.querySelector("#meoshi").checked) stopReel(+b.dataset.stop); });
+  cb.querySelectorAll("[data-stop]").forEach(b => b.onclick = () => { if (cur && !frozen && !cur.lockStop && cb.querySelector("#meoshi").checked) stopReel(+b.dataset.stop); });
   cb.querySelector("#spin2").onclick = () => cb.querySelector("#spin").click();
   cb.querySelector("#spin").onclick = () => {
     if (S.busy) return;
@@ -160,24 +182,50 @@ function setupSlot(cb, body) {
     S.lastBet = per; S.busy = true; wins = []; res.className = "result"; res.textContent = "……";
     cb.querySelector("#reach").hidden = true;
     K.addMoney(-total); K.world.jackpot += Math.ceil(total * .03); if (K.jpAdd) K.jpAdd(Math.ceil(total * .03)); refreshMoney(body);
-    cur = { per, total }; SFX.lever(); SFX.spinStart();
+    const kkOn = slotEv84().kk > 0, kind = K.slotForce || rollSlotEv84(kkOn); K.slotForce = null; zenSym = null;
+    cur = { per, total, kind, kk: kkOn, mult: kind === "freeze" ? pickW84(FREEZE_PRIZE84) : 0, lockStop: kind === "freeze" }; SFX.lever(); SFX.spinStart();
     reels.forEach((r, i) => { r.target = rnd(21); r.spinning = true; r.remain = -1; r.speed = 16; });
     if (!cb.querySelector("#meoshi").checked) autoTimers = [700, 1100, 1500].map((t, i) => setTimeout(() => stopReel(i), t));
     else autoTimers = [setTimeout(() => [0, 1, 2].forEach(stopReel), 8000)];
+    if (kind === "freeze") autoTimers.push(setTimeout(startFreeze, 650));
   };
+  // フリーズ：リールが止まったまま……やがてボーナス
+  function startFreeze() {
+    if (!cur || cur.kind !== "freeze" || frozen) return;
+    autoTimers.forEach(clearTimeout); frozen = true; box.classList.add("freeze84"); evEl.hidden = false; evEl.textContent = "……"; SFX.reach();
+    setTimeout(() => { if (frozen) evEl.textContent = "フリーズ！？"; }, 1100);
+    setTimeout(() => {
+      if (!frozen) return;
+      evEl.textContent = "FREEZE！！"; flash = 1; SFX.big();
+      setTimeout(() => {
+        frozen = false; box.classList.remove("freeze84"); evEl.hidden = true; if (cur) cur.lockStop = false;
+        autoTimers = cb.querySelector("#meoshi").checked ? [setTimeout(() => [0, 1, 2].forEach(stopReel), 8000)] : [300, 800, 1300].map((t, i) => setTimeout(() => stopReel(i), t));
+      }, 900);
+    }, 2300);
+  }
   function finish() {
     autoTimers.forEach(clearTimeout);
     reels.forEach((r, i) => slot.pos[i] = r.target);
-    const { per, total } = cur; cur = null;
+    const { per, total, kind, kk, mult } = cur; cur = null;
+    if (kind === "zen") zenSym = pickW84(ZEN_SYM84);
+    const cellAt = (r, top, row) => zenSym || symAt(r, top, row);
     let payout = 0; const parts = [];
     LINES.slice(0, slot.lines).forEach((l, i) => {
-      const sy = l.map((row, r) => symAt(r, reels[r].target, row));
+      const sy = l.map((row, r) => cellAt(r, reels[r].target, row));
       const m = lineWin(sy);
       if (m) { payout += per * m; wins.push(i); parts.push(`${LINE_NAMES[i]} ${m}倍`); }
     });
+    if (kk && payout) { payout *= 2; parts.push("確変2倍"); }
+    if (kk) slotEv84().kk = Math.max(0, slotEv84().kk - 1);
     let msg = payout ? `${parts.join("・")}　+${fmt(payout)}` : "はずれ…";
     let big = payout >= total * 20;
-    const center = LINES[0].map((row, r) => symAt(r, reels[r].target, row));
+    const st = K.world.stats;
+    if (kind === "freeze") { const bonus = total * mult; msg = `フリーズ！！ ボーナス ×${mult}　+${fmt(bonus)}${payout ? `（そろった配当 +${fmt(payout)}）` : ""}`; payout += bonus; big = big || mult >= 8; st.slotFreeze84 = (st.slotFreeze84 || 0) + 1; }
+    if (kind === "zen") { msg = `全回転！！ ${SYM_NAME[zenSym]}が全ラインにそろった　+${fmt(payout)}`; big = true; banner("全回転！！", 2600); st.slotZen84 = (st.slotZen84 || 0) + 1; wins = LINES.slice(0, slot.lines).map((l, i) => i); }
+    if (kind === "kaku") { slotEv84().kk = KK_SPINS84; msg += `${payout ? "　" : ""}確変突入！ 次の${KK_SPINS84}回は配当2倍`; banner("確変突入！", 2200); st.slotKaku84 = (st.slotKaku84 || 0) + 1; SFX.big(); }
+    if (kk && !slotEv84().kk) msg += "　（確変おわり）";
+    kkSync();
+    const center = LINES[0].map((row, r) => cellAt(r, reels[r].target, row));
     if (slot.lines === 5 && center.every(s => s === "7")) {
       const jpAmt = K.world.jackpot; payout += jpAmt; msg = `ジャックポット！！ +${fmt(payout)}`; K.world.stats.jackpots++; K.world.jackpot = 3000; big = true; if (K.jpWon) K.jpWon(jpAmt);
     }

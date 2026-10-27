@@ -24,6 +24,8 @@ STEPS = [
     ("巡査", f"window.KOMO.closeModal(); {G}.F78.openPolice()"),
     ("台車", f"window.KOMO.closeModal(); {G}.F80.cartDemo()"),
     ("2・3階", f"window.KOMO.closeModal(); {G}.F80.demo()"),
+    ("建てた家の階", f"window.KOMO.closeModal(); {G}.F82.demo(); window.KOMO.closeModal(); {G}.F82.open('11,9')"),
+    ("船着き場", f"window.KOMO.closeModal(); {G}.enter({G}.makePort(), 18, 12, 'right'); {G}.F81.openBoat()"),
 ]
 async def main():
     bad = 0

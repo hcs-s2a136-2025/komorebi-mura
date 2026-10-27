@@ -13,15 +13,19 @@ import java.util.regex.Pattern;
  * - layout：家具の並びなど。持ち主だけが書きかえられる（JSONの文字列のまま預かる）
  * - shared：みんなの収納箱。家に入れる人ならだれでも出し入れできる
  * - priv：鍵つきの箱。持ち主だけが出し入れできる
+ *
+ * 箱に入れられる「種類」の数は、家に置いてある箱の数でふえる（1個で MAX_KINDS 種類・MAX_BOXES 個まで）。
+ * 箱の数は、家具の並び（layout の JSON）に出てくる収納箱・鍵つきの箱を数えて決める（2・3階の箱もふくむ）。
  */
 public final class HouseBook {
 
-    public static final int MAX_LAYOUT = 80_000, MAX_KINDS = 300;
+    public static final int MAX_LAYOUT = 80_000, MAX_KINDS = 300, MAX_BOXES = 5;
     public static final long MAX_COUNT = 99_999, MAX_MOVE = 9_999;
     /** 建てた家（"48,21"）、みんなの家（"home"）、ひとりずつの箱（"me:プレイヤーID"） */
     private static final Pattern KEY = Pattern.compile("\\d{1,3},\\d{1,3}|home|me:\\d{1,12}");
     private static final Pattern BUILT = Pattern.compile("\\d{1,3},\\d{1,3}");
     private static final Pattern ITEM = Pattern.compile("[\\p{L}\\p{N}_:\\-]{1,32}");
+    private static final Pattern CHEST = Pattern.compile("\"id\"\\s*:\\s*\"chest\""), LOCKBOX = Pattern.compile("\"id\"\\s*:\\s*\"lockbox\"");
 
     public static final class Room {
         String layout;
@@ -46,6 +50,21 @@ public final class HouseBook {
 
     public static boolean validItem(String id) {
         return id != null && ITEM.matcher(id).matches();
+    }
+
+    /** 家具の並び（JSONの文字列）に置いてある箱の数（1〜MAX_BOXES）。priv=true なら鍵つきの箱、false なら収納箱 */
+    static int boxes(String layout, boolean priv) {
+        if (layout == null) return 1;
+        var m = (priv ? LOCKBOX : CHEST).matcher(layout);
+        int n = 0;
+        while (n < MAX_BOXES && m.find()) n++;
+        return Math.max(1, n);
+    }
+
+    /** その箱に入れられる種類の数。ひとりずつの箱（me:）は、みんなの家に置いてある鍵つきの箱の数で決まる */
+    private int capacity(String key, boolean priv) {
+        Room r = rooms.get(key != null && key.startsWith("me:") ? "home" : key);
+        return MAX_KINDS * boxes(r == null ? null : r.layout, priv);
     }
 
     /** データベースから読んだものを戻すとき用 */
@@ -84,7 +103,7 @@ public final class HouseBook {
     public synchronized long put(String key, boolean priv, String id, long n) {
         if (!validKey(key) || !validItem(id) || n < 1 || n > MAX_MOVE) return -1;
         Room r = rooms.computeIfAbsent(key, k -> new Room());
-        return add(priv ? r.priv : r.shared, id, n);
+        return add(priv ? r.priv : r.shared, id, n, capacity(key, priv));
     }
 
     /** 箱から出す。@return 出したあとの残りの数。足りなかったら -1 */
@@ -100,8 +119,12 @@ public final class HouseBook {
     }
 
     private static long add(Map<String, Long> box, String id, Long n) {
+        return add(box, id, n, MAX_KINDS);
+    }
+
+    private static long add(Map<String, Long> box, String id, Long n, int cap) {
         if (!validItem(id) || n == null || n < 1) return -1;
-        if (!box.containsKey(id) && box.size() >= MAX_KINDS) return -1;
+        if (!box.containsKey(id) && box.size() >= cap) return -1;
         long v = Math.min(MAX_COUNT, box.getOrDefault(id, 0L) + n);
         box.put(id, v);
         return v;

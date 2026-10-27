@@ -584,3 +584,34 @@ html, body { touch-action: manipulation; }
 /* v80: スマホのアイコン（黒地に白い線） */
 .ph76app i.ln80 { background: #000; color: #fff; text-shadow: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), 0 3px 0 rgba(0, 0, 0, .4); }
 .ph76app i.ln80 svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
+
+/* v84: スロットの割り込みイベント（フリーズ・確変・全回転） */
+.slev84 { inset: 30% 0 auto; font-size: 1.5rem; color: #ffe27a; text-shadow: 0 0 6px #fff, 0 0 14px #f0a020; animation: none; background: rgba(18, 11, 24, .72); padding: 6px 0; }
+.slotbox.freeze84 #slotcv { filter: grayscale(1) contrast(1.4) brightness(.8); }
+.slotbox.freeze84 .slev84 { color: #ff7a7a; text-shadow: 0 0 6px #fff, 0 0 14px #ff2a2a; animation: flash .35s steps(2) infinite; }
+.slotbox.kk84 { box-shadow: inset 0 0 0 3px #ff7aa8, 0 0 0 3px #2a1d33, 0 0 16px 4px rgba(255, 122, 168, .7); }
+.kkbar84 { text-align: center; font-weight: 700; color: #c8326a; margin: 4px 0; }
+
+/* v85: 野外ステージのダンスライブ */
+.stg85top { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; }
+.stg85gauge { height: 8px; border-radius: 4px; background: #e6dcc8; overflow: hidden; margin-bottom: 6px; }
+.stg85gauge i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ff9ac0, #ffd05a); transition: width .3s; }
+.stg85stage { display: flex; justify-content: center; padding: 8px 0 2px; border-radius: 10px; background: linear-gradient(#3a2a3a, #6a3a4a); }
+.stg85stage canvas { width: 96px; height: 96px; image-rendering: pixelated; }
+.stg85seq { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin: 8px 0 2px; min-height: 28px; }
+.stg85seq b { min-width: 24px; padding: 2px 4px; text-align: center; border-radius: 6px; background: #efe6d2; color: #6a5a40; font-family: var(--f-pixel, inherit); }
+.stg85seq b.on { background: #ffd05a; color: #3a2a10; }
+.stg85msg { text-align: center; margin: 4px 0; }
+.stg85pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.stg85b { font-size: 1.6rem; padding: 12px 0; }
+.stg85b.on { background: #ffd05a; color: #3a2a10; transform: translateY(2px); }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .stg85stage canvas { width: 64px; height: 64px; }
+  .stg85b { padding: 8px 0; font-size: 1.3rem; }
+  .stg85seq { margin: 4px 0 0; }
+}
+
+/* v86: 収納箱の個数指定 */
+.qty86 { display: inline-flex; align-items: center; gap: 4px; }
+.qin86 { width: 4.4em; padding: 6px 4px; text-align: center; border: 2px solid var(--wood, #a8794a); border-radius: 8px; background: #fffaf0; font: inherit; }
+

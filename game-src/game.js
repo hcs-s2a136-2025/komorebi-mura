@@ -3935,7 +3935,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.50.0";
+const CLIENT_VERSION = "0.51.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6013,6 +6013,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.51.0", date: "2026/10/28", title: "スマホのゲームが4つふえた", items: [
+    "スマホの「ゲーム」が、遊びを選ぶ画面になった。「村のビンゴ」「こもれびブロック」「こもれびつなぎ」「マージパズル」「にわとりジャンプ」から選べる",
+    "「村のビンゴ」：日がわりで、村でやることが9つ並ぶ（魚を釣る・木を切る・水やり・料理など）。やったことは自動で数えられて、たて・よこ・ななめがそろうと「ライン」。ラインごとにお金、1ラインで種、3ラインで種がもっと、ぜんぶそろうと宝石がもらえる",
+    "「こもれびつなぎ」：同じ作物をなぞって3つ以上つなぐ、60秒のゲーム。長くつなぐほど高得点で、6つ以上つなぐと時間がふえる。つないだ作物の種が、ときどき（1日4個まで）本物の種としてもらえる",
+    "「マージパズル」：同じ物を2つかさねて、種→芽→苗木→花→野菜→若木→実のなる木→金の実の木へ育てる。ますが全部うまるまで、どこまで育てられるか",
+    "「にわとりジャンプ」：走るにわとりをジャンプさせて、柵をとびこえる。だんだん速くなる。どれだけ走れたか（m）を競う",
+    "「こもれびつなぎ」「マージパズル」「にわとりジャンプ」は、「こもれびブロック」と同じように、この村・全部の村のランキングに載る。称号も4つふえた"
+  ] },
   { v: "0.50.0", date: "2026/10/28", title: "VIPルームに、ルーレット・バカラ・会員ランク・景品交換所ができた", items: [
     "VIPルームが広くなって、卓が3つに。左がサイコロ、まん中が「高額ルーレット」（0〜36・数字ひとつ×36〜）、右が「バカラ」（プレイヤー／バンカー／タイ）。どちらも現金（1,000G札）だけで遊べる",
     "勝ったあとは「ダブルアップ」ができる。赤か黒を当てると払い戻しが2倍（最大3回まで）。はずれるとぜんぶなくなるので、持ち帰るのも手。VIPの勝ち負けは、これまでどおり番付と今日の負け上限につながる",
@@ -16833,6 +16841,344 @@ F91.ready = true;
 F91.rank = rank91; F91.settle = settle91; F91.state = vs91; F91.RANKS = RANKS91; F91.takePot = takePot91; F91.claim = claimGifts91; F91.duPlay = duPlay91;
 F91.spin = spinRoulette91; F91.playBac = playBaccarat91; F91.luna = openLuna91; F90.manager = () => openLuna91(); F91.rouTargets = RT91;
 
+// =================== v92: スマホのゲームがふえた（村のビンゴ・こもれびつなぎ・マージパズル・にわとりジャンプ） ===================
+// 「ゲーム」アプリは、遊びを選ぶ画面になった。ランキングは v77 と同じ「grank」のしくみ（ゲームの名前は半角英数12字まで）で、サーバーの変更はいらない。
+var F92 = {};
+const GM92 = {
+  tsu: { name: "こもれびつなぎ", unit: "点", intro: "同じ作物を、なぞってつなげよう（3つ以上）。長くつなぐほど高得点。60秒の勝負で、つないだ作物の種が、ときどき見つかるよ。", howto: "そうさ：作物をなぞって、同じ作物を3つ以上つなぐ（ななめもOK）。指をはなすと消える。6つ以上つなぐと、じかんが2秒ふえる" },
+  mrg: { name: "マージパズル", unit: "点", intro: "となりあった同じ物をくっつけて、次の物に育てよう。種→芽→苗木→花→野菜→若木→実のなる木→金の実の木。ますが全部うまって動けなくなるまで、どこまで育てられるかな。", howto: "そうさ：物をタップして選ぶ → たて・よこにとなりあった同じ物をタップするとくっつく／あいているますをタップすると動く。1回動くたびに、新しい物がひとつ増える" },
+  jmp: { name: "にわとりジャンプ", unit: "m", intro: "走るにわとりを、タイミングよくジャンプさせて、柵をとびこえよう。だんだん速くなる。どれだけ走れるかな。", howto: "そうさ：画面のタップ（スマホ）・Space か ↑ キー・「ジャンプ」ボタンでジャンプ。ぶつかるとおしまい" },
+};
+const IDS92 = Object.keys(GM92);
+const g92 = () => {
+  const g = world.g92 = world.g92 && typeof world.g92 === "object" ? world.g92 : {};
+  for (const id of IDS92) {
+    const o = g[id] = g[id] && typeof g[id] === "object" ? g[id] : {};
+    for (const k of ["best", "plays", "sent", "pend", "seedDay", "seedN", "seedTot", "maxChain", "top", "fences", "harv"]) o[k] = Number.isFinite(+o[k]) ? Math.floor(+o[k]) : 0;
+  }
+  return g;
+};
+const fmt92 = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+// ---- ランキング（v77 と同じ。ゲームごとに別の表） ----
+F92.board = {}; F92.tab = "all"; F92.scope = "village"; F92.cur = null; F92.render = null;
+F92.sendScore = (id, score) => { const o = g92()[id]; score = Math.floor(+score || 0); if (score <= 0) return; if (F8.connected) send8({ type: "grank", game: id, score }); else { o.pend = Math.max(o.pend, score); saveWorld(); } };
+F92.sendBest = id => { const o = g92()[id]; if (!F8.connected) return; if (o.pend > 0) { send8({ type: "grank", game: id, score: o.pend }); o.pend = 0; saveWorld(); } else if (o.best > o.sent) { send8({ type: "grank", game: id, score: o.best }); o.sent = o.best; saveWorld(); } };
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "grank" && m.board && GM92[m.board.game]) { F92.board[m.board.game] = m.board; if (F92.render && F92.cur === m.board.game) F92.render(); return; }
+    _h(m);
+    if (m && m.type === "welcome") IDS92.forEach((id, i) => setTimeout(() => F92.sendBest(id), 3300 + i * 800));
+  };
+}
+function openMenu92(id, note) {
+  const M = GM92[id]; F92.cur = id; F92.board[id] = null;
+  F92.ask = () => send8({ type: "grank", get: id, everywhere: F92.scope === "everywhere" });
+  if (F8.connected) { F92.sendBest(id); setTimeout(() => { if (F92.cur === id) F92.ask(); }, 400); }
+  openModal(M.name, "dark", body => {
+    F92.render = () => {
+      if (!body.isConnected) { F92.render = null; return; }
+      const B = F92.board[id], T = F92.tab, o = g92()[id], rows = B ? B[T] : null, me = B ? B.me : null;
+      const extra = id === "tsu" ? `・いちばん長いつなぎ ${o.maxChain}つ・見つけた種 ${o.seedTot}個` : id === "mrg" ? `・いちばん育てた物 ${o.top ? MN92[o.top - 1] : "なし"}` : `・とびこえた柵 ${o.fences}本`;
+      body.innerHTML = `<div class="gm92m">${note ? `<p class="mtext">${esc(note)}</p>` : ""}<p class="mtext">${esc(M.intro)}</p>
+        <div class="row2"><button class="btn" type="button" id="gm92go">あそぶ</button><button class="btn light" type="button" id="gm92back">ゲームのえらびなおし</button></div>
+        <p class="mtext small">自己ベスト <b>${fmt92(o.best)}${M.unit}</b>・あそんだ回数 ${o.plays}回${extra}</p>
+        <h4>ランキング</h4>${F8.connected ? `<div class="cr74tabs sc88"><button class="chip" type="button" data-s92="village" aria-pressed="${F92.scope !== "everywhere"}">この村</button><button class="chip" type="button" data-s92="everywhere" aria-pressed="${F92.scope === "everywhere"}">全部の村</button></div>` : ""}<div class="cr74tabs"><button class="chip" type="button" data-t92="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t92="week" aria-pressed="${T === "week"}">この1週間</button></div>
+        ${!F8.connected ? `<p class="mtext small">ランキングは、オンラインのときに見られるよ</p>` : !B ? `<p class="mtext small">読みこんでいるよ…</p>` :
+          rows.length ? `<ol class="cr74l">${rows.map((r, i) => `<li class="${r.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(r.name)}</span><b class="wi74">${esc(fmt92(r.v))}${M.unit}</b></li>`).join("")}</ol>${me && me[T + "Rank"] ? `<p class="mtext small cr74me">あなたは <b>${me[T + "Rank"]}位</b></p>` : ""}` : `<p class="mtext small">まだだれもいないよ。いちばん乗りしよう</p>`}
+        <p class="mtext small">${esc(M.howto)}</p></div>`;
+      body.querySelector("#gm92go").onclick = () => { closeModal(); F92.play(id); };
+      body.querySelector("#gm92back").onclick = () => { closeModal(); openGames92(); };
+      body.querySelectorAll("[data-t92]").forEach(x => x.onclick = () => { F92.tab = x.dataset.t92; F92.render(); });
+      body.querySelectorAll("[data-s92]").forEach(x => x.onclick = () => { if (F92.scope === x.dataset.s92) return; F92.scope = x.dataset.s92; F92.board[id] = null; F92.render(); F92.ask(); });
+    };
+    F92.render();
+  }, () => { F92.render = null; });
+}
+F92.play = id => { if (id === "tsu") playTsu92(); else if (id === "mrg") playMrg92(); else if (id === "jmp") playJmp92(); };
+/** ゲームが終わったときの結果の画面（途中で閉じたときは、通知だけ） */
+function finish92(id, closed, score, lines, extraHtml) {
+  const M = GM92[id], o = g92()[id], best = score > o.best;
+  if (best) { o.best = score; if (F8.connected) o.sent = o.best; }
+  saveWorld(); try { checkTitles42(); } catch (e) { } F92.sendScore(id, score);
+  if (closed || !$("mbody")) { if (score) F7.notify(`${M.name}：${fmt92(score)}${M.unit}${best ? "（自己ベスト！）" : ""}`, null); return; }
+  $("mbody").innerHTML = `<div class="dk75r"><b>おしまい</b><span>スコア <em>${fmt92(score)}${M.unit}</em>${best ? "・自己ベスト！" : ""}</span>${lines.map(l => `<span>${esc(l)}</span>`).join("")}</div>${extraHtml || ""}
+    <div class="row2"><button class="btn" type="button" id="gm92again">もう一回</button><button class="btn light" type="button" id="gm92rank">ランキング</button></div>`;
+  $("gm92again").onclick = () => { closeModal(); F92.play(id); };
+  $("gm92rank").onclick = () => { closeModal(); openMenu92(id); };
+}
+const wide92 = () => matchMedia("(max-height: 560px) and (min-aspect-ratio: 4/3)").matches;
+
+// ---- ゲームを選ぶ画面 ----
+function openGames92() {
+  const g = g92(), bg = bingoInfo92();
+  openModal("ゲーム", "dark", body => {
+    body.innerHTML = `<div class="gm92hub"><p class="mtext">スマホで遊べるゲーム。ランキングのあるものは、村のみんなと競えるよ。</p>
+      <button class="gm92c" type="button" data-g92="bingo"><b>村のビンゴ</b><span>きょうの村のお題（9つ）を、そろえて遊ぶ。ラインがそろうと、ごほうび</span><em>${bg.lines}ライン／${bg.done}マス${bg.claim ? "・ごほうびあり！" : ""}</em></button>
+      <button class="gm92c" type="button" data-g92="blk"><b>こもれびブロック</b><span>落ちものパズル。横1列をそろえて消す</span><em>自己ベスト ${fmt92(blk77().best)}点</em></button>
+      ${IDS92.map(id => `<button class="gm92c" type="button" data-g92="${id}"><b>${esc(GM92[id].name)}</b><span>${esc(GM92[id].intro.split("。")[0])}</span><em>自己ベスト ${fmt92(g[id].best)}${GM92[id].unit}</em></button>`).join("")}</div>`;
+    body.querySelectorAll("[data-g92]").forEach(b => b.onclick = () => {
+      const k = b.dataset.g92; closeModal();
+      if (k === "bingo") openBingo92(); else if (k === "blk") openBlkMenu77(); else openMenu92(k);
+    });
+  });
+}
+F92.hub = openGames92;
+F76.add({ id: "game", name: "ゲーム", ch: "遊", c: "#f07a40", open: openGames92, badge: () => { try { return bingoInfo92().claim ? 1 : 0; } catch (e) { return 0; } } });
+
+// =================== 村のビンゴ ===================
+const BG92 = [
+  { id: "fish", n: [2, 3], t: n => `魚を${n}匹釣る`, st: "fish" },
+  { id: "chop", n: [1, 2], t: n => `木を${n}本切る`, st: "chop" },
+  { id: "mine", n: [2, 3], t: n => `岩を${n}個砕く`, st: "mine" },
+  { id: "harvest", n: [3, 5], t: n => `作物を${n}個収穫する`, st: "harvest" },
+  { id: "cook", n: [1], t: () => "料理を1回作る", st: "cook" },
+  { id: "gifts", n: [1], t: () => "村のだれかにプレゼントをわたす", st: "gifts" },
+  { id: "plant", n: [3, 5], t: n => `種を${n}つ植える`, ev: "plant" },
+  { id: "water", n: [4, 6], t: n => `水やりを${n}回する`, ev: "water" },
+  { id: "till", n: [3, 5], t: n => `畑を${n}マス耕す`, ev: "till" },
+  { id: "pickup", n: [2, 3], t: n => `落ちている物を${n}個ひろう`, ev: "pickup" },
+  { id: "craft", n: [1], t: () => "クラフトで何かを作る", ev: "craft" },
+  { id: "dig", n: [2, 3], t: n => `シャベルで${n}マス掘る`, ev: "dig" },
+];
+const LN92 = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+const BGPAY92 = 150, BGFULL92 = 500;
+function bingo92() {
+  const g = g92(); let b = g.bingo;
+  if (!b || typeof b !== "object" || b.day !== world.day || !Array.isArray(b.cells) || b.cells.length !== 9) {
+    let s = (world.day * 7919 + 13) >>> 0; const r = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    const pool = BG92.slice(); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const base = {}; for (const d of BG92) if (d.st) base[d.st] = world.stats[d.st] || 0;
+    b = g.bingo = { day: world.day, cells: pool.slice(0, 9).map(d => ({ id: d.id, n: d.n[Math.floor(r() * d.n.length)] })), base, cnt: {}, paid: { lines: 0, s1: 0, s3: 0, full: 0 }, notified: 0 };
+  }
+  if (!b.cnt || typeof b.cnt !== "object") b.cnt = {}; if (!b.base || typeof b.base !== "object") b.base = {}; if (!b.paid || typeof b.paid !== "object") b.paid = { lines: 0, s1: 0, s3: 0, full: 0 };
+  return b;
+}
+const bgVal92 = (b, c) => { const d = BG92.find(x => x.id === c.id); return d.st ? Math.max(0, (world.stats[d.st] || 0) - (b.base[d.st] || 0)) : (b.cnt[d.ev] || 0); };
+function bingoInfo92() {
+  const b = bingo92(), cells = b.cells.map(c => { const d = BG92.find(x => x.id === c.id), v = bgVal92(b, c); return { text: d.t(c.n), v: Math.min(v, c.n), n: c.n, ok: v >= c.n }; });
+  const lines = LN92.map(l => l.every(i => cells[i].ok)), L = lines.filter(Boolean).length, done = cells.filter(c => c.ok).length, full = done === 9;
+  const pay = Math.max(0, L - b.paid.lines) * BGPAY92 + (full && !b.paid.full ? BGFULL92 : 0);
+  const seeds = (L >= 1 && !b.paid.s1 ? 2 : 0) + (L >= 3 && !b.paid.s3 ? 3 : 0), gem = full && !b.paid.full ? 1 : 0;
+  return { b, cells, lines, L, done, full, pay, seeds, gem, claim: pay > 0 || seeds > 0 || gem > 0 };
+}
+function claimBingo92() {
+  const I = bingoInfo92(); if (!I.claim) return null;
+  const b = I.b, seedIds = Object.keys(ITEMS).filter(k => ITEMS[k].seed && k.startsWith("seed_")), got = [];
+  for (let i = 0; i < I.seeds; i++) { const id = seedIds[rnd(seedIds.length)]; giveItem91(id, 1); got.push(ITEMS[id].name); }
+  if (I.gem) giveItem91("gem", 1);
+  if (I.pay) addMoney(I.pay);
+  b.paid.lines = I.L; if (I.L >= 1) b.paid.s1 = 1; if (I.L >= 3) b.paid.s3 = 1;
+  if (I.full && !b.paid.full) { b.paid.full = 1; world.stats.bingoFull92 = (world.stats.bingoFull92 || 0) + 1; }
+  saveWorld(); try { renderHotbar(); checkTitles42(); } catch (e) { }
+  return { ...I, got };
+}
+function openBingo92(note) {
+  openModal("村のビンゴ", "dark", body => {
+    const I = bingoInfo92();
+    const inLine = new Set(); LN92.forEach((l, i) => { if (I.lines[i]) l.forEach(c => inLine.add(c)); });
+    body.innerHTML = `<div class="bg92">${note ? `<p class="mtext">${esc(note)}</p>` : ""}<p class="mtext">きょうの村のお題。やったことは、自動で数えられるよ（日がかわると、新しいお題になる）。たて・よこ・ななめがそろうと「ライン」。</p>
+      <div class="bg92g">${I.cells.map((c, i) => `<div class="bg92c ${c.ok ? "ok" : ""} ${inLine.has(i) ? "ln" : ""}"><span>${esc(c.text)}</span><em>${c.ok ? "OK" : c.v + "/" + c.n}</em></div>`).join("")}</div>
+      <p class="mtext small">そろったライン <b>${I.L}</b>本・できたマス <b>${I.done}</b>/9</p>
+      <p class="mtext small">ごほうび：ラインごとに ${BGPAY92}G・1ラインで種2つ・3ラインで種3つ・ぜんぶのマスで ${BGFULL92}G と宝石1個</p>
+      <div class="row2"><button class="btn" type="button" id="bg92get" ${I.claim ? "" : "disabled"}>${I.claim ? `ごほうびをうけとる（${[I.pay ? fmt(I.pay) : "", I.seeds ? "種" + I.seeds + "つ" : "", I.gem ? "宝石" : ""].filter(Boolean).join("・")}）` : "うけとれるごほうびはないよ"}</button><button class="btn light" type="button" id="bg92back">ゲームのえらびなおし</button></div></div>`;
+    body.querySelector("#bg92back").onclick = () => { closeModal(); openGames92(); };
+    body.querySelector("#bg92get").onclick = () => {
+      const r = claimBingo92(); if (!r) return; se13(r.full ? "big" : "harvest");
+      closeModal(); openBingo92(`ごほうびをうけとった：${[r.pay ? fmt(r.pay) : "", r.got.length ? r.got.join("・") : "", r.gem ? "宝石×1" : ""].filter(Boolean).join("・")}`);
+    };
+  });
+}
+F92.bingo = openBingo92;
+F92.bingoInfo = bingoInfo92; F92.bingoClaim = claimBingo92;
+{
+  const _ev = F7.ev;
+  F7.ev = function (name) { try { const b = bingo92(); b.cnt[name] = (b.cnt[name] || 0) + 1; } catch (e) { } return _ev.apply(this, arguments); };
+}
+// ラインがそろったら、そっと知らせる
+setInterval(() => { try { if (!world || !world.stats) return; const I = bingoInfo92(); if (I.L > (I.b.notified || 0)) { I.b.notified = I.L; F7.notify(I.full ? "村のビンゴ：ぜんぶそろった！ スマホの「ゲーム」でごほうびをうけとれるよ" : `村のビンゴ：ラインがそろった（${I.L}本）。スマホの「ゲーム」でごほうびをうけとれるよ`, null); } } catch (e) { } }, 4000);
+
+// =================== こもれびつなぎ ===================
+const TSK92 = ["tomato", "carrot", "cabbage", "strawberry", "eggplant"];
+function playTsu92() {
+  const COLS = 6, ROWS = 7, N = COLS * ROWS, o = g92().tsu; o.plays++; saveWorld();
+  let grid = Array.from({ length: N }, () => rnd(TSK92.length)), score = 0, time = 60, chain = [], busy = false, ended = false, found = [], maxC = 0, tick = null;
+  const adj = (a, b) => Math.abs((a % COLS) - (b % COLS)) <= 1 && Math.abs(Math.floor(a / COLS) - Math.floor(b / COLS)) <= 1;
+  const hasChain = () => {
+    const seen = new Array(N).fill(false);
+    for (let i = 0; i < N; i++) { if (seen[i]) continue; let n = 0; const st = [i]; seen[i] = true; while (st.length) { const c = st.pop(); n++; for (let j = 0; j < N; j++) if (!seen[j] && grid[j] === grid[i] && adj(c, j)) { seen[j] = true; st.push(j); } } if (n >= 3) return true; }
+    return false;
+  };
+  const shuffle = () => { do { grid = Array.from({ length: N }, () => rnd(TSK92.length)); } while (!hasChain()); };
+  if (!hasChain()) shuffle();
+  openModal("こもれびつなぎ", "ph76m", body => {
+    body.innerHTML = `<div class="ts92 ${wide92() ? "w92" : ""}"><div class="ts92h"><span>スコア <b id="ts92s">0</b></span><span class="ts92t"><i id="ts92bar"></i></span><span id="ts92c" class="ts92n"></span></div>
+      <div class="ts92g" id="ts92g">${grid.map((_, i) => `<div class="ts92c" data-i="${i}"><img alt=""></div>`).join("")}</div><p class="mtext small" id="ts92m">同じ作物を、なぞってつなげよう</p></div>`;
+  }, () => { clearInterval(tick); if (!ended) { ended = true; finish92("tsu", true, score, []); } });
+  const gEl = $("ts92g"), cells = [...gEl.children];
+  const paint = () => {
+    cells.forEach((el, i) => { const im = el.firstChild, k = ASSETS[TSK92[grid[i]]]; if (im.getAttribute("src") !== k) im.src = k; el.classList.toggle("on", chain.includes(i)); el.classList.toggle("head", chain.length > 0 && chain[chain.length - 1] === i); });
+    $("ts92s").textContent = fmt92(score); $("ts92c").textContent = chain.length >= 2 ? `${chain.length}つ` : "";
+    $("ts92bar").style.width = Math.max(0, time / 90 * 100) + "%";
+  };
+  const idxAt = (x, y) => { const r = gEl.getBoundingClientRect(), cx = (x - r.left) / r.width * COLS, cy = (y - r.top) / r.height * ROWS; if (cx < 0 || cy < 0 || cx >= COLS || cy >= ROWS) return -1; if (Math.hypot(cx % 1 - .5, cy % 1 - .5) > .42) return -1; return Math.floor(cy) * COLS + Math.floor(cx); };
+  gEl.addEventListener("pointerdown", e => { if (busy || ended) return; e.preventDefault(); try { gEl.setPointerCapture(e.pointerId); } catch (x) { } const i = idxAt(e.clientX, e.clientY); if (i < 0) return; chain = [i]; paint(); });
+  gEl.addEventListener("pointermove", e => {
+    if (!chain.length || busy || ended) return; const i = idxAt(e.clientX, e.clientY); if (i < 0) return;
+    const last = chain[chain.length - 1]; if (i === last) return;
+    if (chain.length > 1 && i === chain[chain.length - 2]) { chain.pop(); paint(); return; }
+    if (chain.includes(i) || grid[i] !== grid[chain[0]] || !adj(i, last)) return;
+    chain.push(i); paint(); se13("small");
+  });
+  const up = () => { if (!chain.length) return; const c = chain; chain = []; if (c.length >= 3 && !busy && !ended) clear(c); else paint(); };
+  gEl.addEventListener("pointerup", up); gEl.addEventListener("pointercancel", up);
+  function clear(c) {
+    busy = true; const n = c.length, kind = TSK92[grid[c[0]]], gain = n * (n - 1) * 5; score += gain; maxC = Math.max(maxC, n); o.maxChain = Math.max(o.maxChain, n);
+    if (n >= 6) time = Math.min(90, time + 2);
+    const msg = [`${ITEMS[kind].name}を${n}つ！ +${gain}`];
+    if (o.seedDay !== world.day) { o.seedDay = world.day; o.seedN = 0; }
+    if (o.seedN < 4 && Math.random() < .02 * (n - 2)) { o.seedN++; o.seedTot++; giveItem91("seed_" + kind, 1); found.push(kind); msg.push(`${ITEMS["seed_" + kind].name}を見つけた！`); }
+    saveWorld(); se13(n >= 6 ? "big" : "harvest"); c.forEach(i => cells[i].classList.add("pop")); $("ts92m").textContent = msg.join("　"); $("ts92s").textContent = fmt92(score);
+    setTimeout(() => {
+      if (ended || !gEl.isConnected) return;
+      for (const i of c) grid[i] = -1;
+      for (let x = 0; x < COLS; x++) { const col = []; for (let y = ROWS - 1; y >= 0; y--) if (grid[y * COLS + x] >= 0) col.push(grid[y * COLS + x]); for (let y = ROWS - 1, k = 0; y >= 0; y--, k++) grid[y * COLS + x] = k < col.length ? col[k] : rnd(TSK92.length); }
+      if (!hasChain()) shuffle();
+      cells.forEach(el => el.classList.remove("pop")); busy = false; paint();
+    }, 180);
+  }
+  const done = () => {
+    if (ended) return; ended = true; clearInterval(tick);
+    finish92("tsu", false, score, [`いちばん長いつなぎ ${maxC}つ`, found.length ? `見つけた種：${found.map(k => ITEMS["seed_" + k].name).join("・")}` : "種は見つからなかった…"]);
+  };
+  tick = setInterval(() => { if (ended) return; if (!gEl.isConnected) { clearInterval(tick); return; } time -= .1; if (time <= 0) { time = 0; paint(); done(); return; } $("ts92bar").style.width = Math.max(0, time / 90 * 100) + "%"; }, 100);
+  paint(); F92.T = { grid: () => grid, adj, hasChain, clear: c => clear(c), time: () => time, score: () => score, done };
+}
+F92.tsu = playTsu92;
+
+// =================== マージパズル ===================
+const MN92 = ["種", "芽", "苗木", "花", "野菜", "若木", "実のなる木", "金の実の木"];
+const MC92 = ["#c8a878", "#a8d890", "#8ac878", "#f4b8cc", "#f09a8a", "#78b870", "#e8c070", "#ffe070"];
+const MSPR92 = [
+  (s, r) => { ell13(s, 8, 9, 3.5, 4.5, C13["#8a5a2a"]); r(7, 6, 1, 2, C13["#c89a5a"]); s(7, 8, C13["#c89a5a"]); },
+  (s, r) => { r(7, 7, 2, 7, C13["#4a9a3a"]); ell13(s, 5, 7, 3, 2, C13["#7ad070"]); ell13(s, 11, 5, 3, 2, C13["#7ad070"]); r(4, 14, 8, 2, C13["#7a5a3a"]); },
+  (s, r) => { r(7, 7, 2, 8, C13["#8a5a2a"]); ell13(s, 8, 5, 5, 4, C13["#5aa95a"]); ell13(s, 6, 4, 2, 2, C13["#86cc72"]); r(4, 14, 8, 2, C13["#6a4a2a"]); },
+  (s, r) => { r(7, 8, 2, 7, C13["#4a9a3a"]); ell13(s, 5, 11, 3, 1.5, C13["#7ad070"]); ell13(s, 11, 10, 3, 1.5, C13["#7ad070"]); for (const [dx, dy] of [[-3, 0], [3, 0], [0, -3], [0, 3]]) ell13(s, 8 + dx, 5 + dy, 2, 2, C13["#f07aa0"]); ell13(s, 8, 5, 1.6, 1.6, C13["#f8d050"]); },
+  (s, r) => { ell13(s, 8, 10, 6, 5, C13["#e2404e"]); s(5, 8, C13["#ff9a9a"]); s(6, 8, C13["#ff9a9a"]); r(6, 5, 4, 2, C13["#3f8a46"]); r(7, 3, 2, 2, C13["#3f8a46"]); },
+  (s, r) => { r(7, 9, 2, 6, C13["#8a5a2a"]); ell13(s, 8, 6, 6, 5, C13["#3f8a46"]); ell13(s, 6, 5, 3, 2, C13["#5aa95a"]); ell13(s, 10, 7, 3, 2, C13["#5aa95a"]); },
+  (s, r) => { r(7, 10, 2, 5, C13["#8a5a2a"]); ell13(s, 8, 6, 7, 6, C13["#3f8a46"]); ell13(s, 6, 4, 3, 2, C13["#5aa95a"]); for (const [x, y] of [[4, 5], [9, 3], [11, 7], [6, 8], [8, 5]]) r(x, y, 2, 2, C13["#e2404e"]); },
+  (s, r) => { r(7, 10, 2, 5, C13["#8a5a2a"]); ell13(s, 8, 6, 7, 6, C13["#d8a820"]); ell13(s, 6, 4, 3, 2, C13["#f8e070"]); for (const [x, y] of [[4, 5], [9, 3], [11, 7], [6, 8], [8, 5]]) r(x, y, 2, 2, C13["#fffbe0"]); s(1, 1, C13["#fff8c0"]); s(14, 2, C13["#fff8c0"]); s(2, 12, C13["#fff8c0"]); },
+];
+MSPR92.forEach((fn, i) => { IMG["s92_m" + (i + 1)] = pix13(16, 16, fn); ASSETS["s92_m" + (i + 1)] = IMG["s92_m" + (i + 1)].toDataURL(); });
+const mPts92 = t => Math.round(Math.pow(2, t) * 2.5);
+function playMrg92() {
+  const C = 5, R = 6, N = C * R, o = g92().mrg; o.plays++; saveWorld();
+  const B = Array(N).fill(0); let sel = -1, score = 0, moves = 0, top = 1, harv = 0, ended = false, nextT = 1;
+  const newT = () => { const r = Math.random(); return top >= 5 && r < .12 ? 3 : r < .3 ? 2 : 1; };
+  const spawn = () => { const e = []; B.forEach((v, i) => { if (!v) e.push(i); }); if (!e.length) return -1; const i = e[rnd(e.length)]; B[i] = nextT; nextT = newT(); return i; };
+  const nb = (a, b) => Math.abs(a - b) === C || (Math.abs(a - b) === 1 && Math.floor(a / C) === Math.floor(b / C));
+  const over = () => { if (B.some(v => !v)) return false; for (let i = 0; i < N; i++) for (const j of [i + 1, i + C]) if (j < N && nb(i, j) && B[i] === B[j]) return false; return true; };
+  nextT = newT(); for (let i = 0; i < 5; i++) spawn();
+  openModal("マージパズル", "ph76m", body => {
+    body.innerHTML = `<div class="mg92 ${wide92() ? "w92" : ""}"><div class="mg92h"><span>スコア <b id="mg92s">0</b></span><span>つぎ <img id="mg92n" alt=""></span><span id="mg92t"></span></div>
+      <div class="mg92g" id="mg92g">${B.map((_, i) => `<button type="button" class="mg92c" data-i="${i}"><img alt=""></button>`).join("")}</div><p class="mtext small" id="mg92m">となりあった同じ物をくっつけると、次の物に育つよ</p></div>`;
+  }, () => { if (!ended) { ended = true; finish92("mrg", true, score, []); } });
+  const gEl = $("mg92g"), cells = [...gEl.children];
+  const paint = (hi, msg) => {
+    cells.forEach((el, i) => { const v = B[i], im = el.firstChild; if (v) { im.hidden = false; im.src = ASSETS["s92_m" + v]; el.style.background = MC92[v - 1]; } else { im.hidden = true; el.style.background = ""; } el.classList.toggle("sel", i === sel); el.classList.toggle("hi", i === hi); el.title = v ? MN92[v - 1] : ""; });
+    $("mg92s").textContent = fmt92(score); $("mg92n").src = ASSETS["s92_m" + nextT]; $("mg92t").textContent = `いちばん ${MN92[top - 1]}`; if (msg) $("mg92m").textContent = msg;
+  };
+  const after = hi => { moves++; spawn(); paint(hi); if (over()) setTimeout(end, 450); };
+  function tap(i) {
+    if (ended) return;
+    const from = sel;
+    if (sel < 0) { if (B[i]) { sel = i; paint(); } return; }
+    if (i === sel) { sel = -1; paint(); return; }
+    if (!B[i]) { B[i] = B[sel]; B[sel] = 0; sel = -1; se13("small"); after(i); return; }
+    if (B[i] === B[sel] && nb(i, sel)) {
+      const t = B[i]; sel = -1;
+      if (t >= 8) { B[i] = 0; B[from] = 0; score += 1500; harv++; se13("big"); o.harv++; saveWorld(); paint(i, "金の実を収穫した！ +1,500"); after(i); return; }
+      B[i] = t + 1; B[from] = 0; score += mPts92(t + 1); if (t + 1 > top) { top = t + 1; o.top = Math.max(o.top, top); if (top >= 6) se13("big"); } se13("harvest");
+      after(i); $("mg92m").textContent = `${MN92[t]}に育った！ +${mPts92(t + 1)}`; return;
+    }
+    sel = i; paint();
+  }
+  cells.forEach((el, i) => el.onclick = () => tap(i));
+  function end() { if (ended) return; ended = true; o.top = Math.max(o.top, top); finish92("mrg", false, score, [`いちばん育てた物：${MN92[top - 1]}`, `動かした回数 ${moves}回${harv ? `・金の実の収穫 ${harv}回` : ""}`]); }
+  paint(); F92.M = { B, tap, end, over, score: () => score, top: () => top };
+}
+F92.mrg = playMrg92;
+
+// =================== にわとりジャンプ ===================
+function playJmp92() {
+  const W = 320, H = 180, GY = 142, CX = 56, G = 1500, VY = 430, o = g92().jmp; o.plays++; saveWorld();
+  let dist = 0, y = 0, vy = 0, fences = [], nextF = 380, over = false, ended = false, fenceN = 0, buf = 0, last = performance.now(), stopped = false, t = 0, shake = 0;
+  openModal("にわとりジャンプ", "ph76m", body => {
+    body.innerHTML = `<div class="jm92 ${wide92() ? "w92" : ""}"><canvas id="jm92cv" width="${W}" height="${H}"></canvas><button type="button" class="btn" id="jm92b">ジャンプ</button></div>`;
+  }, () => { stopped = true; removeEventListener("keydown", onKey, true); if (!ended) { ended = true; finish92("jmp", true, Math.floor(dist / 24), []); } });
+  const cv = $("jm92cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const speed = () => Math.min(400, 190 + dist * .018);
+  const jump = () => { if (over || ended) return; if (y <= 0) { vy = VY; y = .01; se13("small"); } else buf = .12; };
+  const onKey = e => { if (/INPUT|TEXTAREA/.test(e.target.tagName)) return; if (e.key === " " || e.key === "ArrowUp" || e.key === "w" || e.key === "W") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) jump(); } };
+  addEventListener("keydown", onKey, true);
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); jump(); });
+  $("jm92b").addEventListener("pointerdown", e => { e.preventDefault(); jump(); });
+  const TYPES = [{ w: 10, h: 16 }, { w: 10, h: 16 }, { w: 26, h: 16 }, { w: 10, h: 26 }, { w: 18, h: 22 }];
+  const spawnF = () => { const ty = TYPES[rnd(TYPES.length)], span = speed() * (2 * VY / G), gap = span * (1.2 + Math.random() * .9); fences.push({ x: nextF - dist, w: ty.w, h: ty.h, pass: false }); nextF += ty.w + gap + 40; };
+  const post = (x, w, h) => { g.fillStyle = "#b8864a"; for (let px = 0; px < w; px += 9) { g.fillRect(x + px, GY - h, 6, h); g.fillStyle = "#e8c08a"; g.fillRect(x + px, GY - h, 2, h); g.fillStyle = "#b8864a"; } g.fillStyle = "#9a6a38"; g.fillRect(x - 1, GY - h + 4, w + 2, 3); g.fillRect(x - 1, GY - Math.round(h / 2) + 3, w + 2, 3); };
+  const chicken = () => {
+    const cy = GY - y, leg = y > 0 ? 0 : Math.floor(t * 12) % 2, x = CX;
+    g.fillStyle = "#e86a2a"; g.fillRect(x + 3 + leg * 2, cy - 4, 2, 4); g.fillRect(x + 8 - leg * 2, cy - 4, 2, 4);
+    g.fillStyle = "#fff"; g.fillRect(x, cy - 14, 13, 10); g.fillRect(x + 8, cy - 18, 6, 6); g.fillStyle = "#e0e6ee"; g.fillRect(x, cy - 7, 13, 3);
+    g.fillStyle = "#e8c8a0"; g.fillRect(x + 2, cy - 11 - (y > 0 ? 2 : 0), 6, 4);
+    g.fillStyle = "#d83a3a"; g.fillRect(x + 9, cy - 20, 4, 3); g.fillStyle = "#f0a030"; g.fillRect(x + 14, cy - 15, 3, 2); g.fillStyle = "#222"; g.fillRect(x + 11, cy - 16, 1, 2);
+    g.fillStyle = "#f8f0e0"; g.fillRect(x - 3, cy - 13, 4, 5);
+  };
+  const crash = () => { over = true; shake = .3; se13("miss"); setTimeout(() => end(), 700); };
+  function end() { if (ended) return; ended = true; stopped = true; removeEventListener("keydown", onKey, true); o.fences += fenceN; finish92("jmp", false, Math.floor(dist / 24), [`とびこえた柵 ${fenceN}本`]); }
+  const loop = now => {
+    if (stopped || ended && !over) return;
+    if (!cv.isConnected) { stopped = true; removeEventListener("keydown", onKey, true); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+    if (!over) {
+      const dx = speed() * dt; dist += dx; for (const f of fences) f.x -= dx;
+      if (y > 0 || vy > 0) { vy -= G * dt; y += vy * dt; if (y <= 0) { y = 0; vy = 0; if (buf > 0) { jump(); } } }
+      buf = Math.max(0, buf - dt);
+      while (nextF - dist < W + 30) spawnF();
+      fences = fences.filter(f => f.x + f.w > -20);
+      for (const f of fences) {
+        if (!f.pass && f.x + f.w < CX) { f.pass = true; fenceN++; }
+        if (CX + 11 > f.x + 1 && CX + 2 < f.x + f.w - 1 && GY - y > GY - f.h + 3) { crash(); break; }
+      }
+    } else shake = Math.max(0, shake - dt);
+    // 絵
+    const sg = g.createLinearGradient(0, 0, 0, GY); sg.addColorStop(0, "#8ad0f0"); sg.addColorStop(1, "#d8f0f8"); g.fillStyle = sg; g.fillRect(0, 0, W, H);
+    g.fillStyle = "rgba(255,255,255,.85)"; for (let i = 0; i < 4; i++) { const cx = ((i * 130 - dist * .05) % 520 + 520) % 520 - 60, cy2 = 24 + (i % 2) * 22; g.fillRect(cx, cy2, 34, 8); g.fillRect(cx + 8, cy2 - 6, 18, 6); }
+    g.fillStyle = "#9ad08a"; for (let i = 0; i < 3; i++) { const hx = ((i * 190 - dist * .15) % 570 + 570) % 570 - 100; g.beginPath(); g.ellipse(hx + 60, GY + 6, 90, 38, 0, Math.PI, 0); g.fill(); }
+    g.fillStyle = "#7ac050"; g.fillRect(0, GY, W, H - GY); g.fillStyle = "#5aa03a"; g.fillRect(0, GY, W, 3);
+    g.fillStyle = "#68b048"; for (let i = 0; i < 14; i++) { const gx = ((i * 40 - dist * .9) % 560 + 560) % 560 - 40; g.fillRect(gx, GY + 14 + (i % 3) * 9, 14, 3); }
+    for (const f of fences) post(f.x, f.w, f.h);
+    g.save(); if (shake > 0) g.translate((Math.random() - .5) * 6, 0); chicken(); g.restore();
+    g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(6, 6, 96, 16); g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${Math.floor(dist / 24)} m`, 12, 8); g.fillStyle = "#cfe"; g.font = "9px sans-serif"; g.fillText(`ベスト ${o.best}`, 56, 9);
+    if (over) { g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(0, 60, W, 40); g.fillStyle = "#fff"; g.font = "bold 16px sans-serif"; g.textAlign = "center"; g.fillText("ぶつかった！", W / 2, 72); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F92.J = { jump, state: () => ({ dist, y, over, fenceN, fences: fences.map(f => ({ ...f })) }), crash, end, setDist: d => { dist = d; } };
+}
+F92.jmp = playJmp92;
+
+// ---- 称号 ----
+const TTL92 = [
+  ["ビンゴ！", "村のビンゴを、ぜんぶのマスでそろえる", () => (world.stats.bingoFull92 || 0) >= 1],
+  ["つなぎの達人", "「こもれびつなぎ」で、10個以上つなぐ", () => (world.g92?.tsu?.maxChain || 0) >= 10],
+  ["金の実を育てた人", "「マージパズル」で、金の実の木を育てる", () => (world.g92?.mrg?.top || 0) >= 8],
+  ["にわとり飛脚", "「にわとりジャンプ」で、300m走る", () => (world.g92?.jmp?.best || 0) >= 300],
+];
+for (const t of TTL92) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+F92.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -17293,5 +17639,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

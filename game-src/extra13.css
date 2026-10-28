@@ -734,3 +734,50 @@ body.watch88 #tut { display: none !important; }
   .du91-btns .btn { padding: 6px 4px; }
   .rou91 .row2 .btn, .bac91 .row2 .btn { padding: 7px 4px; }
 }
+
+/* ---- v92: スマホのゲーム（ゲームの選び・ビンゴ・つなぎ・マージ・にわとり） ---- */
+.gm92hub { display: flex; flex-direction: column; gap: 8px; }
+.gm92c { display: grid; gap: 2px; text-align: left; font: inherit; color: #eef2fa; background: #2a3346; border: 0; border-radius: 10px; padding: 10px 12px; box-shadow: 0 3px 0 #1a2030; cursor: pointer; }
+.gm92c b { font-size: 1rem; }
+.gm92c span { font-size: .82rem; color: #c3cde0; }
+.gm92c em { font-style: normal; font-size: .78rem; color: #ffd86a; }
+.gm92c:active { transform: translateY(2px); box-shadow: 0 1px 0 #1a2030; }
+.bg92g { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; }
+.bg92c { display: grid; align-content: center; justify-items: center; gap: 4px; min-height: 74px; padding: 6px; border-radius: 10px; background: #2a3346; text-align: center; font-size: .8rem; line-height: 1.3; }
+.bg92c em { font-style: normal; font-size: .74rem; color: #ffd86a; }
+.bg92c.ok { background: #3a6a4a; }
+.bg92c.ok em { color: #bff0c8; font-weight: bold; }
+.bg92c.ln { box-shadow: inset 0 0 0 2px #ffd86a; }
+.ts92, .mg92, .jm92 { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ts92h, .mg92h { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: min(100%, 360px); font-size: .9rem; }
+.ts92t { flex: 1; height: 8px; border-radius: 4px; background: #151a26; overflow: hidden; }
+.ts92t i { display: block; height: 100%; background: linear-gradient(90deg, #7ad070, #f8d050); }
+.ts92n { min-width: 3em; text-align: right; color: #ffd86a; font-weight: bold; }
+.ts92g { display: grid; grid-template-columns: repeat(6, 1fr); width: min(100%, 360px); aspect-ratio: 6 / 7; max-height: calc(100dvh - 250px); gap: 0; background: #151a26; border-radius: 10px; padding: 4px; touch-action: none; user-select: none; -webkit-user-select: none; box-sizing: border-box; }
+.ts92c { display: grid; place-items: center; border-radius: 12px; transition: transform .08s, background .08s; }
+.ts92c img { width: 82%; height: 82%; image-rendering: pixelated; pointer-events: none; }
+.ts92c.on { background: rgba(255, 216, 106, .35); transform: scale(.92); }
+.ts92c.head { background: rgba(255, 216, 106, .65); }
+.ts92c.pop img { animation: ts92pop .18s ease-out forwards; }
+@keyframes ts92pop { to { transform: scale(1.5); opacity: 0; } }
+.mg92g { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: min(100%, 340px); }
+.mg92c { aspect-ratio: 1; display: grid; place-items: center; border: 2px solid #3a4560; border-radius: 10px; background: #2a3346; padding: 0; cursor: pointer; }
+.mg92c img { width: 78%; height: 78%; image-rendering: pixelated; pointer-events: none; }
+.mg92c.sel { border-color: #ffd86a; box-shadow: 0 0 0 2px #ffd86a; }
+.mg92c.hi { animation: mg92hi .3s ease-out; }
+@keyframes mg92hi { 40% { transform: scale(1.15); } }
+.mg92h img { width: 22px; height: 22px; vertical-align: middle; image-rendering: pixelated; }
+#jm92cv { width: min(100%, 420px); aspect-ratio: 320 / 180; image-rendering: pixelated; border-radius: 8px; touch-action: none; }
+.jm92 .btn { width: min(100%, 420px); padding: 14px 0; font-size: 1.1rem; touch-action: none; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .ts92.w92, .mg92.w92 { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: start; column-gap: 14px; row-gap: 6px; }
+  .ts92.w92 .ts92g, .mg92.w92 .mg92g { grid-column: 1; grid-row: 1 / span 2; }
+  .ts92.w92 .ts92h, .mg92.w92 .mg92h { grid-column: 2; grid-row: 1; width: auto; align-self: end; }
+  .ts92.w92 p, .mg92.w92 p { grid-column: 2; grid-row: 2; }
+  .ts92.w92 .ts92g { height: calc(100dvh - 215px); max-height: 300px; width: auto; }
+  .mg92.w92 .mg92g { width: min(calc((100dvh - 215px) * 5 / 6), 250px); }
+  .jm92.w92 { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: stretch; column-gap: 12px; }
+  .jm92.w92 #jm92cv { width: auto; height: calc(100dvh - 215px); max-height: 230px; }
+  .jm92.w92 .btn { width: auto; height: auto; padding: 0; }
+  .bg92c { min-height: 54px; padding: 4px; }
+}

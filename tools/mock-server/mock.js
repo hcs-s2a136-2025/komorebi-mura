@@ -41,6 +41,44 @@ if (fs.existsSync(BJ_CP)) {
 let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPending = new Map(), crank = new Map();
 const grank = {}, cashLed = new Map(), cashPend = new Map(); let cashPool = 0;
 function cashDeliver(to, ev) { const on = [...sessions].filter(o => o.pl && o.pl.id === to); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "cash77", ev }))); else { const l = cashPend.get(to) || []; l.push(ev); cashPend.set(to, l); } }
+// 村のアルバイト（本物は JobService.java。お手紙は取っておき、脱走の手引きはメモリだけ）
+const jobPend = new Map(), rescues = new Map(); // rescues: 村ID -> Map(inmateId -> {inmate, name, since, helper, helperName})
+const jobSend = (to, o) => { for (const x of sessions) if (x.pl && x.pl.id === to) x.send(JSON.stringify(o)); };
+const jobMine = s => { const v = vOf(s.pl); if (!rescues.has(v)) rescues.set(v, new Map()); return rescues.get(v); };
+const jobPurge = s => { const m = jobMine(s), now = Date.now(); for (const [k, r] of m) if (now - r.since > 20 * 60000 || ![...sessions].some(o => o.pl && o.pl.id === r.inmate && !o.watch)) m.delete(k); };
+const jobRs = new Map(); const jobSlow = new Map(); const slowJ = (k, ms) => { const n = Date.now(), p = jobSlow.get(k); jobSlow.set(k, n); return p != null && n - p < ms; };
+function jobHandle(s, m) {
+  if (!s.pl || s.watch) return; const me = s.pl.id, a = String(m.a || ""), V = vOf(s.pl);
+  if (a === "letter") {
+    const to = +m.to | 0, k = m.k | 0, out = { type: "job", a: "letter", rid: String(m.rid || "") };
+    let err = null;
+    if (to === me) err = "自分あてのお手紙は届けられないよ"; else if (k < 0 || k > 5) err = "お手紙が見つからなかった"; else if (slowJ("l" + me, 1000)) err = "少し待ってから届けてね";
+    else if (!accounts.some(x => x.id === to && !x.deleted && vOf(x) === V)) err = "その家の人は見つからなかった";
+    if (!err) { const ev = { kind: "letter", from: me, name: s.pl.name, k }; if ([...sessions].some(o => o.pl && o.pl.id === to)) jobSend(to, { type: "job", ev }); else { const l = jobPend.get(to) || []; if (l.length < 20) l.push(ev); jobPend.set(to, l); } }
+    return s.send(JSON.stringify({ ...out, ok: !err, ...(err ? { text: err } : {}) }));
+  }
+  const mm = jobMine(s);
+  if (a === "help") {
+    if (m.on) { if (slowJ("h" + me, 2000)) return; jobPurge(s); if (mm.has(me)) return; mm.set(me, { inmate: me, name: s.pl.name, since: Date.now(), helper: null, helperName: "" }); }
+    else { const r = mm.get(me); if (!r) return; mm.delete(me); if (r.helper) jobSend(r.helper, { type: "job", ev: { kind: "bye", id: me } }); }
+    return bc({ type: "job", ev: { kind: "help", id: me, name: s.pl.name, on: !!m.on } }, s);
+  }
+  if (a === "list") { if (slowJ("ls" + me, 500)) return; jobPurge(s); return s.send(JSON.stringify({ type: "job", a: "list", list: [...mm.values()].filter(r => r.inmate !== me).sort((x, y) => x.since - y.since).map(r => ({ id: r.inmate, name: r.name, busy: !!r.helper })) })); }
+  if (a === "join") {
+    if (slowJ("jn" + me, 800)) return; jobPurge(s); const id = +m.id | 0, r = mm.get(id), out = { type: "job", a: "joined", id };
+    if (!r || id === me) return s.send(JSON.stringify({ ...out, ok: false, text: "その人の「助けて」は、もう終わったみたい" }));
+    if (r.helper && r.helper !== me) return s.send(JSON.stringify({ ...out, ok: false, text: "ほかの人が助けに行っているよ" }));
+    r.helper = me; r.helperName = s.pl.name; s.send(JSON.stringify({ ...out, ok: true, name: r.name })); return jobSend(id, { type: "job", ev: { kind: "joined", id: me, name: s.pl.name } });
+  }
+  if (a === "rs") {
+    { const n = Date.now(); const w = jobRs.get(me) || { t: n, c: 0 }; if (n - w.t > 1000) { w.t = n; w.c = 0; } w.c++; jobRs.set(me, w); if (w.c > 20) return; } const id = +m.id | 0, r = mm.get(id); if (!r || !r.helper) return;
+    const isIn = me === r.inmate, isHe = me === r.helper; if (!isIn && !isHe) return; const to = isIn ? r.helper : r.inmate, op = String(m.op || "");
+    if (op === "won") { if (!isHe) return; mm.delete(id); jobSend(to, { type: "job", ev: { kind: "freed", id: me, name: r.helperName } }); return bc({ type: "job", ev: { kind: "help", id, name: r.name, on: false } }, s); }
+    if (!["flash", "hit", "miss", "next", "ready", "lost", "bye"].includes(op)) return;
+    if (op === "bye") { if (isHe) r.helper = null; else mm.delete(id); }
+    jobSend(to, { type: "job", ev: { kind: "rs", id, op, c: Math.max(0, Math.min(3, m.c | 0)), n: Math.max(0, Math.min(99, m.n | 0)) } });
+  }
+}
 // イベント（本物は EventService.java。ここでは同じ約束をメモリだけで）
 let ev = null; let evNext = 1; const evRewards = new Map(); // playerId -> [{id,name,rank,total,reward}]
 const evAct = e => ["easter", "halloween", "christmas"].includes(e.kind) ? "collect" : e.kind === "fishing" ? "fish" : e.scoring === "collect" ? "collect" : e.scoring === "none" ? "none" : "fish";
@@ -215,8 +253,8 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
-      mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id);
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
     if (m.type === "move") { if (!/^[A-Za-z0-9:,_\-]{1,40}$/.test(String(m.map || ""))) return; Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir }); bc({ type: "move", id: s.pl.id, map: m.map, x: m.x, y: m.y, dir: m.dir }, s); }
@@ -229,6 +267,7 @@ wss.on("connection", s => {
       if (e.l === "cfarm") { const cur = shared.cfarm?.[e.k]; const o = cur ? +(cur.o || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const v = e.v; if (!(v.w >= 2 && v.h >= 2 && v.w <= 12 && v.h <= 12 && v.x >= 0 && v.y >= 0)) continue; e.v = { x: v.x | 0, y: v.y | 0, w: v.w | 0, h: v.h | 0, o: o > 0 ? o : s.pl.id, n: s.pl.name }; } }
       if (e.l === "houses") { const cur = shared.houses?.[e.k]; const o = cur ? +(cur.ownerId || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { if (typeof e.v !== "object") continue; e.v = { ...e.v, ownerId: o > 0 ? o : s.pl.id }; } }
       if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name }; } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
+    if (m.type === "job") return jobHandle(s, m);
     if (m.type === "grank") {
       const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(0), from = jst(6);
       const g = String(m.game || ""); if (/^[a-z0-9]{1,12}$/.test(g) && +m.score > 0) { const G = grank[g] = grank[g] || {}; const e = G[s.pl.id] = G[s.pl.id] || { b: 0, d: {} }; e.b = Math.max(e.b, +m.score); e.d[today] = Math.max(e.d[today] || 0, +m.score); }

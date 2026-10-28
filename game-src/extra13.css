@@ -781,3 +781,41 @@ body.watch88 #tut { display: none !important; }
   .jm92.w92 .btn { width: auto; height: auto; padding: 0; }
   .bg92c { min-height: 54px; padding: 4px; }
 }
+
+/* ---- v93: 村のアルバイト ---- */
+.st93 { color: #b85a1a; }
+.nw93, .bt93, .lt93, .rs93 { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#nw93cv { width: min(100%, 420px); aspect-ratio: 320 / 180; image-rendering: pixelated; border-radius: 8px; touch-action: none; }
+.nw93 .btn { width: min(100%, 420px); padding: 14px 0; font-size: 1.1rem; touch-action: none; }
+.bt93belt { display: grid; place-items: center; width: min(100%, 320px); height: 90px; background: #2a3346; border-radius: 10px; }
+.bt93belt img { width: 64px; height: 64px; image-rendering: pixelated; }
+.bt93bar { width: min(100%, 320px); height: 8px; background: #151a26; border-radius: 4px; overflow: hidden; }
+.bt93bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #e8c040, #7ad070); }
+.bt93btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: min(100%, 360px); }
+.bt93btns .btn { padding: 14px 0; font-size: 1rem; }
+.lt93 { flex-direction: row; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+.lt93tw { display: flex; flex-direction: column; gap: 3px; width: 72px; padding: 6px; background: linear-gradient(#1a2548, #4a3a5a); border-radius: 8px; }
+.lt93l { display: block; height: 24px; border-radius: 4px; background: #3a3a46; box-shadow: inset 0 0 0 2px #1a1a24; }
+.lt93l.on { background: #ffe680; box-shadow: 0 0 10px #ffe680, inset 0 0 0 2px #e8b840; }
+.lt93r { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
+.lt93g { position: relative; height: 20px; border-radius: 6px; background: #151a26; overflow: hidden; }
+.lt93g b { position: absolute; top: 0; bottom: 0; background: #4aa85a; }
+.lt93g i { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: #fff; }
+#lt93sky { width: min(100%, 420px); aspect-ratio: 320 / 170; border-radius: 8px; touch-action: none; }
+.rs93b { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: min(100%, 360px); }
+.rs93b button { padding: 22px 0; border: 0; border-radius: 12px; font: inherit; font-size: 1.1rem; font-weight: bold; color: #fff; background: var(--c); box-shadow: 0 4px 0 rgba(0, 0, 0, .35); opacity: .75; touch-action: manipulation; }
+.rs93b button:disabled { opacity: .45; }
+.rs93b button.fl { opacity: 1; filter: brightness(1.5); transform: translateY(2px); box-shadow: 0 0 16px var(--c); }
+.rs93h { font-weight: bold; color: #ffd86a; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .nw93 { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: stretch; column-gap: 12px; }
+  #nw93cv { width: auto; height: calc(100dvh - 215px); max-height: 230px; }
+  .nw93 .btn { width: auto; height: auto; padding: 0; }
+  .bt93belt { height: 56px; }
+  .bt93btns .btn { padding: 8px 0; }
+  .lt93tw { width: 56px; } .lt93l { height: 16px; }
+  .rs93b button { padding: 12px 0; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  #lt93sky { width: auto; height: calc(100dvh - 215px); max-height: 200px; }
+}

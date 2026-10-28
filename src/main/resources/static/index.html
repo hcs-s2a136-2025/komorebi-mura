@@ -1243,6 +1243,44 @@ body.watch88 #tut { display: none !important; }
   .jm92.w92 .btn { width: auto; height: auto; padding: 0; }
   .bg92c { min-height: 54px; padding: 4px; }
 }
+
+/* ---- v93: 村のアルバイト ---- */
+.st93 { color: #b85a1a; }
+.nw93, .bt93, .lt93, .rs93 { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#nw93cv { width: min(100%, 420px); aspect-ratio: 320 / 180; image-rendering: pixelated; border-radius: 8px; touch-action: none; }
+.nw93 .btn { width: min(100%, 420px); padding: 14px 0; font-size: 1.1rem; touch-action: none; }
+.bt93belt { display: grid; place-items: center; width: min(100%, 320px); height: 90px; background: #2a3346; border-radius: 10px; }
+.bt93belt img { width: 64px; height: 64px; image-rendering: pixelated; }
+.bt93bar { width: min(100%, 320px); height: 8px; background: #151a26; border-radius: 4px; overflow: hidden; }
+.bt93bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #e8c040, #7ad070); }
+.bt93btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: min(100%, 360px); }
+.bt93btns .btn { padding: 14px 0; font-size: 1rem; }
+.lt93 { flex-direction: row; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+.lt93tw { display: flex; flex-direction: column; gap: 3px; width: 72px; padding: 6px; background: linear-gradient(#1a2548, #4a3a5a); border-radius: 8px; }
+.lt93l { display: block; height: 24px; border-radius: 4px; background: #3a3a46; box-shadow: inset 0 0 0 2px #1a1a24; }
+.lt93l.on { background: #ffe680; box-shadow: 0 0 10px #ffe680, inset 0 0 0 2px #e8b840; }
+.lt93r { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 180px; }
+.lt93g { position: relative; height: 20px; border-radius: 6px; background: #151a26; overflow: hidden; }
+.lt93g b { position: absolute; top: 0; bottom: 0; background: #4aa85a; }
+.lt93g i { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: #fff; }
+#lt93sky { width: min(100%, 420px); aspect-ratio: 320 / 170; border-radius: 8px; touch-action: none; }
+.rs93b { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: min(100%, 360px); }
+.rs93b button { padding: 22px 0; border: 0; border-radius: 12px; font: inherit; font-size: 1.1rem; font-weight: bold; color: #fff; background: var(--c); box-shadow: 0 4px 0 rgba(0, 0, 0, .35); opacity: .75; touch-action: manipulation; }
+.rs93b button:disabled { opacity: .45; }
+.rs93b button.fl { opacity: 1; filter: brightness(1.5); transform: translateY(2px); box-shadow: 0 0 16px var(--c); }
+.rs93h { font-weight: bold; color: #ffd86a; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .nw93 { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: stretch; column-gap: 12px; }
+  #nw93cv { width: auto; height: calc(100dvh - 215px); max-height: 230px; }
+  .nw93 .btn { width: auto; height: auto; padding: 0; }
+  .bt93belt { height: 56px; }
+  .bt93btns .btn { padding: 8px 0; }
+  .lt93tw { width: 56px; } .lt93l { height: 16px; }
+  .rs93b button { padding: 12px 0; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  #lt93sky { width: auto; height: calc(100dvh - 215px); max-height: 200px; }
+}
 </style>
 
 <header>
@@ -1369,7 +1407,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.51.0";
+  const VER = "0.52.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -2432,6 +2470,7 @@ function makeLabor() {
   return m;
 }
 const village = makeVillage(), labor = makeLabor();
+village.labels = [{ x: 14 * TS + 8, y: 9 * TS - 16, text: "求人の掲示板" }];
 function roomFor(key) {
   if (!world.rooms[key]) {
     const h = world.houses.find(h => h.col + "," + h.row === key);
@@ -3915,12 +3954,12 @@ function npcDonate() {
 }
 
 // ---- village decorations & placements ----
-const BOARD_AT = [13, 9], BUS_AT = [16, 25];
+const BOARD_AT = [13, 9], BUS_AT = [16, 25], JOB_AT = [14, 9];
 const FOUNTAIN_AT = [16, 10], LAMPS = [[4, 9], [10, 9], [20, 9], [28, 9], [33, 9]], BEDS = [[1, 9], [2, 9]];
 const PADDOCK = { x0: 22, y0: 22, x1: 28, y1: 25 };
 function solids6(S) {
   if (map !== village && S !== village.solid) return;
-  S[BOARD_AT[1]][BOARD_AT[0]] = true; S[BUS_AT[1]][BUS_AT[0]] = true;
+  S[BOARD_AT[1]][BOARD_AT[0]] = true; S[BUS_AT[1]][BUS_AT[0]] = true; S[JOB_AT[1]][JOB_AT[0]] = true;
   if (world.projects.fountain.done) { S[FOUNTAIN_AT[1]][FOUNTAIN_AT[0]] = S[FOUNTAIN_AT[1]][FOUNTAIN_AT[0] + 1] = true; }
   if (world.projects.lamps.done) LAMPS.forEach(([x, y]) => S[y][x] = true);
   if (world.projects.beds.done) BEDS.forEach(([x, y]) => S[y][x] = true);
@@ -3930,6 +3969,7 @@ function addToList6(list, now) {
   if (map === village) {
     list.push({ s: (BOARD_AT[1] + 1) * TS, d: () => ctx.drawImage(IMG.board, BOARD_AT[0] * TS, BOARD_AT[1] * TS - 8) });
     list.push({ s: (BUS_AT[1] + 1) * TS, d: () => ctx.drawImage(IMG.busstop, BUS_AT[0] * TS, BUS_AT[1] * TS - 8) });
+    list.push({ s: (JOB_AT[1] + 1) * TS, d: () => ctx.drawImage(IMG.s93_jobs, JOB_AT[0] * TS, JOB_AT[1] * TS - 8) });
     if (world.projects.fountain.done) list.push({ s: (FOUNTAIN_AT[1] + 1) * TS, d: () => { ctx.drawImage(IMG.fountain, FOUNTAIN_AT[0] * TS, FOUNTAIN_AT[1] * TS - 16); const t = now / 200; for (let i = 0; i < 6; i++) { ctx.fillStyle = "rgba(200,235,255,.9)"; ctx.fillRect(FOUNTAIN_AT[0] * TS + 16 + Math.sin(t + i) * 6, FOUNTAIN_AT[1] * TS - 14 + ((t * 3 + i * 2) % 8), 1, 1); } } });
     if (world.projects.lamps.done) LAMPS.forEach(([x, y]) => list.push({ s: (y + 1) * TS, d: () => ctx.drawImage(IMG.streetlamp, x * TS, y * TS - 16) }));
     if (world.projects.beds.done) BEDS.forEach(([x, y]) => list.push({ s: (y + 1) * TS, d: () => ctx.drawImage(IMG.flowerbed, x * TS, y * TS) }));
@@ -4277,6 +4317,7 @@ F6.act = (tx, ty, key, sel, item, other) => {
   if (other && other.kind === "mob") { if (ITEMS[sel?.id]?.weapon || !sel) { swing("sword", .25, () => swordHit(tx, ty)); return true; } }
   if (map === village) {
     if (tx === BOARD_AT[0] && ty === BOARD_AT[1]) { openBoard(); return true; }
+    if (tx === JOB_AT[0] && ty === JOB_AT[1]) { openJobs93("village"); return true; }
     if (tx === BUS_AT[0] && ty === BUS_AT[1]) { openBus(); return true; }
     if (village.doors[key]?.kind === "cave") { F6.caveBack = [player.x, player.y]; enterCave(1); return true; }
     const si = world.stalls.findIndex(s => s.y === ty && (s.x === tx || s.x + 1 === tx)); if (si >= 0) { openStall(si); return true; }
@@ -5369,7 +5410,7 @@ function showLaborRules() {
         <div class="li"><img src="${ASSETS.chest}" alt=""><span class="nm">荷物運び<span class="sub2">左の荷物の山でⒶ → 右の荷車でⒶ。1往復でノルマ+1</span></span></div>
         <div class="li"><img src="${ASSETS.ore}" alt=""><span class="nm">仕分け（ミニゲーム）<span class="sub2">中央下の作業台でⒶ。ミスなし8秒以内ならノルマ+2</span></span></div>
       </div>
-      <p class="mtext small">ノルマを終えるか、借金の延滞分を返し終えるか、ゲーム内で6時間たつと解放され、残りの期限が5日延びます。出口から逃げることもできますが、見張りに見つかるとノルマが増えます。</p>
+      <p class="mtext small">ノルマを終えるか、借金の延滞分を返し終えるか、ゲーム内で6時間たつと解放され、残りの期限が5日延びます。出口から逃げることもできますが、見張りに見つかるとノルマが増えます。オンラインなら、スマホの「助けて」で村の人に手引きをお願いすることもできます。</p>
       <div class="row2"><button class="btn" type="button" id="lbOk">はたらく</button></div>`;
     body.innerHTML = kA(body.innerHTML);
     body.querySelector("#lbOk").onclick = closeModal;
@@ -5833,7 +5874,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.51.0";
+const CLIENT_VERSION = "0.52.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7911,6 +7952,16 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.52.0", date: "2026/10/28", title: "村のアルバイトが5つ・北の丘にも巡査", items: [
+    "村の広場（掲示板のとなり）とみなと町に「求人の掲示板」ができた。村では「郵便配達」「新聞配達」「脱走の手引き」、みなと町では「釣り船の手伝い」「灯台守」のアルバイトを受けられる",
+    "郵便配達：配達先5か所を、自分の足で回ってお手紙を届ける。道のりが短いほどお給料が高い（最大700G）。オンラインなら、ほかの人の家にも届けられて、相手に本物のお手紙が届く（ボーナス100G）",
+    "新聞配達：朝（6時〜9時）だけ。10軒にタイミングよく新聞を投げ入れる。1軒40G・ぜんぶ入ると+100G。配った新聞は、スマホの「新聞」アプリで読める",
+    "脱走の手引き（オンライン）：労働施設の中の人が、スマホの「助けて」を出したときだけ始まる。助けに行く人と中の人が、4つの合図（赤・青・緑・黄）を交代で送りあう2人協力のゲーム。成功すると、中の人は脱走できて、助けた人は200Gをもらえる（1日3回まで）",
+    "釣り船の手伝い：網の中身を「さかな・ごみ・かいそう」に仕分ける。ほとんど合っていると、まれに沖でしか釣れない魚が出てくる",
+    "灯台守：夕方（17時〜）から。灯台のあかりを下から順に灯して、星空を見上げる。流れ星をタップして、お願いごともできる",
+    "北の丘の道を、もう一人の巡査「ケイ」が見回るようになった。6マス以内で作物を盗むと見つかるのは、マモルと同じ",
+    "称号が5つふえた"
+  ] },
   { v: "0.51.0", date: "2026/10/28", title: "スマホのゲームが4つふえた", items: [
     "スマホの「ゲーム」が、遊びを選ぶ画面になった。「村のビンゴ」「こもれびブロック」「こもれびつなぎ」「マージパズル」「にわとりジャンプ」から選べる",
     "「村のビンゴ」：日がわりで、村でやることが9つ並ぶ（魚を釣る・木を切る・水やり・料理など）。やったことは自動で数えられて、たて・よこ・ななめがそろうと「ライン」。ラインごとにお金、1ラインで種、3ラインで種がもっと、ぜんぶそろうと宝石がもらえる",
@@ -15794,7 +15845,7 @@ function showJail78() {
   openModal("労働施設（つとめ）", "yami", body => {
     body.innerHTML = staffSay13(charIcon13({ skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "ジャケット", topc: "青", bottom: "パンツ", bottomc: "黒", glasses: true }), `「${esc(world.labor.crime)}」か…。ここでしっかり、つとめを果たしてもらうぞ`)
       + `<div class="stat"><span>つとめ</span><b>${world.labor.quota} 回</b><span>長くても</span><b>6時間で釈放</b></div>
-      <p class="mtext small">岩を砕く・荷物を運ぶ・仕分けで、つとめが進む（借金の返済にはならないよ）。逃げることもできるけど、見張りに見つかるとつとめが増えて、逃げきれても罪が重くなる（称号が1日のびる）。</p>
+      <p class="mtext small">岩を砕く・荷物を運ぶ・仕分けで、つとめが進む（借金の返済にはならないよ）。逃げることもできるけど、見張りに見つかるとつとめが増えて、逃げきれても罪が重くなる（称号が1日のびる）。オンラインなら、スマホの「助けて」で村の人に手引きをお願いすることもできる。</p>
       <div class="row2"><button class="btn" type="button" id="jl78">はい…</button></div>`;
     body.querySelector("#jl78").onclick = closeModal;
   });
@@ -16184,7 +16235,7 @@ function updatePolice78(dt) {
 }
 const _uc78 = updateCollector; updateCollector = function (dt) { _uc78.apply(this, arguments); try { updatePolice78(dt); } catch (e) {} };
 const _ev78 = F6.entsVillage; F6.entsVillage = () => [..._ev78(), police78];
-const policeNear78 = () => map === village && Math.abs(player.x - police78.x) + Math.abs(player.y - police78.y) <= 6;
+const policeNear78 = () => map === village && (Math.abs(player.x - police78.x) + Math.abs(player.y - police78.y) <= 6 || (F93.police && Math.abs(player.x - F93.police.x) + Math.abs(player.y - F93.police.y) <= 6));
 F78.police = police78; F78.near = policeNear78; F78.fixX = null;
 function openPolice78() {
   const c = cash78(), crime = crimeTitle78(), thief = typeof F69 !== "undefined" && F69.thief && F69.thief();
@@ -16298,7 +16349,7 @@ GUIDE54.push(["現金と偽札", "s78_bill", `
     <li><b>偽札づくり</b>：闇市で「偽札の版」と「インクと紙」を買って、家の中で版を手に持ってA。1日10枚まで。クラフトの腕前が高いほど本物そっくり</li>
     <li>偽札で払うときは、まぜる割合を選べる。多くまぜるほど、会計ミニゲームの緑のところがせまくなる</li></ul>`]);
 GUIDE54.push(["警察と牢獄", "", `
-    <p>村の大通りを、<b>巡査マモル</b>が見回っている。話しかけると、偽札を届けたり、きまりを聞いたりできる。</p><ul>
+    <p>村の大通りを<b>巡査マモル</b>が、北の丘を<b>巡査ケイ</b>が見回っている（どちらも、6マス以内で作物を盗むと見つかる）。話しかけると、偽札を届けたり、きまりを聞いたりできる。</p><ul>
     <li><b>作物どろぼう</b>：巡査の近く（6マス）で盗むと、見つかって労働施設へ（盗んだ作物は返す）</li>
     <li><b>偽札</b>が見つかると取り調べ。持ち物と家を調べられて、偽札の版が出てきたら一発アウト（称号「偽札づくり」と「偽札使用」）</li>
     <li>版がなければ「知っていて使ったか」を聞かれる。正直に「はい」と言うか、「いいえ」で知らなかったと言うか。知っていたのにうそをつくと、ばれることも…</li>
@@ -19077,6 +19128,485 @@ const TTL92 = [
 for (const t of TTL92) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 F92.ready = true;
 
+// =================== v93: 村のアルバイト5つ（郵便配達・新聞配達・脱走の手引き・灯台守・釣り船の手伝い）と、北の丘の巡査 ===================
+// 求人の掲示板は、村の広場（JOB_AT）とみなと町の2か所。郵便・新聞・脱走の手引きは村、釣り船・灯台はみなと町。
+// ほかの人がかかわるのは、郵便のお手紙（相手の家へ）と脱走の手引き（2人で合図）だけ。サーバーは JobService.java（type は "job"）。
+var F93 = {};
+const j93 = () => {
+  const j = world.j93 = world.j93 && typeof world.j93 === "object" ? world.j93 : {};
+  if (j.day !== world.day || !j.paid || typeof j.paid !== "object") { j.day = world.day; j.paid = { mail: 0, news: 0, light: 0, boat: 0, rescue: 0, help: 0 }; j.letters = 0; j.mail = null; }
+  for (const k of ["mailBest", "mailN", "newsFull", "lightN", "boatN", "boatRare", "rescueN"]) j[k] = Number.isFinite(+j[k]) ? Math.floor(+j[k]) : 0;
+  if (!Array.isArray(j.inbox)) j.inbox = [];
+  if (!j.rescued || typeof j.rescued !== "object") j.rescued = {};
+  return j;
+};
+const PAYCAP93 = { mail: 3, news: 1, light: 1, boat: 3, rescue: 3, help: 3 };
+const left93 = k => Math.max(0, PAYCAP93[k] - (j93().paid[k] || 0));
+const pay93 = (n, text) => { addMoney(n); saveWorld(); F7.notify(`${text}（${fmt(n)}）`, null); };
+const JOBAT93 = [14, 9];
+const PORTJOB93 = [8, 5];
+
+// ---- 絵：求人の掲示板・灯台・ゲームの小物 ----
+const SPR93 = {
+  jobs: [16, 24, (s, r) => {
+    r(2, 22, 12, 2, C13["#6a4a2a"]); r(7, 10, 2, 13, C13["#8a5a2a"]); r(7, 10, 1, 13, C13["#b8824a"]);
+    r(1, 1, 14, 10, C13["#7a4e26"]); r(2, 2, 12, 8, C13["#f4e6c2"]); r(2, 2, 12, 1, C13["#fffaf0"]);
+    r(3, 4, 5, 3, C13["#fffaf0"]); r(3, 4, 5, 1, C13["#c8b890"]); s(4, 5, C13["#d83a3a"]); s(5, 6, C13["#d83a3a"]); r(9, 4, 4, 1, C13["#6a5a3a"]); r(9, 6, 4, 1, C13["#6a5a3a"]); r(3, 8, 9, 1, C13["#6a5a3a"]);
+  }],
+  lighthouse: [32, 64, (s, r) => {
+    r(6, 56, 20, 8, C13["#7a7a80"]); r(7, 56, 18, 2, C13["#a0a0a8"]);
+    for (let i = 0; i < 40; i++) { const w = 18 - Math.floor(i / 5); r(16 - w / 2, 16 + i, w, 1, i % 10 < 5 ? C13["#f4f0e8"] : C13["#d83a3a"]); }
+    r(6, 12, 20, 4, C13["#3a3a46"]); r(8, 4, 16, 8, C13["#f0e070"]); r(10, 6, 12, 4, C13["#fff8b0"]); r(12, 0, 8, 4, C13["#c83a3a"]); r(14, 0, 4, 2, C13["#e86a5a"]);
+    r(13, 48, 6, 8, C13["#6a4a2a"]); r(14, 49, 4, 7, C13["#8a5a2a"]);
+  }],
+  fish: [16, 12, (s, r) => { ell13(s, 7, 6, 6, 3.4, C13["#4a8ad0"]); r(12, 3, 3, 6, C13["#4a8ad0"]); s(3, 5, C13["#ffffff"]); s(3, 5, C13["#222"]); r(5, 8, 5, 1, C13["#bcd8f4"]); }],
+  weed: [16, 14, (s, r) => { for (const [x, h] of [[4, 11], [7, 13], [10, 10]]) { r(x, 14 - h, 2, h, C13["#3f8a46"]); r(x, 14 - h, 1, h, C13["#5aa95a"]); } r(3, 12, 10, 2, C13["#2f6a3a"]); }],
+  trash: [16, 14, (s, r) => { r(3, 4, 10, 10, C13["#8a8a94"]); r(3, 4, 10, 2, C13["#b8b8c0"]); r(4, 7, 8, 1, C13["#6a6a74"]); r(4, 10, 8, 1, C13["#6a6a74"]); r(6, 1, 4, 3, C13["#6a6a74"]); }],
+};
+for (const [k, [w, h, fn]] of Object.entries(SPR93)) { IMG["s93_" + k] = pix13(w, h, fn); ASSETS["s93_" + k] = IMG["s93_" + k].toDataURL(); }
+{
+  const _ms = makePort;
+  makePort = function () {
+    const m = _ms();
+    m.objs.push({ img: "s93_jobs", x: PORTJOB93[0] * TS, y: PORTJOB93[1] * TS - 8, sortY: (PORTJOB93[1] + 1) * TS }); m.base[PORTJOB93[1]][PORTJOB93[0]] = true;
+    m.interact[PORTJOB93[0] + "," + PORTJOB93[1]] = () => openJobs93("port"); m.labels.push({ x: PORTJOB93[0] * TS + 8, y: PORTJOB93[1] * TS - 14, text: "求人の掲示板" });
+    m.objs.push({ img: "s93_lighthouse", x: 21 * TS, y: 0, sortY: 4 * TS });
+    for (let y = 0; y <= 3; y++) for (const x of [21, 22]) m.base[y][x] = true;
+    for (const k of ["21,3", "22,3"]) m.interact[k] = () => startLight93();
+    m.labels.push({ x: 22 * TS, y: 4 * TS + 12, text: "灯台" });
+    return m;
+  };
+}
+
+// ---- 求人の掲示板 ----
+function openJobs93(where, note) {
+  const j = j93(), online = F8.connected;
+  F93.jobWhere = where;
+  openModal("求人の掲示板", "", body => {
+    const card = (id, img, name, desc, status, btn) => `<div class="li"><img src="${ASSETS[img]}" alt=""><span class="nm">${name}<span class="sub2">${desc}</span><span class="sub2 st93">${status}</span></span><span class="acts">${btn || ""}</span></div>`;
+    const M = j.mail, mailDone = M ? M.stops.filter(s => s.done).length : 0;
+    const mailBtn = M ? (mailDone === M.stops.length ? `<button class="btn" type="button" data-j93="mailReport">報告する</button>` : `<button class="btn light" type="button" data-j93="mailList">宛先を見る</button>`) : left93("mail") ? `<button class="btn" type="button" data-j93="mailStart">はじめる</button>` : "";
+    const newsOK = world.time >= 360 && world.time < 540;
+    const lightOK = world.time >= 1020;
+    const village = where === "village";
+    body.innerHTML = `${note ? `<p class="mtext">${esc(note)}</p>` : ""}<p class="mtext">村の人の手伝いをして、お小遣いをかせごう。${village ? "ここの掲示板は村の広場。" : "ここはみなと町の掲示板。"}</p><div class="list">
+      ${village ? card("mail", "s93_jobs", "郵便配達", "配達先5か所へ、歩いてお手紙を届ける。道のりが短いほどお給料が高い（最大700G）。ほかの人の家に届けると、本物のお手紙が届いて、ボーナス100G", M ? `配達中（${mailDone}/${M.stops.length}）` : `きょうはあと${left93("mail")}回`, mailBtn) : ""}
+      ${village ? card("news", "s93_jobs", "新聞配達", "朝のうちだけ（6時〜9時）。10軒に新聞を投げ入れる。1軒40G・ぜんぶ入れると+100G。新聞アプリとも つながっている", left93("news") ? (newsOK ? "いまならできる" : `朝（6時〜9時）だけ・いまは${clockStr()}`) : "きょうはもうやった", left93("news") && newsOK ? `<button class="btn" type="button" data-j93="newsStart">はじめる</button>` : "") : ""}
+      ${village ? card("rescue", "s93_jobs", "脱走の手引き", "労働施設の中の人が「助けて」を出したときだけ。2人で合図を合わせて、脱走を手引きする。お礼は小さめ（200G・1日3回まで）", online ? (left93("rescue") ? "助けを求めている人を見てみる" : "きょうはもう3回やった") : "オンラインのときだけ", online && left93("rescue") ? `<button class="btn" type="button" data-j93="rescueList">さがす</button>` : "") : ""}
+      ${!village ? card("boat", "s93_fish", "釣り船の手伝い", "網の中身を「さかな・ごみ・かいそう」に仕分ける。うまくいくと、まれに沖の魚がもらえる（100G〜600G）", `きょうはあと${left93("boat")}回`, left93("boat") ? `<button class="btn" type="button" data-j93="boatStart">はじめる</button>` : "") : ""}
+      ${!village ? card("light", "s93_lighthouse", "灯台守", "夕方から夜だけ（17時〜）。灯台のあかりを下から順に灯して、星空を見上げる。450G", left93("light") ? (lightOK ? "いまならできる" : `夕方（17時〜）から・いまは${clockStr()}`) : "きょうはもうやった", left93("light") && lightOK ? `<button class="btn" type="button" data-j93="lightStart">はじめる</button>` : "") : ""}
+    </div><div id="j93extra"></div>
+    ${village && j.inbox.length ? `<h4>届いたお手紙</h4><div class="list">${j.inbox.slice(0, 5).map(l => `<div class="li"><span class="nm">${esc(l.name)}さんから<span class="sub2">${esc(LETTER93[l.k] || "")}</span></span></div>`).join("")}</div>` : ""}`;
+    body.querySelectorAll("[data-j93]").forEach(b => b.onclick = () => {
+      const k = b.dataset.j93;
+      if (k === "mailStart") { startMail93(); closeModal(); }
+      else if (k === "mailList") { showMail93(); }
+      else if (k === "mailReport") { reportMail93(); }
+      else if (k === "newsStart") { closeModal(); playNews93(); }
+      else if (k === "boatStart") { closeModal(); playBoat93(); }
+      else if (k === "lightStart") { closeModal(); startLight93(); }
+      else if (k === "rescueList") { F93.listWanted = true; send8({ type: "job", a: "list" }); b.disabled = true; b.textContent = "さがしている…"; }
+    });
+  });
+}
+F93.jobs = openJobs93;
+
+// =================== 郵便配達 ===================
+const LETTER93 = ["いつもありがとう。いい天気ですね", "こんにちは！ 郵便配達のおとどけものです", "畑の調子はどうですか？ 今度いっしょに釣りでも", "遊びにきてね。お茶を用意して待ってます", "おつかれさま。無理しないでね", "季節の変わり目、お体に気をつけて"];
+const MAILPAY93 = [[1, 700, "最短ルート！"], [.88, 520, "ほぼ最短"], [.75, 380, "なかなかの道のり"], [.6, 260, "ちょっと遠まわり"], [0, 160, "ずいぶん遠まわり"]];
+function mailPool93() {
+  const pool = [], me = onl.id || 0;
+  for (const b of BUILDINGS) if (b.kind !== "home") pool.push({ x: b.col, y: b.row, label: b.label || b.kind, to: 0 });
+  const others = [];
+  if (F8.online) for (const h of world.houses || []) if (h && Number.isFinite(h.col) && Number.isFinite(h.row) && h.ownerId && h.ownerId !== me && !others.some(o => o.to === h.ownerId)) others.push({ x: h.col, y: h.row, label: `${h.owner || "だれか"}さんの家`, to: h.ownerId });
+  return { pool, others };
+}
+const frontTile93 = s => [s.x, s.y + 1];
+function startMail93() {
+  const j = j93(); if (j.mail || !left93("mail")) return;
+  const { pool, others } = mailPool93(), pick = [];
+  const sh = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const k = rnd(i + 1); [a[i], a[k]] = [a[k], a[i]]; } return a; };
+  for (const o of sh(others).slice(0, 2)) pick.push(o);
+  for (const p of sh(pool)) if (pick.length < 5 && !pick.some(q => q.x === p.x && q.y === p.y)) pick.push(p);
+  j.mail = { stops: sh(pick).map(p => ({ ...p, done: false })), steps: 0, start: [JOBAT93[0], JOBAT93[1] + 1] };
+  saveWorld(); toast(null, "配達の宛先を受けとった。ドアの前でドアを向いて、Ⓐで届けよう"); setTimeout(showMail93, 0);
+}
+function showMail93() {
+  const M = j93().mail; if (!M) return;
+  openModal("配達の宛先", "", body => {
+    body.innerHTML = `<p class="mtext">ドアの前（ドアを向いた位置）でⒶを押すと届けられる。お手紙を全部届けたら、広場の求人の掲示板で報告しよう。道のりが短いほど、お給料が高くなるよ。</p>
+      <div class="list">${M.stops.map((s, i) => `<div class="li"><span class="nm">${i + 1}. ${esc(s.label)}<span class="sub2">${s.done ? "届けた" : s.to ? "お手紙を届ける（ほかの人の家）" : "新聞・荷物を届ける"}</span></span><span class="acts">${s.done ? "✓" : ""}</span></div>`).join("")}</div>
+      <p class="mtext small">歩いた歩数：${M.steps}歩</p>
+      <div class="row2"><button class="btn light" type="button" id="j93mc">とじる</button><button class="btn light" type="button" id="j93mq">配達をやめる</button></div>`;
+    body.querySelector("#j93mc").onclick = closeModal;
+    body.querySelector("#j93mq").onclick = () => { j93().mail = null; saveWorld(); closeModal(); toast(null, "配達をやめた"); };
+  });
+}
+function deliver93(s) {
+  const j = j93(), M = j.mail; if (!M || s.done) return;
+  s.done = true; saveWorld(); se13("harvest");
+  const n = M.stops.filter(x => x.done).length;
+  toast(null, `${s.label}に届けた（${n}/${M.stops.length}）`);
+  if (s.to && F8.connected && j.letters < 3) {
+    F93.letterWait = { to: s.to }; send8({ type: "job", a: "letter", to: s.to, k: rnd(LETTER93.length), rid: "l" + s.to });
+  }
+  if (n === M.stops.length) F7.notify("お手紙を全部届けた！ 広場の求人の掲示板で報告しよう", null);
+}
+function optSteps93(start, pts) {
+  const d = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]); let best = Infinity;
+  const rec = (cur, rest, sum) => { if (!rest.length) { best = Math.min(best, sum + d(cur, start)); return; } rest.forEach((p, i) => rec(p, rest.filter((_, k) => k !== i), sum + d(cur, p))); };
+  rec(start, pts, 0); return best;
+}
+function reportMail93() {
+  const j = j93(), M = j.mail; if (!M || M.stops.some(s => !s.done)) return;
+  const opt = optSteps93(M.start, M.stops.map(frontTile93)), r = Math.min(1, opt * 1.15 / Math.max(1, M.steps));
+  const tier = MAILPAY93.find(t => r >= t[0]), n = tier[1];
+  j.paid.mail++; j.mail = null; j.mailN++; if (r >= .88) j.mailBest++;
+  pay93(n, `配達おつかれさま！ ${tier[2]}（歩数 ${M.steps}・最短 ${opt}）`); se13(r >= .88 ? "big" : "harvest"); saveWorld(); checkTitles42();
+  closeModal(); setTimeout(() => openJobs93("village", `${tier[2]}。お給料 ${fmt(n)} をもらった`), 0);
+}
+{
+  const _os = F6.onStep;
+  F6.onStep = (nx, ny) => { const r = _os(nx, ny); try { const M = world.j93 && world.j93.mail; if (!r && M && map === village) M.steps++; } catch (e) { } return r; };
+  const _a = act;
+  act = function () {
+    if (map === village && !modalOpen && !placing && !fish && !busy && !player.moving) {
+      const M = j93().mail;
+      if (M) { const [tx, ty] = front(); const s = M.stops.find(s => !s.done && s.x === tx && s.y === ty); if (s) { deliver93(s); return; } }
+    }
+    return _a.apply(this, arguments);
+  };
+}
+
+// =================== 新聞配達 ===================
+function playNews93() {
+  const W = 320, H = 180, N = 10, tol = 15; let i = 0, hit = 0, mx = 0, mk = 0, t = 0, thr = null, resultT = 0, ended = false, last = performance.now(), res = "";
+  const newTarget = () => { mx = 50 + rnd(220); mk = rnd(3); t = 0; };
+  newTarget();
+  openModal("新聞配達", "ph76m", body => { body.innerHTML = `<div class="nw93"><canvas id="nw93cv" width="${W}" height="${H}"></canvas><button type="button" class="btn" id="nw93b">なげる！</button></div>`; }, () => { if (!ended) finish(true); });
+  const cv = $("nw93cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const mark = () => 20 + (Math.sin(t * (2.2 + i * .25)) * .5 + .5) * 280;
+  const toss = () => { if (ended || thr || resultT > 0) return; const x = mark(), ok = Math.abs(x - mx) <= tol; thr = { x0: 160, x1: x, ok, p: 0 }; se13("small"); };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); toss(); }); $("nw93b").addEventListener("pointerdown", e => { e.preventDefault(); toss(); });
+  const onKey = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) toss(); } };
+  addEventListener("keydown", onKey, true);
+  function finish(closed) {
+    if (ended) return; ended = true; removeEventListener("keydown", onKey, true);
+    const j = j93(), n = hit * 40 + (hit === N ? 100 : 0);
+    if (left93("news") > 0 && (i > 0)) { j.paid.news++; if (hit === N) j.newsFull++; if (n) pay93(n, `新聞配達：${hit}/${N}軒に届いた`); saveWorld(); checkTitles42(); }
+    if (closed || !$("mbody")) return;
+    $("mbody").innerHTML = `<div class="dk75r"><b>配達おしまい</b><span>${hit}/${N}軒に届いた</span><span>お給料 <em>${fmt(n)}</em>${hit === N ? "（ぜんぶ届けたボーナスつき）" : ""}</span></div>
+      <p class="mtext small">配った新聞の内容は、スマホの「新聞」アプリで読めるよ。</p>
+      <div class="row2"><button class="btn" type="button" id="nw93paper">新聞アプリを開く</button><button class="btn light" type="button" id="nw93ok">とじる</button></div>`;
+    $("nw93paper").onclick = () => { closeModal(); try { openArchive42(); } catch (e) { } }; $("nw93ok").onclick = closeModal;
+  }
+  const loop = now => {
+    if (ended) return; if (!cv.isConnected) { return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+    if (thr) { thr.p += dt / .35; if (thr.p >= 1) { if (thr.ok) { hit++; res = "ナイスイン！"; se13("harvest"); } else { res = "はずれ…"; se13("miss"); } thr = null; resultT = .7; } }
+    else if (resultT > 0) { resultT -= dt; if (resultT <= 0) { i++; if (i >= N) { finish(false); return; } newTarget(); } }
+    else if (t > 4.5) { res = "時間切れ…"; resultT = .6; se13("miss"); }
+    g.fillStyle = "#9ad8f0"; g.fillRect(0, 0, W, 110); g.fillStyle = "#7ac050"; g.fillRect(0, 110, W, 70); g.fillStyle = "#c8b890"; g.fillRect(0, 128, W, 24);
+    for (let k = 0; k < 6; k++) { const hx = 8 + k * 54; g.fillStyle = ["#c8604c", "#6aa0d8", "#d8b860"][(i + k) % 3]; g.fillRect(hx, 66, 42, 44); g.fillStyle = "#8a4a3a"; g.fillRect(hx - 3, 58, 48, 10); g.fillStyle = "#f4e8c8"; g.fillRect(hx + 15, 86, 12, 24); }
+    // ポスト
+    g.fillStyle = "#6a4a2a"; g.fillRect(mx - 2, 112, 4, 18); g.fillStyle = "#d83a3a"; g.fillRect(mx - 10, 104, 20, 10); g.fillStyle = "#fff"; g.fillRect(mx - 6, 107, 12, 2);
+    // ねらいの目印
+    const x = mark(); g.fillStyle = "#ffd86a"; g.beginPath(); g.moveTo(x - 6, 14); g.lineTo(x + 6, 14); g.lineTo(x, 26); g.fill(); g.fillStyle = "rgba(255,255,255,.5)"; g.fillRect(x - 1, 26, 2, 76);
+    // 自転車
+    g.fillStyle = "#333"; g.fillRect(146, 150, 12, 12); g.fillRect(166, 150, 12, 12); g.fillStyle = "#4a8ad0"; g.fillRect(146, 138, 32, 4); g.fillStyle = "#f0c8a0"; g.fillRect(156, 122, 10, 12); g.fillStyle = "#e8a030"; g.fillRect(154, 134, 14, 8);
+    if (thr) { const p = thr.p, px = thr.x0 + (thr.x1 - thr.x0) * p, py = 136 - Math.sin(p * Math.PI) * 60 - p * 20; g.fillStyle = "#f4f0e8"; g.fillRect(px - 5, py - 3, 10, 6); g.fillStyle = "#555"; g.fillRect(px - 3, py - 1, 6, 1); }
+    g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(6, 6, 110, 18); g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${Math.min(i + 1, N)}/${N}軒目・${hit}軒に届いた`, 12, 9);
+    if (resultT > 0 && res) { g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(100, 70, 120, 24); g.fillStyle = "#fff"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText(res, 160, 76); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F93.N = { toss, state: () => ({ i, hit, mx, mark: mark() }), finish: () => finish(false), force: (n) => { hit = n; i = N; } };
+}
+F93.news = playNews93;
+
+// =================== 釣り船の手伝い ===================
+function playBoat93() {
+  const N = 20; let i = 0, ok = 0, ended = false, timer = null, cur = null, tOut = 2.4;
+  const kinds = [["fish", "さかな"], ["trash", "ごみ"], ["weed", "かいそう"]];
+  openModal("釣り船の手伝い", "ph76m", body => {
+    body.innerHTML = `<div class="bt93"><p class="mtext small" id="bt93h">網の中身を、種類ごとに仕分けよう</p><div class="bt93belt"><img id="bt93i" alt=""></div><div class="bt93bar"><i id="bt93t"></i></div>
+      <div class="bt93btns">${kinds.map(([k, l]) => `<button type="button" class="btn" data-k93="${k}">${l}</button>`).join("")}</div><p class="mtext small" id="bt93m"></p></div>`;
+  }, () => { clearTimeout(timer); if (!ended) finish(true); });
+  const next = () => {
+    if (ended) return; if (i >= N) { finish(false); return; }
+    cur = kinds[rnd(3)][0]; $("bt93i").src = ASSETS["s93_" + cur]; $("bt93h").textContent = `${i + 1}/${N}・合っていた ${ok}`; tOut = Math.max(1.1, 2.4 - i * .06);
+    const bar = $("bt93t"); bar.style.transition = "none"; bar.style.width = "100%"; void bar.offsetWidth; bar.style.transition = `width ${tOut}s linear`; bar.style.width = "0%";
+    clearTimeout(timer); timer = setTimeout(() => answer(null), tOut * 1000);
+  };
+  function answer(k) {
+    if (ended || !cur) return; clearTimeout(timer);
+    if (k === cur) { ok++; se13("small"); $("bt93m").textContent = "そのとおり！"; } else { se13("miss"); $("bt93m").textContent = k ? "ちがうよ" : "時間切れ"; }
+    cur = null; i++; setTimeout(next, 120);
+  }
+  $("mbody").querySelectorAll("[data-k93]").forEach(b => b.onclick = () => answer(b.dataset.k93));
+  function finish(closed) {
+    if (ended) return; ended = true; clearTimeout(timer);
+    const j = j93(); let msg = "";
+    if (left93("boat") > 0 && i >= N) {
+      const n = ok >= 8 ? 100 + ok * 25 : 80; j.paid.boat++; j.boatN++; pay93(n, `釣り船の手伝い：${ok}/${N}個、合っていた`); msg = `お給料 ${fmt(n)}`;
+      if (ok >= 16 && Math.random() < .14) { const f = BOATFISH81[rnd(BOATFISH81.length)]; giveItem91("fish_" + f.n, 1); world.dex[f.n] = (world.dex[f.n] || 0) + 1; j.boatRare++; msg += `・網の底から「${f.n}」が出てきた！`; F7.notify(`網の中から沖の魚「${f.n}」が見つかった！`, "fish_" + f.n); }
+      saveWorld(); checkTitles42();
+    } else msg = i >= N ? "きょうはもうお給料をもらったよ（練習）" : "途中でやめたので、お給料はなし";
+    if (closed || !$("mbody")) return;
+    $("mbody").innerHTML = `<div class="dk75r"><b>仕分けおしまい</b><span>${ok}/${N}個、合っていた</span><span>${esc(msg)}</span></div><div class="row2"><button class="btn light" type="button" id="bt93ok">とじる</button></div>`;
+    $("bt93ok").onclick = closeModal;
+  }
+  F93.B = { answer, cur: () => cur, state: () => ({ i, ok }), finish: () => finish(false), force: n => { ok = n; i = N; finish(false); } };
+  next();
+}
+F93.boat = playBoat93;
+
+// =================== 灯台守 ===================
+function startLight93() {
+  if (!left93("light")) { toast(null, "灯台の仕事は、きょうはもう終わったよ"); return; }
+  if (world.time < 1020) { toast(null, `灯台のあかりは夕方（17時〜）から。いまは${clockStr()}`); return; }
+  playLight93();
+}
+function playLight93() {
+  const FL = 6; let floor = 0, miss = 0, t = 0, stage = "lamps", ended = false, wish = 0, sky = null, last = performance.now(), skyT = 0, stars = [], shoot = null;
+  for (let k = 0; k < 90; k++) stars.push({ x: Math.random() * 320, y: Math.random() * 120, r: Math.random() * 1.2 + .3, p: Math.random() * 6 });
+  openModal("灯台守", "ph76m", body => {
+    body.innerHTML = `<div class="lt93"><div class="lt93tw" id="lt93tw">${Array.from({ length: FL }, (_, k) => `<i class="lt93l" data-f="${FL - 1 - k}"></i>`).join("")}</div>
+      <div class="lt93r"><p class="mtext small" id="lt93m">下の階から順に、火をつけよう。ゲージが緑のときに押してね</p><div class="lt93g"><b id="lt93z"></b><i id="lt93c"></i></div><button type="button" class="btn" id="lt93b">火をつける</button></div>
+      <canvas id="lt93sky" width="320" height="170" hidden></canvas></div>`;
+  }, () => { if (!ended) { ended = true; if (floor >= FL) done(true); } });
+  const zone = () => ({ w: Math.max(.16, .34 - floor * .035) }), cursor = () => (Math.sin(t * (1.6 + floor * .35)) * .5 + .5);
+  let zc = Math.random() * .5 + .25;
+  const lamps = () => $("lt93tw").querySelectorAll(".lt93l").forEach(el => el.classList.toggle("on", +el.dataset.f < floor));
+  const press = () => {
+    if (ended || stage !== "lamps") return;
+    const c = cursor(), z = zone();
+    if (Math.abs(c - zc) <= z.w / 2) { floor++; se13("harvest"); zc = Math.random() * .5 + .25; lamps(); $("lt93m").textContent = floor >= FL ? "ぜんぶ灯った！" : `${floor}階に火がついた`; if (floor >= FL) setTimeout(() => { stage = "sky"; showSky(); }, 700); }
+    else { miss++; se13("miss"); $("lt93m").textContent = "火が消えた…もう一度"; }
+  };
+  $("lt93b").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+  const onKey = e => { if (stage !== "lamps") return; if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) press(); } };
+  addEventListener("keydown", onKey, true);
+  function showSky() {
+    $("lt93tw").style.display = "none"; document.querySelector(".lt93r").style.display = "none"; sky = $("lt93sky"); sky.hidden = false; skyT = 0;
+    sky.addEventListener("pointerdown", e => { e.preventDefault(); if (!shoot || shoot.got) return; const r = sky.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 320, y = (e.clientY - r.top) / r.height * 170; if (Math.hypot(x - shoot.x, y - shoot.y) < 26) { shoot.got = true; wish++; se13("big"); } });
+    $("mbody").insertAdjacentHTML("beforeend", `<p class="mtext small" id="lt93s">星空を見上げよう。流れ星を、タップでつかまえて、お願いごと（最大3回）</p>`);
+  }
+  function done(closed) {
+    removeEventListener("keydown", onKey, true); ended = true;
+    const j = j93(); const base = Math.max(250, 450 - miss * 30), bonus = Math.min(3, wish) * 50, n = base + bonus;
+    if (left93("light") > 0) { j.paid.light++; j.lightN++; pay93(n, `灯台守：あかりを灯した${bonus ? `・流れ星に${wish}回お願いした` : ""}`); saveWorld(); checkTitles42(); }
+    if (closed || !$("mbody")) return;
+    $("mbody").innerHTML = `<div class="dk75r"><b>おつかれさま</b><span>灯台のあかりが、夜の海を照らしている</span><span>お給料 <em>${fmt(n)}</em>${bonus ? `（流れ星のお願い +${bonus}）` : ""}</span></div><div class="row2"><button class="btn light" type="button" id="lt93ok">とじる</button></div>`;
+    $("lt93ok").onclick = closeModal;
+  }
+  const loop = now => {
+    if (ended && stage !== "sky") return; if (!$("lt93b") && !$("lt93sky")) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+    if (stage === "lamps") {
+      const z = zone(); $("lt93c").style.left = (cursor() * 100) + "%"; const el = $("lt93z"); el.style.left = ((zc - z.w / 2) * 100) + "%"; el.style.width = (z.w * 100) + "%";
+    } else if (stage === "sky" && sky && !ended) {
+      skyT += dt; const g = sky.getContext("2d");
+      const grd = g.createLinearGradient(0, 0, 0, 170); grd.addColorStop(0, "#0a1030"); grd.addColorStop(1, "#2a3a6a"); g.fillStyle = grd; g.fillRect(0, 0, 320, 170);
+      for (const s of stars) { g.globalAlpha = .5 + .5 * Math.sin(skyT * 2 + s.p); g.fillStyle = "#fff"; g.fillRect(s.x, s.y, s.r + .6, s.r + .6); } g.globalAlpha = 1;
+      g.fillStyle = "#f8f0c0"; g.beginPath(); g.arc(270, 36, 14, 0, 7); g.fill(); g.fillStyle = "#0e1840"; g.beginPath(); g.arc(276, 32, 12, 0, 7); g.fill();
+      g.fillStyle = "#1a2a50"; g.fillRect(0, 140, 320, 30); g.fillStyle = "#6a8ac0"; for (let k = 0; k < 8; k++) g.fillRect((k * 44 + skyT * 6) % 330, 148 + (k % 3) * 6, 18, 1);
+      g.fillStyle = "#f4f0e8"; g.fillRect(150, 100, 20, 46); g.fillStyle = "#d83a3a"; g.fillRect(150, 112, 20, 8); g.fillRect(150, 130, 20, 8); g.fillStyle = "#fff8b0"; g.fillRect(152, 90, 16, 12);
+      g.fillStyle = "rgba(255,248,176,.25)"; g.beginPath(); g.moveTo(160, 96); g.lineTo(320, 70); g.lineTo(320, 118); g.fill();
+      if (!shoot && skyT > 1.5 && Math.random() < dt * .7 && wish < 3) shoot = { x: 300, y: 20 + Math.random() * 50, vx: -80, vy: 34, got: false, life: 0 };
+      if (shoot) { shoot.x += shoot.vx * dt; shoot.y += shoot.vy * dt; shoot.life += dt; g.strokeStyle = shoot.got ? "#ffd86a" : "#fff"; g.lineWidth = 2; g.beginPath(); g.moveTo(shoot.x, shoot.y); g.lineTo(shoot.x + 26, shoot.y - 11); g.stroke(); if (shoot.x < -30 || shoot.life > 6) shoot = null; }
+      const ms = $("lt93s"); if (ms) ms.textContent = `流れ星に ${wish} 回お願いした（${Math.max(0, Math.ceil(16 - skyT))}秒）`;
+      if (skyT > 16 || wish >= 3 && skyT > 3) { stage = "end"; done(false); return; }
+    }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F93.L = { press, state: () => ({ floor, miss, stage, wish, zc, c: cursor() }), setC: v => { zc = v; }, forceSky: () => { floor = FL; stage = "sky"; showSky(); }, finish: () => done(false), zoneNow: () => Math.abs(cursor() - zc) <= zone().w / 2 };
+}
+F93.light = startLight93;
+
+// =================== 脱走の手引き（2人で合図）と、お手紙の受けとり ===================
+// 中の人が「助けて」を出す → 村の人が引き受ける → 4つの合図（赤・青・緑・黄）を、交代で「送る・まねる」を4回。3回まちがえると見つかって終わり
+const RSLEN93 = [3, 3, 4, 5], RSCOL93 = [["赤", "#d84a4a"], ["青", "#4a7ad8"], ["緑", "#4aa85a"], ["黄", "#e8c040"]];
+F93.RS = null; F93.wait = null;
+const inLabor93 = () => !!world.labor;
+function escapeDone93(helperName) {
+  if (!world.labor) return;
+  F93.RS = null; F93.wait = null;
+  if (crimeJail78()) { world.stats.escapes++; world.labor = null; const c = cash78().crime; for (const k of Object.keys(c)) if (c[k] > world.day) c[k]++; saveWorld(); closeModal(); enter(village, 31, 7, "down"); toast(null, `${helperName || "だれか"}の手引きで脱走できた！…でも罪は重くなった（称号があと1日のびた）`); }
+  else { world.stats.escapes++; world.labor = null; world.gaveUpDay = world.day; saveWorld(); closeModal(); enter(village, 31, 7, "down"); toast(null, `${helperName || "だれか"}の手引きで脱走できた！…でも借金は残ってる`); }
+}
+function openHelpMe93() {
+  if (!world.labor) { toast(null, "いまは助けはいらないよ"); return; }
+  if (!F8.connected) { toast(null, "オンラインのときだけ、助けを呼べるよ"); return; }
+  const j = j93();
+  openModal("助けを呼ぶ", "yami", body => {
+    const waiting = !!F93.wait;
+    body.innerHTML = waiting
+      ? `<p class="mtext">村の人が来てくれるのを待っているよ…（20分で取り下げられる）</p><div class="row2"><button class="btn light" type="button" id="hm93c">助けを取り下げる</button></div>`
+      : `<p class="mtext">労働施設から、村の人に「助けて」を出す。だれかが引き受けてくれたら、2人で合図を合わせて脱走を手引きしてもらう。</p>
+         <p class="mtext small">脱走は、ふつうの脱走と同じ。借金は残るし、罪の称号はあと1日のびる。1日3回まで（きょうはあと${Math.max(0, 3 - (j.paid.help || 0))}回）。</p>
+         <div class="row2"><button class="btn" type="button" id="hm93y" ${j.paid.help >= 3 ? "disabled" : ""}>「助けて」を出す</button><button class="btn light" type="button" id="hm93n">やめる</button></div>`;
+    const c = body.querySelector("#hm93c"); if (c) c.onclick = () => { send8({ type: "job", a: "help", on: false }); F93.wait = null; closeModal(); };
+    const y = body.querySelector("#hm93y"); if (y) y.onclick = () => { j.paid.help++; saveWorld(); send8({ type: "job", a: "help", on: true }); F93.wait = { since: Date.now() }; openHelpMe93(); };
+    const n = body.querySelector("#hm93n"); if (n) n.onclick = closeModal;
+  }, () => { });
+}
+F76.add({ id: "help93", name: "助けて", ch: "助", c: "#c04a4a", open: openHelpMe93, show: () => !!world.labor && F8.connected });
+function showWanted93(list) {
+  const body = $("mbody"); const box = document.getElementById("j93extra");
+  if (!modalOpen || !box) { return; }
+  box.innerHTML = list.length ? `<h4>助けを求めている人</h4><div class="list">${list.map(r => `<div class="li"><img src="${ASSETS.s93_jobs}" alt=""><span class="nm">${esc(r.name)}さん<span class="sub2">労働施設で「助けて」を出している${r.busy ? "（ほかの人が向かっている）" : ""}</span></span><span class="acts"><button class="btn" type="button" data-w93="${r.id}" ${r.busy || j93().rescued[r.id] === world.day ? "disabled" : ""}>${j93().rescued[r.id] === world.day ? "きょう助けた" : "助けに行く"}</button></span></div>`).join("")}</div>` : `<p class="mtext small">いま、「助けて」を出している人はいないよ。</p>`;
+  box.querySelectorAll("[data-w93]").forEach(b => b.onclick = () => { b.disabled = true; send8({ type: "job", a: "join", id: +b.dataset.w93 }); });
+  const rb = body.querySelector("[data-j93='rescueList']"); if (rb) { rb.disabled = false; rb.textContent = "さがしなおす"; }
+}
+function rsRender93() {
+  const R = F93.RS; if (!R) return;
+  const creator = R.round % 2 === 1 ? "helper" : "inmate", L = RSLEN93[R.round - 1];
+  const meMake = R.role === creator;
+  const msg = R.over ? R.over : R.phase === "make" ? `あなたが合図を送る番。${L}つ、好きな順に押してね（${R.seq.length}/${L}）` : R.phase === "wait" ? `${R.pname}さんが、まねしているよ…${R.prog ? `（${R.prog}/${L}）` : ""}` : R.phase === "watch" ? `${R.pname}さんの合図を見ていてね（${R.seq.length}/${L}）` : `同じ順番で押してね（${R.idx}/${L}）`;
+  const ui = $("rs93"); if (!ui) return;
+  $("rs93h").textContent = `${R.round}/4回目・${meMake ? "送る番" : "まねる番"}`; $("rs93m").textContent = msg; $("rs93s").textContent = "見つかりそう：" + "●".repeat(R.strikes) + "○".repeat(3 - R.strikes);
+  ui.querySelectorAll("[data-c93]").forEach(b => b.disabled = !!R.over || !(R.phase === "make" || R.phase === "repeat"));
+}
+function rsFlash93(c) { const b = document.querySelector(`[data-c93="${c}"]`); if (!b) return; b.classList.add("fl"); se13("small"); setTimeout(() => b.classList.remove("fl"), 320); }
+function rsStart93(role, inmate, partner, pname) {
+  F93.RS = { role, inmate, partner, pname, round: 1, seq: [], idx: 0, strikes: 0, prog: 0, phase: role === "helper" ? "make" : "watch", over: "" };
+  F93.wait = null;
+  openModal("脱走の手引き", "ph76m", body => {
+    body.innerHTML = `<div class="rs93" id="rs93"><p class="mtext small">${role === "helper" ? `${esc(pname)}さんを助ける。` : `${esc(pname)}さんが助けに来てくれた。`}合図を交代で送りあって、見張りの目をかいくぐろう</p>
+      <p class="rs93h" id="rs93h"></p><div class="rs93b">${RSCOL93.map(([n, c], i) => `<button type="button" data-c93="${i}" style="--c:${c}">${n}</button>`).join("")}</div><p class="mtext" id="rs93m"></p><p class="mtext small" id="rs93s"></p></div>`;
+    body.querySelectorAll("[data-c93]").forEach(b => b.onclick = () => rsTap93(+b.dataset.c93));
+  }, () => { const R = F93.RS; if (R && !R.over) { send8({ type: "job", a: "rs", id: R.inmate, op: "bye" }); if (R.role === "inmate") { F93.wait = null; } F93.RS = null; } });
+  rsRender93();
+}
+function rsAdvance93() {
+  const R = F93.RS; R.round++; R.seq = []; R.idx = 0; R.prog = 0;
+  const creator = R.round % 2 === 1 ? "helper" : "inmate"; R.phase = R.role === creator ? "make" : "watch"; rsRender93();
+}
+function rsTap93(c) {
+  const R = F93.RS; if (!R || R.over) return; const L = RSLEN93[R.round - 1]; rsFlash93(c);
+  if (R.phase === "make") {
+    R.seq.push(c); send8({ type: "job", a: "rs", id: R.inmate, op: "flash", c });
+    if (R.seq.length >= L) { R.phase = "wait"; R.prog = 0; send8({ type: "job", a: "rs", id: R.inmate, op: "ready", n: L }); }
+  } else if (R.phase === "repeat") {
+    if (c === R.seq[R.idx]) {
+      R.idx++; send8({ type: "job", a: "rs", id: R.inmate, op: "hit", n: R.idx });
+      if (R.idx >= L) {
+        if (R.round >= 4) { send8({ type: "job", a: "rs", id: R.inmate, op: "won" }); rsEnd93(true); return; }
+        send8({ type: "job", a: "rs", id: R.inmate, op: "next", n: R.round }); rsAdvance93(); return;
+      }
+    } else {
+      R.strikes++; R.idx = 0; se13("miss"); send8({ type: "job", a: "rs", id: R.inmate, op: "miss" });
+      if (R.strikes >= 3) { send8({ type: "job", a: "rs", id: R.inmate, op: "lost" }); rsEnd93(false); return; }
+    }
+  }
+  rsRender93();
+}
+function rsEnd93(win, text) {
+  const R = F93.RS; if (!R) return; R.over = win ? "成功！" : (text || "見つかってしまった…"); rsRender93();
+  const j = j93();
+  if (R.role === "helper" && win) {
+    let msg = "手引き成功！";
+    if (left93("rescue") > 0 && j.rescued[R.inmate] !== world.day) { j.rescued[R.inmate] = world.day; j.paid.rescue++; j.rescueN++; pay93(200, `${R.pname}さんの脱走を手引きした`); msg += "お礼に200Gをもらった"; checkTitles42(); }
+    $("rs93m").textContent = msg; saveWorld();
+  } else if (R.role === "inmate" && !win) {
+    send8({ type: "job", a: "help", on: false }); F93.wait = null;
+    $("rs93m").textContent = text || "見つかってしまった…もう一度、助けを呼ぼう";
+  } else if (R.role === "helper" && !win) { $("rs93m").textContent = text || "見つかってしまった…"; }
+  setTimeout(() => { const x = F93.RS; if (x === R) F93.RS = null; }, 100);
+  se13(win ? "big" : "miss");
+}
+function onRs93(e) {
+  const R = F93.RS; if (!R || e.id !== R.inmate) return;
+  if (e.op === "flash") { R.seq.push(e.c); rsFlash93(e.c); rsRender93(); }
+  else if (e.op === "ready") { R.phase = "repeat"; R.idx = 0; rsRender93(); }
+  else if (e.op === "hit") { R.prog = e.n; rsRender93(); }
+  else if (e.op === "miss") { R.strikes++; R.prog = 0; se13("miss"); rsRender93(); }
+  else if (e.op === "next") { rsAdvance93(); }
+  else if (e.op === "lost") { rsEnd93(false); }
+  else if (e.op === "bye") {
+    F93.RS = null; closeModal();
+    if (R.role === "inmate" && world.labor) { toast(null, "助けに来た人が離れた。もう一度、助けを呼ぼう"); F93.wait = null; send8({ type: "job", a: "help", on: false }); } else toast(null, "相手が離れた");
+  }
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "job") {
+      if (m.a === "list" && F93.listWanted) { F93.listWanted = false; showWanted93(Array.isArray(m.list) ? m.list : []); return; }
+      if (m.a === "joined") {
+        if (m.ok) { j93(); rsStart93("helper", +m.id, +m.id, String(m.name || "だれか")); }
+        else { toast(null, String(m.text || "引き受けられなかった")); send8({ type: "job", a: "list" }); F93.listWanted = true; }
+        return;
+      }
+      if (m.a === "letter") {
+        const w = F93.letterWait; F93.letterWait = null; const j = j93();
+        if (m.ok && w && j.letters < 3) { j.letters++; pay93(100, "お手紙が、ちゃんと届いた。ボーナス"); } else if (!m.ok && m.text) toast(null, String(m.text));
+        return;
+      }
+      const e = m.ev; if (!e) return;
+      if (e.kind === "letter") { getLetter93(e); }
+      else if (e.kind === "joined") { if (world.labor && F93.wait) { rsStart93("inmate", onl.id || F8.myId(), +e.id, String(e.name || "だれか")); } else send8({ type: "job", a: "help", on: false }); }
+      else if (e.kind === "freed") { if (world.labor) escapeDone93(String(e.name || "")); }
+      else if (e.kind === "rs") onRs93(e);
+      else if (e.kind === "bye") { /* 助けに来た人がいなくなった */ if (F93.RS && F93.RS.role === "inmate") onRs93({ id: F93.RS.inmate, op: "bye" }); }
+      else if (e.kind === "help") { if (e.on && !world.labor && F93.jobWhere === "village") { F7.notify(`${e.name}さんが、労働施設で「助けて」を出している（求人の掲示板「脱走の手引き」）`, null); } }
+      return;
+    }
+    _h(m);
+    if (m && m.type === "welcome" && Array.isArray(m.job93)) setTimeout(() => m.job93.forEach(getLetter93), 3500);
+  };
+}
+function getLetter93(e) {
+  const j = j93(); j.inbox.unshift({ name: String(e.name || "だれか").slice(0, 20), k: Math.max(0, Math.min(5, e.k | 0)), day: world.day }); j.inbox.length = Math.min(j.inbox.length, 10);
+  saveWorld(); F7.notify(`${String(e.name || "だれか")}さんから、お手紙が届いた：「${LETTER93[j.inbox[0].k]}」`, null);
+}
+F93.letter = getLetter93;
+
+// =================== 北の丘の巡査（もう一人） ===================
+const POLICE93 = { name: "巡査 ケイ", cfg: { skin: "色白", hair: "ボブ", hairc: "ブラウン", top: "スーツ", topc: "青", bottom: "パンツ", bottomc: "黒", hat: "キャップ", shoesc: "黒" } };
+const police93 = entity(NGAP[0], 62, { ...DEFAULT, ...POLICE93.cfg }, POLICE93.name, "police"); police93.home = village; police93.speed = .16;
+const PATROL93 = { x: NGAP[0], y0: 55, y1: 80, wait: 12, v: .7 };
+function patrolPos93(t) {
+  const L = PATROL93.y1 - PATROL93.y0, leg = L / PATROL93.v, P = 2 * (leg + PATROL93.wait); let u = (t / 1000) % P;
+  if (u < PATROL93.wait) return [PATROL93.y0, 0]; u -= PATROL93.wait;
+  if (u < leg) return [PATROL93.y0 + Math.floor(u * PATROL93.v), 1]; u -= leg;
+  if (u < PATROL93.wait) return [PATROL93.y1, 0]; u -= PATROL93.wait;
+  return [PATROL93.y1 - Math.floor(u * PATROL93.v), -1];
+}
+function updatePolice93(dt) {
+  const e = police93; if (map !== village) return;
+  const [ty, d] = patrolPos93(Date.now() + 7000);
+  if (!e.moving) {
+    if (Math.abs(ty - e.y) > 3 || e.x !== PATROL93.x) placeAt(e, PATROL93.x, ty, d > 0 ? "down" : d < 0 ? "up" : "down");
+    else if (ty !== e.y) { const s = ty > e.y ? 1 : -1; e.dir = s > 0 ? "down" : "up"; e.fx = e.x; e.fy = e.y + s; e.moving = true; e.prog = 0; }
+    else if (!d) e.dir = "down";
+  }
+  updateEnt(e, dt);
+}
+{
+  const _uc = updateCollector; updateCollector = function (dt) { _uc.apply(this, arguments); try { updatePolice93(dt); } catch (e) { } };
+  const _ev = F6.entsVillage; F6.entsVillage = () => [..._ev(), police93];
+  const _a = act;
+  act = function () {
+    if (map === village && !modalOpen && !placing && !fish && !busy && !player.moving) { const [tx, ty] = front(); if (tx === police93.x && ty === police93.y) { openPolice78(); return; } }
+    return _a.apply(this, arguments);
+  };
+}
+F93.police = police93; F93.patrol = patrolPos93;
+
+// ---- 称号 ----
+const TTL93 = [
+  ["配達の達人", "郵便配達で「ほぼ最短」以上を3回とる", () => (world.j93?.mailBest || 0) >= 3],
+  ["朝刊係", "新聞配達で、10軒ぜんぶに届ける", () => (world.j93?.newsFull || 0) >= 1],
+  ["灯台守", "灯台守のアルバイトを3回やる", () => (world.j93?.lightN || 0) >= 3],
+  ["沖の魚の贈り物", "釣り船の手伝いで、沖の魚をもらう", () => (world.j93?.boatRare || 0) >= 1],
+  ["脱走の手引き人", "脱走の手引きを3回成功させる", () => (world.j93?.rescueN || 0) >= 3],
+];
+for (const t of TTL93) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+F93.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -19537,7 +20067,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

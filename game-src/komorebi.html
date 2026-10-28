@@ -1407,7 +1407,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.52.0";
+  const VER = "0.53.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5410,7 +5410,7 @@ function showLaborRules() {
         <div class="li"><img src="${ASSETS.chest}" alt=""><span class="nm">荷物運び<span class="sub2">左の荷物の山でⒶ → 右の荷車でⒶ。1往復でノルマ+1</span></span></div>
         <div class="li"><img src="${ASSETS.ore}" alt=""><span class="nm">仕分け（ミニゲーム）<span class="sub2">中央下の作業台でⒶ。ミスなし8秒以内ならノルマ+2</span></span></div>
       </div>
-      <p class="mtext small">ノルマを終えるか、借金の延滞分を返し終えるか、ゲーム内で6時間たつと解放され、残りの期限が5日延びます。出口から逃げることもできますが、見張りに見つかるとノルマが増えます。オンラインなら、スマホの「助けて」で村の人に手引きをお願いすることもできます。</p>
+      <p class="mtext small">ノルマを終えるか、借金の延滞分を返し終えるか、ゲーム内で6時間たつと解放され、残りの期限が5日延びます。出口から逃げることもできますが、見張りに見つかるとノルマが増えます。オンラインでほかの人がいれば、出口の前で「助けて」を出して、手引きをお願いすることもできます。</p>
       <div class="row2"><button class="btn" type="button" id="lbOk">はたらく</button></div>`;
     body.innerHTML = kA(body.innerHTML);
     body.querySelector("#lbOk").onclick = closeModal;
@@ -5874,7 +5874,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.52.0";
+const CLIENT_VERSION = "0.53.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7952,11 +7952,15 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
-  { v: "0.52.0", date: "2026/10/28", title: "村のアルバイトが5つ・北の丘にも巡査", items: [
-    "村の広場（掲示板のとなり）とみなと町に「求人の掲示板」ができた。村では「郵便配達」「新聞配達」「脱走の手引き」、みなと町では「釣り船の手伝い」「灯台守」のアルバイトを受けられる",
+  { v: "0.53.0", date: "2026/10/28", title: "労働施設の出口で「助けて」", items: [
+    "オンラインでほかの人がいるとき、労働施設の出口に立つと「助けて」を出せるようになった。出口の前で、自分でこっそり抜けるか、村の人に手引きをお願いするかを選べる",
+    "「助けて」が出ると、ほかの人に知らせが届いて、スマホに「頼まれごと」が現れる。引き受けると、2人で合図（赤・青・緑・黄）を交代で送りあう協力ゲームで、中の人を脱走させられる。お礼は200G（1日3回まで）",
+    "求人の掲示板から「脱走の手引き」を外した。スマホのアプリ「助けて」もなくなった"
+  ] },
+  { v: "0.52.0", date: "2026/10/28", title: "村のアルバイトが4つ・北の丘にも巡査", items: [
+    "村の広場（掲示板のとなり）とみなと町に「求人の掲示板」ができた。村では「郵便配達」「新聞配達」、みなと町では「釣り船の手伝い」「灯台守」のアルバイトを受けられる",
     "郵便配達：配達先5か所を、自分の足で回ってお手紙を届ける。道のりが短いほどお給料が高い（最大700G）。オンラインなら、ほかの人の家にも届けられて、相手に本物のお手紙が届く（ボーナス100G）",
     "新聞配達：朝（6時〜9時）だけ。10軒にタイミングよく新聞を投げ入れる。1軒40G・ぜんぶ入ると+100G。配った新聞は、スマホの「新聞」アプリで読める",
-    "脱走の手引き（オンライン）：労働施設の中の人が、スマホの「助けて」を出したときだけ始まる。助けに行く人と中の人が、4つの合図（赤・青・緑・黄）を交代で送りあう2人協力のゲーム。成功すると、中の人は脱走できて、助けた人は200Gをもらえる（1日3回まで）",
     "釣り船の手伝い：網の中身を「さかな・ごみ・かいそう」に仕分ける。ほとんど合っていると、まれに沖でしか釣れない魚が出てくる",
     "灯台守：夕方（17時〜）から。灯台のあかりを下から順に灯して、星空を見上げる。流れ星をタップして、お願いごともできる",
     "北の丘の道を、もう一人の巡査「ケイ」が見回るようになった。6マス以内で作物を盗むと見つかるのは、マモルと同じ",
@@ -15845,7 +15849,7 @@ function showJail78() {
   openModal("労働施設（つとめ）", "yami", body => {
     body.innerHTML = staffSay13(charIcon13({ skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "ジャケット", topc: "青", bottom: "パンツ", bottomc: "黒", glasses: true }), `「${esc(world.labor.crime)}」か…。ここでしっかり、つとめを果たしてもらうぞ`)
       + `<div class="stat"><span>つとめ</span><b>${world.labor.quota} 回</b><span>長くても</span><b>6時間で釈放</b></div>
-      <p class="mtext small">岩を砕く・荷物を運ぶ・仕分けで、つとめが進む（借金の返済にはならないよ）。逃げることもできるけど、見張りに見つかるとつとめが増えて、逃げきれても罪が重くなる（称号が1日のびる）。オンラインなら、スマホの「助けて」で村の人に手引きをお願いすることもできる。</p>
+      <p class="mtext small">岩を砕く・荷物を運ぶ・仕分けで、つとめが進む（借金の返済にはならないよ）。逃げることもできるけど、見張りに見つかるとつとめが増えて、逃げきれても罪が重くなる（称号が1日のびる）。オンラインでほかの人がいれば、出口の前で「助けて」を出して、手引きをお願いすることもできる。</p>
       <div class="row2"><button class="btn" type="button" id="jl78">はい…</button></div>`;
     body.querySelector("#jl78").onclick = closeModal;
   });
@@ -17086,6 +17090,7 @@ F17.kinds80 = 300;
 
 // ---------- スマホ：白い線のアイコン ----------
 const ICON80 = {
+  yami94: `<path d="M6 27V15a10 10 0 0 1 20 0v12"/><path d="M11 16.5h3.5M17.5 16.5H21"/><path d="M10 27h12"/>`,
   map: `<path d="M16 29s-9-8.2-9-15a9 9 0 0 1 18 0c0 6.8-9 15-9 15z"/><circle cx="16" cy="14" r="3.4"/>`,
   chat: `<path d="M5 6h22a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H15l-6 5v-5H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/>`,
   friend: `<path d="M16 28S4 20.5 4 12.2A6.2 6.2 0 0 1 16 9.6 6.2 6.2 0 0 1 28 12.2C28 20.5 16 28 16 28z"/>`,
@@ -19192,7 +19197,6 @@ function openJobs93(where, note) {
     body.innerHTML = `${note ? `<p class="mtext">${esc(note)}</p>` : ""}<p class="mtext">村の人の手伝いをして、お小遣いをかせごう。${village ? "ここの掲示板は村の広場。" : "ここはみなと町の掲示板。"}</p><div class="list">
       ${village ? card("mail", "s93_jobs", "郵便配達", "配達先5か所へ、歩いてお手紙を届ける。道のりが短いほどお給料が高い（最大700G）。ほかの人の家に届けると、本物のお手紙が届いて、ボーナス100G", M ? `配達中（${mailDone}/${M.stops.length}）` : `きょうはあと${left93("mail")}回`, mailBtn) : ""}
       ${village ? card("news", "s93_jobs", "新聞配達", "朝のうちだけ（6時〜9時）。10軒に新聞を投げ入れる。1軒40G・ぜんぶ入れると+100G。新聞アプリとも つながっている", left93("news") ? (newsOK ? "いまならできる" : `朝（6時〜9時）だけ・いまは${clockStr()}`) : "きょうはもうやった", left93("news") && newsOK ? `<button class="btn" type="button" data-j93="newsStart">はじめる</button>` : "") : ""}
-      ${village ? card("rescue", "s93_jobs", "脱走の手引き", "労働施設の中の人が「助けて」を出したときだけ。2人で合図を合わせて、脱走を手引きする。お礼は小さめ（200G・1日3回まで）", online ? (left93("rescue") ? "助けを求めている人を見てみる" : "きょうはもう3回やった") : "オンラインのときだけ", online && left93("rescue") ? `<button class="btn" type="button" data-j93="rescueList">さがす</button>` : "") : ""}
       ${!village ? card("boat", "s93_fish", "釣り船の手伝い", "網の中身を「さかな・ごみ・かいそう」に仕分ける。うまくいくと、まれに沖の魚がもらえる（100G〜600G）", `きょうはあと${left93("boat")}回`, left93("boat") ? `<button class="btn" type="button" data-j93="boatStart">はじめる</button>` : "") : ""}
       ${!village ? card("light", "s93_lighthouse", "灯台守", "夕方から夜だけ（17時〜）。灯台のあかりを下から順に灯して、星空を見上げる。450G", left93("light") ? (lightOK ? "いまならできる" : `夕方（17時〜）から・いまは${clockStr()}`) : "きょうはもうやった", left93("light") && lightOK ? `<button class="btn" type="button" data-j93="lightStart">はじめる</button>` : "") : ""}
     </div><div id="j93extra"></div>
@@ -19205,7 +19209,6 @@ function openJobs93(where, note) {
       else if (k === "newsStart") { closeModal(); playNews93(); }
       else if (k === "boatStart") { closeModal(); playBoat93(); }
       else if (k === "lightStart") { closeModal(); startLight93(); }
-      else if (k === "rescueList") { F93.listWanted = true; send8({ type: "job", a: "list" }); b.disabled = true; b.textContent = "さがしている…"; }
     });
   });
 }
@@ -19439,26 +19442,20 @@ function escapeDone93(helperName) {
 function openHelpMe93() {
   if (!world.labor) { toast(null, "いまは助けはいらないよ"); return; }
   if (!F8.connected) { toast(null, "オンラインのときだけ、助けを呼べるよ"); return; }
-  const j = j93();
-  openModal("助けを呼ぶ", "yami", body => {
-    const waiting = !!F93.wait;
+  const j = j93(), left = Math.max(0, 3 - (j.paid.help || 0));
+  openModal("出口の前", "yami", body => {
+    const waiting = !!F93.wait && F93.wait.lab === world.labor && Date.now() - F93.wait.since < 1200000;
+    if (!waiting) F93.wait = null;
     body.innerHTML = waiting
-      ? `<p class="mtext">村の人が来てくれるのを待っているよ…（20分で取り下げられる）</p><div class="row2"><button class="btn light" type="button" id="hm93c">助けを取り下げる</button></div>`
-      : `<p class="mtext">労働施設から、村の人に「助けて」を出す。だれかが引き受けてくれたら、2人で合図を合わせて脱走を手引きしてもらう。</p>
-         <p class="mtext small">脱走は、ふつうの脱走と同じ。借金は残るし、罪の称号はあと1日のびる。1日3回まで（きょうはあと${Math.max(0, 3 - (j.paid.help || 0))}回）。</p>
-         <div class="row2"><button class="btn" type="button" id="hm93y" ${j.paid.help >= 3 ? "disabled" : ""}>「助けて」を出す</button><button class="btn light" type="button" id="hm93n">やめる</button></div>`;
+      ? `<p class="mtext">見張りの目をうかがいながら、村の人が来てくれるのを待っているよ…（20分で取り下げられる）</p><div class="row2"><button class="btn light" type="button" id="hm93c">助けを取り下げる</button><button class="btn light" type="button" id="hm93s">自分でこっそり抜ける</button><button class="btn light" type="button" id="hm93n">戻る</button></div>`
+      : `<p class="mtext">出口の向こうは村の外れ。だれかが村にいるみたいだ。…「助けて」を出してみる？</p>
+         <p class="mtext small">だれかが引き受けてくれたら、2人で合図を合わせて、見張りの目をかいくぐって抜け出す。借金は残るし、罪の称号はあと1日のびる。1日3回まで（きょうはあと${left}回）。</p>
+         <div class="row2"><button class="btn" type="button" id="hm93y" ${left <= 0 ? "disabled" : ""}>「助けて」を出す</button><button class="btn light" type="button" id="hm93s">自分でこっそり抜ける</button><button class="btn light" type="button" id="hm93n">やめる</button></div>`;
     const c = body.querySelector("#hm93c"); if (c) c.onclick = () => { send8({ type: "job", a: "help", on: false }); F93.wait = null; closeModal(); };
-    const y = body.querySelector("#hm93y"); if (y) y.onclick = () => { j.paid.help++; saveWorld(); send8({ type: "job", a: "help", on: true }); F93.wait = { since: Date.now() }; openHelpMe93(); };
+    const y = body.querySelector("#hm93y"); if (y) y.onclick = () => { j.paid.help++; saveWorld(); send8({ type: "job", a: "help", on: true }); F93.wait = { since: Date.now(), lab: world.labor }; openHelpMe93(); };
+    const sn = body.querySelector("#hm93s"); if (sn) sn.onclick = () => { if (F93.wait) { send8({ type: "job", a: "help", on: false }); F93.wait = null; } closeModal(); F94.solo(); };
     const n = body.querySelector("#hm93n"); if (n) n.onclick = closeModal;
   }, () => { });
-}
-F76.add({ id: "help93", name: "助けて", ch: "助", c: "#c04a4a", open: openHelpMe93, show: () => !!world.labor && F8.connected });
-function showWanted93(list) {
-  const body = $("mbody"); const box = document.getElementById("j93extra");
-  if (!modalOpen || !box) { return; }
-  box.innerHTML = list.length ? `<h4>助けを求めている人</h4><div class="list">${list.map(r => `<div class="li"><img src="${ASSETS.s93_jobs}" alt=""><span class="nm">${esc(r.name)}さん<span class="sub2">労働施設で「助けて」を出している${r.busy ? "（ほかの人が向かっている）" : ""}</span></span><span class="acts"><button class="btn" type="button" data-w93="${r.id}" ${r.busy || j93().rescued[r.id] === world.day ? "disabled" : ""}>${j93().rescued[r.id] === world.day ? "きょう助けた" : "助けに行く"}</button></span></div>`).join("")}</div>` : `<p class="mtext small">いま、「助けて」を出している人はいないよ。</p>`;
-  box.querySelectorAll("[data-w93]").forEach(b => b.onclick = () => { b.disabled = true; send8({ type: "job", a: "join", id: +b.dataset.w93 }); });
-  const rb = body.querySelector("[data-j93='rescueList']"); if (rb) { rb.disabled = false; rb.textContent = "さがしなおす"; }
 }
 function rsRender93() {
   const R = F93.RS; if (!R) return;
@@ -19534,10 +19531,10 @@ function onRs93(e) {
   const _h = handle8;
   handle8 = m => {
     if (m && m.type === "job") {
-      if (m.a === "list" && F93.listWanted) { F93.listWanted = false; showWanted93(Array.isArray(m.list) ? m.list : []); return; }
+      if (m.a === "list") { if (F94.listing) { F94.listing = false; F94.sync(Array.isArray(m.list) ? m.list : []); } return; }
       if (m.a === "joined") {
         if (m.ok) { j93(); rsStart93("helper", +m.id, +m.id, String(m.name || "だれか")); }
-        else { toast(null, String(m.text || "引き受けられなかった")); send8({ type: "job", a: "list" }); F93.listWanted = true; }
+        else { toast(null, String(m.text || "引き受けられなかった")); F94.refresh(); }
         return;
       }
       if (m.a === "letter") {
@@ -19551,11 +19548,12 @@ function onRs93(e) {
       else if (e.kind === "freed") { if (world.labor) escapeDone93(String(e.name || "")); }
       else if (e.kind === "rs") onRs93(e);
       else if (e.kind === "bye") { /* 助けに来た人がいなくなった */ if (F93.RS && F93.RS.role === "inmate") onRs93({ id: F93.RS.inmate, op: "bye" }); }
-      else if (e.kind === "help") { if (e.on && !world.labor && F93.jobWhere === "village") { F7.notify(`${e.name}さんが、労働施設で「助けて」を出している（求人の掲示板「脱走の手引き」）`, null); } }
+      else if (e.kind === "help") F94.onHelp(e);
       return;
     }
     _h(m);
     if (m && m.type === "welcome" && Array.isArray(m.job93)) setTimeout(() => m.job93.forEach(getLetter93), 3500);
+    if (m && m.type === "welcome") setTimeout(() => F94.refresh(true), 4500);
   };
 }
 function getLetter93(e) {
@@ -19606,6 +19604,63 @@ const TTL93 = [
 ];
 for (const t of TTL93) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 F93.ready = true;
+
+// =================== v94: 労働施設の出口で「助けて」・ほかの人への知らせと「頼まれごと」 ===================
+// 脱走の手引き（v93）は、求人の掲示板に出さない裏の頼まれごと。中の人は、オンラインでほかの人がいるとき、出口の前で「助けて」を出せる。
+// 村のほかの人には知らせが出て、スマホに「頼まれごと」のアプリが現れる。引き受けると、2人で合図を送りあう（v93 の rsStart93）
+var F94 = { calls: {}, listing: false };
+const calls94 = () => Object.values(F94.calls).sort((a, b) => a.at - b.at);
+F94.others = () => F8.connected && !WATCH88 && remotes.size > 0;
+const _esc94 = tryEscape;
+F94.solo = () => _esc94();
+tryEscape = function () {
+  if (!world.labor || WATCH88) return;
+  if (!F94.others()) return _esc94.apply(this, arguments);
+  openHelpMe93();
+};
+F94.sync = list => {
+  const old = F94.calls; F94.calls = {};
+  for (const r of list) if (r && r.id) F94.calls[r.id] = { id: +r.id, name: String(r.name || "だれか").slice(0, 20), at: (old[r.id] && old[r.id].at) || Date.now(), busy: !!r.busy };
+  renderCalls94();
+};
+F94.refresh = quiet => { if (!F8.connected || WATCH88 || world.labor) return; F94.listing = true; send8({ type: "job", a: "list" }); };
+F94.onHelp = e => {
+  if (!e || !e.id) return;
+  if (!e.on) { delete F94.calls[e.id]; renderCalls94(); return; }
+  const fresh = !F94.calls[e.id], name = String(e.name || "だれか").slice(0, 20);
+  F94.calls[e.id] = { id: +e.id, name, at: Date.now(), busy: false };
+  renderCalls94();
+  if (fresh && !world.labor && !WATCH88 && left93("rescue") > 0) {
+    F7.notify(`${name}さんが、労働施設から「助けて」を出している…（スマホの「頼まれごと」）`, null);
+    if (!F7.pending.some(p => p.k94 === +e.id)) F7.pending.push({ kind: "custom", k94: +e.id, show: () => { if (F94.calls[e.id] && !world.labor) openCall94(+e.id); } });
+  }
+};
+function openCall94(id) {
+  const c = F94.calls[id];
+  if (!c) { toast(null, "その「助けて」は、もう終わったみたい"); return; }
+  const j = j93(), done = j.rescued[id] === world.day, left = left93("rescue");
+  openModal("頼まれごと", "yami", body => {
+    body.innerHTML = `<p class="mtext">${esc(c.name)}さんが、労働施設から「助けて」を出している。</p>
+      <p class="mtext small">表には出せない、裏の手引き。2人で合図を合わせて、見張りの目をかいくぐって脱走させる。お礼は200G（1日3回まで・同じ人は1日1回）。</p>
+      ${done ? `<p class="mtext small">この人は、きょうもう助けたよ。</p>` : left <= 0 ? `<p class="mtext small">きょうは、もう3回やったよ。</p>` : ""}
+      <div class="row2"><button class="btn" type="button" id="cl94y" ${done || left <= 0 || c.busy ? "disabled" : ""}>${c.busy ? "ほかの人が向かっている" : "引き受ける"}</button><button class="btn light" type="button" id="cl94n">いまはやめとく</button></div>`;
+    body.querySelector("#cl94y").onclick = e => { e.target.disabled = true; send8({ type: "job", a: "join", id }); };
+    body.querySelector("#cl94n").onclick = closeModal;
+  }, () => { });
+}
+F94.open = openCall94;
+function renderCalls94() {
+  const box = document.getElementById("cl94box"); if (!box) return;
+  const cs = calls94(), j = j93();
+  box.innerHTML = cs.length ? cs.map(c => { const done = j.rescued[c.id] === world.day; return `<div class="li"><img src="${ASSETS.s93_jobs}" alt=""><span class="nm">${esc(c.name)}さん<span class="sub2">労働施設で「助けて」を出している${c.busy ? "（ほかの人が向かっている）" : ""}</span></span><span class="acts"><button class="btn" type="button" data-c94="${c.id}" ${c.busy || done || left93("rescue") <= 0 ? "disabled" : ""}>${done ? "きょう助けた" : "引き受ける"}</button></span></div>`; }).join("") : `<p class="mtext small">いまは、頼まれごとはないみたい。</p>`;
+  box.querySelectorAll("[data-c94]").forEach(b => b.onclick = () => { b.disabled = true; send8({ type: "job", a: "join", id: +b.dataset.c94 }); });
+}
+function openCalls94() {
+  if (world.labor) { toast(null, "いまは、それどころじゃないよ"); return; }
+  openModal("頼まれごと", "yami", body => { body.innerHTML = `<p class="mtext small">労働施設から「助けて」が出たときだけ現れる、裏の頼まれごと。2人で合図を合わせて、脱走を手引きする（お礼は200G）。</p><div class="list" id="cl94box"></div>`; renderCalls94(); }, () => { });
+  F94.refresh();
+}
+F76.add({ id: "yami94", name: "頼まれごと", ch: "頼", c: "#6a4a7a", open: openCalls94, show: () => F8.connected && !WATCH88 && !world.labor && calls94().length > 0, badge: () => calls94().filter(c => !c.busy).length });
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -20067,7 +20122,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

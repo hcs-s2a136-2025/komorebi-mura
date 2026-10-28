@@ -1265,7 +1265,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.49.0";
+  const VER = "0.49.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5729,7 +5729,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.49.0";
+const CLIENT_VERSION = "0.49.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7807,6 +7807,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.49.1", date: "2026/10/28", title: "偽札をまぜて賭けた分は、番付に入らなくなった", items: [
+    "VIPルームで、偽札をまぜて賭けたときの勝ち負けは、カジノの番付・称号・メダル・今日の負け上限に数えないようにした。本物のお札で賭けた分だけが数えられる",
+    "村に出回っている偽札が払い戻しにまざったときも、その分はもうけに数えない。支配人ルナのきまりにも一行足した"
+  ] },
   { v: "0.49.0", date: "2026/10/27", title: "カジノの奥に、現金だけのVIPルームができた", items: [
     "こもれびパレスの右がわの紫のカーテン（「VIPルーム」）から、奥の部屋に入れるようになった。金のシャンデリア・大理石の柱・ワイン色のソファ・金のどんぐり像のある、ぜいたくな部屋。ここで遊べるのは現金（1,000G札）だけで、電子マネーは使えない",
     "部屋の中央に、高額のサイコロの卓。賭けられるのは10・50・100・500枚（これまでのVIPの10倍まで）。「大・小」（×2）に加えて、「ゾロ目」（どの目でも×35）・「合計ぴったり」（×7〜×68）・「指定ゾロ目」（×210）が選べる。払い戻しは最高5,000枚まで",
@@ -17901,7 +17905,7 @@ function openVip90(res) {
       const bet = V.bet; if (cash78().n < bet || !betOk90(bet, V)) return;
       if (K.betAllowed && !K.betAllowed(bet * BILL78)) { toast(null, K.betMsg()); return; }
       closeModal();
-      payCash78("vip", bet, ok => { if (ok) play90(V, bet); });
+      payCash78("vip", bet, (ok, d) => { if (ok) play90(V, bet, d); });
     };
     if (res && res.anim) {
       res.anim = false; res.busy = true;
@@ -17922,9 +17926,12 @@ function openVip90(res) {
   }
 }
 F90.table = openVip90;
+F90.play = (...a) => play90(...a);   // テスト用
 /** サイコロをふって、勝ち負けをその場で決める（払い戻しとお金の動きは、演出の前に終わらせる） */
-function play90(V, bet) {
+function play90(V, bet, paid) {
   const d = [1 + rnd(6), 1 + rnd(6), 1 + rnd(6)], sum = d[0] + d[1] + d[2], triple = d[0] === d[1] && d[1] === d[2];
+  // 偽札をまぜて賭けた分のもうけは、番付・負け上限・メダルに入れない（本物のお札で賭けた分だけ数える）
+  const share = bet > 0 ? Math.max(0, bet - ((paid && (paid.fu + paid.fk)) || 0)) / bet : 1;
   const P = PICK90[V.pick], arg = arg90(V), mult = P.mult(arg), win = !!P.win(d, sum, triple, arg), pay = win ? bet * mult : 0;
   const label = V.pick === "total" ? `合計${arg}ぴったり` : V.pick === "exact" ? `指定ゾロ目　${arg}・${arg}・${arg}` : P.name;
   const fin = k => {
@@ -17933,10 +17940,10 @@ function play90(V, bet) {
     const c = cash78(), room = Math.max(0, 9999 - c.n), inCash = Math.min(pay, room), over = pay - inCash, fkIn = Math.min(k, inCash), fkOut = k - fkIn;
     if (inCash) addCash78(inCash, { fu: fkIn });
     const overG = Math.max(0, over - fkOut); if (overG) addMoney(overG * BILL78);
-    const net = (pay - bet) * BILL78, st = world.stats;
+    const realPay = pay - k, net = Math.round(share * (realPay - bet) * BILL78), st = world.stats;
     st.gambleNet += net; if (K.gambleTrack) K.gambleTrack(net); st.lastGamble = world.day; if (net > st.bigWin) st.bigWin = net;
     st.vip78 = (st.vip78 || 0) + 1; st.gambles = (st.gambles || 0) + 1;
-    if (win) { st.vipWin90 = (st.vipWin90 || 0) + 1; st.vipBest90 = Math.max(st.vipBest90 || 0, pay); st.gambleWins = (st.gambleWins || 0) + 1; st.loseStreak = 0; if (V.pick === "exact") st.vipExact90 = (st.vipExact90 || 0) + 1; }
+    if (win) { st.vipWin90 = (st.vipWin90 || 0) + 1; st.vipBest90 = Math.max(st.vipBest90 || 0, Math.round(share * realPay)); st.gambleWins = (st.gambleWins || 0) + 1; st.loseStreak = 0; if (V.pick === "exact" && share > 0) st.vipExact90 = (st.vipExact90 || 0) + 1; }
     else { st.loseStreak = (st.loseStreak || 0) + 1; st.loseStreakMax = Math.max(st.loseStreakMax || 0, st.loseStreak); }
     saveWorld(); updateHud(true); try { checkTitles42(); } catch (e) { }
     const tier = tier90(win, pay, mult);
@@ -17959,6 +17966,7 @@ function openManager90() {
         <li>どの賭けも、長く遊ぶほど、お札は少しずつ減るようにできています（還元率は約97%以下）</li>
         <li>お札は9,999枚まで持てます。入りきらない分は、電子マネーで口座にお振り込みします</li>
         <li>偽札のお支払いには、とくに目を光らせております。ご注意くださいませ</li>
+        <li>偽札をまぜてお賭けになった分の勝ち負けは、番付・称号・メダル・今日の負け上限には数えません</li>
         <li>「今日の負け上限」を決めている方は、それをこえる賭けはできません</li></ul>
       <p class="mtext small">あなたの記録：勝負 ${(st.vip78 || 0)}回・勝ち ${st.vipWin90 || 0}回・最高の払い戻し ${(st.vipBest90 || 0).toLocaleString("ja-JP")}枚</p>`;
   });

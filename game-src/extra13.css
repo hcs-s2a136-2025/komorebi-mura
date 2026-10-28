@@ -677,3 +677,60 @@ body.watch88 #tut { display: none !important; }
   .vp90-odds { font-size: .7rem !important; margin: 2px 0 !important; }
   .vp90-go { min-width: 0; width: 100%; padding-top: 9px; padding-bottom: 9px; }
 }
+
+/* ---- v91: VIPルームの拡張（ルーレット・バカラ・ダブルアップ・会員ランク） ---- */
+.mbox.vip90 .mtabs { margin-bottom: 6px; }
+.mbox.vip90 .li { color: #fbeee0; }
+.mbox.vip90 .li .sub2 { color: #cbb3a0; }
+.mbox.vip90 .li img.gl91 { width: 28px; height: 40px; object-fit: contain; image-rendering: pixelated; }
+.mbox.vip90 .btn.light { background: #3a1a2c; color: #fbeee0; border-color: #7a5a22; }
+.mbox.vip90 .btn:disabled { opacity: .4; }
+.rk91bar { height: 10px; border-radius: 6px; background: #3a1a2c; box-shadow: inset 0 0 0 1px #7a5a22; overflow: hidden; margin: 4px 0; }
+.rk91bar i { display: block; height: 100%; background: linear-gradient(90deg, #d89a20, #fff0a0); }
+.rk91list .rk91-lock { opacity: .55; }
+.du91 { margin: 6px 0; padding: 8px 10px; border-radius: 10px; background: rgba(240, 192, 64, .12); box-shadow: inset 0 0 0 1px #7a5a22; }
+.du91-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.du91-btns .btn { flex: 1; min-width: 4.6em; font-weight: bold; }
+.mbox.vip90 .du91-btns .btn.red { background: #c8102e; color: #fff; border-color: #ff9a9a; }
+.mbox.vip90 .du91-btns .btn.blk { background: #1a1620; color: #fff; border-color: #8a8090; }
+.du91-card { display: inline-grid; place-items: center; float: right; width: 34px; height: 46px; margin: 0 0 4px 8px; border-radius: 5px; background: #fffdf4; color: #1a1620; font-size: 1.3rem; box-shadow: inset 0 0 0 1px #c8b890, 0 2px 4px rgba(0, 0, 0, .5); animation: bc91flip .35s ease-out; }
+.du91-card.r { color: #c8102e; }
+.du91-card.j { color: #7a2ab8; }
+.du91-msg { font-weight: bold; }
+.du91-msg.win { color: #ffe27a; }
+.du91-msg.lose { color: #d8b8c8; }
+/* ルーレット */
+.rw91 { display: flex; justify-content: center; margin: 4px 0; }
+.rw91 canvas { width: 170px; height: 170px; max-width: 46vw; max-height: 46vw; }
+.rb91 { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 2px; margin: 6px 0; padding: 4px; border-radius: 8px; background: #164c36; box-shadow: inset 0 0 0 2px #c8a040; }
+.rc91 { position: relative; border: 1px solid #c8a040; border-radius: 3px; background: #1f6a4a; color: #fff; font-size: .7rem; font-weight: bold; padding: 4px 0; line-height: 1; min-height: 26px; cursor: pointer; font-family: inherit; }
+.rc91.r { background: #b01428; } .rc91.k { background: #1a1620; } .rc91.z { background: #1f9a4a; } .rc91.o { background: #1f6a4a; font-size: .62rem; }
+.rc91.o.r { background: #b01428; } .rc91.o.k { background: #1a1620; }
+.rc91:disabled { opacity: .55; cursor: default; }
+.rc91 .cb91 { position: absolute; right: -3px; top: -5px; min-width: 14px; background: #f0c040; color: #2a0f1e; border-radius: 9px; font-size: .56rem; padding: 1px 3px; box-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.rou91 .row2 { gap: 6px; flex-wrap: wrap; }
+.rou91 .row2 .btn { flex: 1; }
+/* バカラ */
+.bt91 { display: flex; justify-content: center; gap: 14px; margin: 8px 0 4px; padding: 10px 6px; border-radius: 12px; background: radial-gradient(ellipse at 50% 35%, #2a6aa0, #123a60 70%); box-shadow: inset 0 0 0 3px #c8a040, inset 0 0 0 5px #5a3a10; }
+.bh91 { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 8px; }
+.bh91.win { box-shadow: 0 0 0 2px #ffe27a, 0 0 12px rgba(255, 226, 122, .7); }
+.bh91-n { font-size: .75rem; color: #e8c060; }
+.bh91-c { display: flex; gap: 4px; min-height: 54px; }
+.bh91-t { font-size: 1.1rem; color: #ffe27a; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.bc91 { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 36px; height: 52px; border-radius: 5px; background: #fffdf4; color: #1a1620; font-weight: bold; box-shadow: inset 0 0 0 1px #c8b890, 0 2px 4px rgba(0, 0, 0, .5); font-size: .85rem; line-height: 1.1; font-style: normal; }
+.bc91 i { font-style: normal; } .bc91 b { font-size: 1.05rem; }
+.bc91.r { color: #c8102e; }
+.bc91.down { background: repeating-linear-gradient(45deg, #8a1a3a 0 4px, #5a0f26 4px 8px); box-shadow: inset 0 0 0 2px #f0c040, 0 2px 4px rgba(0, 0, 0, .5); }
+.bc91.flip { animation: bc91flip .35s ease-out; }
+@keyframes bc91flip { 0% { transform: rotateY(90deg) scale(.9); } 100% { transform: none; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .rw91 canvas { width: 104px; height: 104px; max-width: none; max-height: none; }
+  .rc91 { min-height: 20px; padding: 2px 0; font-size: .62rem; }
+  .rb91 { margin: 3px 0; gap: 1px; padding: 3px; }
+  .bt91 { margin: 4px 0 2px; padding: 6px 4px; gap: 8px; }
+  .bc91 { width: 28px; height: 40px; font-size: .72rem; } .bh91-c { min-height: 40px; }
+  .du91 { padding: 5px 8px; margin: 3px 0; }
+  .du91 .mtext { margin: 2px 0; font-size: .76rem; }
+  .du91-btns .btn { padding: 6px 4px; }
+  .rou91 .row2 .btn, .bac91 .row2 .btn { padding: 7px 4px; }
+}

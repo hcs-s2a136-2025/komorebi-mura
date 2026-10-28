@@ -1139,6 +1139,63 @@ body.watch88 #tut { display: none !important; }
   .vp90-odds { font-size: .7rem !important; margin: 2px 0 !important; }
   .vp90-go { min-width: 0; width: 100%; padding-top: 9px; padding-bottom: 9px; }
 }
+
+/* ---- v91: VIPルームの拡張（ルーレット・バカラ・ダブルアップ・会員ランク） ---- */
+.mbox.vip90 .mtabs { margin-bottom: 6px; }
+.mbox.vip90 .li { color: #fbeee0; }
+.mbox.vip90 .li .sub2 { color: #cbb3a0; }
+.mbox.vip90 .li img.gl91 { width: 28px; height: 40px; object-fit: contain; image-rendering: pixelated; }
+.mbox.vip90 .btn.light { background: #3a1a2c; color: #fbeee0; border-color: #7a5a22; }
+.mbox.vip90 .btn:disabled { opacity: .4; }
+.rk91bar { height: 10px; border-radius: 6px; background: #3a1a2c; box-shadow: inset 0 0 0 1px #7a5a22; overflow: hidden; margin: 4px 0; }
+.rk91bar i { display: block; height: 100%; background: linear-gradient(90deg, #d89a20, #fff0a0); }
+.rk91list .rk91-lock { opacity: .55; }
+.du91 { margin: 6px 0; padding: 8px 10px; border-radius: 10px; background: rgba(240, 192, 64, .12); box-shadow: inset 0 0 0 1px #7a5a22; }
+.du91-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.du91-btns .btn { flex: 1; min-width: 4.6em; font-weight: bold; }
+.mbox.vip90 .du91-btns .btn.red { background: #c8102e; color: #fff; border-color: #ff9a9a; }
+.mbox.vip90 .du91-btns .btn.blk { background: #1a1620; color: #fff; border-color: #8a8090; }
+.du91-card { display: inline-grid; place-items: center; float: right; width: 34px; height: 46px; margin: 0 0 4px 8px; border-radius: 5px; background: #fffdf4; color: #1a1620; font-size: 1.3rem; box-shadow: inset 0 0 0 1px #c8b890, 0 2px 4px rgba(0, 0, 0, .5); animation: bc91flip .35s ease-out; }
+.du91-card.r { color: #c8102e; }
+.du91-card.j { color: #7a2ab8; }
+.du91-msg { font-weight: bold; }
+.du91-msg.win { color: #ffe27a; }
+.du91-msg.lose { color: #d8b8c8; }
+/* ルーレット */
+.rw91 { display: flex; justify-content: center; margin: 4px 0; }
+.rw91 canvas { width: 170px; height: 170px; max-width: 46vw; max-height: 46vw; }
+.rb91 { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 2px; margin: 6px 0; padding: 4px; border-radius: 8px; background: #164c36; box-shadow: inset 0 0 0 2px #c8a040; }
+.rc91 { position: relative; border: 1px solid #c8a040; border-radius: 3px; background: #1f6a4a; color: #fff; font-size: .7rem; font-weight: bold; padding: 4px 0; line-height: 1; min-height: 26px; cursor: pointer; font-family: inherit; }
+.rc91.r { background: #b01428; } .rc91.k { background: #1a1620; } .rc91.z { background: #1f9a4a; } .rc91.o { background: #1f6a4a; font-size: .62rem; }
+.rc91.o.r { background: #b01428; } .rc91.o.k { background: #1a1620; }
+.rc91:disabled { opacity: .55; cursor: default; }
+.rc91 .cb91 { position: absolute; right: -3px; top: -5px; min-width: 14px; background: #f0c040; color: #2a0f1e; border-radius: 9px; font-size: .56rem; padding: 1px 3px; box-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.rou91 .row2 { gap: 6px; flex-wrap: wrap; }
+.rou91 .row2 .btn { flex: 1; }
+/* バカラ */
+.bt91 { display: flex; justify-content: center; gap: 14px; margin: 8px 0 4px; padding: 10px 6px; border-radius: 12px; background: radial-gradient(ellipse at 50% 35%, #2a6aa0, #123a60 70%); box-shadow: inset 0 0 0 3px #c8a040, inset 0 0 0 5px #5a3a10; }
+.bh91 { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 8px; }
+.bh91.win { box-shadow: 0 0 0 2px #ffe27a, 0 0 12px rgba(255, 226, 122, .7); }
+.bh91-n { font-size: .75rem; color: #e8c060; }
+.bh91-c { display: flex; gap: 4px; min-height: 54px; }
+.bh91-t { font-size: 1.1rem; color: #ffe27a; text-shadow: 0 1px 3px rgba(0, 0, 0, .6); }
+.bc91 { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 36px; height: 52px; border-radius: 5px; background: #fffdf4; color: #1a1620; font-weight: bold; box-shadow: inset 0 0 0 1px #c8b890, 0 2px 4px rgba(0, 0, 0, .5); font-size: .85rem; line-height: 1.1; font-style: normal; }
+.bc91 i { font-style: normal; } .bc91 b { font-size: 1.05rem; }
+.bc91.r { color: #c8102e; }
+.bc91.down { background: repeating-linear-gradient(45deg, #8a1a3a 0 4px, #5a0f26 4px 8px); box-shadow: inset 0 0 0 2px #f0c040, 0 2px 4px rgba(0, 0, 0, .5); }
+.bc91.flip { animation: bc91flip .35s ease-out; }
+@keyframes bc91flip { 0% { transform: rotateY(90deg) scale(.9); } 100% { transform: none; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .rw91 canvas { width: 104px; height: 104px; max-width: none; max-height: none; }
+  .rc91 { min-height: 20px; padding: 2px 0; font-size: .62rem; }
+  .rb91 { margin: 3px 0; gap: 1px; padding: 3px; }
+  .bt91 { margin: 4px 0 2px; padding: 6px 4px; gap: 8px; }
+  .bc91 { width: 28px; height: 40px; font-size: .72rem; } .bh91-c { min-height: 40px; }
+  .du91 { padding: 5px 8px; margin: 3px 0; }
+  .du91 .mtext { margin: 2px 0; font-size: .76rem; }
+  .du91-btns .btn { padding: 6px 4px; }
+  .rou91 .row2 .btn, .bac91 .row2 .btn { padding: 7px 4px; }
+}
 </style>
 
 <header>
@@ -1265,7 +1322,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.49.1";
+  const VER = "0.50.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5729,7 +5786,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.49.1";
+const CLIENT_VERSION = "0.50.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7807,6 +7864,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.50.0", date: "2026/10/28", title: "VIPルームに、ルーレット・バカラ・会員ランク・景品交換所ができた", items: [
+    "VIPルームが広くなって、卓が3つに。左がサイコロ、まん中が「高額ルーレット」（0〜36・数字ひとつ×36〜）、右が「バカラ」（プレイヤー／バンカー／タイ）。どちらも現金（1,000G札）だけで遊べる",
+    "勝ったあとは「ダブルアップ」ができる。赤か黒を当てると払い戻しが2倍（最大3回まで）。はずれるとぜんぶなくなるので、持ち帰るのも手。VIPの勝ち負けは、これまでどおり番付と今日の負け上限につながる",
+    "賭けた現金の合計で、会員ランクが上がる（ブロンズ→シルバー→ゴールド→プラチナ→ブラック）。ランクが上がるたびに、ここだけの家具がもらえて、称号も増える",
+    "VIPルームの奥に、現金だけの「景品交換所」。コンシェルジュ ミントに話しかけると、ランクに合わせて、大理石の柱・VIPのソファ・シャンパンタワー・金のどんぐり像・ダイヤのどんぐり像などと交換できる。ここでしか手に入らない家具で、よろず屋では買い取ってもらえない",
+    "支配人ルナに、ドリンク（シャンパン・赤ワイン・ブルーソーダ・どんぐりティー）をたのめる。ドレスコード（蝶ネクタイ・仮面・シルクハット）を借りると、見た目が少し変わる。20分ほど続いて、ほかの人にも見える"
+  ] },
   { v: "0.49.1", date: "2026/10/28", title: "偽札をまぜて賭けた分は、番付に入らなくなった", items: [
     "VIPルームで、偽札をまぜて賭けたときの勝ち負けは、カジノの番付・称号・メダル・今日の負け上限に数えないようにした。本物のお札で賭けた分だけが数えられる",
     "村に出回っている偽札が払い戻しにまざったときも、その分はもうけに数えない。支配人ルナのきまりにも一行足した"
@@ -17682,37 +17746,45 @@ for (const [k, [w, h, fn]] of Object.entries(SPR90)) { IMG["s90_" + k] = pix13(w
 const NPC90 = {
   dealer: { name: "VIPディーラー レイ", cfg: { skin: "色白", hair: "ショート", hairc: "黒", top: "スーツ", topc: "黒", bottom: "パンツ", bottomc: "黒" } },
   manager: { name: "支配人 ルナ", cfg: { skin: "色白", hair: "ロング", hairc: "銀", top: "ドレス", topc: "紫", bottom: "スカート", bottomc: "黒" } },
+  roulette: { name: "ルーレットディーラー ソラ", cfg: { skin: "やや明るめ", hair: "ボブ", hairc: "ブラウン", top: "ジャケット", topc: "赤", bottom: "スカート", bottomc: "黒" } },
+  baccarat: { name: "バカラディーラー ミオ", cfg: { skin: "色白", hair: "おだんご", hairc: "金", top: "ドレス", topc: "青", bottom: "スカート", bottomc: "黒" } },
+  concierge: { name: "コンシェルジュ ミント", cfg: { skin: "小麦色", hair: "ショート", hairc: "銀", top: "スーツ", topc: "紫", bottom: "パンツ", bottomc: "黒" } },
 };
-const CH90 = [[40, 11], [184, 11]];   // シャンデリアの中心（ピクセル）
+const CH90 = [[48, 11], [272, 11]];   // シャンデリアの中心（ピクセル）
 const _mi90 = makeInterior;
 makeInterior = function (kind) {
   if (kind !== "vip") return _mi90(kind);
-  const w = 14, h = 11, m = blankMap(w, h, "こもれびパレス VIPルーム");
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m.ground[y][x] = y < 2 ? "@vwall" : y >= 6 && y < h - 1 && x === 6 ? "@vcarpetL" : y >= 6 && y < h - 1 && x === 7 ? "@vcarpetR" : "@vfloor";
+  const w = 20, h = 12, mid = w / 2, m = blankMap(w, h, "こもれびパレス VIPルーム");
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m.ground[y][x] = y < 2 ? "@vwall" : y >= 6 && y < h - 1 && x === mid - 1 ? "@vcarpetL" : y >= 6 && y < h - 1 && x === mid ? "@vcarpetR" : "@vfloor";
   solidRect(m, 0, 0, w, 2);
   m.isInterior = true; m.kind = "vip"; m.floorT = "@vfloor"; m.statics = []; m.interact = {}; m.labels = []; m.music = "vip";
-  const ex = Math.floor(w / 2); m.exit = [ex, h - 1]; m.exits = { [ex + "," + (h - 1)]: true }; m.ground[h - 1][ex] = "@exit";
+  m.exit = [mid, h - 1]; m.exits = { [mid + "," + (h - 1)]: true }; m.ground[h - 1][mid] = "@exit";
   const spr = (k, x, y, sortY) => m.objs.push({ img: "s90_" + k, x, y, sortY: sortY ?? y + IMG["s90_" + k].height });
   const solid = tiles => tiles.forEach(([a, b]) => m.base[b][a] = true);
   const on = (tiles, fn) => tiles.forEach(([a, b]) => m.interact[a + "," + b] = fn);
   const npc = (d, x, y, dir) => { const e = entity(x, y, { ...DEFAULT, ...d.cfg }, d.name, "staff"); e.dir = dir; e.home = m; m.statics.push(e); return e; };
   // 壁
-  spr("frame", 4 * TS, 7, TS); spr("frame", 9 * TS, 7, TS); spr("sign", 7 * TS - 16, 5, TS);
+  spr("frame", 6 * TS, 7, TS); spr("frame", 13 * TS, 7, TS); spr("sign", mid * TS - 16, 5, TS);
   for (const [cx, cy] of CH90) spr("chandelier", cx - 14, cy - 11, 2 * TS);
-  // 卓とディーラー
-  m.objs.push({ img: "s90_table", x: 5 * TS, y: 4 * TS - 2, sortY: 6 * TS - 1 });
-  const table = [[5, 4], [6, 4], [7, 4], [8, 4], [5, 5], [6, 5], [7, 5], [8, 5]]; solid(table);
-  npc(NPC90.dealer, 7, 3, "down");
-  on([...table, [7, 3]], () => openVip90());
-  m.labels.push({ x: 7 * TS, y: 3 * TS - 22, text: "サイコロの卓" });
+  // 卓3つとディーラー：サイコロ（左）・ルーレット（中）・バカラ（右）
+  for (const [img, x0, d, fn, label] of [["s90_table", 2, NPC90.dealer, () => openVip90(), "サイコロの卓"], ["s91_roulette", 8, NPC90.roulette, () => openRoulette91(), "高額ルーレット"], ["s91_baccarat", 14, NPC90.baccarat, () => openBaccarat91(), "バカラ"]]) {
+    m.objs.push({ img, x: x0 * TS, y: 4 * TS - 2, sortY: 6 * TS - 1 });
+    const table = []; for (let y = 4; y <= 5; y++) for (let x = x0; x < x0 + 4; x++) table.push([x, y]);
+    solid(table); npc(d, x0 + 2, 3, "down"); on([...table, [x0 + 2, 3]], fn);
+    m.labels.push({ x: (x0 + 2) * TS, y: 3 * TS - 22, text: label });
+  }
   // 柱
-  for (const [x, y] of [[3, 2], [10, 2], [3, 8], [10, 8]]) { spr("pillar", x * TS, (y + 1) * TS - 36, (y + 1) * TS - 1); solid([[x, y]]); }
+  for (const [x, y] of [[6, 3], [13, 3], [6, 9], [13, 9]]) { spr("pillar", x * TS, (y + 1) * TS - 36, (y + 1) * TS - 1); solid([[x, y]]); }
   // くつろぎの場所
-  for (const x of [1, 11]) { spr("sofa", x * TS, 6 * TS - 20, 6 * TS - 1); solid([[x, 5], [x + 1, 5]]); on([[x, 5], [x + 1, 5]], () => toast(null, "ふかふかのソファ。座ると立ちたくなくなる…")); }
-  spr("champagne", 1 * TS, 3 * TS - 30, 3 * TS - 1); solid([[1, 2]]); on([[1, 2]], () => toast(null, "シャンパンタワー。のぞきこむと、きらきらの自分がうつる"));
-  spr("statue", 12 * TS, 3 * TS - 32, 3 * TS - 1); solid([[12, 2]]); on([[12, 2]], () => toast(null, "金のどんぐり像。ぴかぴかで、さわるのがもったいない"));
-  for (const x of [0, 13]) { m.objs.push({ img: "plant", x: x * TS, y: 9 * TS - 8, sortY: 9 * TS - 8 + IMG.plant.height }); solid([[x, 9]]); }
-  npc(NPC90.manager, 2, 7, "right"); on([[2, 7]], () => openManager90());
+  spr("sofa", 1 * TS, 9 * TS - 20, 9 * TS - 1); solid([[1, 8], [2, 8]]); on([[1, 8], [2, 8]], () => toast(null, "ふかふかのソファ。座ると立ちたくなくなる…"));
+  spr("champagne", 0, 3 * TS - 30, 3 * TS - 1); solid([[0, 2]]); on([[0, 2]], () => toast(null, "シャンパンタワー。のぞきこむと、きらきらの自分がうつる"));
+  spr("statue", 19 * TS, 3 * TS - 32, 3 * TS - 1); solid([[19, 2]]); on([[19, 2]], () => toast(null, "金のどんぐり像。ぴかぴかで、さわるのがもったいない"));
+  for (const x of [0, 19]) { m.objs.push({ img: "plant", x: x * TS, y: 10 * TS - 8, sortY: 10 * TS - 8 + IMG.plant.height }); solid([[x, 10]]); }
+  npc(NPC90.manager, 4, 8, "down"); on([[4, 8]], () => openLuna91());
+  // 現金だけの景品交換所
+  m.objs.push({ img: "s91_counter", x: 16 * TS, y: 10 * TS - 24, sortY: 10 * TS - 1 });
+  solid([[16, 9], [17, 9], [18, 9], [17, 8]]); npc(NPC90.concierge, 17, 8, "down"); on([[16, 9], [17, 9], [18, 9], [17, 8]], () => openExchange91());
+  m.labels.push({ x: 17 * TS + 8, y: 8 * TS - 22, text: "景品交換所" });
   return m;
 };
 // カジノからVIPルームへ（出るときは、カジノのVIPルームの前にもどる）
@@ -17746,7 +17818,7 @@ drawInteriorFx = function (now) {
   const t = pn - S.t0; if (t > S.dur) { F90.shine = null; return; }
   const a = 1 - t / S.dur;
   ctx.fillStyle = `rgba(255,232,160,${.2 * a * (.65 + .35 * Math.sin(t / 90))})`; ctx.fillRect(0, 0, interior.w * TS, interior.h * TS);
-  if (Math.random() < .5 + S.tier * .12) particles.push({ x: 4 * TS + Math.random() * 6 * TS, y: 3 * TS + Math.random() * 4 * TS, vx: (Math.random() - .5) * 30, vy: -10 - Math.random() * 30, life: .5 + Math.random() * .5, col: [255, 220 + (Math.random() * 30 | 0), 90 + (Math.random() * 90 | 0)] });
+  if (Math.random() < .5 + S.tier * .12) particles.push({ x: (interior.w / 2 - 3) * TS + Math.random() * 6 * TS, y: 3 * TS + Math.random() * 4 * TS, vx: (Math.random() - .5) * 30, vy: -10 - Math.random() * 30, life: .5 + Math.random() * .5, col: [255, 220 + (Math.random() * 30 | 0), 90 + (Math.random() * 90 | 0)] });
 };
 
 // ---- 勝ったときの豪華な演出（画面いっぱい）。tier 1 WIN／2 BIG WIN／3 SUPER WIN／4 MEGA JACKPOT ----
@@ -17872,7 +17944,7 @@ const dealerLine90 = (res, c) => {
 };
 function openVip90(res) {
   const TITLE = "VIPルーム　サイコロの卓";
-  openModal(TITLE, "dark vip90", body => paint(body, res));
+  openModal(TITLE, "dark vip90", body => paint(body, res), onClose91);
   function paint(body, res) {
     const V = vs90(), c = cash78(), P = PICK90[V.pick], mult = mult90(V);
     if (!betOk90(V.bet, V)) V.bet = BETS90.filter(b => betOk90(b, V)).pop() || BETS90[0];
@@ -17886,6 +17958,7 @@ function openVip90(res) {
         <div class="vp90-stage" id="vp90st">${dice.map(v => dieHtml90(v)).join("")}${shown ? `<b class="vp90-sum">${res.sum}${res.triple ? "（ゾロ目）" : res.sum >= 11 ? "（大）" : "（小）"}</b>` : ""}</div>
         <p class="mtext vp90-res ${shown ? (res.win ? "win" : "lose") : ""}" id="vp90res">${busy ? "　" : shown ? esc(res.text) : "お賭けを選んでください"}</p>
         <p class="mtext">現金 <b>${billTxt78(cashN)}</b>（${fmt(cashN * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
+        ${duHtml91(res)}
       </div>
       <div class="vp90-r">
         <div class="vp90-row"><span class="lbl">賭ける</span>${BETS90.map(b => `<button class="chip" type="button" data-vb90="${b}" aria-pressed="${V.bet === b}" ${!busy && c.n >= b && betOk90(b, V) ? "" : "disabled"}>${b}枚</button>`).join("")}</div>
@@ -17901,6 +17974,7 @@ function openVip90(res) {
     body.querySelectorAll("[data-vp90]").forEach(b => b.onclick = () => { V.pick = b.dataset.vp90; re(); });
     body.querySelectorAll("[data-vn90]").forEach(b => b.onclick = () => { V.num = +b.dataset.vn90; re(); });
     body.querySelectorAll("[data-vf90]").forEach(b => b.onclick = () => { V.face = +b.dataset.vf90; re(); });
+    duBind91(body, res, re);
     body.querySelector("#vp90go").onclick = () => {
       const bet = V.bet; if (cash78().n < bet || !betOk90(bet, V)) return;
       if (K.betAllowed && !K.betAllowed(bet * BILL78)) { toast(null, K.betMsg()); return; }
@@ -17930,48 +18004,21 @@ F90.play = (...a) => play90(...a);   // テスト用
 /** サイコロをふって、勝ち負けをその場で決める（払い戻しとお金の動きは、演出の前に終わらせる） */
 function play90(V, bet, paid) {
   const d = [1 + rnd(6), 1 + rnd(6), 1 + rnd(6)], sum = d[0] + d[1] + d[2], triple = d[0] === d[1] && d[1] === d[2];
-  // 偽札をまぜて賭けた分のもうけは、番付・負け上限・メダルに入れない（本物のお札で賭けた分だけ数える）
-  const share = bet > 0 ? Math.max(0, bet - ((paid && (paid.fu + paid.fk)) || 0)) / bet : 1;
+  // 偽札をまぜて賭けた分のもうけは、番付・負け上限・メダル・会員ランクに入れない（settle91 で、本物のお札で賭けた分だけ数える）
   const P = PICK90[V.pick], arg = arg90(V), mult = P.mult(arg), win = !!P.win(d, sum, triple, arg), pay = win ? bet * mult : 0;
   const label = V.pick === "total" ? `合計${arg}ぴったり` : V.pick === "exact" ? `指定ゾロ目　${arg}・${arg}・${arg}` : P.name;
   const fin = k => {
     F90.hold = true; setTimeout(release90, 6000);
     const cashPre = cash78().n;
-    const c = cash78(), room = Math.max(0, 9999 - c.n), inCash = Math.min(pay, room), over = pay - inCash, fkIn = Math.min(k, inCash), fkOut = k - fkIn;
-    if (inCash) addCash78(inCash, { fu: fkIn });
-    const overG = Math.max(0, over - fkOut); if (overG) addMoney(overG * BILL78);
-    const realPay = pay - k, net = Math.round(share * (realPay - bet) * BILL78), st = world.stats;
-    st.gambleNet += net; if (K.gambleTrack) K.gambleTrack(net); st.lastGamble = world.day; if (net > st.bigWin) st.bigWin = net;
-    st.vip78 = (st.vip78 || 0) + 1; st.gambles = (st.gambles || 0) + 1;
-    if (win) { st.vipWin90 = (st.vipWin90 || 0) + 1; st.vipBest90 = Math.max(st.vipBest90 || 0, Math.round(share * realPay)); st.gambleWins = (st.gambleWins || 0) + 1; st.loseStreak = 0; if (V.pick === "exact" && share > 0) st.vipExact90 = (st.vipExact90 || 0) + 1; }
-    else { st.loseStreak = (st.loseStreak || 0) + 1; st.loseStreakMax = Math.max(st.loseStreakMax || 0, st.loseStreak); }
-    saveWorld(); updateHud(true); try { checkTitles42(); } catch (e) { }
+    const S = settle91({ game: "dice", bet, pay, k, paid, out: win ? "win" : "lose", exact: win && V.pick === "exact" });
     const tier = tier90(win, pay, mult);
-    const text = win ? `当たり！ ${billTxt78(pay)}（${fmt(pay * BILL78)}）を受けとった${over ? `。お札が入りきらない分（${over}枚）は、口座に振り込んでおいたよ` : ""}` : `はずれ… ${billTxt78(bet)} を失った`;
-    openVip90({ d, sum, triple, win, pay, bet, mult, tier, label, text, over, cashPre, anim: true });
+    const text = win ? `当たり！ ${billTxt78(pay)}（${fmt(pay * BILL78)}）${S.credit ? "。" + payText91(pay, S.credit) : ""}` : `はずれ… ${billTxt78(bet)} を失った`;
+    openVip90({ d, sum, triple, win, pay, bet, mult, tier, label, text, cashPre, anim: true });
   };
   if (pay) drawPool78(pay, fin); else fin(0);
 }
 
-// ---- 支配人 ルナ：VIPルームのきまり ----
-function openManager90() {
-  const st = world.stats, rows = [[4, 17], [5, 16], [6, 15], [7, 14], [8, 13], [9, 12], [10, 11]];
-  openModal("支配人 ルナ", "dark vip90", body => {
-    body.innerHTML = staffSay13(charIcon13(NPC90.manager.cfg), "いらっしゃいませ。VIPルームは、現金だけのお客さまの場所でございます。きまりを、ご案内いたしますね")
-      + `<ul class="mtext small vp90-rules">
-        <li>使えるのは<b>現金（1,000G札）だけ</b>。電子マネーはお取り扱いしておりません</li>
-        <li>賭けられるのは <b>${BETS90.join("・")}枚</b>。払い戻しは、<b>最高${MAXPAY90.toLocaleString("ja-JP")}枚</b>まで（賭けた枚数×倍率がこえる賭け方はできません）</li>
-        <li><b>大・小</b>：×2　<b>ゾロ目</b>（どの目でも）：×35　<b>指定ゾロ目</b>：×210</li>
-        <li><b>合計ぴったり</b>：${rows.map(([a, b]) => `${a}か${b} ×${SUMM90[a]}`).join("、")}</li>
-        <li>どの賭けも、長く遊ぶほど、お札は少しずつ減るようにできています（還元率は約97%以下）</li>
-        <li>お札は9,999枚まで持てます。入りきらない分は、電子マネーで口座にお振り込みします</li>
-        <li>偽札のお支払いには、とくに目を光らせております。ご注意くださいませ</li>
-        <li>偽札をまぜてお賭けになった分の勝ち負けは、番付・称号・メダル・今日の負け上限には数えません</li>
-        <li>「今日の負け上限」を決めている方は、それをこえる賭けはできません</li></ul>
-      <p class="mtext small">あなたの記録：勝負 ${(st.vip78 || 0)}回・勝ち ${st.vipWin90 || 0}回・最高の払い戻し ${(st.vipBest90 || 0).toLocaleString("ja-JP")}枚</p>`;
-  });
-}
-F90.manager = openManager90;
+// ---- 支配人 ルナ：きまり・会員ランク・ドリンク・ドレスコードは v91（openLuna91）----
 GUIDE54.push(["VIPルーム", "s78_vip", `
     <p>こもれびパレスの奥の<b>VIPルーム</b>（カジノの右がわの紫のカーテンから入る）。<b>現金（1,000G札）だけ</b>で遊べる、高額のサイコロの卓があるよ。</p><ul>
     <li>賭けられるのは10・50・100・500枚。大・小・ゾロ目・合計ぴったり・指定ゾロ目から選ぶ。払い戻しは最高5,000枚まで</li>
@@ -17979,6 +18026,663 @@ GUIDE54.push(["VIPルーム", "s78_vip", `
     <li>支配人ルナに話しかけると、きまりと倍率の表が見られる。称号は「VIPの常連」「ハイローラー」「ゾロ目の王」</li>
     <li>お会計で偽札を使うのは、いちばんきびしい（見つかると取り調べ）</li></ul>`]);
 F90.ready = true;
+
+// =================== v91: VIPルームの拡張（会員ランク・高額ルーレット・バカラ・景品交換所・ドリンクとドレスコード・ダブルアップ） ===================
+var F91 = {};
+// v90 のVIPルームに、卓を2つ（高額ルーレット・バカラ）と、現金だけの景品交換所・ドリンクとドレスコードを足す。
+// 3つの卓（サイコロ・ルーレット・バカラ）は、どれも同じ決着（settle91）を通る：賭けた分の本物の割合 share で番付・メダル・負け上限・会員ランクに数える。
+// 勝った払い戻しは、いったん「卓の上」（world.vip91.pot）に置かれ、持ち帰る or ダブルアップ。画面を閉じても読み込み直しても、持ち帰りになる。
+const MAXPAY91 = MAXPAY90, MAXTOTAL91 = 3000, DUCAP91 = 10000, DUMAX91 = 3;
+const vs91 = () => {
+  const v = world.vip91 = world.vip91 && typeof world.vip91 === "object" && !Array.isArray(world.vip91) ? world.vip91 : {};
+  v.wager = Number.isFinite(+v.wager) ? Math.max(0, Math.floor(+v.wager)) : 0;
+  v.claimed = Array.isArray(v.claimed) ? v.claimed.filter(n => Number.isInteger(n) && n > 0 && n < 99) : [];
+  if (v.pot != null && !(v.pot && typeof v.pot === "object" && v.pot.n > 0)) v.pot = null;
+  return v;
+};
+
+// ---- 会員ランク（現金で遊んだ量＝本物のお札で賭けた枚数の合計） ----
+const RANKS91 = [
+  { name: "ビジター", need: 0 },
+  { name: "ブロンズ会員", need: 300, gift: "bronze91" },
+  { name: "シルバー会員", need: 1500, gift: "silver91" },
+  { name: "ゴールド会員", need: 6000, gift: "gold91" },
+  { name: "プラチナ会員", need: 20000, gift: "plat91" },
+  { name: "ブラック会員", need: 60000, gift: "black91" },
+];
+const rank91 = w => { w = w == null ? vs91().wager : w; let r = 0; RANKS91.forEach((x, i) => { if (w >= x.need) r = i; }); return r; };
+
+// ---- 絵 ----
+const SPR91 = {
+  // 高額ルーレットの卓（64×34）
+  roulette: [64, 34, (s, r) => {
+    r(1, 1, 62, 22, C13["#4a2a14"]); r(2, 2, 60, 20, C13["#b8841c"]); r(2, 2, 60, 1, C13["#fff0a0"]); r(3, 3, 58, 18, C13["#3a1e10"]);
+    r(5, 5, 54, 14, C13["#1f6a4a"]); r(5, 5, 54, 2, C13["#2f8a5e"]); r(5, 17, 54, 2, C13["#164c36"]);
+    ell13(s, 18, 12, 11, 6.4, C13["#3a1e10"]); ell13(s, 18, 12, 10, 5.4, C13["#b8841c"]);
+    for (let i = 0; i < 12; i++) { const a = i / 12 * 6.2832, x = Math.round(18 + Math.cos(a) * 8), y = Math.round(12 + Math.sin(a) * 4), c = C13[i % 2 ? "#d83a3a" : "#2a2630"]; s(x, y, c); s(x + 1, y, c); }
+    ell13(s, 18, 12, 4.6, 2.8, C13["#2a1a10"]); ell13(s, 18, 12, 3.2, 1.8, C13["#f0c040"]); s(18, 12, C13["#fff0a0"]); s(26, 9, C13["#ffffff"]);
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 6; i++) r(32 + i * 4, 7 + j * 3, 3, 2, C13[(i + j) % 2 ? "#d83a3a" : "#2a2630"]);
+    r(30, 7, 1, 8, C13["#1f9a4a"]); r(32, 16, 24, 1, C13["#f0c040"]);
+    r(46, 18, 4, 1, C13["#f0c040"]); r(51, 18, 4, 1, C13["#d83a3a"]);
+    r(2, 22, 60, 1, C13["#7a5410"]);
+    r(2, 23, 60, 9, C13["#8a1a3a"]); r(2, 23, 60, 1, C13["#f0c040"]); r(2, 24, 60, 1, C13["#c8304f"]);
+    for (let x = 6; x < 62; x += 12) r(x, 25, 1, 7, C13["#f0c040"]);
+    r(2, 31, 60, 1, C13["#b8841c"]); r(2, 32, 60, 1, C13["#5a0f26"]); r(4, 32, 4, 2, C13["#7a5410"]); r(56, 32, 4, 2, C13["#7a5410"]);
+  }],
+  // バカラの卓（64×34）
+  baccarat: [64, 34, (s, r) => {
+    r(1, 1, 62, 22, C13["#4a2a14"]); r(2, 2, 60, 20, C13["#b8841c"]); r(2, 2, 60, 1, C13["#fff0a0"]); r(3, 3, 58, 18, C13["#3a1e10"]);
+    r(5, 5, 54, 14, C13["#1a4a7a"]); r(5, 5, 54, 2, C13["#2a6aa0"]); r(5, 17, 54, 2, C13["#123a60"]);
+    r(7, 7, 50, 1, C13["#f0c040"]); r(7, 16, 50, 1, C13["#f0c040"]); r(7, 7, 1, 10, C13["#f0c040"]); r(56, 7, 1, 10, C13["#f0c040"]);
+    for (const [x, c] of [[14, "#d83a3a"], [38, "#2a2630"]]) { r(x, 9, 6, 7, C13["#fffaf0"]); r(x + 1, 10, 2, 2, C13[c]); r(x + 3, 13, 2, 2, C13[c]); r(x + 8, 9, 6, 7, C13["#fffaf0"]); r(x + 9, 10, 2, 2, C13[c === "#2a2630" ? "#d83a3a" : "#2a2630"]); }
+    r(30, 11, 4, 2, C13["#f0c040"]); r(30, 9, 4, 2, C13["#d83a3a"]); r(30, 13, 4, 2, C13["#f2f2f2"]);
+    r(2, 22, 60, 1, C13["#7a5410"]);
+    r(2, 23, 60, 9, C13["#1a2a5a"]); r(2, 23, 60, 1, C13["#f0c040"]); r(2, 24, 60, 1, C13["#2a4a8a"]);
+    for (let x = 6; x < 62; x += 12) r(x, 25, 1, 7, C13["#f0c040"]);
+    r(2, 31, 60, 1, C13["#b8841c"]); r(2, 32, 60, 1, C13["#0e1a3a"]); r(4, 32, 4, 2, C13["#7a5410"]); r(56, 32, 4, 2, C13["#7a5410"]);
+  }],
+  // 景品交換所のカウンター（48×24）
+  counter: [48, 24, (s, r) => {
+    r(0, 5, 48, 18, C13["#4a2a14"]); r(1, 6, 46, 16, C13["#8a1a3a"]); r(1, 6, 46, 1, C13["#f0c040"]); r(1, 7, 46, 1, C13["#c8304f"]);
+    for (let x = 5; x < 46; x += 10) r(x, 8, 1, 14, C13["#f0c040"]);
+    r(0, 3, 48, 3, C13["#b8841c"]); r(0, 3, 48, 1, C13["#fff0a0"]); r(0, 22, 48, 2, C13["#3a1e10"]);
+    r(6, 0, 6, 3, C13["#fffaf0"]); r(7, 1, 4, 1, C13["#d83a3a"]); ell13(s, 36, 2, 3, 2, C13["#f0c040"]); r(35, 1, 2, 2, C13["#fff0a0"]);
+  }],
+  // ブロンズのコインスタンド（16×20）
+  bronze91: [16, 20, (s, r) => {
+    r(3, 16, 10, 3, C13["#7a4a1a"]); r(3, 16, 10, 1, C13["#b87a3a"]); r(4, 15, 8, 1, C13["#b87a3a"]); r(7, 9, 2, 6, C13["#b87a3a"]);
+    ell13(s, 8, 6, 5.5, 5.5, C13["#7a4a1a"]); ell13(s, 8, 6, 4.5, 4.5, C13["#b87a3a"]); ell13(s, 7, 5, 2.4, 2.4, C13["#e8a860"]);
+    r(7, 4, 2, 4, C13["#7a4a1a"]); s(8, 3, C13["#e8a860"]);
+  }],
+  // 銀のワインクーラー（16×22）
+  silver91: [16, 22, (s, r) => {
+    r(3, 17, 2, 4, C13["#8a94a4"]); r(11, 17, 2, 4, C13["#8a94a4"]); r(3, 15, 10, 2, C13["#8a94a4"]);
+    r(7, 1, 2, 8, C13["#2a5a3a"]); r(7, 1, 2, 2, C13["#f0c040"]); r(7, 3, 1, 5, C13["#4a8a5a"]);
+    r(3, 8, 10, 8, C13["#c8d0dc"]); r(3, 8, 10, 1, C13["#eef2f8"]); r(2, 7, 12, 2, C13["#8a94a4"]); r(2, 7, 12, 1, C13["#eef2f8"]);
+    r(4, 10, 2, 5, C13["#eef2f8"]); r(10, 11, 1, 4, C13["#8a94a4"]); s(7, 12, C13["#ffffff"]); s(9, 10, C13["#ffffff"]);
+  }],
+  // 金のルーレットのおき物（16×22）
+  gold91: [16, 22, (s, r) => {
+    r(4, 17, 8, 4, C13["#7a5410"]); r(3, 16, 10, 1, C13["#f0c040"]); r(5, 14, 6, 2, C13["#b8841c"]);
+    ell13(s, 8, 9, 7, 6, C13["#7a5410"]); ell13(s, 8, 9, 6, 5, C13["#f0c040"]);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * 6.2832; s(Math.round(8 + Math.cos(a) * 4.4), Math.round(9 + Math.sin(a) * 3.6), C13[i % 2 ? "#d83a3a" : "#2a2630"]); }
+    ell13(s, 8, 9, 2.4, 2, C13["#b8841c"]); s(8, 9, C13["#fff0a0"]); s(11, 6, C13["#ffffff"]);
+  }],
+  // プラチナの大きなサイコロ（16×20）
+  plat91: [16, 20, (s, r) => {
+    r(2, 15, 12, 4, C13["#6a0c22"]); r(2, 15, 12, 1, C13["#e8c060"]); r(1, 18, 14, 1, C13["#3a0616"]);
+    r(4, 6, 8, 9, C13["#e6ecf2"]); r(4, 6, 8, 1, C13["#ffffff"]); r(4, 6, 1, 9, C13["#ffffff"]); r(11, 6, 1, 9, C13["#9aa8b8"]); r(4, 14, 8, 1, C13["#9aa8b8"]);
+    r(5, 3, 8, 3, C13["#ffffff"]); r(12, 4, 1, 2, C13["#c8d4e0"]);
+    for (const [x, y] of [[6, 8], [9, 8], [7, 10], [6, 12], [9, 12]]) s(x, y, C13["#2a2630"]);
+  }],
+  // ブラックカードの像（16×32）
+  black91: [16, 32, (s, r) => {
+    r(1, 28, 14, 3, C13["#7a5410"]); r(2, 27, 12, 1, C13["#f0c040"]);
+    r(3, 4, 10, 23, C13["#2a2630"]); r(3, 4, 2, 23, C13["#3c3648"]); r(11, 4, 2, 23, C13["#14101a"]); r(5, 2, 6, 2, C13["#3c3648"]); r(7, 0, 2, 2, C13["#3c3648"]);
+    r(5, 9, 6, 9, C13["#f0c040"]); r(5, 9, 6, 1, C13["#fff0a0"]); r(5, 17, 6, 1, C13["#b8841c"]);
+    ell13(s, 8, 12, 1.4, 1.4, C13["#2a2630"]); r(7, 13, 2, 3, C13["#2a2630"]); r(6, 15, 4, 1, C13["#2a2630"]);
+    s(4, 22, C13["#f0c040"]); s(11, 22, C13["#f0c040"]);
+  }],
+  // VIPのカードテーブル（32×24）
+  cardtable91: [32, 24, (s, r) => {
+    ell13(s, 16, 8, 15, 7, C13["#7a5410"]); ell13(s, 16, 8, 14, 6, C13["#b8841c"]); ell13(s, 16, 8, 12.6, 5, C13["#1f6a4a"]);
+    r(9, 6, 4, 5, C13["#fffaf0"]); r(10, 7, 1, 1, C13["#d83a3a"]); r(12, 9, 1, 1, C13["#d83a3a"]); r(14, 5, 4, 5, C13["#fffaf0"]); r(15, 6, 1, 1, C13["#2a2630"]); r(17, 8, 1, 1, C13["#2a2630"]);
+    r(21, 8, 3, 1, C13["#f0c040"]); r(21, 7, 3, 1, C13["#d83a3a"]); r(21, 6, 3, 1, C13["#f2f2f2"]);
+    r(14, 14, 4, 7, C13["#5a3a10"]); r(14, 14, 1, 7, C13["#7a5410"]); r(8, 21, 16, 2, C13["#7a5410"]); r(8, 21, 16, 1, C13["#b8841c"]);
+  }],
+  // ダイヤのどんぐり像（16×32）
+  diamond91: [16, 32, (s, r) => {
+    r(1, 21, 14, 2, C13["#fffaf0"]); r(2, 23, 12, 7, C13["#ece6d6"]); r(1, 29, 14, 2, C13["#c8c0a8"]); r(5, 25, 6, 3, C13["#7ad8ff"]);
+    ell13(s, 8, 14, 5, 6, C13["#7ad8ff"]); ell13(s, 6, 13, 2, 3, C13["#e6f8ff"]); ell13(s, 10.5, 16, 2, 3, C13["#3a9ac0"]);
+    r(3, 6, 10, 4, C13["#7a5410"]); r(4, 5, 8, 1, C13["#b8841c"]); for (const [x, y] of [[5, 7], [8, 8], [11, 7], [7, 6]]) s(x, y, C13["#b8841c"]); r(7, 2, 2, 3, C13["#7a5410"]);
+    s(3, 4, C13["#ffffff"]); s(13, 12, C13["#ffffff"]); s(2, 15, C13["#cfeaff"]);
+  }],
+};
+for (const [k, [w, h, fn]] of Object.entries(SPR91)) { IMG["s91_" + k] = pix13(w, h, fn); ASSETS["s91_" + k] = IMG["s91_" + k].toDataURL(); }
+// 手に持つグラスと、ドレスコードの小物（ふちどりなし）。グラスは下の中央（3,9）が手に当たる
+const GL91 = {
+  champ: (s, r) => { r(2, 0, 3, 5, C13["#f4e6a0"]); r(2, 0, 3, 1, C13["#fffaf0"]); r(1, 0, 1, 5, C13["#cfeaf2"]); r(5, 0, 1, 5, C13["#cfeaf2"]); r(3, 5, 1, 4, C13["#cfeaf2"]); r(2, 9, 3, 1, C13["#cfeaf2"]); s(3, 2, C13["#ffffff"]); },
+  wine: (s, r) => { r(1, 1, 5, 4, C13["#8a1a3a"]); r(1, 0, 5, 1, C13["#e8d8e0"]); r(1, 0, 1, 5, C13["#e8d8e0"]); r(5, 0, 1, 5, C13["#e8d8e0"]); r(2, 5, 3, 1, C13["#e8d8e0"]); r(3, 6, 1, 3, C13["#d8d0dc"]); r(2, 9, 3, 1, C13["#d8d0dc"]); s(2, 2, C13["#c8304f"]); },
+  soda: (s, r) => { r(1, 1, 5, 8, C13["#7ad8ff"]); r(1, 1, 5, 1, C13["#cfeaff"]); r(1, 1, 1, 8, C13["#cfeaff"]); r(4, 0, 1, 4, C13["#ff5f8a"]); s(3, 4, C13["#ffffff"]); s(4, 6, C13["#ffffff"]); r(1, 9, 5, 1, C13["#3a9ac0"]); },
+  tea: (s, r) => { r(1, 5, 5, 4, C13["#fffaf0"]); r(1, 5, 5, 1, C13["#b8742a"]); r(2, 5, 3, 1, C13["#b8742a"]); s(6, 6, C13["#fffaf0"]); s(6, 7, C13["#fffaf0"]); r(0, 9, 7, 1, C13["#e8d8c0"]); r(2, 8, 3, 1, C13["#e8d8c0"]); },
+};
+for (const [k, fn] of Object.entries(GL91)) IMG["s91_g_" + k] = pix13(7, 10, fn, false);
+IMG.s91_w_t = pix13(6, 3, (s, r) => { r(0, 0, 2, 3, C13["#d83a3a"]); r(4, 0, 2, 3, C13["#d83a3a"]); r(2, 1, 2, 1, C13["#8a1a3a"]); s(0, 0, C13["#ff8a8a"]); s(4, 0, C13["#ff8a8a"]); }, false);
+IMG.s91_w_m = pix13(10, 3, (s, r) => { r(0, 0, 4, 3, C13["#5a2a8a"]); r(6, 0, 4, 3, C13["#5a2a8a"]); r(4, 0, 2, 1, C13["#f0c040"]); r(0, 0, 4, 1, C13["#f0c040"]); r(6, 0, 4, 1, C13["#f0c040"]); s(1, 1, C13["#2a1a3a"]); s(2, 1, C13["#2a1a3a"]); s(7, 1, C13["#2a1a3a"]); s(8, 1, C13["#2a1a3a"]); s(0, 2, C13["#fff0a0"]); }, false);
+IMG.s91_w_h = pix13(12, 9, (s, r) => { r(0, 7, 12, 2, C13["#14101a"]); r(0, 7, 12, 1, C13["#3c3648"]); r(2, 1, 8, 6, C13["#2a2630"]); r(2, 1, 8, 1, C13["#3c3648"]); r(2, 5, 8, 1, C13["#d83a3a"]); r(9, 1, 1, 6, C13["#14101a"]); }, false);
+
+// ---- 家具（会員ランクのごほうび5つ・景品交換所の限定6つ。よろず屋には並ばない・買い取りもされない） ----
+// w・h は 1マス単位、oy は絵の高さ（h×16−oy）に合わせる。img は s91_*（新しい絵）か s90_*（VIPルームの絵）
+const FURN91 = {
+  bronze91: { name: "ブロンズのコインスタンド", w: 1, h: 1, oy: -4, img: "s91_bronze91", say: ["ブロンズ会員のしるし。ここから、はじまった", "ぴかっ。まだまだ、これから"] },
+  silver91: { name: "銀のワインクーラー", w: 1, h: 1, oy: -6, img: "s91_silver91", say: ["キンキンに冷えている。……中身は空っぽだけど", "シルバー会員の風格"] },
+  gold91: { name: "金のルーレットのおき物", w: 1, h: 1, oy: -6, img: "s91_gold91", say: ["くるくる……回らない。おき物だから", "ゴールド会員の、金ぴかな誇り"] },
+  plat91: { name: "プラチナの大きなサイコロ", w: 1, h: 1, oy: -4, img: "s91_plat91", say: ["出目は5。いつ見ても5", "プラチナ会員だけが持てるサイコロ"] },
+  black91: { name: "ブラックカードの像", w: 1, h: 1, oy: -16, img: "s91_black91", say: ["ブラック会員のしるし。見上げるだけで背筋がのびる", "ずっしり重い。気持ちのほうが"] },
+  pillar91: { name: "大理石の柱", w: 1, h: 1, oy: -20, img: "s90_pillar", say: ["つるつるの大理石。ひんやりする"] },
+  sofa91: { name: "VIPのソファ", w: 2, h: 1, oy: -4, img: "s90_sofa", say: ["ふかふかのソファ。座ると立ちたくなくなる…"] },
+  champagne91: { name: "シャンパンタワー", w: 1, h: 1, oy: -14, img: "s90_champagne", say: ["のぞきこむと、きらきらの自分がうつる"] },
+  cardtable91: { name: "VIPのカードテーブル", w: 2, h: 1, oy: -8, img: "s91_cardtable91", say: ["カードがそろっている。今夜は、だれと勝負しよう？"] },
+  statue91: { name: "金のどんぐり像", w: 1, h: 1, oy: -16, img: "s90_statue", say: ["金のどんぐり像。ぴかぴかで、さわるのがもったいない"] },
+  diamond91: { name: "ダイヤのどんぐり像", w: 1, h: 1, oy: -16, img: "s91_diamond91", say: ["ダイヤのどんぐり。光にかざすと、虹色にゆれる"] },
+};
+for (const [k, f] of Object.entries(FURN91)) {
+  FURN[k] = { name: f.name, img: f.img, w: f.w, h: f.h, oy: f.oy, price: 0 };
+  ITEMS["f_" + k] = { name: f.name, icon: f.img, furn: k, price: 0 };
+}
+{ const _h = F7.hideFurn; F7.hideFurn = k => k in FURN91 || _h(k); }
+// よろず屋では買い取らない（ここでしか手に入らない物なので）
+{
+  const NOSELL = new Set(Object.keys(FURN91).map(k => "f_" + k));
+  const _shop91 = openShop;
+  openShop = function (tab) {
+    const r = _shop91.apply(this, arguments);
+    if (tab === "sell") document.querySelectorAll("#mbody [data-sell]").forEach(b => { if (NOSELL.has(b.dataset.sell)) { const li = b.closest(".li"); if (li) li.querySelector(".acts").innerHTML = `<span class="note">買い取れない</span>`; } });
+    return r;
+  };
+}
+const _furnAct91 = F6.act;
+F6.act = (tx, ty, key, sel, item, other) => {
+  if (map === room && !decor && !modalOpen) {
+    const f = furnAt(room.data, tx, ty, "obj");
+    if (f && FURN91[f.id]) { const say = FURN91[f.id].say; toast(FURN[f.id].img, say[rnd(say.length)]); return true; }
+  }
+  return _furnAct91(tx, ty, key, sel, item, other);
+};
+const giveItem91 = (id, n = 1) => { if (!addItem(id, n, true)) homeStore18(id, n); };
+// 景品交換所の限定家具：[家具ID, 必要な枚数, 必要なランク]
+const SHOP91 = [["pillar91", 60, 1], ["sofa91", 120, 1], ["champagne91", 150, 2], ["cardtable91", 180, 2], ["statue91", 250, 3], ["diamond91", 800, 4]];
+
+// ---- 称号 ----
+const TTL91 = [
+  ["VIPブロンズ会員", "VIPルームの会員ランクが「ブロンズ会員」になる", () => rank91() >= 1],
+  ["VIPシルバー会員", "VIPルームの会員ランクが「シルバー会員」になる", () => rank91() >= 2],
+  ["VIPゴールド会員", "VIPルームの会員ランクが「ゴールド会員」になる", () => rank91() >= 3],
+  ["VIPプラチナ会員", "VIPルームの会員ランクが「プラチナ会員」になる", () => rank91() >= 4],
+  ["VIPブラック会員", "VIPルームの会員ランクが「ブラック会員」になる", () => rank91() >= 5],
+  ["一点読み", "VIPのルーレットで、数字ひとつを当てる", () => (world.stats.vipStraight91 || 0) >= 1],
+  ["ナチュラルウィン", "VIPのバカラで、ナチュラル（8か9）で勝つ", () => (world.stats.vipNatural91 || 0) >= 1],
+  ["倍々ゲーム", "ダブルアップに3回続けて勝つ", () => (world.stats.vipDuBest91 || 0) >= 3],
+  ["乾杯の達人", "VIPルームで、ドリンクを10杯たのむ", () => (world.stats.vipDrink91 || 0) >= 10],
+];
+for (const t of TTL91) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
+// ---- 決着（3つの卓で共通） ----
+/** 払い戻し pay 枚を、お札の財布に入れる（9,999枚をこえる分は口座に振り込む。偽札はここで本物にならない） */
+function credit91(pay, k) {
+  const c = cash78(), room = Math.max(0, 9999 - c.n), inCash = Math.min(pay, room), over = pay - inCash, fkIn = Math.min(k || 0, inCash), fkOut = (k || 0) - fkIn;
+  if (inCash) addCash78(inCash, { fu: fkIn });
+  const overG = Math.max(0, over - fkOut); if (overG) addMoney(overG * BILL78);
+  saveWorld(); updateHud(true);
+  return { inCash, over };
+}
+const payText91 = (pay, c) => `${billTxt78(pay)}（${fmt(pay * BILL78)}）を受けとった${c && c.over ? `。お札が入りきらない分（${c.over}枚）は、口座に振り込んでおいたよ` : ""}`;
+/** 1回の勝負の決着。o = { bet 賭けた枚数, pay 払い戻し（賭け金をふくむ枚数）, k 払い戻しにまざった村の偽札, paid 払ったお札の内訳, out "win"|"lose"|"push", exact, straight, natural }
+ *  番付・メダル・負け上限には、本物のお札で賭けた割合 share だけを数える。払い戻しは、ダブルアップできるときは卓の上に置いて、できないときは財布へ */
+function settle91(o) {
+  const st = world.stats, V = vs91(), bet = o.bet, k = Math.max(0, Math.min(o.pay, o.k || 0));
+  const fakes = o.paid ? (o.paid.fu || 0) + (o.paid.fk || 0) : 0, share = bet > 0 ? Math.max(0, bet - fakes) / bet : 1;
+  const realPay = o.pay - k, net = Math.round(share * (realPay - bet) * BILL78), r0 = rank91();
+  V.wager += Math.round(bet * share);
+  st.gambleNet += net; if (K.gambleTrack) K.gambleTrack(net); st.lastGamble = world.day; if (net > st.bigWin) st.bigWin = net;
+  st.vip78 = (st.vip78 || 0) + 1; st.gambles = (st.gambles || 0) + 1;
+  if (o.out === "win") {
+    st.vipWin90 = (st.vipWin90 || 0) + 1; st.vipBest90 = Math.max(st.vipBest90 || 0, Math.round(share * realPay)); st.gambleWins = (st.gambleWins || 0) + 1; st.loseStreak = 0;
+  } else if (o.out === "lose") { st.loseStreak = (st.loseStreak || 0) + 1; st.loseStreakMax = Math.max(st.loseStreakMax || 0, st.loseStreak); }
+  if (share > 0) { if (o.exact) st.vipExact90 = (st.vipExact90 || 0) + 1; if (o.straight) st.vipStraight91 = (st.vipStraight91 || 0) + 1; if (o.natural) st.vipNatural91 = (st.vipNatural91 || 0) + 1; }
+  let credit = null; V.pot = null;
+  if (o.pay > 0) {
+    if (o.out === "win" && o.pay * 2 <= DUCAP91) V.pot = { n: o.pay, k, share, du: 0 };
+    else credit = credit91(o.pay, k);
+  }
+  saveWorld(); updateHud(true); try { checkTitles42(); } catch (e) { }
+  if (rank91() > r0) claimGifts91(true);
+  return { share, net, pot: !!V.pot, credit };
+}
+/** 会員ランクのごほうび（まだ受けとっていないランクの分を、持ち物へ。入りきらなければ家の箱へ） */
+function claimGifts91(announce) {
+  const V = vs91(), r = rank91(), got = [];
+  for (let i = 1; i <= r; i++) {
+    const R = RANKS91[i]; if (!R || !R.gift || V.claimed.includes(i)) continue;
+    V.claimed.push(i); giveItem91("f_" + R.gift, 1); got.push([i, R]);
+  }
+  if (!got.length) return;
+  saveWorld(); try { renderHotbar(); } catch (e) { }
+  if (announce) for (const [, R] of got) F7.notify(`VIPルームの会員ランクが「${R.name}」になった！ ごほうびに「${FURN91[R.gift].name}」をもらったよ`, FURN91[R.gift].img);
+}
+/** 卓の上に置いてある払い戻しを、財布に入れる（持ち帰り） */
+function takePot91(quiet) {
+  const V = vs91(), p = V.pot; if (!p) return null;
+  V.pot = null; const c = credit91(p.n, p.k); saveWorld();
+  const text = `${payText91(p.n, c)}`; if (!quiet) toast(null, text);
+  return { p, c, text };
+}
+const vipModal91 = () => modalOpen && $("mbox").classList.contains("vip90");
+const onClose91 = () => { if (vs91().pot) takePot91(); };
+setInterval(() => { try { if (vs91().pot && !vipModal91()) takePot91(); } catch (e) { } }, 3000);
+
+// ---- ダブルアップ：赤か黒かを当てる（山札は54枚：赤26・黒26・ジョーカー2。ジョーカーは親の勝ち） ----
+const duOK91 = () => { const p = vs91().pot; return !!p && p.du < DUMAX91 && p.n * 2 <= DUCAP91 && (!K.betAllowed || K.betAllowed(Math.round(p.n * p.share * BILL78))); };
+function duWhy91() {
+  const p = vs91().pot; if (!p) return "";
+  if (p.du >= DUMAX91) return `ダブルアップは${DUMAX91}回まで`;
+  if (p.n * 2 > DUCAP91) return `${DUCAP91.toLocaleString("ja-JP")}枚をこえるダブルアップはできないよ`;
+  if (K.betAllowed && !K.betAllowed(Math.round(p.n * p.share * BILL78))) return K.betMsg();
+  return "";
+}
+function duPlay91(choice) {
+  const V = vs91(), p = V.pot; if (!p || !duOK91()) return null;
+  const r = rnd(54), card = r < 26 ? "R" : r < 52 ? "B" : "J", win = card === choice, stake = p.n, st = world.stats;
+  const net = Math.round(p.share * (win ? stake : -stake) * BILL78), r0 = rank91();
+  V.wager += Math.round(stake * p.share);
+  st.gambleNet += net; if (K.gambleTrack) K.gambleTrack(net); st.lastGamble = world.day; if (net > st.bigWin) st.bigWin = net; st.gambles = (st.gambles || 0) + 1;
+  if (win) {
+    p.n = stake * 2; p.du++; st.gambleWins = (st.gambleWins || 0) + 1; st.loseStreak = 0; st.vipDuBest91 = Math.max(st.vipDuBest91 || 0, p.du);
+    st.vipBest90 = Math.max(st.vipBest90 || 0, Math.round(p.share * (p.n - p.k)));
+  } else { st.loseStreak = (st.loseStreak || 0) + 1; st.loseStreakMax = Math.max(st.loseStreakMax || 0, st.loseStreak); V.pot = null; }
+  saveWorld(); updateHud(true); try { checkTitles42(); } catch (e) { }
+  if (rank91() > r0) claimGifts91(true);
+  return { win, card, stake, n: win ? p.n : 0 };
+}
+const DUCARD91 = { R: ["♥", "赤", "r"], B: ["♠", "黒", ""], J: ["★", "ジョーカー", "j"] };
+/** 勝ったあとの「卓の上」の表示と、ダブルアップのボタン（3つの卓で共通）。res.duMsg に直前のダブルアップの結果 */
+function duHtml91(res) {
+  if (!res || res.busy || res.anim) return "";
+  const p = vs91().pot, card = res.duCard ? `<span class="du91-card ${DUCARD91[res.duCard][2]}">${DUCARD91[res.duCard][0]}</span>` : "";
+  if (!p) return res.duMsg ? `<div class="du91">${card}<p class="mtext du91-msg ${res.duWin ? "win" : "lose"}">${esc(res.duMsg)}</p></div>` : "";
+  const ok = duOK91(), why = ok ? "" : duWhy91();
+  return `<div class="du91">${card}${res.duMsg ? `<p class="mtext du91-msg ${res.duWin ? "win" : "lose"}">${esc(res.duMsg)}</p>` : ""}
+    <p class="mtext">卓の上の払い戻し <b>${billTxt78(p.n)}</b>（${fmt(p.n * BILL78)}）${p.du ? `　ダブルアップ ${p.du}回成功` : ""}</p>
+    ${ok ? `<p class="mtext small">ダブルアップ：赤か黒を当てると、払い戻しが<b>2倍</b>。はずれると、ぜんぶなくなる（ジョーカーは親の勝ち）。持ち帰るなら「持ち帰る」を</p>` : `<p class="mtext small">${esc(why || "ダブルアップはできないよ")}</p>`}
+    <div class="du91-btns">${ok ? `<button class="btn red" type="button" data-du91="R">赤 ♥</button><button class="btn blk" type="button" data-du91="B">黒 ♠</button>` : ""}<button class="btn" type="button" data-du91="take">持ち帰る</button></div></div>`;
+}
+function duBind91(body, res, repaint) {
+  body.querySelectorAll("[data-du91]").forEach(b => b.onclick = () => {
+    const k = b.dataset.du91;
+    if (k === "take") { const t = takePot91(); res.duMsg = t ? "持ち帰った：" + t.text : ""; res.duWin = true; res.duCard = null; res.text = t ? t.text : res.text; se13("small"); repaint(); return; }
+    const r = duPlay91(k); if (!r) { repaint(); return; }
+    res.duCard = r.card; res.duWin = r.win;
+    res.duMsg = r.win ? `ダブルアップ成功！ ${billTxt78(r.n)}になった` : `${DUCARD91[r.card][1]}… ダブルアップ失敗。${billTxt78(r.stake)}はなくなった`;
+    if (r.win) { se13(r.n >= 1000 ? "big" : "small"); shine90(r.n >= 2000 ? 2 : 1); } else se13("miss");
+    repaint();
+  });
+}
+
+// ---- ドリンクとドレスコード（見た目が少し変わる、小さなお楽しみ） ----
+// 手に持つグラス・ほっぺ・小物は、キャラの上に重ねて描く。見た目の設定 cfg.vipfx（"champ-tm" のような短い文字）に乗せるので、同じ場所にいる人にも見える。サーバーは変えない
+const DRINK91 = { champ: { name: "シャンパン", cost: 3, say: "シュワシュワと泡がのぼる。乾杯" }, wine: { name: "赤ワイン", cost: 2, say: "ほんのり、ほっぺが赤くなる" }, soda: { name: "ブルーソーダ", cost: 1, say: "海の色。ストローでちゅー" }, tea: { name: "どんぐりティー", cost: 1, say: "ふぅ、とひと息。湯気がやさしい" } };
+const WEAR91 = { t: "蝶ネクタイ", m: "仮面（マスカレード）", h: "シルクハット" };
+const FXMIN91 = 20;   // 見た目が続く時間（分・読み込み直すと消える）
+F91.fx = null;
+const fxOn91 = () => { const f = F91.fx; if (f && Date.now() > f.until) F91.fx = null; return F91.fx; };
+const fxKey91 = () => { const f = fxOn91(); if (!f) return null; const k = (f.drink || "") + "-" + [...f.wear].sort().join(""); return k === "-" ? null : k; };
+const fxOK91 = k => typeof k === "string" && /^(champ|wine|soda|tea|)-[tmh]{0,3}$/.test(k);
+function fxSet91(fn) { const f = F91.fx = fxOn91() || { drink: "", wear: new Set(), until: 0 }; fn(f); f.until = Date.now() + FXMIN91 * 60000; if (!f.drink && !f.wear.size) F91.fx = null; sync91(); }
+function sync91() {
+  const k = fxKey91(); if ((cfg.vipfx || null) === k) return;
+  if (k) cfg.vipfx = k; else delete cfg.vipfx;
+  changed(); if (typeof sendCfgSoon === "function") sendCfgSoon();
+}
+if (cfg.vipfx) delete cfg.vipfx;
+const _clean91 = cleanCfg;
+cleanCfg = function (c) { const o = _clean91(c); if (c && c.vipfx && fxOK91(c.vipfx)) o.vipfx = c.vipfx; return o; };
+setInterval(() => { try { sync91(); } catch (e) { } }, 1000);
+const _drawEnt91 = drawEnt;
+drawEnt = function (e) {
+  const r = _drawEnt91.apply(this, arguments);
+  try {
+    if (!e || e.sprite || e.kind === "cat") return r;
+    const k = e === player ? fxKey91() : e.kind === "remote" && e.cfg ? e.cfg.vipfx : null;
+    if (!k || !fxOK91(k)) return r;
+    const em = e.emo60; if (em && (em.k === "sleep" || em.k === "sit")) return r;
+    const [dk, wr] = k.split("-"), x = Math.round(e.px), y = Math.round(e.py), dir = e.dir, front = dir === "down", back = dir === "up", t = performance.now() / 1000;
+    if (wr.includes("t") && !back) ctx.drawImage(IMG.s91_w_t, x + (front ? 5 : dir === "left" ? 4 : 6), y + 9);
+    if (wr.includes("m") && front) ctx.drawImage(IMG.s91_w_m, x + 3, y + 5);
+    if (wr.includes("h")) ctx.drawImage(IMG.s91_w_h, x + 2, y - 6);
+    if (dk && IMG["s91_g_" + dk]) {
+      if (dk === "wine" && front) { ctx.fillStyle = "rgba(246,110,140,.75)"; ctx.fillRect(x + 4, y + 7, 2, 1); ctx.fillRect(x + 10, y + 7, 2, 1); }
+      const holding = e === player ? heldKey87() : (e.cfg && e.cfg.hold);
+      if (!holding) {
+        const hx = dir === "left" ? x + 3 : x + 13, hy = y + (front || back ? 12 : 11);
+        ctx.drawImage(IMG["s91_g_" + dk], hx - 3, hy - 9);
+        if (dk === "champ") { ctx.fillStyle = "#ffffff"; for (let i = 0; i < 2; i++) ctx.fillRect(hx - 1 + Math.floor(t * 5 + i * 2) % 3, hy - 11 - Math.floor(t * 5 + i * 3) % 5, 1, 1); }
+        else if (dk === "tea") { ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.fillRect(hx - 1 + Math.floor(t * 3) % 2, hy - 11 - Math.floor(t * 4) % 3, 1, 1); ctx.fillRect(hx + 1, hy - 12 - Math.floor(t * 4 + 1) % 3, 1, 1); }
+        else if (dk === "soda") { ctx.fillStyle = "#cfeaff"; ctx.fillRect(hx - 2 + Math.floor(t * 4) % 5, hy - 12 - Math.floor(t * 3) % 3, 1, 1); }
+      }
+    }
+  } catch (x) { }
+  return r;
+};
+
+// ---- 支配人 ルナ ----
+const rulesHtml91 = () => {
+  const st = world.stats, rows = [[4, 17], [5, 16], [6, 15], [7, 14], [8, 13], [9, 12], [10, 11]];
+  return `<ul class="mtext small vp90-rules">
+    <li>使えるのは<b>現金（1,000G札）だけ</b>。電子マネーはお取り扱いしておりません</li>
+    <li>賭けられるのは <b>${BETS90.join("・")}枚</b>。払い戻しは、1回の賭けごとに<b>最高${MAXPAY90.toLocaleString("ja-JP")}枚</b>まで（賭けた枚数×倍率がこえる賭け方はできません）</li>
+    <li><b>サイコロ</b> 大・小：×2　ゾロ目（どの目でも）：×35　指定ゾロ目：×210　合計ぴったり：${rows.map(([a, b]) => `${a}か${b} ×${SUMM90[a]}`).join("、")}</li>
+    <li><b>ルーレット</b> 数字ひとつ：×36　赤・黒・偶数・奇数・1〜18・19〜36：×2　12個ずつ（1st・2nd・3rd）と縦の列：×3。0は、数字のほかは全部はずれ。1回の勝負で賭けられるのは、合わせて${MAXTOTAL91.toLocaleString("ja-JP")}枚まで</li>
+    <li><b>バカラ</b> プレイヤー：×2　バンカー：×2（6で勝つと×1.5）　タイ：×9（プレイヤー・バンカーに賭けていて引き分けなら、賭け金は返る）</li>
+    <li>勝つと、払い戻しはいったん卓の上に置かれます。<b>持ち帰る</b>か、<b>ダブルアップ</b>（赤か黒を当てると2倍・${DUMAX91}回まで・${DUCAP91.toLocaleString("ja-JP")}枚をこえる分はできません）をお選びください。画面を閉じたら、持ち帰りになります</li>
+    <li>どの賭けも、長く遊ぶほど、お札は少しずつ減るようにできています（還元率は卓によって約85〜99%）</li>
+    <li>お札は9,999枚まで持てます。入りきらない分は、電子マネーで口座にお振り込みします</li>
+    <li>偽札のお支払いには、とくに目を光らせております。ご注意くださいませ</li>
+    <li>偽札をまぜてお賭けになった分の勝ち負けは、番付・称号・メダル・会員ランク・今日の負け上限には数えません</li>
+    <li>「今日の負け上限」を決めている方は、それをこえる賭けはできません</li></ul>
+    <p class="mtext small">あなたの記録：勝負 ${(st.vip78 || 0)}回・勝ち ${st.vipWin90 || 0}回・最高の払い戻し ${(st.vipBest90 || 0).toLocaleString("ja-JP")}枚</p>`;
+};
+function openLuna91(tab) {
+  const L = F91.luna = F91.luna || { tab: "rules" }; if (tab) L.tab = tab;
+  const TABS = [["rules", "きまり"], ["rank", "会員ランク"], ["drink", "ドリンク"], ["dress", "ドレスコード"]];
+  openModal("支配人 ルナ", "dark vip90", body => paint(), onClose91);
+  function paint(note) {
+    const body = $("mbody"); if (!body || !modalOpen) return;
+    const c = cash78(), V = vs91(), r = rank91(), f = fxOn91();
+    const say = note || { rules: "いらっしゃいませ。VIPルームは、現金だけのお客さまの場所でございます。きまりを、ご案内いたしますね", rank: "お客さまの会員ランクは、本物のお札でお賭けになった枚数で上がってまいります。ランクごとに、称号と、専用の家具を差し上げます", drink: "ドリンクはいかがでしょう。お気に召したら、しばらく、お姿に添えてまいります", dress: "ドレスコードの小物は、お貸しいたします。お似合いですよ" }[L.tab];
+    let main = "";
+    if (L.tab === "rules") main = rulesHtml91();
+    else if (L.tab === "rank") {
+      const next = RANKS91[r + 1], prev = RANKS91[r], pct = next ? Math.min(100, Math.floor((V.wager - prev.need) / (next.need - prev.need) * 100)) : 100;
+      main = `<p class="mtext">いまの会員ランク：<b>${RANKS91[r].name}</b>　賭けた量：<b>${V.wager.toLocaleString("ja-JP")}枚</b><span class="vp90-note">　（本物のお札で賭けた枚数の合計。ダブルアップも数えます）</span></p>
+        <div class="rk91bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+        <p class="mtext small">${next ? `次の「${next.name}」まで、あと <b>${(next.need - V.wager).toLocaleString("ja-JP")}枚</b>` : "最高ランクです。おめでとうございます"}</p>
+        <div class="list rk91list">${RANKS91.slice(1).map((R, i) => { const n = i + 1, got = V.claimed.includes(n), ok = r >= n; return `<div class="li ${ok ? "" : "rk91-lock"}"><img src="${ASSETS[FURN91[R.gift].img]}" alt=""><span class="nm">${R.name}　${R.need.toLocaleString("ja-JP")}枚から<span class="sub2">称号「VIP${R.name}」・家具「${esc(FURN91[R.gift].name)}」${ok ? (got ? "（受けとりずみ）" : "") : ""}</span></span>${ok && !got ? `<span class="acts"><button class="btn" type="button" data-rk91="${n}">受けとる</button></span>` : ""}</div>`; }).join("")}</div>`;
+    } else if (L.tab === "drink") {
+      main = `<p class="mtext">現金 <b>${billTxt78(c.n)}</b>${f && f.drink ? `　いまのドリンク：<b>${DRINK91[f.drink].name}</b>（あと${Math.max(1, Math.ceil((f.until - Date.now()) / 60000))}分）` : ""}</p>
+        <div class="list">${Object.entries(DRINK91).map(([k, d]) => `<div class="li"><img src="${IMG["s91_g_" + k].toDataURL()}" alt="" class="gl91"><span class="nm">${d.name}<span class="sub2">${billTxt78(d.cost)}・${esc(d.say)}</span></span><span class="acts"><button class="btn" type="button" data-dr91="${k}" ${c.n >= d.cost ? "" : "disabled"}>たのむ</button></span></div>`).join("")}</div>
+        <p class="mtext small">見た目は${FXMIN91}分ほど続いて、同じ場所にいる人にも見えるよ（読み込み直すと消える）。手にほかの物を持っているときは、グラスは出ないよ</p>`;
+    } else {
+      main = `<p class="mtext">いまの小物：${f && f.wear.size ? [...f.wear].map(k => WEAR91[k]).join("・") : "なし"}${f && f.wear.size ? `（あと${Math.max(1, Math.ceil((f.until - Date.now()) / 60000))}分）` : ""}</p>
+        <div class="vp90-row">${Object.entries(WEAR91).map(([k, n]) => `<button class="chip" type="button" data-wr91="${k}" aria-pressed="${!!(f && f.wear.has(k))}">${n}</button>`).join("")}<button class="chip" type="button" data-wr91="off">ぜんぶ返す</button></div>
+        <p class="mtext small">貸し出しは無料。同じ場所にいる人にも見えるよ。仮面はまっすぐ前を向いているときに見える</p>`;
+    }
+    body.innerHTML = `<div class="mtabs">${TABS.map(([k, l]) => `<button class="chip" type="button" data-lt91="${k}" aria-pressed="${L.tab === k}">${l}</button>`).join("")}</div>` + staffSay13(charIcon13(NPC90.manager.cfg), esc(say)) + main + `<div class="row2"><button class="btn light" type="button" id="lu91ok">閉じる</button></div>`;
+    body.querySelectorAll("[data-lt91]").forEach(b => b.onclick = () => { L.tab = b.dataset.lt91; paint(); });
+    body.querySelector("#lu91ok").onclick = closeModal;
+    body.querySelectorAll("[data-rk91]").forEach(b => b.onclick = () => { claimGifts91(true); paint("どうぞ、お受けとりくださいませ"); });
+    body.querySelectorAll("[data-dr91]").forEach(b => b.onclick = () => {
+      const k = b.dataset.dr91, d = DRINK91[k]; if (!d || cash78().n < d.cost) return;
+      closeModal();
+      payCash78("vip", d.cost, ok => {
+        if (!ok) return;
+        fxSet91(f => { f.drink = k; }); world.stats.vipDrink91 = (world.stats.vipDrink91 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { }
+        se13("small"); toast(null, `${d.name}をたのんだ。${d.say}`); openLuna91("drink");
+      }, { noMix: true });
+    });
+    body.querySelectorAll("[data-wr91]").forEach(b => b.onclick = () => {
+      const k = b.dataset.wr91;
+      if (k === "off") fxSet91(f => { f.wear.clear(); });
+      else fxSet91(f => { if (f.wear.has(k)) f.wear.delete(k); else f.wear.add(k); });
+      se13("small"); paint(k === "off" ? "お返しいただきました。またいつでもどうぞ" : "お似合いでございます");
+    });
+  }
+  paint();
+}
+F91.fxKey = fxKey91;
+
+// ---- 景品交換所（現金だけ・ここでしか手に入らない限定家具） ----
+function openExchange91(note) {
+  openModal("景品交換所（現金）", "dark vip90", body => {
+    const c = cash78(), r = rank91();
+    body.innerHTML = staffSay13(charIcon13(NPC90.concierge.cfg), esc(note || "いらっしゃいませ。こちらは、現金のお客さま専用の景品交換所でございます。ここでしか手に入らない品を、ご用意しております"))
+      + `<p class="mtext">現金 <b>${billTxt78(c.n)}</b>　会員ランク <b>${RANKS91[r].name}</b></p>
+      <div class="list">${SHOP91.map(([id, price, need]) => { const F = FURN91[id], ok = c.n >= price && r >= need; return `<div class="li"><img src="${ASSETS[F.img]}" alt=""><span class="nm">${esc(F.name)}<span class="sub2">${billTxt78(price)}（${fmt(price * BILL78)}）・${RANKS91[need].name}から</span></span><span class="acts"><button class="btn" type="button" data-ex91="${id}" ${ok ? "" : "disabled"}>交換</button></span></div>`; }).join("")}</div>
+      <p class="mtext small">お支払いは現金（1,000G札）だけ。偽札をまぜると、バレたときがこわいよ。買った家具は、よろず屋では買い取ってもらえない</p>
+      <div class="row2"><button class="btn light" type="button" id="ex91ok">閉じる</button></div>`;
+    body.querySelector("#ex91ok").onclick = closeModal;
+    body.querySelectorAll("[data-ex91]").forEach(b => b.onclick = () => {
+      const row = SHOP91.find(x => x[0] === b.dataset.ex91); if (!row) return; const [id, price, need] = row;
+      if (cash78().n < price || rank91() < need) return;
+      closeModal();
+      payCash78("vip", price, ok => {
+        if (!ok) return;
+        giveItem91("f_" + id, 1); world.stats.vipShop91 = (world.stats.vipShop91 || 0) + 1; saveWorld(); try { renderHotbar(); } catch (e) { }
+        se13("small"); toast(FURN91[id].img, `「${FURN91[id].name}」と交換した`); openExchange91(`「${FURN91[id].name}」でございます。お大事にお使いくださいませ`);
+      });
+    });
+  }, onClose91);
+}
+F91.exchange = openExchange91;
+
+// ---- 高額ルーレット（0〜36のヨーロピアン・還元率 約97.3%） ----
+const ROU91 = { order: [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26], red: new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]) };
+const RT91 = {};
+for (let n = 0; n <= 36; n++) RT91["n" + n] = { name: String(n), mult: 36, hit: x => x === n, num: n };
+Object.assign(RT91, {
+  red: { name: "赤", mult: 2, hit: x => x > 0 && ROU91.red.has(x) }, black: { name: "黒", mult: 2, hit: x => x > 0 && !ROU91.red.has(x) },
+  even: { name: "偶数", mult: 2, hit: x => x > 0 && x % 2 === 0 }, odd: { name: "奇数", mult: 2, hit: x => x % 2 === 1 },
+  low: { name: "1〜18", mult: 2, hit: x => x >= 1 && x <= 18 }, high: { name: "19〜36", mult: 2, hit: x => x >= 19 },
+  d1: { name: "1st 12", mult: 3, hit: x => x >= 1 && x <= 12 }, d2: { name: "2nd 12", mult: 3, hit: x => x >= 13 && x <= 24 }, d3: { name: "3rd 12", mult: 3, hit: x => x >= 25 },
+  c1: { name: "列1", mult: 3, hit: x => x > 0 && x % 3 === 1 }, c2: { name: "列2", mult: 3, hit: x => x > 0 && x % 3 === 2 }, c3: { name: "列3", mult: 3, hit: x => x > 0 && x % 3 === 0 },
+});
+const RCHIPS91 = [10, 50, 100, 500];
+const R91 = F91.R = { chip: 10, bets: {}, hist: [] };
+const rTotal91 = () => Object.values(R91.bets).reduce((a, b) => a + b, 0);
+const rColor91 = n => n === 0 ? "z" : ROU91.red.has(n) ? "r" : "k";
+const rDesc91 = n => n === 0 ? "0" : `${n}（${ROU91.red.has(n) ? "赤" : "黒"}・${n % 2 ? "奇数" : "偶数"}）`;
+function rAdd91(t) {
+  const T = RT91[t]; if (!T) return;
+  const chip = R91.chip, cur = R91.bets[t] || 0, tot = rTotal91(), c = cash78();
+  if (tot + chip > c.n) { toast(null, "現金が足りないよ"); return; }
+  if (tot + chip > MAXTOTAL91) { toast(null, `1回の勝負で賭けられるのは、合わせて${MAXTOTAL91.toLocaleString("ja-JP")}枚まで`); return; }
+  if ((cur + chip) * T.mult > MAXPAY91) { toast(null, `「${T.name}」は、払い戻しが${MAXPAY91.toLocaleString("ja-JP")}枚をこえるので、これ以上は置けないよ`); return; }
+  if (K.betAllowed && !K.betAllowed((tot + chip) * BILL78)) { toast(null, K.betMsg()); return; }
+  R91.bets[t] = cur + chip; R91.hist.push({ t, a: chip });
+}
+function rUndo91() { const h = R91.hist.pop(); if (!h) return; R91.bets[h.t] = (R91.bets[h.t] || 0) - h.a; if (R91.bets[h.t] <= 0) delete R91.bets[h.t]; }
+function rClear91() { R91.bets = {}; R91.hist = []; }
+const easeOut91 = t => 1 - Math.pow(1 - t, 3);
+/** ホイールを描く。theta＝ホイールの回転、ball＝{a, r}（ボールの角度と半径の割合）、hi＝光らせる数字 */
+function drawWheel91(cv, theta, ball, hi) {
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 6, N = 37, step = 6.2832 / N;
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = "#3a1e10"; g.beginPath(); g.arc(cx, cy, R + 5, 0, 6.2832); g.fill();
+  g.fillStyle = "#b8841c"; g.beginPath(); g.arc(cx, cy, R + 2, 0, 6.2832); g.fill();
+  for (let i = 0; i < N; i++) {
+    const n = ROU91.order[i], a0 = theta + i * step - 1.5708 - step / 2;
+    g.fillStyle = n === 0 ? "#1f9a4a" : ROU91.red.has(n) ? "#c8102e" : "#1a1620";
+    g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, R, a0, a0 + step); g.closePath(); g.fill();
+    if (hi === n) { g.strokeStyle = "#ffe27a"; g.lineWidth = 2; g.stroke(); }
+  }
+  g.fillStyle = "#2a1a10"; g.beginPath(); g.arc(cx, cy, R * .6, 0, 6.2832); g.fill();
+  g.fillStyle = "#f0c040"; g.beginPath(); g.arc(cx, cy, R * .5, 0, 6.2832); g.fill();
+  g.fillStyle = "#b8841c"; g.beginPath(); g.arc(cx, cy, R * .22, 0, 6.2832); g.fill();
+  g.fillStyle = "#2a1a10"; g.font = `900 ${Math.round(R * .34)}px sans-serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(hi == null ? "" : String(hi), cx, cy + 1);
+  if (ball) { const bx = cx + Math.cos(ball.a) * ball.r * R, by = cy + Math.sin(ball.a) * ball.r * R; g.fillStyle = "#ffffff"; g.beginPath(); g.arc(bx, by, Math.max(2.5, R * .06), 0, 6.2832); g.fill(); g.strokeStyle = "#8a8a8a"; g.lineWidth = 1; g.stroke(); }
+  g.fillStyle = "#ffe27a"; g.beginPath(); g.moveTo(cx, 1); g.lineTo(cx - 5, -4 + 8); g.lineTo(cx + 5, -4 + 8); g.closePath(); g.fill();
+}
+const rouEnd91 = p => { const idx = ROU91.order.indexOf(p); return -idx * (6.2832 / 37); };
+function openRoulette91(res) {
+  const TITLE = "VIPルーム　高額ルーレット";
+  openModal(TITLE, "dark vip90 rou91", body => paint(body, res), onClose91);
+  function paint(body, res) {
+    const c = cash78(), busy = !!(res && (res.busy || res.anim)), shown = res && !busy, tot = rTotal91();
+    const cell = (t, cls, label) => `<button class="rc91 ${cls}" type="button" data-rt="${t}" ${busy ? "disabled" : ""} aria-label="${esc(RT91[t].name)}">${label}${R91.bets[t] ? `<b class="cb91">${R91.bets[t]}</b>` : ""}</button>`;
+    let grid = `<div class="rb91" role="group" aria-label="ルーレットのテーブル">` + cell("n0", "z", "0").replace('class="rc91 z"', 'class="rc91 z" style="grid-row:1/4;grid-column:1"');
+    for (let col = 0; col < 12; col++) for (let row = 0; row < 3; row++) { const n = col * 3 + 3 - row; grid += cell("n" + n, rColor91(n), n).replace(/class="rc91 (\w)"/, `class="rc91 $1" style="grid-row:${row + 1};grid-column:${col + 2}"`); }
+    grid += [["c3", 1], ["c2", 2], ["c1", 3]].map(([t, row]) => cell(t, "o", "2:1").replace('class="rc91 o"', `class="rc91 o" style="grid-row:${row};grid-column:14"`)).join("");
+    grid += [["d1", 2, 5], ["d2", 6, 9], ["d3", 10, 13]].map(([t, a, b]) => cell(t, "o", RT91[t].name).replace('class="rc91 o"', `class="rc91 o" style="grid-row:4;grid-column:${a}/${b + 1}"`)).join("");
+    grid += [["low", 2, 3], ["even", 4, 5], ["red", 6, 7], ["black", 8, 9], ["odd", 10, 11], ["high", 12, 13]].map(([t, a, b]) => cell(t, t === "red" ? "r" : t === "black" ? "k" : "o", RT91[t].name).replace(/class="rc91 (\w)"/, `class="rc91 $1" style="grid-row:5;grid-column:${a}/${b + 1}"`)).join("");
+    grid += `</div>`;
+    const placed = Object.entries(R91.bets).map(([t, a]) => `${RT91[t].name} ${a}`).join("　");
+    body.innerHTML = `<div class="vp90">
+      <div class="vp90-l">
+        ${staffSay13(charIcon13(NPC90.roulette.cfg), esc(busy ? "……ボールが回っております" : shown ? (res.pay > res.total ? (res.tier >= 3 ? "お見事でございます！ 今夜はあなたさまのお席ですね" : "おめでとうございます。当たりでございます") : res.pay === res.total ? "ちょうど、お返しとなりました" : "残念でございます。ホイールは気まぐれですので") : c.n < RCHIPS91[0] ? "ここは現金だけのテーブルでございます。信用金庫の「現金の窓口」で、お札をお引き出しくださいませ" : "ようこそ、ルーレットへ。チップを置いて、「勝負！」をどうぞ")) }
+        <div class="rw91"><canvas id="rou91cv" width="170" height="170"></canvas></div>
+        <p class="mtext vp90-res ${shown ? (res.pay > res.total ? "win" : "lose") : ""}" id="rou91res">${busy ? "　" : shown ? esc(res.text) : "チップを置いてください"}</p>
+        <p class="mtext">現金 <b>${billTxt78(busy && res.cashPre != null ? res.cashPre : c.n)}</b>（${fmt((busy && res.cashPre != null ? res.cashPre : c.n) * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
+        ${duHtml91(res)}
+      </div>
+      <div class="vp90-r">
+        <div class="vp90-row"><span class="lbl">チップ</span>${RCHIPS91.map(b => `<button class="chip" type="button" data-rch="${b}" aria-pressed="${R91.chip === b}" ${busy ? "disabled" : ""}>${b}枚</button>`).join("")}</div>
+        ${grid}
+        <p class="mtext small vp90-odds">置いたチップ：${placed ? esc(placed) : "なし"}　合計 <b>${tot}枚</b>（${fmt(tot * BILL78)}）</p>
+        <div class="row2"><button class="btn light" type="button" id="rou91undo" ${busy || !R91.hist.length ? "disabled" : ""}>ひとつもどす</button><button class="btn light" type="button" id="rou91clr" ${busy || !tot ? "disabled" : ""}>ぜんぶ下げる</button><button class="btn vp90-go" type="button" id="rou91go" ${!busy && tot > 0 && c.n >= tot ? "" : "disabled"}>${busy ? "…" : "勝負！"}</button></div>
+      </div></div>`;
+    const re = () => paint(body, res);
+    body.querySelectorAll("[data-rch]").forEach(b => b.onclick = () => { R91.chip = +b.dataset.rch; re(); });
+    body.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { rAdd91(b.dataset.rt); re(); });
+    body.querySelector("#rou91undo").onclick = () => { rUndo91(); re(); };
+    body.querySelector("#rou91clr").onclick = () => { rClear91(); re(); };
+    duBind91(body, res, re);
+    body.querySelector("#rou91go").onclick = () => {
+      const total = rTotal91(); if (cash78().n < total || !total) return;
+      if (K.betAllowed && !K.betAllowed(total * BILL78)) { toast(null, K.betMsg()); return; }
+      for (const [t, a] of Object.entries(R91.bets)) if (a * RT91[t].mult > MAXPAY91) { toast(null, "払い戻しの上限をこえる置き方があるよ"); return; }
+      const bets = { ...R91.bets };
+      closeModal();
+      payCash78("vip", total, (ok, d) => { if (ok) spinRoulette91(bets, total, d); });
+    };
+    const cv = body.querySelector("#rou91cv");
+    if (res && res.anim) {
+      res.anim = false; res.busy = true;
+      const end = rouEnd91(res.p), s0 = performance.now(), D = 3600;
+      const frame = now => {
+        if (!cv.isConnected) { res.busy = false; release90(); toast(null, res.text); if (res.pay > res.total) shine90(res.tier || 1); return; }
+        const t = Math.min(1, (now - s0) / D), e = easeOut91(t);
+        drawWheel91(cv, end + 6.2832 * 5 * (1 - e), { a: -1.5708 - (1 - e) * 6.2832 * 7, r: e < .7 ? .92 : .92 - (e - .7) / .3 * .17 }, t >= 1 ? res.p : null);
+        if (t < 1) { requestAnimationFrame(frame); return; }
+        res.busy = false; release90();
+        if ($("mtitle").textContent === TITLE) paint(body, res);
+        if (res.pay > res.total) { shine90(res.tier || 1); if (res.tier) winFx90({ tier: res.tier, pay: res.pay, label: res.label }); } else se13("miss");
+      };
+      try { if (typeof SFX !== "undefined" && SFX.diceRoll) SFX.diceRoll(1.2); } catch (e) { }
+      requestAnimationFrame(frame);
+    } else drawWheel91(cv, res ? rouEnd91(res.p) : 0, res ? { a: -1.5708, r: .75 } : null, res ? res.p : null);
+  }
+}
+F91.roulette = openRoulette91;
+function spinRoulette91(bets, total, paid) {
+  const p = rnd(37); let pay = 0, straight = false; const hits = [];
+  for (const [t, a] of Object.entries(bets)) { const T = RT91[t]; if (T.hit(p)) { pay += a * T.mult; hits.push(T.name); if (T.num != null) straight = true; } }
+  const win = pay > total, push = pay === total;
+  const label = win ? (straight ? `ルーレット　${p}` : `ルーレット　${hits[0]}`) : "ルーレット";
+  const fin = k => {
+    F90.hold = true; setTimeout(release90, 6000);
+    const cashPre = cash78().n;
+    const S = settle91({ game: "roulette", bet: total, pay, k, paid, out: win ? "win" : push ? "push" : "lose", straight });
+    const mult = total > 0 ? pay / total : 0, tier = tier90(win, pay, mult);
+    const text = `${rDesc91(p)}　` + (win ? `当たり！ 払い戻し ${billTxt78(pay)}（${fmt(pay * BILL78)}）${S.credit ? "。" + payText91(pay, S.credit) : ""}` : push ? "賭け金が、そのまま返った" : `はずれ… ${billTxt78(total - pay)} を失った`);
+    rClear91();
+    openRoulette91({ p, total, pay, tier, label, text, cashPre, anim: true, hits });
+  };
+  if (pay) drawPool78(pay, fin); else fin(0);
+}
+
+// ---- バカラ（プレイヤー・バンカー・タイ。8デッキの山札から引くつもりで、1枚ずつ無作為に引く） ----
+const BCP91 = { player: { name: "プレイヤー", note: "×2" }, banker: { name: "バンカー", note: "×2（6で勝つと×1.5）" }, tie: { name: "タイ", note: "×9" } };
+const B91 = F91.B = { bet: 10, pick: "player" };
+const SUIT91 = ["♠", "♥", "♦", "♣"], RNK91 = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+const cardV91 = c => c.r >= 10 ? 0 : c.r;
+const draw91 = () => ({ r: 1 + rnd(13), s: rnd(4) });
+const cardHtml91 = (c, up, flip) => `<span class="bc91 ${up ? (c.s === 1 || c.s === 2 ? "r" : "") : "down"} ${flip ? "flip" : ""}">${up ? `<i>${RNK91[c.r - 1]}</i><b>${SUIT91[c.s]}</b>` : ""}</span>`;
+/** 1回ぶんの配り。引き方は本物のバカラのルール */
+function dealBaccarat91() {
+  const P = [draw91(), draw91()], B = [draw91(), draw91()], tot = h => h.reduce((a, c) => a + cardV91(c), 0) % 10;
+  let pt = tot(P), bt = tot(B); const natural = pt >= 8 || bt >= 8;
+  if (!natural) {
+    let p3 = null;
+    if (pt <= 5) { P.push(draw91()); p3 = cardV91(P[2]); }
+    const bDraw = p3 === null ? bt <= 5 : bt <= 2 ? true : bt === 3 ? p3 !== 8 : bt === 4 ? p3 >= 2 && p3 <= 7 : bt === 5 ? p3 >= 4 && p3 <= 7 : bt === 6 ? p3 === 6 || p3 === 7 : false;
+    if (bDraw) B.push(draw91());
+    pt = tot(P); bt = tot(B);
+  }
+  return { P, B, pt, bt, natural, winner: pt > bt ? "player" : bt > pt ? "banker" : "tie" };
+}
+function bacPay91(pick, bet, deal) {
+  if (pick === "tie") return deal.winner === "tie" ? bet * 9 : 0;
+  if (deal.winner === "tie") return bet;
+  if (deal.winner !== pick) return 0;
+  return pick === "banker" && deal.bt === 6 ? bet * 3 / 2 : bet * 2;
+}
+function openBaccarat91(res) {
+  const TITLE = "VIPルーム　バカラ";
+  openModal(TITLE, "dark vip90 bac91", body => paint(body, res), onClose91);
+  function paint(body, res) {
+    const c = cash78(), busy = !!(res && (res.busy || res.anim)), shown = res && !busy, B = B91;
+    const hand = (name, cards, total, upN, win) => `<div class="bh91 ${win ? "win" : ""}"><span class="bh91-n">${name}</span><div class="bh91-c">${cards.map((cd, i) => cardHtml91(cd, i < upN, false)).join("")}</div><b class="bh91-t">${upN >= cards.length || shown ? total : "?"}</b></div>`;
+    const cards = res ? res.deal : null, upN = shown ? 9 : 0;
+    body.innerHTML = `<div class="vp90">
+      <div class="vp90-l">
+        ${staffSay13(charIcon13(NPC90.baccarat.cfg), esc(busy ? "……カードをお開きいたします" : shown ? (res.pay > res.bet ? (res.tier >= 3 ? "お見事でございます。今夜のあなたさまは、無敵でございますね" : "おめでとうございます。当たりでございます") : res.pay === res.bet ? "引き分けでございます。賭け金はお返しいたします" : "残念でございます。カードは気まぐれですので") : c.n < BETS90[0] ? "ここは現金だけのテーブルでございます。信用金庫の「現金の窓口」で、お札をお引き出しくださいませ" : "ようこそ、バカラへ。プレイヤー、バンカー、タイからお選びくださいませ")) }
+        <div class="bt91" id="bac91st">${cards ? hand("プレイヤー", cards.P, cards.pt, upN, shown && cards.winner === "player") + hand("バンカー", cards.B, cards.bt, upN, shown && cards.winner === "banker") : `<div class="bh91"><span class="bh91-n">プレイヤー</span><div class="bh91-c">${cardHtml91({ r: 1, s: 0 }, false)}${cardHtml91({ r: 1, s: 0 }, false)}</div><b class="bh91-t">?</b></div><div class="bh91"><span class="bh91-n">バンカー</span><div class="bh91-c">${cardHtml91({ r: 1, s: 0 }, false)}${cardHtml91({ r: 1, s: 0 }, false)}</div><b class="bh91-t">?</b></div>`}</div>
+        <p class="mtext vp90-res ${shown ? (res.pay > res.bet ? "win" : res.pay === res.bet ? "" : "lose") : ""}" id="bac91res">${busy ? "　" : shown ? esc(res.text) : "お賭けを選んでください"}</p>
+        <p class="mtext">現金 <b>${billTxt78(busy && res.cashPre != null ? res.cashPre : c.n)}</b>（${fmt((busy && res.cashPre != null ? res.cashPre : c.n) * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
+        ${duHtml91(res)}
+      </div>
+      <div class="vp90-r">
+        <div class="vp90-row"><span class="lbl">賭ける</span>${BETS90.map(b => `<button class="chip" type="button" data-bb91="${b}" aria-pressed="${B.bet === b}" ${!busy && c.n >= b ? "" : "disabled"}>${b}枚</button>`).join("")}</div>
+        <div class="vp90-row"><span class="lbl">どれに</span>${Object.entries(BCP91).map(([k, p]) => `<button class="chip" type="button" data-bp91="${k}" aria-pressed="${B.pick === k}" ${busy ? "disabled" : ""}>${p.name}</button>`).join("")}</div>
+        <p class="mtext small vp90-odds"><b>${BCP91[B.pick].name}</b>に賭ける：当たると <b>${BCP91[B.pick].note}</b>（${billTxt78(bacPay91(B.pick, B.bet, { winner: B.pick, bt: B.pick === "banker" ? 5 : 0 }))}）。${B.pick === "tie" ? "プレイヤーとバンカーの合計が同じになると当たり" : "合計が9に近いほうが勝ち（10・J・Q・Kは0、Aは1）。引き分けは賭け金が返る"}</p>
+        <div class="row2"><button class="btn vp90-go" type="button" id="bac91go" ${!busy && c.n >= B.bet ? "" : "disabled"}>${busy ? "…" : "勝負！"}</button></div>
+        ${c.n >= BETS90[0] ? "" : `<p class="mtext small">現金が足りないよ（最低${BETS90[0]}枚）。信用金庫の「現金の窓口」で引き出してから来てね</p>`}
+      </div></div>`;
+    const re = () => paint(body, res);
+    body.querySelectorAll("[data-bb91]").forEach(b => b.onclick = () => { B.bet = +b.dataset.bb91; re(); });
+    body.querySelectorAll("[data-bp91]").forEach(b => b.onclick = () => { B.pick = b.dataset.bp91; re(); });
+    duBind91(body, res, re);
+    body.querySelector("#bac91go").onclick = () => {
+      const bet = B.bet; if (cash78().n < bet) return;
+      if (K.betAllowed && !K.betAllowed(bet * BILL78)) { toast(null, K.betMsg()); return; }
+      const pick = B.pick; closeModal();
+      payCash78("vip", bet, (ok, d) => { if (ok) playBaccarat91(pick, bet, d); });
+    };
+    if (res && res.anim) {
+      res.anim = false; res.busy = true;
+      const D = res.deal, st = body.querySelector("#bac91st"), order = [["P", 0], ["B", 0], ["P", 1], ["B", 1]]; if (D.P[2]) order.push(["P", 2]); if (D.B[2]) order.push(["B", 2]);
+      const up = { P: 0, B: 0 }; let i = 0, lastK = "";
+      const draw = () => {
+        const html = (name, cards, tot, n, key) => `<div class="bh91"><span class="bh91-n">${name}</span><div class="bh91-c">${cards.map((cd, j) => cardHtml91(cd, j < up[key], key === lastK && j === up[key] - 1)).join("")}</div><b class="bh91-t">${n ? cards.slice(0, n).reduce((a, cd) => a + cardV91(cd), 0) % 10 : "?"}</b></div>`;
+        st.innerHTML = html("プレイヤー", D.P, D.pt, up.P, "P") + html("バンカー", D.B, D.bt, up.B, "B");
+      };
+      const step = () => {
+        if (!st.isConnected) { res.busy = false; release90(); toast(null, res.text); if (res.pay > res.bet) shine90(res.tier || 1); return; }
+        if (i >= order.length) {
+          setTimeout(() => {
+            res.busy = false; release90();
+            if ($("mtitle").textContent === TITLE) paint(body, res);
+            if (res.pay > res.bet) { shine90(res.tier || 1); if (res.tier) winFx90({ tier: res.tier, pay: res.pay, label: res.label }); } else if (res.pay < res.bet) se13("miss");
+          }, 500); return;
+        }
+        const [k] = order[i++]; up[k]++; lastK = k; se13("small"); draw(); setTimeout(step, 520);
+      };
+      draw(); setTimeout(step, 500);
+    }
+  }
+}
+F91.baccarat = openBaccarat91;
+function playBaccarat91(pick, bet, paid) {
+  const deal = dealBaccarat91(), pay = bacPay91(pick, bet, deal), win = pay > bet, push = pay === bet;
+  const mult = pay / bet, label = `バカラ　${BCP91[pick].name}`;
+  const fin = k => {
+    F90.hold = true; setTimeout(release90, 6000);
+    const cashPre = cash78().n;
+    const S = settle91({ game: "baccarat", bet, pay, k, paid, out: win ? "win" : push ? "push" : "lose", natural: win && deal.natural });
+    const tier = tier90(win, pay, mult);
+    const head = `プレイヤー ${deal.pt}・バンカー ${deal.bt}${deal.natural ? "（ナチュラル）" : ""}　`;
+    const text = head + (win ? `当たり！ 払い戻し ${billTxt78(pay)}（${fmt(pay * BILL78)}）${S.credit ? "。" + payText91(pay, S.credit) : ""}` : push ? "引き分け。賭け金が返った" : `はずれ… ${billTxt78(bet)} を失った`);
+    openBaccarat91({ deal, pick, bet, pay, tier, label, text, cashPre, anim: true });
+  };
+  if (pay) drawPool78(pay, fin); else fin(0);
+}
+F91.bacDeal = dealBaccarat91; F91.bacPay = bacPay91;
+
+// ---- てびき ----
+{
+  const g = GUIDE54.find(x => x[0] === "VIPルーム");
+  if (g) g[2] = `
+    <p>こもれびパレスの奥の<b>VIPルーム</b>（カジノの右がわの紫のカーテンから入る）。<b>現金（1,000G札）だけ</b>で遊べる、高額の卓が3つある。</p><ul>
+    <li><b>サイコロ</b>：大・小・ゾロ目・合計ぴったり・指定ゾロ目。<b>ルーレット</b>：チップを好きなところに置いて勝負。<b>バカラ</b>：プレイヤー・バンカー・タイのどれが勝つか。賭けられるのは10・50・100・500枚で、払い戻しは1回の賭けごとに最高5,000枚まで</li>
+    <li>勝つと、払い戻しは卓の上に置かれる。「持ち帰る」か、赤か黒を当てると2倍になる「ダブルアップ」（3回まで）を選べる。画面を閉じたら持ち帰りになる</li>
+    <li>当たると、部屋が光って、画面いっぱいに金貨が降る。大きく当てるほど、演出も豪華になる（WIN → BIG WIN → SUPER WIN → MEGA JACKPOT）</li>
+    <li><b>会員ランク</b>：本物のお札で賭けた枚数が増えると、ブロンズ・シルバー・ゴールド・プラチナ・ブラックと上がる。ランクごとに、称号と専用の家具がもらえる</li>
+    <li><b>景品交換所</b>（右下のカウンター）：現金だけで、ここでしか手に入らない家具（金のどんぐり像など）と交換できる。ランクが高いほど、買える物がふえる</li>
+    <li><b>支配人ルナ</b>：きまり・会員ランク・ドリンク（グラスを持つ・ほっぺが赤くなる）・ドレスコード（蝶ネクタイ・仮面・シルクハット）。ドリンクと小物は、同じ場所にいる人にも見える</li>
+    <li>偽札をまぜて賭けた分の勝ち負けは、番付・称号・メダル・会員ランクに数えない。お会計で偽札を使うのは、いちばんきびしい（見つかると取り調べ）</li></ul>`;
+}
+F91.ready = true;
+F91.rank = rank91; F91.settle = settle91; F91.state = vs91; F91.RANKS = RANKS91; F91.takePot = takePot91; F91.claim = claimGifts91; F91.duPlay = duPlay91;
+F91.spin = spinRoulette91; F91.playBac = playBaccarat91; F91.luna = openLuna91; F90.manager = () => openLuna91(); F91.rouTargets = RT91;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -18440,7 +19144,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

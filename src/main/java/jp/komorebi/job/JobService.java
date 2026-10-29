@@ -23,7 +23,7 @@ import jp.komorebi.ws.WelcomeContributor;
 /**
  * 村のアルバイトのうち、ほかの人がかかわるもの。
  * ・郵便配達：ほかの人の家へお手紙を届ける。相手がつないでいなければ、共有の村の "_job" に {pend: {プレイヤーID: [お手紙...]}} で取っておき、
- *   次の welcome（"job93": [...]）で渡す（1人20通まで）。お手紙の中身は文面の番号（0〜5）だけ。文面はゲーム側にある
+ *   次の welcome（"job93": [...]）で渡す（1人20通まで）。お手紙の中身は文面の番号（0〜6。6はペットの散歩代行のお知らせ）だけ。文面はゲーム側にある
  * ・脱走の手引き：労働施設の中の人が「助けて」を出す（help）→ 村のほかの人が一覧で見て、引き受ける（join）→ 2人で合図を送りあう（rs）。
  *   助けを求めている人・組はつないでいるあいだだけメモリに持つ（サーバーを再起動すると消える）。20分で期限切れ
  * ・差し入れ：「助けて」を出している人に、村の人が差し入れを届ける（gift）。中の人に {"ev":{"kind":"gift","id":届けた人,"name","g":品物の番号}} が届き、
@@ -33,7 +33,7 @@ import jp.komorebi.ws.WelcomeContributor;
 public class JobService implements WelcomeContributor {
 
     static final String KEY = "_job";
-    static final int MAX_PEND = 20, MAX_KIND = 5, MAX_GIFT = 7;
+    static final int MAX_PEND = 20, MAX_KIND = 6, MAX_GIFT = 7;
     static final long HELP_TTL = 20 * 60_000L;
     static final Set<String> OPS = Set.of("flash", "hit", "miss", "next", "ready", "lost", "bye");
 

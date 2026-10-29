@@ -1327,6 +1327,39 @@ body.watch88 #tut { display: none !important; }
 .sn96 .btn { width: min(100%, 320px); user-select: none; -webkit-user-select: none; touch-action: none; }
 .mbox.yami .list > .btn small { display: block; font-size: .72rem; opacity: .8; font-weight: normal; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .sn96 canvas { width: auto; height: 52vh; } }
+
+/* v97 そのほかのアルバイト */
+.wk97, .sn97, .gl97, .cn97, .ck97, .sh97 { display: grid; gap: 8px; justify-items: center; }
+.wk97 canvas, .sn97 canvas { width: min(100%, 480px); image-rendering: pixelated; border-radius: 6px; touch-action: none; }
+.gl97 canvas, .cn97 canvas { width: min(100%, 360px); image-rendering: pixelated; border-radius: 6px; touch-action: none; }
+.wk97 .btn, .gl97 .btn { width: min(100%, 320px); user-select: none; -webkit-user-select: none; touch-action: none; }
+.sh97basket { display: flex; align-items: center; gap: 10px; background: #3a2a1a; border-radius: 8px; padding: 6px 14px; }
+.sh97basket span { color: #f4e6c2; font-size: .8rem; }
+.sh97basket img { width: 40px; height: 40px; image-rendering: pixelated; }
+.sh97shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: min(100%, 360px); background: #8a5a2a; padding: 8px; border-radius: 8px; }
+.sh97slot { display: grid; justify-items: center; gap: 2px; background: #f4e6c2; border: 2px solid #c8925a; border-radius: 6px; padding: 6px 2px; color: #3a2a1a; cursor: pointer; }
+.sh97slot img { width: 28px; height: 28px; image-rendering: pixelated; opacity: .55; }
+.sh97slot small { font-size: .68rem; }
+.sh97slot:active { transform: scale(.96); }
+.cn97row { display: grid; gap: 6px; }
+.cn97k { display: flex; align-items: center; gap: 8px; }
+.cn97k i { width: 18px; height: 18px; border-radius: 50%; display: inline-block; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .3); }
+.cn97k span { min-width: 2em; text-align: center; font-weight: bold; font-size: 1.1rem; }
+.cn97k .btn { padding: 4px 12px; }
+.gl97t { width: 100%; margin-top: 6px; }
+.ck97stage { min-height: 84px; display: flex; align-items: center; justify-content: center; }
+.ck97tag { display: grid; justify-items: center; gap: 4px; background: #f4e6c2; color: #3a2a1a; border-radius: 8px; padding: 8px 18px; border: 2px solid #c8b890; }
+.ck97tag img { width: 40px; height: 40px; image-rendering: pixelated; }
+.ck97grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ck97it { background: #f4e6c2; border: 2px solid #c8925a; border-radius: 8px; padding: 6px; cursor: pointer; }
+.ck97it img { width: 32px; height: 32px; image-rendering: pixelated; display: block; }
+.ck97it:disabled { opacity: .35; }
+.pc97 { border-left: 14px solid var(--c) !important; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .wk97 canvas, .sn97 canvas { width: auto; height: 50vh; }
+  .gl97 canvas, .cn97 canvas { width: auto; height: 40vh; }
+  .sh97shelf { grid-template-columns: repeat(6, minmax(0, 1fr)); width: 100%; }
+}
 </style>
 
 <header>
@@ -1453,7 +1486,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.54.0";
+  const VER = "0.55.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5920,7 +5953,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.54.0";
+const CLIENT_VERSION = "0.55.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7998,6 +8031,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.55.0", date: "2026/10/29", title: "アルバイトが8つふえた", items: [
+    "求人の掲示板の下に「そのほかのアルバイト」ができた。村では ペットの散歩代行・よろず屋の品出し・雪かき（冬だけ）・落ち葉はき（秋だけ）・カジノのコイン数え・ラウンジのグラスみがき・クローク係、みなと町では 船のペンキぬり",
+    "ペットの散歩代行は、オンラインならほかの人の本物のペットを預かれる。散歩が終わると、飼い主にお手紙が届く",
+    "落ち葉はきでは、たまに焼きいもがもらえる。グラスみがきのあとは、支配人のルナと少し話せる",
+    "船のペンキぬりで半分以上ぬれた船は、3日のあいだみなと町の港にうかんでいる"
+  ] },
   { v: "0.54.0", date: "2026/10/29", title: "VIPの高レートスロットと、裏の求人", items: [
     "VIPルームに「高レートスロット」ができた（ルナのとなりの金の台）。現金だけで、1回に5・10・20・50枚。はじめに「おまかせ」か「目押し」を選べる（あとから変えられる）",
     "目押しでは、STOPで1つずつ自分のタイミングで止める。大きい役（金のどんぐり・7・金塊）が当たると、ランプとルナが「狙え」と教えてくれる。上手でも勝ちすぎないように、還元率は約97%まで",
@@ -20619,6 +20658,465 @@ GUIDE54.push(["裏の求人（闇バイト）", "s96_board", `
     <li>同居人（模様替えできる合鍵の人）になっている家の中でも、偽札の版で偽札を刷れる。1日10枚までは人ごと。見つかっても、疑われるのは刷った人だけ</li></ul>`]);
 F96.ready = true;
 
+// =================== v97: ふつうのアルバイトが8つ（散歩代行・品出し・雪かき・落ち葉はき・ペンキぬり・コイン数え・グラスみがき・クローク係） ===================
+// 求人の掲示板（v93）の「#j93extra」に足す。村：散歩代行・品出し・雪かき（冬）・落ち葉はき（秋）・コイン数え・グラスみがき・クローク係／みなと町：船のペンキぬり
+// 状態は world.j97（日がかわると paid が戻る）。お給料は1日の回数まで（それ以降は練習）。途中でやめるとお給料はなし。
+var F97 = {};
+const JOB97 = {
+  walk: { name: "ペットの散歩代行", where: "village", cap: 2, desc: "村の人のペットを預かって散歩する。リードを引っぱられないように、ゲージをまんなかに。オンラインなら、ほかの人の本物のペットを預かれる（150〜370G）" },
+  shelf: { name: "よろず屋の品出し", where: "village", cap: 3, desc: "かごの商品を、棚の決まった場所に並べる。速くて正確なほどお給料が上がる（80〜340G）" },
+  snow: { name: "雪かき", where: "village", cap: 2, when: () => season() === "冬", whenTxt: "冬だけ", desc: "道の雪をかいて、村の通り道を作る。雪はどんどん降ってくる（100〜460G）" },
+  leaf: { name: "落ち葉はき", where: "village", cap: 2, when: () => season() === "秋", whenTxt: "秋だけ", desc: "落ち葉を集めて、まんなかの山にする。風に気をつけて。たまに焼きいもがもらえる（60〜400G）" },
+  coin: { name: "カジノのコイン数え", where: "village", cap: 3, desc: "トレーのコインを、金・銀・銅に分けて数える。まちがえるとお給料が減る（60〜300G）" },
+  glass: { name: "ラウンジのグラスみがき", where: "village", cap: 2, desc: "グラスを割らないように、ちょうどよくみがいて並べる。終わったら支配人のルナと少し話せる（0〜260G）" },
+  cloak: { name: "クローク係", where: "village", cap: 3, desc: "お客さんの荷物と番号札をおぼえて、正しく返す記憶ゲーム（0〜400G）" },
+  paint: { name: "船のペンキぬり", where: "port", cap: 2, desc: "はみ出さないように船体をぬる。ぬった船は、しばらく港に色が残る（80〜380G）" },
+};
+F97.JOB = JOB97;
+const j97 = () => {
+  const j = world.j97 = world.j97 && typeof world.j97 === "object" && !Array.isArray(world.j97) ? world.j97 : {};
+  if (j.day !== world.day || !j.paid || typeof j.paid !== "object") { j.day = world.day; j.paid = {}; }
+  if (!j.n || typeof j.n !== "object") j.n = {};
+  if (!j.best || typeof j.best !== "object") j.best = {};
+  for (const k of ["imo", "luna", "petOnline"]) j[k] = Number.isFinite(+j[k]) ? Math.max(0, Math.floor(+j[k])) : 0;
+  if (j.boat && !(typeof j.boat === "object" && typeof j.boat.c === "string")) j.boat = null;
+  return j;
+};
+F97.state = j97;
+const left97 = k => Math.max(0, JOB97[k].cap - (j97().paid[k] || 0));
+const avail97 = k => !JOB97[k].when || JOB97[k].when();
+
+// ---- 絵 ----
+const SPR97 = {
+  walk: [16, 16, (s, r) => { r(2, 8, 8, 5, C13["#c8925a"]); r(8, 5, 5, 5, C13["#c8925a"]); s(11, 6, C13["#2a1a10"]); r(12, 8, 2, 1, C13["#2a1a10"]); r(3, 13, 2, 2, C13["#8a5a2a"]); r(8, 13, 2, 2, C13["#8a5a2a"]); r(9, 9, 4, 1, C13["#d83a3a"]); for (let i = 0; i < 4; i++) s(13 + (i % 2), 9 - i * 2, C13["#3a3a44"]); }],
+  shelf: [16, 16, (s, r) => { r(1, 2, 14, 13, C13["#8a5a2a"]); r(2, 3, 12, 11, C13["#c8925a"]); r(2, 8, 12, 1, C13["#8a5a2a"]); r(3, 5, 3, 3, C13["#d83a3a"]); r(7, 4, 3, 4, C13["#6ab04c"]); r(11, 5, 2, 3, C13["#f0c040"]); r(3, 10, 4, 3, C13["#4a8ad0"]); r(9, 10, 3, 3, C13["#e8e0d0"]); }],
+  snow: [16, 16, (s, r) => { r(7, 1, 2, 9, C13["#8a5a2a"]); r(4, 9, 8, 5, C13["#9aa8b8"]); r(5, 10, 6, 3, C13["#c8d4e0"]); r(6, 0, 4, 2, C13["#3a3a44"]); r(1, 13, 14, 2, C13["#ffffff"]); s(2, 4, C13["#ffffff"]); s(13, 6, C13["#ffffff"]); }],
+  leaf: [16, 16, (s, r) => { for (const [x, y, c] of [[3, 9, "#d8642a"], [8, 7, "#e8a030"], [11, 10, "#c83a2a"], [6, 11, "#f0c040"], [10, 5, "#d8642a"]]) { r(x, y, 3, 2, C13[c]); s(x + 1, y + 2, C13["#7a3a1a"]); } r(2, 13, 12, 2, C13["#8a5a2a"]); }],
+  coin: [16, 16, (s, r) => { for (const [x, y, c, d] of [[2, 8, "#f0c040", "#b8841c"], [7, 6, "#d8dce4", "#8a94a4"], [11, 9, "#c87a3a", "#8a4a1a"]]) { ell13(s, x + 2, y + 2, 2.6, 2.6, C13[d]); ell13(s, x + 2, y + 2, 1.8, 1.8, C13[c]); } }],
+  glass: [16, 16, (s, r) => { r(5, 1, 6, 7, C13["#cfeaf2"]); r(5, 1, 6, 1, C13["#ffffff"]); r(6, 2, 1, 5, C13["#ffffff"]); r(7, 8, 2, 4, C13["#cfeaf2"]); r(5, 12, 6, 2, C13["#cfeaf2"]); s(12, 2, C13["#fffaf0"]); s(13, 3, C13["#fff0a0"]); }],
+  cloak: [16, 16, (s, r) => { r(3, 2, 10, 12, C13["#e8d8b0"]); r(3, 2, 10, 1, C13["#c8b890"]); ell13(s, 8, 4, 1.4, 1.4, C13["#8a6a3a"]); r(5, 7, 6, 4, C13["#fffaf0"]); r(6, 8, 1, 2, C13["#3a3a44"]); r(8, 8, 2, 1, C13["#3a3a44"]); r(9, 9, 1, 1, C13["#3a3a44"]); }],
+  paint: [16, 16, (s, r) => { r(2, 9, 12, 5, C13["#4a8ad0"]); r(3, 13, 10, 1, C13["#2a5a9a"]); r(9, 2, 2, 7, C13["#8a5a2a"]); r(8, 7, 4, 3, C13["#e8e0d0"]); r(8, 9, 4, 2, C13["#d83a3a"]); }],
+  imo: [16, 16, (s, r) => { ell13(s, 8, 9, 6.4, 3.6, C13["#7a2a4a"]); ell13(s, 8, 9, 5.4, 2.6, C13["#9a3a5a"]); ell13(s, 6, 8, 2.6, 1.4, C13["#f0c040"]); s(4, 6, C13["#e8e0d0"]); s(10, 4, C13["#e8e0d0"]); s(11, 3, C13["#e8e0d0"]); }],
+};
+for (const [k, [w, h, fn]] of Object.entries(SPR97)) { IMG["s97_" + k] = pix13(w, h, fn); ASSETS["s97_" + k] = IMG["s97_" + k].toDataURL(); }
+ITEMS.dish_yakiimo97 = { name: "焼きいも", icon: "s97_imo", price: 120 };
+// ぬった船：色ごとに絵を作って取っておく
+const boatImg97 = hex => {
+  const k = "s97_boat_" + hex.slice(1); if (IMG[k]) return k;
+  IMG[k] = pix13(48, 20, (s, r) => {
+    r(4, 0, 2, 9, C13["#6a4a2a"]); r(6, 1, 10, 7, C13["#f4f0e8"]); r(6, 1, 10, 1, C13["#ffffff"]);
+    r(0, 9, 48, 3, C13["#5a3a22"]); r(2, 12, 44, 5, C13[hex]); r(5, 17, 38, 2, C13[hex]); r(2, 12, 44, 1, C13["#fffaf0"]); r(30, 13, 10, 2, C13["#fffaf0"]);
+  });
+  return k;
+};
+{
+  const _mp = makePort;
+  makePort = function () {
+    const m = _mp.apply(this, arguments);
+    try { const b = j97().boat; if (b && world.day <= b.until) { const k = boatImg97(b.c); m.objs.push({ img: k, x: 9 * TS, y: 11 * TS - 4, sortY: 11 * TS }); m.labels.push({ x: 10 * TS + 8, y: 11 * TS - 10, text: "ぬりたての船" }); } } catch (e) { }
+    return m;
+  };
+}
+
+// ---- 求人の掲示板に足す ----
+{
+  const _oj = openJobs93;
+  openJobs93 = function (where, note) {
+    _oj.apply(this, arguments);
+    const box = document.getElementById("j93extra"); if (!box) return;
+    const ids = Object.keys(JOB97).filter(k => JOB97[k].where === where);
+    box.innerHTML = `<h4>そのほかのアルバイト</h4><div class="list">${ids.map(k => {
+      const J = JOB97[k], ok = avail97(k), left = left97(k);
+      return `<div class="li"><img src="${ASSETS["s97_" + k]}" alt=""><span class="nm">${J.name}<span class="sub2">${J.desc}</span><span class="sub2 st93">${!ok ? `${J.whenTxt}（いまは${season()}）` : left ? `きょうはあと${left}回` : "きょうはもう終わり（練習ならできる）"}</span></span><span class="acts">${ok ? `<button class="btn${left ? "" : " light"}" type="button" data-j97="${k}">${left ? "はじめる" : "練習"}</button>` : ""}</span></div>`;
+    }).join("")}</div>`;
+    box.querySelectorAll("[data-j97]").forEach(b => b.onclick = () => { closeModal(); F97.play(b.dataset.j97); });
+  };
+  F93.jobs = openJobs93;
+}
+F97.play = k => ({ walk: playWalk97, shelf: playShelf97, snow: playSnow97, leaf: playLeaf97, coin: playCoin97, glass: playGlass97, cloak: playCloak97, paint: playPaint97 })[k]();
+/** おしまい：お給料（回数のうちだけ）と結果の画面 */
+function done97(k, closed, pay, lines, extra) {
+  const j = j97(); let paid = 0;
+  pay = Math.max(0, Math.round(pay / 10) * 10);
+  if (!closed && pay > 0 && left97(k) > 0) { j.paid[k] = (j.paid[k] || 0) + 1; paid = pay; addMoney(pay); }
+  if (!closed) { j.n[k] = (j.n[k] || 0) + 1; j.best[k] = Math.max(j.best[k] || 0, pay); }
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+  if (closed || !$("mbody")) { if (paid) F7.notify(`${JOB97[k].name}：お給料 ${fmt(paid)}`, "s97_" + k); return paid; }
+  const msg = paid ? `お給料 <em>${fmt(paid)}</em>` : closed ? "" : pay > 0 ? "きょうはもうお給料をもらったよ（練習）" : "お給料はなし";
+  $("mbody").innerHTML = `<div class="dk75r"><b>おつかれさま</b>${lines.map(l => `<span>${esc(l)}</span>`).join("")}<span>${msg}</span></div>${extra || ""}
+    <div class="row2"><button class="btn" type="button" id="j97again">もう一回</button><button class="btn light" type="button" id="j97ok">とじる</button></div>`;
+  $("j97ok").onclick = closeModal; $("j97again").onclick = () => { closeModal(); F97.play(k); };
+  se13(paid >= 250 ? "big" : paid ? "harvest" : "small");
+  return paid;
+}
+const keyHold97 = (keys, set) => {
+  const kd = e => { if (keys.includes(e.key)) { e.preventDefault(); e.stopPropagation(); set(true); } }, ku = e => { if (keys.includes(e.key)) { e.preventDefault(); e.stopPropagation(); set(false); } };
+  addEventListener("keydown", kd, true); addEventListener("keyup", ku, true);
+  return () => { removeEventListener("keydown", kd, true); removeEventListener("keyup", ku, true); };
+};
+const holdBtn97 = (el, set) => { const on = e => { e.preventDefault(); set(true); }, off = e => { if (e) e.preventDefault(); set(false); }; el.addEventListener("pointerdown", on); el.addEventListener("pointerup", off); el.addEventListener("pointerleave", off); el.addEventListener("pointercancel", off); };
+
+// =================== ペットの散歩代行 ===================
+function pickPet97() {
+  if (F8.connected) {
+    const L = []; for (const [pid, ents] of rPets44) for (const e of ents) if (e && e.sprite && IMG[e.sprite]) L.push({ pid: +pid, owner: e.owner44 || "だれか", name: e.name || "ペット", sprite: e.sprite });
+    if (L.length) return L[rnd(L.length)];
+  }
+  const NP = [["ゆず", "dog", "マロン"], ["そら", "cat", "タマ"], ["みお", "dog", "ハチ"]], [o, s, n] = NP[rnd(NP.length)];
+  return { pid: 0, owner: o, name: n, sprite: IMG[s] ? s : "cat" };
+}
+function playWalk97() {
+  const P = pickPet97(), W = 320, H = 180, GOAL = 300;
+  let dist = 0, nd = 0, vel = 0, strikes = 0, t = 0, hold = false, ended = false, last = performance.now(), dis = null, disT = 2.5, msg = "", msgT = 0, scroll = 0;
+  openModal("ペットの散歩代行", "ph76m", body => {
+    body.innerHTML = `<div class="wk97"><p class="mtext small">${esc(P.owner)}さんの「${esc(P.name)}」を預かった。${P.pid ? "（オンラインの本物のペット）" : ""}ゲージがはしに行かないように、引っぱられたら「リードを引く」を押そう</p>
+      <canvas id="wk97cv" width="${W}" height="${H}"></canvas><button type="button" class="btn" id="wk97b">リードを引く（押しているあいだ）</button></div>`;
+  }, () => { if (!ended) end(true); });
+  const cv = $("wk97cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  holdBtn97($("wk97b"), v => hold = v); holdBtn97(cv, v => hold = v);
+  const unkey = keyHold97([" ", "ArrowLeft", "a"], v => hold = v);
+  const DIS = [["ねこ", "#f0a050"], ["ちょうちょ", "#ffe27a"], ["水たまり", "#6ab0e0"], ["いいにおい", "#d88ab0"]];
+  function end(closed) {
+    if (ended) return; ended = true; unkey();
+    const ratio = Math.min(1, dist / GOAL), pay = ratio * 200 + (ratio >= 1 && strikes === 0 ? 120 : ratio >= 1 ? 40 : 0) + (P.pid && ratio >= 1 ? 50 : 0);
+    if (!closed && ratio >= 1 && P.pid && F8.connected) { send8({ type: "job", a: "letter", to: P.pid, k: 6, rid: "w" + P.pid }); j97().petOnline++; }
+    done97("walk", closed, ratio >= .3 ? pay : 0, [`${Math.round(dist)}m あるいた（${GOAL}m）`, strikes ? `リードを引っぱられた／引っぱりすぎた：${strikes}回` : "ずっとなかよく歩けた！", P.pid && ratio >= 1 ? `${P.owner}さんに、散歩のお手紙を届けた` : ""].filter(Boolean));
+  }
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+    disT -= dt; if (!dis && disT <= 0) { const d = DIS[rnd(DIS.length)]; dis = { n: d[0], c: d[1], t: 1.6 + Math.random() * 1.6, side: Math.random() < .5 ? -1 : 1 }; }
+    if (dis) { dis.t -= dt; if (dis.t <= 0) { dis = null; disT = 1.6 + Math.random() * 2.2; } }
+    const pull = (dis ? 1.25 : .18 * Math.sin(t * 1.7) + .12) * (1 + Math.min(.6, t * .015));
+    vel += (pull - (hold ? 1.25 : 0) - nd * .5) * dt * 2.4; vel *= Math.pow(.25, dt); nd += vel * dt;
+    if (Math.abs(nd) >= 1) { strikes++; msg = nd > 0 ? "リードを引っぱられた！" : "引っぱりすぎて、しょんぼり…"; msgT = 1.2; nd = 0; vel = 0; se13("miss"); if (strikes >= 3) { end(false); return; } }
+    if (Math.abs(nd) < .6) { dist += 9 * dt; scroll += 30 * dt; }
+    if (dist >= GOAL) { end(false); return; }
+    // 道
+    g.fillStyle = "#9ad8f0"; g.fillRect(0, 0, W, 90); g.fillStyle = "#7ac050"; g.fillRect(0, 90, W, 90); g.fillStyle = "#c8b890"; g.fillRect(0, 118, W, 30);
+    for (let k = 0; k < 6; k++) { const x = ((k * 70 - scroll) % 420 + 420) % 420 - 50; g.fillStyle = "#4a8a4a"; g.beginPath(); g.arc(x, 82, 18, 0, 7); g.fill(); g.fillStyle = "#6a4a2a"; g.fillRect(x - 3, 82, 6, 16); }
+    if (dis) { g.fillStyle = dis.c; g.beginPath(); g.arc(250, dis.side > 0 ? 108 : 156, 8, 0, 7); g.fill(); g.fillStyle = "#3a3a44"; g.font = "bold 10px sans-serif"; g.textAlign = "center"; g.fillText(dis.n, 250, dis.side > 0 ? 94 : 174); }
+    // ペットと自分とリード
+    const px = 190 + nd * 50, img = IMG[P.sprite];
+    g.strokeStyle = "#d83a3a"; g.lineWidth = 2; g.beginPath(); g.moveTo(110, 122); g.quadraticCurveTo((110 + px) / 2, 128 + (1 - Math.abs(nd)) * 10, px, 130); g.stroke();
+    if (img) g.drawImage(img, px - img.width, 118 - img.height * 2 + 26, img.width * 2, img.height * 2);
+    g.drawImage(renderChar(cfg, "right", Math.floor(t * 5) % 2), 84, 104, 32, 32);
+    // ゲージ
+    g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(40, 10, 240, 16); g.fillStyle = "#6ad06a"; g.fillRect(40 + 120 - 54, 12, 108, 12); g.fillStyle = "#e86a5a"; g.fillRect(40, 12, 16, 12); g.fillRect(264, 12, 16, 12);
+    g.fillStyle = "#ffd86a"; g.fillRect(40 + 120 + nd * 116 - 2, 8, 4, 20);
+    g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(4, 30, 92, 16); g.fillRect(W - 50, 30, 46, 16);
+    g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${Math.round(dist)}m / ${GOAL}m`, 8, 32); g.textAlign = "right"; g.fillText("♥".repeat(3 - strikes) + "♡".repeat(strikes), W - 8, 32);
+    if (msgT > 0) { msgT -= dt; g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(70, 56, 180, 22); g.fillStyle = "#fff"; g.textAlign = "center"; g.font = "bold 13px sans-serif"; g.fillText(msg, 160, 60); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F97.W = { state: () => ({ dist, nd, strikes }), finish: () => { dist = GOAL; }, end: () => end(false) };
+}
+// 散歩のお手紙（文面6番）。サーバーは文面0〜6を受けとる
+LETTER93[6] = "ペットのおさんぽ、行ってきました！ とっても元気でしたよ";
+{
+  const _gl = getLetter93;
+  getLetter93 = function (e) {
+    if (e && (e.k | 0) === 6) {
+      const j = j93(); j.inbox.unshift({ name: String(e.name || "だれか").slice(0, 20), k: 6, day: world.day }); j.inbox.length = Math.min(j.inbox.length, 10);
+      saveWorld(); F7.notify(`${String(e.name || "だれか")}さんが、ペットの散歩をしてくれた：「${LETTER93[6]}」`, null); return;
+    }
+    return _gl.apply(this, arguments);
+  };
+  F93.letter = getLetter93;
+}
+
+// =================== よろず屋の品出し ===================
+function playShelf97() {
+  const kinds = ["tomato", "cabbage", "carrot", "feed", "wood", "stone", "ore", "seed_tomato"].filter(id => ITEMS[id]).slice(0, 6);
+  for (let i = kinds.length - 1; i > 0; i--) { const k = rnd(i + 1); [kinds[i], kinds[k]] = [kinds[k], kinds[i]]; }
+  const N = 12, seq = Array.from({ length: N }, () => kinds[rnd(kinds.length)]);
+  let i = 0, ok = 0, miss = 0, t0 = performance.now(), ended = false, timer = 0, itemT0 = 0;
+  openModal("よろず屋の品出し", "ph76m", body => {
+    body.innerHTML = `<div class="sh97"><p class="mtext small" id="sh97h"></p><div class="sh97basket"><span>かご</span><img id="sh97i" alt=""></div>
+      <div class="sh97shelf">${kinds.map(id => `<button type="button" class="sh97slot" data-s97="${id}"><img src="${ASSETS[ITEMS[id].icon]}" alt=""><small>${esc(ITEMS[id].name)}</small></button>`).join("")}</div><p class="mtext small" id="sh97m">棚の正しい場所をタップ</p></div>`;
+  }, () => { clearTimeout(timer); if (!ended) finish(true); });
+  const next = () => {
+    if (ended) return; if (i >= N) { finish(false); return; }
+    $("sh97i").src = ASSETS[ITEMS[seq[i]].icon]; $("sh97h").textContent = `${i + 1}/${N}こ目・正しく並べた ${ok}`; itemT0 = performance.now();
+    clearTimeout(timer); timer = setTimeout(() => put(null), 4000);
+  };
+  function put(id) {
+    if (ended) return; clearTimeout(timer);
+    if (id === seq[i]) { ok++; se13("small"); $("sh97m").textContent = "ぴったり！"; } else { miss++; se13("miss"); $("sh97m").textContent = id ? "場所がちがうよ" : "時間切れ"; }
+    i++; setTimeout(next, 90);
+  }
+  $("mbody").querySelectorAll("[data-s97]").forEach(b => b.onclick = () => put(b.dataset.s97));
+  function finish(closed) {
+    if (ended) return; ended = true; clearTimeout(timer);
+    const sec = (performance.now() - t0) / 1000, pay = ok < 4 ? 0 : 80 + ok * 15 + Math.max(0, Math.round((40 - sec) * 2)) - miss * 10;
+    done97("shelf", closed, pay, [`${ok}/${N}こ、正しく並べた`, `かかった時間 ${sec.toFixed(1)}秒`]);
+  }
+  F97.S = { cur: () => seq[i], put, finish: () => finish(false) };
+  next();
+}
+
+// =================== 雪かき（冬だけ） ===================
+function playSnow97() {
+  const C = 10, R = 6, ROAD = 3, S = 32, W = C * S, H = R * S, depth = Array.from({ length: R }, (_, y) => Array.from({ length: C }, () => y === ROAD ? 3 : 2 + rnd(2)));
+  let t = 0, ended = false, last = performance.now(), fall = 0, down = false, lastTile = "", best = 0, shovels = 0;
+  openModal("雪かき", "ph76m", body => { body.innerHTML = `<div class="sn97"><p class="mtext small" id="sw97h">村の通り道（まんなかの列）の雪を、ぜんぶかこう。タップかなぞるとかける（1マス3回）。雪はどんどん降ってくる</p><canvas id="sw97cv" width="${W}" height="${H}"></canvas></div>`; }, () => { if (!ended) end(true, false); });
+  const cv = $("sw97cv"), g = cv.getContext("2d");
+  const at = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * C), Math.floor((e.clientY - r.top) / r.height * R)]; };
+  const dig = (x, y) => { if (ended || x < 0 || y < 0 || x >= C || y >= R) return; const k = x + "," + y + "," + Math.floor(t * 8); if (k === lastTile) return; lastTile = k; if (y !== ROAD) return; if (depth[y][x] > 0) { depth[y][x]--; shovels++; se13("small"); } };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); down = true; dig(...at(e)); });
+  cv.addEventListener("pointermove", e => { if (down) dig(...at(e)); });
+  addEventListener("pointerup", () => down = false);
+  const clear = () => depth[ROAD].filter(d => d === 0).length;
+  function end(closed, win) {
+    if (ended) return; ended = true;
+    const c = clear(), pay = win ? 260 + Math.max(0, Math.round((40 - t) * 5)) : c * 12;
+    done97("snow", closed, pay, [win ? `通り道ができた！（${t.toFixed(1)}秒）` : `${c}/${C}マス、雪をかいた`, `かいた回数 ${shovels}回`]);
+  }
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; fall += dt;
+    if (fall > Math.max(.9, 2.2 - t * .03)) { fall = 0; const x = rnd(C); depth[ROAD][x] = Math.min(3, depth[ROAD][x] + 1); }
+    best = Math.max(best, clear());
+    if (clear() === C) { end(false, true); return; }
+    if (t > 40) { end(false, false); return; }
+    for (let y = 0; y < R; y++) for (let x = 0; x < C; x++) {
+      const d = depth[y][x]; g.fillStyle = y === ROAD ? (d ? ["", "#e8eef8", "#f2f6fc", "#ffffff"][d] : "#8a7a6a") : "#f8fbff"; g.fillRect(x * S, y * S, S, S);
+      if (y === ROAD) { g.strokeStyle = "rgba(90,110,140,.35)"; g.strokeRect(x * S + .5, y * S + .5, S - 1, S - 1); if (d) { g.fillStyle = "#9aa8c0"; g.font = "bold 11px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("■".repeat(d), x * S + S / 2, y * S + S / 2); } }
+    }
+    g.fillStyle = "#c86a4a"; g.fillRect(0, ROAD * S - 18, 26, 16); g.fillRect(W - 26, ROAD * S - 18, 26, 16);
+    g.fillStyle = "rgba(255,255,255,.8)"; for (let k = 0; k < 30; k++) g.fillRect((k * 53 + t * 20 * (1 + k % 3)) % W, (k * 37 + t * 40) % H, 2, 2);
+    g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(4, 4, 150, 16); g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`のこり ${Math.max(0, Math.ceil(40 - t))}秒・${clear()}/${C}マス`, 8, 6);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F97.N = { dig, depth, end: () => end(false, false) };
+}
+
+// =================== 落ち葉はき（秋だけ） ===================
+function playLeaf97() {
+  const W = 320, H = 180, PX = 160, PY = 120, PR = 30, COL = ["#d8642a", "#e8a030", "#c83a2a", "#f0c040", "#b8541a"];
+  const L = Array.from({ length: 70 }, () => { let x, y; do { x = 10 + Math.random() * 300; y = 10 + Math.random() * 160; } while (Math.hypot(x - PX, y - PY) < PR + 10); return { x, y, vx: 0, vy: 0, c: COL[rnd(COL.length)], r: Math.random() * 6 }; });
+  let t = 0, ended = false, last = performance.now(), ptr = null, gust = 6, gustT = 0, gdir = 0;
+  openModal("落ち葉はき", "ph76m", body => { body.innerHTML = `<div class="sn97"><p class="mtext small">ほうきで落ち葉をなぞって、まんなかの山に集めよう（30秒）。ときどき風が吹くよ</p><canvas id="lf97cv" width="${W}" height="${H}"></canvas></div>`; }, () => { if (!ended) end(true); });
+  const cv = $("lf97cv"), g = cv.getContext("2d");
+  const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); const [x, y] = pos(e); ptr = { x, y, px: x, py: y }; });
+  cv.addEventListener("pointermove", e => { if (!ptr) return; const [x, y] = pos(e); ptr.px = ptr.x; ptr.py = ptr.y; ptr.x = x; ptr.y = y; sweep(ptr.x - ptr.px, ptr.y - ptr.py); });
+  addEventListener("pointerup", () => ptr = null);
+  function sweep(dx, dy) { for (const l of L) if (Math.hypot(l.x - ptr.x, l.y - ptr.y) < 24) { l.vx += dx * 7; l.vy += dy * 7; } }
+  const inPile = () => L.filter(l => Math.hypot(l.x - PX, l.y - PY) < PR).length;
+  function end(closed) {
+    if (ended) return; ended = true;
+    const n = inPile(), pay = n < 5 ? 0 : 60 + n * 4;
+    let imo = "";
+    if (!closed && n >= 10 && Math.random() < (n >= 40 ? .35 : .1)) { giveItem91("dish_yakiimo97", 1); j97().imo++; imo = "落ち葉の山で焼いた、ほかほかの焼きいもをもらった！"; }
+    done97("leaf", closed, pay, [`山に集めた落ち葉 ${n}枚（${L.length}枚中）`, imo].filter(Boolean), imo ? `<p class="mtext" style="text-align:center"><img src="${ASSETS.s97_imo}" alt="" style="width:32px;image-rendering:pixelated"></p>` : "");
+  }
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; gust -= dt;
+    if (gust <= 0) { gust = 5 + Math.random() * 3; gustT = .9; gdir = Math.random() * 6.28; }
+    if (gustT > 0) { gustT -= dt; for (const l of L) if (Math.hypot(l.x - PX, l.y - PY) > PR * .7) { l.vx += Math.cos(gdir) * 140 * dt; l.vy += Math.sin(gdir) * 140 * dt; } }
+    for (const l of L) { l.x += l.vx * dt; l.y += l.vy * dt; l.vx *= Math.pow(.04, dt); l.vy *= Math.pow(.04, dt); l.x = Math.max(4, Math.min(W - 4, l.x)); l.y = Math.max(4, Math.min(H - 4, l.y)); l.r += dt * (Math.abs(l.vx) + Math.abs(l.vy)) * .05; }
+    if (t > 30) { end(false); return; }
+    g.fillStyle = "#7ab050"; g.fillRect(0, 0, W, H); g.fillStyle = "#c8b890"; g.fillRect(0, 70, W, 30);
+    g.fillStyle = "rgba(120,80,40,.35)"; g.beginPath(); g.arc(PX, PY, PR, 0, 7); g.fill(); g.strokeStyle = "#8a5a2a"; g.setLineDash([4, 3]); g.stroke(); g.setLineDash([]);
+    for (const l of L) { g.save(); g.translate(l.x, l.y); g.rotate(l.r); g.fillStyle = l.c; g.fillRect(-3, -2, 6, 4); g.fillStyle = "#7a3a1a"; g.fillRect(-1, 2, 1, 2); g.restore(); }
+    if (gustT > 0) { g.strokeStyle = "rgba(255,255,255,.7)"; for (let k = 0; k < 6; k++) { const x = (k * 60 + t * 200) % W, y = 20 + k * 25; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(gdir) * 26, y + Math.sin(gdir) * 26); g.stroke(); } }
+    if (ptr) { g.fillStyle = "rgba(255,255,255,.25)"; g.beginPath(); g.arc(ptr.x, ptr.y, 24, 0, 7); g.fill(); }
+    g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(4, 4, 170, 16); g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`のこり ${Math.max(0, Math.ceil(30 - t))}秒・山に ${inPile()}枚${gustT > 0 ? "・風！" : ""}`, 8, 6);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F97.L = { leaves: L, end: () => end(false), pile: () => { for (const l of L.slice(0, 50)) { l.x = PX + (Math.random() - .5) * 20; l.y = PY + (Math.random() - .5) * 20; l.vx = l.vy = 0; } } };
+}
+
+// =================== カジノのコイン数え ===================
+function playCoin97() {
+  const ROUNDS = [6, 8, 10, 12], KIND = [["金", "#f0c040", "#b8841c"], ["銀", "#d8dce4", "#8a94a4"], ["銅", "#c87a3a", "#8a4a1a"]];
+  let r = 0, wrong = 0, ended = false, ans = [0, 0, 0], truth = [0, 0, 0], timer = 0;
+  openModal("カジノのコイン数え", "ph76m", body => { body.innerHTML = `<div class="cn97"><p class="mtext small" id="cn97h"></p><canvas id="cn97cv" width="240" height="120"></canvas><div id="cn97q"></div><p class="mtext small" id="cn97m"></p></div>`; }, () => { clearTimeout(timer); if (!ended) finish(true); });
+  const cv = $("cn97cv"), g = cv.getContext("2d");
+  const round = () => {
+    if (ended) return; if (r >= ROUNDS.length) { finish(false); return; }
+    const n = ROUNDS[r]; truth = [0, 0, 0]; ans = [0, 0, 0];
+    const coins = []; for (let k = 0; k < n; k++) { const t = rnd(3); truth[t]++; let x, y, tries = 0; do { x = 16 + Math.random() * 208; y = 16 + Math.random() * 88; tries++; } while (tries < 30 && coins.some(c => Math.hypot(c.x - x, c.y - y) < 17)); coins.push({ x, y, t }); }
+    g.fillStyle = "#1f6a4a"; g.fillRect(0, 0, 240, 120); g.strokeStyle = "#f0c040"; g.lineWidth = 2; g.strokeRect(2, 2, 236, 116);
+    for (const c of coins) { g.fillStyle = KIND[c.t][2]; g.beginPath(); g.arc(c.x, c.y, 8, 0, 7); g.fill(); g.fillStyle = KIND[c.t][1]; g.beginPath(); g.arc(c.x - 1, c.y - 1, 6, 0, 7); g.fill(); }
+    $("cn97h").textContent = `${r + 1}/${ROUNDS.length}回目・トレーのコインをおぼえて！`; $("cn97q").innerHTML = ""; $("cn97m").textContent = "";
+    const show = 2200 + n * 160; F97.C.truth = truth.slice();
+    timer = setTimeout(() => {
+      g.fillStyle = "#123a2a"; g.fillRect(0, 0, 240, 120); g.fillStyle = "#e8f0e0"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("いくつずつあった？", 120, 64);
+      $("cn97h").textContent = `${r + 1}/${ROUNDS.length}回目・種類ごとの枚数を入れよう`;
+      $("cn97q").innerHTML = `<div class="cn97row">${KIND.map(([nm, c], i) => `<div class="cn97k"><i style="background:${c}"></i><b>${nm}</b><button class="btn light" type="button" data-cm="${i}">−</button><span id="cn97v${i}">0</span><button class="btn light" type="button" data-cp="${i}">＋</button></div>`).join("")}</div><div class="row2"><button class="btn" type="button" id="cn97ok">これでOK</button></div>`;
+      $("cn97q").querySelectorAll("[data-cm]").forEach(b => b.onclick = () => { const i = +b.dataset.cm; ans[i] = Math.max(0, ans[i] - 1); $("cn97v" + i).textContent = ans[i]; });
+      $("cn97q").querySelectorAll("[data-cp]").forEach(b => b.onclick = () => { const i = +b.dataset.cp; ans[i] = Math.min(20, ans[i] + 1); $("cn97v" + i).textContent = ans[i]; });
+      $("cn97ok").onclick = () => submit(ans);
+    }, show);
+  };
+  function submit(a) {
+    if (ended) return; clearTimeout(timer);
+    const ok = a.every((v, i) => v === truth[i]); if (!ok) wrong++;
+    $("cn97m").textContent = ok ? "ぴったり！" : `ちがった…（金${truth[0]}・銀${truth[1]}・銅${truth[2]}）`; se13(ok ? "harvest" : "miss");
+    r++; timer = setTimeout(round, 1100);
+  }
+  function finish(closed) { if (ended) return; ended = true; clearTimeout(timer); done97("coin", closed, Math.max(60, 300 - wrong * 60), [`${ROUNDS.length - wrong}/${ROUNDS.length}回、ぴったり数えた`, wrong ? `まちがえた分、お給料が${wrong * 60}G減った` : "ぜんぶぴったり！"]); }
+  F97.C = { submit, truth: [], finish: () => finish(false), skip: () => { clearTimeout(timer); } };
+  round();
+}
+
+// =================== ラウンジのグラスみがき（ルナと少し話せる） ===================
+const LUNATALK97 = [
+  ["お疲れさまですわ。……実はわたくし、ここに来る前は、旅の歌い手でしたの", [["聞かせてほしい", "ふふ、またいつか。VIPの夜が静かなときにでも"], ["意外です", "よく言われますわ。似合いませんでしょう？"]]],
+  ["グラスは、映すものですわ。きれいなグラスには、きれいな夜がうつりますの", [["なるほど", "ええ。あなたさまのみがいたグラス、とてもいい夜をうつしていますわ"], ["夜って？", "勝った夜も、負けた夜も。……どちらも、大切な夜ですのよ"]]],
+  ["高レートスロット、遊んでくださいました？ 目押しで7を止める方、見ていてほれぼれしますの", [["練習します", "ふふ。指先は、正直ですわよ"], ["おまかせ派です", "それもまた、粋な遊び方ですわ"]]],
+  ["勝ちすぎるお客さまより、楽しんで帰るお客さまのほうが、わたくしは好きですの", [["わかる気がする", "でしょう？ 今日の負けは、明日の楽しみですわ"], ["勝ちたいです", "正直なかた。……では、ほどほどに、ね"]]],
+  ["シャンパンタワーのいちばん上のグラス、毎晩わたくしがみがいていますのよ", [["いちばん上？", "ええ。いちばん上は、いちばん光を集めますから"], ["大変ですね", "好きでやっていることですから。……今日は、助かりましたわ"]]],
+];
+function playGlass97() {
+  const N = 6; let i = 0, good = 0, half = 0, broke = 0, v = 0, hold = false, ended = false, last = performance.now(), phase = "polish", res = "", resT = 0, zone = [.68, .88];
+  openModal("ラウンジのグラスみがき", "ph76m", body => {
+    body.innerHTML = `<div class="gl97"><p class="mtext small" id="gl97h"></p><canvas id="gl97cv" width="240" height="140"></canvas><button type="button" class="btn" id="gl97b">みがく（押しているあいだ）</button><p class="mtext small">緑のところで手をはなすと、ぴかぴか。みがきすぎると割れちゃう</p></div>`;
+  }, () => { if (!ended) end(true); });
+  const cv = $("gl97cv"), g = cv.getContext("2d");
+  let wasHold = false;
+  holdBtn97($("gl97b"), x => hold = x); holdBtn97(cv, x => hold = x);
+  const unkey = keyHold97([" ", "Enter"], x => hold = x);
+  const judge = () => { if (v >= 1) return; if (v >= zone[0] && v <= zone[1]) { good++; res = "ぴかぴか！"; se13("harvest"); } else if (v > .2) { half++; res = "くもりが残った…"; se13("small"); } else { res = "まだ、ぜんぜん"; return false; } return true; };
+  const nextGlass = () => { i++; v = 0; resT = .7; zone = [.6 + Math.random() * .15, 0]; zone[1] = zone[0] + Math.max(.1, .22 - i * .02); if (i >= N) setTimeout(() => end(false), 700); };
+  function end(closed) {
+    if (ended) return; ended = true; unkey();
+    const pay = good * 40 + half * 15 - broke * 30;
+    const talk = LUNATALK97[rnd(LUNATALK97.length)];
+    done97("glass", closed, pay, [`ぴかぴか ${good}こ・くもり ${half}こ・割れた ${broke}こ`], `<div class="gl97t">${staffSay13(charIcon13(NPC90.manager.cfg), esc(talk[0]))}<div class="row2">${talk[1].map(([q], k) => `<button class="btn light" type="button" data-lt97="${k}">${esc(q)}</button>`).join("")}</div></div>`);
+    if (closed) return;
+    $("mbody").querySelectorAll("[data-lt97]").forEach(b => b.onclick = () => { const a = talk[1][+b.dataset.lt97]; const box = b.closest(".gl97t"); box.innerHTML = staffSay13(charIcon13(NPC90.manager.cfg), esc(a[1])); j97().luna++; saveWorld(); try { checkTitles42(); } catch (e) { } });
+  }
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (resT > 0) resT -= dt;
+    else if (i < N) {
+      if (hold) { v += dt * (.45 + i * .05); if (v >= 1) { broke++; res = "パリン！ 割れちゃった…"; se13("miss"); nextGlass(); hold = false; } }
+      else if (wasHold && v > 0) { if (judge() !== false) nextGlass(); else v = 0; }
+      wasHold = hold;
+    }
+    g.fillStyle = "#2a1020"; g.fillRect(0, 0, 240, 140); g.fillStyle = "#4a2034"; g.fillRect(0, 108, 240, 32);
+    for (let k = 0; k < N; k++) { const x = 20 + k * 36; g.globalAlpha = k < i ? 1 : .25; g.fillStyle = "#cfeaf2"; g.fillRect(x, 112, 10, 12); g.fillRect(x + 4, 124, 2, 6); g.fillRect(x + 1, 130, 8, 2); g.globalAlpha = 1; }
+    if (i < N) {
+      const sh = Math.min(1, v); g.fillStyle = `rgba(207,234,242,${.4 + sh * .6})`; g.fillRect(100, 20, 40, 46); g.fillRect(116, 66, 8, 22); g.fillRect(104, 88, 32, 6);
+      g.fillStyle = `rgba(255,255,255,${sh})`; g.fillRect(106, 26, 4, 30); if (v > .85) { g.fillStyle = "#ff8a8a"; g.fillRect(126, 30, 2, 12); g.fillRect(128, 42, 2, 8); }
+      g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(20, 6, 200, 10); g.fillStyle = "#6ad06a"; g.fillRect(20 + zone[0] * 200, 6, (zone[1] - zone[0]) * 200, 10); g.fillStyle = "#e86a5a"; g.fillRect(216, 6, 4, 10); g.fillStyle = "#ffd86a"; g.fillRect(20 + Math.min(1, v) * 200 - 1, 3, 3, 16);
+    }
+    $("gl97h").textContent = `${Math.min(N, i + 1)}/${N}こ目`;
+    if (resT > 0 && res) { g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(40, 60, 160, 22); g.fillStyle = "#fff"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(res, 120, 71); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F97.G = { set: x => { v = x; }, release: () => { hold = false; wasHold = true; }, press: () => { hold = true; }, state: () => ({ i, good, half, broke, v, zone }), end: () => end(false) };
+}
+
+// =================== クローク係 ===================
+function playCloak97() {
+  const POOL = ["s91_g_wine", "s97_glass", "s78_bill", "s97_imo", "s97_coin", "s93_fish", "s97_paint", "s97_walk", "s97_shelf", "s96_hole", "s95_acorn", "s97_leaf"].filter(k => ASSETS[k] || IMG[k]);
+  const SIZES = [3, 4, 5]; let r = 0, ok = 0, miss = 0, ended = false, timer = 0, items = [], order = [], q = 0;
+  const src = k => ASSETS[k] || (IMG[k] ? (ASSETS[k] = IMG[k].toDataURL()) : "");
+  openModal("クローク係", "ph76m", body => { body.innerHTML = `<div class="ck97"><p class="mtext small" id="ck97h"></p><div class="ck97stage" id="ck97s"></div><div class="ck97grid" id="ck97g"></div><p class="mtext small" id="ck97m"></p></div>`; }, () => { clearTimeout(timer); if (!ended) finish(true); });
+  const round = () => {
+    if (ended) return; if (r >= SIZES.length) { finish(false); return; }
+    const n = SIZES[r], pool = POOL.slice(); for (let k = pool.length - 1; k > 0; k--) { const j = rnd(k + 1); [pool[k], pool[j]] = [pool[j], pool[k]]; }
+    items = pool.slice(0, n); $("ck97g").innerHTML = ""; $("ck97m").textContent = "";
+    let k = 0;
+    const showOne = () => {
+      if (ended) return;
+      if (k >= n) { ask(); return; }
+      $("ck97h").textContent = `${r + 1}/${SIZES.length}回目・お客さんの荷物と番号をおぼえて！`;
+      $("ck97s").innerHTML = `<div class="ck97tag"><img src="${src(items[k])}" alt=""><b>${k + 1}番</b></div>`; se13("small");
+      k++; timer = setTimeout(showOne, Math.max(900, 1500 - r * 150));
+    };
+    showOne();
+  };
+  const ask = () => {
+    order = items.map((_, i) => i); for (let k = order.length - 1; k > 0; k--) { const j = rnd(k + 1); [order[k], order[j]] = [order[j], order[k]]; } q = 0;
+    const shuffled = items.map((it, i) => [it, i]); for (let k = shuffled.length - 1; k > 0; k--) { const j = rnd(k + 1); [shuffled[k], shuffled[j]] = [shuffled[j], shuffled[k]]; }
+    $("ck97g").innerHTML = shuffled.map(([it, i]) => `<button type="button" class="ck97it" data-ck97="${i}"><img src="${src(it)}" alt=""></button>`).join("");
+    $("ck97g").querySelectorAll("[data-ck97]").forEach(b => b.onclick = () => answer(+b.dataset.ck97, b));
+    askOne();
+  };
+  const askOne = () => { if (q >= order.length) { r++; timer = setTimeout(round, 900); return; } $("ck97s").innerHTML = `<div class="ck97tag"><b>「${order[q] + 1}番の札です」</b></div>`; $("ck97h").textContent = `${r + 1}/${SIZES.length}回目・どの荷物？`; F97.K.want = order[q]; };
+  function answer(i, b) {
+    if (ended || q >= order.length) return;
+    if (i === order[q]) { ok++; se13("harvest"); $("ck97m").textContent = "ありがとう！"; b.disabled = true; } else { miss++; se13("miss"); $("ck97m").textContent = "それはちがう荷物…"; const right = $("ck97g").querySelector(`[data-ck97="${order[q]}"]`); if (right) right.disabled = true; }
+    q++; askOne();
+  }
+  function finish(closed) { if (ended) return; ended = true; clearTimeout(timer); const tot = SIZES.reduce((a, b) => a + b, 0); done97("cloak", closed, ok * 25 + (miss === 0 && ok === tot ? 100 : 0), [`${ok}/${tot}人に、正しく返した`, miss ? `まちがえた ${miss}回` : "ぜんぶ正解！"]); }
+  F97.K = { want: -1, answer: i => answer(i, { disabled: false }), finish: () => finish(false) };
+  round();
+}
+
+// =================== 船のペンキぬり（みなと町） ===================
+const PCOL97 = [["赤", "#d83a3a"], ["青", "#3a6ad8"], ["黄", "#e8c040"], ["緑", "#3aa85a"], ["白", "#f4f0e8"]];
+function playPaint97() {
+  openModal("船のペンキぬり", "ph76m", body => {
+    body.innerHTML = `<p class="mtext">何色にぬる？ ぬった船は、3日のあいだ港にうかんでいるよ。</p><div class="row2">${PCOL97.map(([n, c]) => `<button class="btn light pc97" type="button" data-pc97="${c}" style="--c:${c}">${n}</button>`).join("")}</div>`;
+    body.querySelectorAll("[data-pc97]").forEach(b => b.onclick = () => paint(b.dataset.pc97));
+  });
+  function paint(col) {
+    const W = 320, H = 180, GW = 64, GH = 36, cell = 5, BR = 10;
+    const inHull = (x, y) => { if (y < 70 || y > 150) return false; const half = 130 - Math.max(0, (y - 120)) * 1.6; return Math.abs(x - 160) < half; };
+    const grid = new Uint8Array(GW * GH); let inside = 0; for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) if (inHull(x * cell + 2.5, y * cell + 2.5)) inside++;
+    let t = 0, ended = false, last = performance.now(), down = false, px = null;
+    const b = $("mbody");
+    b.innerHTML = `<div class="sn97"><p class="mtext small">白い線の中を、はみ出さないようにぬろう（25秒）。なぞるとぬれる</p><canvas id="pt97cv" width="${W}" height="${H}"></canvas><div class="row2"><button class="btn" type="button" id="pt97ok">できた！</button></div></div>`;
+    const cv = $("pt97cv"), g = cv.getContext("2d");
+    const off = document.createElement("canvas"); off.width = W; off.height = H; const o = off.getContext("2d");
+    const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+    const dab = (x, y) => {
+      o.fillStyle = col; o.beginPath(); o.arc(x, y, BR, 0, 7); o.fill();
+      for (let gy = Math.max(0, Math.floor((y - BR) / cell)); gy <= Math.min(GH - 1, Math.floor((y + BR) / cell)); gy++) for (let gx = Math.max(0, Math.floor((x - BR) / cell)); gx <= Math.min(GW - 1, Math.floor((x + BR) / cell)); gx++) if (Math.hypot(gx * cell + 2.5 - x, gy * cell + 2.5 - y) <= BR) grid[gy * GW + gx] = 1;
+    };
+    const stroke = (x, y) => { if (px) { const d = Math.hypot(x - px[0], y - px[1]), n = Math.ceil(d / 4); for (let k = 1; k <= n; k++) dab(px[0] + (x - px[0]) * k / n, px[1] + (y - px[1]) * k / n); } else dab(x, y); px = [x, y]; };
+    cv.addEventListener("pointerdown", e => { e.preventDefault(); down = true; px = null; stroke(...pos(e)); });
+    cv.addEventListener("pointermove", e => { if (down) stroke(...pos(e)); });
+    addEventListener("pointerup", () => { down = false; px = null; });
+    $("pt97ok").onclick = () => end(false);
+    const score = () => { let cov = 0, over = 0; for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) if (grid[y * GW + x]) { if (inHull(x * cell + 2.5, y * cell + 2.5)) cov++; else over++; } return { cov: cov / inside, over: over / inside }; };
+    function end(closed) {
+      if (ended) return; ended = true;
+      const s = score(), sc = Math.max(0, s.cov - s.over * 1.5), pay = s.cov < .2 ? 0 : 80 + sc * 300;
+      if (!closed && s.cov >= .5) { j97().boat = { c: col, until: world.day + 3 }; saveWorld(); }
+      done97("paint", closed, pay, [`ぬれたところ ${Math.round(s.cov * 100)}%・はみ出し ${Math.round(s.over * 100)}%`, s.cov >= .5 ? "ぬった船は、3日のあいだ港に残るよ" : "もう少しぬれていたら、港に飾れたのに"]);
+    }
+    F97.P = { dab, end: () => end(false), score, fill: () => { for (let y = 72; y < 150; y += 6) for (let x = 40; x < 290; x += 6) if (inHull(x, y)) dab(x, y); } };
+    const loop = now => {
+      if (!cv.isConnected || ended) return;
+      const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt; if (t > 25) { end(false); return; }
+      g.fillStyle = "#6ab0e0"; g.fillRect(0, 0, W, H); g.fillStyle = "#4a90c8"; g.fillRect(0, 140, W, 40);
+      g.fillStyle = "#c8b8a0"; g.beginPath(); g.moveTo(30, 70); g.lineTo(290, 70); g.lineTo(290, 120); g.lineTo(242, 150); g.lineTo(78, 150); g.lineTo(30, 120); g.closePath(); g.fill();
+      g.drawImage(off, 0, 0);
+      g.strokeStyle = "#ffffff"; g.lineWidth = 2; g.setLineDash([5, 3]); g.beginPath(); g.moveTo(30, 70); g.lineTo(290, 70); g.lineTo(290, 120); g.lineTo(242, 150); g.lineTo(78, 150); g.lineTo(30, 120); g.closePath(); g.stroke(); g.setLineDash([]);
+      const s = score(); g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(4, 4, 220, 16); g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`のこり ${Math.max(0, Math.ceil(25 - t))}秒・ぬれた ${Math.round(s.cov * 100)}%・はみ出し ${Math.round(s.over * 100)}%`, 8, 6);
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+}
+
+// ---- 称号 ----
+const TTL97 = [
+  ["散歩の名人", "ペットの散歩代行を、5回する", () => (world.j97?.n?.walk || 0) >= 5],
+  ["焼きいも係", "落ち葉はきで、焼きいもをもらう", () => (world.j97?.imo || 0) >= 1],
+  ["ルナの話し相手", "グラスみがきのあと、ルナと5回話す", () => (world.j97?.luna || 0) >= 5],
+  ["村のなんでも屋", "ふつうのアルバイト8つのうち、6つ以上やったことがある", () => Object.keys(JOB97).filter(k => (world.j97?.n?.[k] || 0) > 0).length >= 6],
+];
+for (const t of TTL97) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["そのほかのアルバイト", "s97_shelf", `
+    <p>求人の掲示板の下のほうに、<b>そのほかのアルバイト</b>がある。どれも1日の回数まではお給料、それ以降は練習。</p><ul>
+    <li><b>村</b>：ペットの散歩代行（オンラインならほかの人の本物のペット）・よろず屋の品出し・雪かき（冬だけ）・落ち葉はき（秋だけ・たまに焼きいも）・カジノのコイン数え・ラウンジのグラスみがき（ルナと話せる）・クローク係</li>
+    <li><b>みなと町</b>：船のペンキぬり（色を選んでぬる。半分以上ぬれたら、その船が3日のあいだ港にうかぶ）</li></ul>`]);
+F97.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -21079,7 +21577,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

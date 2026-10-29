@@ -865,3 +865,36 @@ body.watch88 #tut { display: none !important; }
 .sn96 .btn { width: min(100%, 320px); user-select: none; -webkit-user-select: none; touch-action: none; }
 .mbox.yami .list > .btn small { display: block; font-size: .72rem; opacity: .8; font-weight: normal; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .sn96 canvas { width: auto; height: 52vh; } }
+
+/* v97 そのほかのアルバイト */
+.wk97, .sn97, .gl97, .cn97, .ck97, .sh97 { display: grid; gap: 8px; justify-items: center; }
+.wk97 canvas, .sn97 canvas { width: min(100%, 480px); image-rendering: pixelated; border-radius: 6px; touch-action: none; }
+.gl97 canvas, .cn97 canvas { width: min(100%, 360px); image-rendering: pixelated; border-radius: 6px; touch-action: none; }
+.wk97 .btn, .gl97 .btn { width: min(100%, 320px); user-select: none; -webkit-user-select: none; touch-action: none; }
+.sh97basket { display: flex; align-items: center; gap: 10px; background: #3a2a1a; border-radius: 8px; padding: 6px 14px; }
+.sh97basket span { color: #f4e6c2; font-size: .8rem; }
+.sh97basket img { width: 40px; height: 40px; image-rendering: pixelated; }
+.sh97shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: min(100%, 360px); background: #8a5a2a; padding: 8px; border-radius: 8px; }
+.sh97slot { display: grid; justify-items: center; gap: 2px; background: #f4e6c2; border: 2px solid #c8925a; border-radius: 6px; padding: 6px 2px; color: #3a2a1a; cursor: pointer; }
+.sh97slot img { width: 28px; height: 28px; image-rendering: pixelated; opacity: .55; }
+.sh97slot small { font-size: .68rem; }
+.sh97slot:active { transform: scale(.96); }
+.cn97row { display: grid; gap: 6px; }
+.cn97k { display: flex; align-items: center; gap: 8px; }
+.cn97k i { width: 18px; height: 18px; border-radius: 50%; display: inline-block; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .3); }
+.cn97k span { min-width: 2em; text-align: center; font-weight: bold; font-size: 1.1rem; }
+.cn97k .btn { padding: 4px 12px; }
+.gl97t { width: 100%; margin-top: 6px; }
+.ck97stage { min-height: 84px; display: flex; align-items: center; justify-content: center; }
+.ck97tag { display: grid; justify-items: center; gap: 4px; background: #f4e6c2; color: #3a2a1a; border-radius: 8px; padding: 8px 18px; border: 2px solid #c8b890; }
+.ck97tag img { width: 40px; height: 40px; image-rendering: pixelated; }
+.ck97grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ck97it { background: #f4e6c2; border: 2px solid #c8925a; border-radius: 8px; padding: 6px; cursor: pointer; }
+.ck97it img { width: 32px; height: 32px; image-rendering: pixelated; display: block; }
+.ck97it:disabled { opacity: .35; }
+.pc97 { border-left: 14px solid var(--c) !important; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .wk97 canvas, .sn97 canvas { width: auto; height: 50vh; }
+  .gl97 canvas, .cn97 canvas { width: auto; height: 40vh; }
+  .sh97shelf { grid-template-columns: repeat(6, minmax(0, 1fr)); width: 100%; }
+}

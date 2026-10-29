@@ -52,7 +52,7 @@ function jobHandle(s, m) {
   if (a === "letter") {
     const to = +m.to | 0, k = m.k | 0, out = { type: "job", a: "letter", rid: String(m.rid || "") };
     let err = null;
-    if (to === me) err = "自分あてのお手紙は届けられないよ"; else if (k < 0 || k > 5) err = "お手紙が見つからなかった"; else if (slowJ("l" + me, 1000)) err = "少し待ってから届けてね";
+    if (to === me) err = "自分あてのお手紙は届けられないよ"; else if (k < 0 || k > 6) err = "お手紙が見つからなかった"; else if (slowJ("l" + me, 1000)) err = "少し待ってから届けてね";
     else if (!accounts.some(x => x.id === to && !x.deleted && vOf(x) === V)) err = "その家の人は見つからなかった";
     if (!err) { const ev = { kind: "letter", from: me, name: s.pl.name, k }; if ([...sessions].some(o => o.pl && o.pl.id === to)) jobSend(to, { type: "job", ev }); else { const l = jobPend.get(to) || []; if (l.length < 20) l.push(ev); jobPend.set(to, l); } }
     return s.send(JSON.stringify({ ...out, ok: !err, ...(err ? { text: err } : {}) }));

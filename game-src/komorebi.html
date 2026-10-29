@@ -1418,6 +1418,17 @@ body.watch88 #tut { display: none !important; }
 .sw100c { border-left: 10px solid var(--c) !important; }
 @media (max-width: 520px) { .dr100 { grid-template-columns: 1fr; } }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .sw100m canvas { width: 84px; height: 84px; } .dr100l canvas { width: 96px; height: 96px; } }
+
+/* v101 こもれび闘鶏・v102 アイドルプロデュース */
+.to101 { display: grid; gap: 6px; }
+.to101 canvas { width: min(100%, 320px); justify-self: center; image-rendering: pixelated; border-radius: 8px; }
+.id102pick { display: grid; gap: 8px; }
+.id102pick .gm92c img { width: 40px; height: 40px; image-rendering: pixelated; float: left; margin-right: 8px; }
+.id102 { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 2fr); gap: 12px; align-items: start; }
+.id102l { display: grid; justify-items: center; gap: 4px; text-align: center; }
+.id102l canvas { width: 112px; height: 112px; image-rendering: pixelated; border-radius: 8px; }
+@media (max-width: 520px) { .id102 { grid-template-columns: 1fr; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .to101 canvas { width: auto; height: 26vh; } .id102l canvas { width: 72px; height: 72px; } }
 </style>
 
 <header>
@@ -1544,7 +1555,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.56.0";
+  const VER = "0.57.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6011,7 +6022,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.56.0";
+const CLIENT_VERSION = "0.57.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8089,6 +8100,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.57.0", date: "2026/10/29", title: "こもれび闘鶏と、アイドルプロデュース", items: [
+    "スマホの「ゲーム」に「こもれび闘鶏」ができた。にわとりを走り・ジャンプ・体力できたえて、レースに出る。牧場のにわとりのなかよし度が高いほど、もともとの力が強い。休ませないと、疲れて力が出ない",
+    "オンラインなら、友だちのにわとりと1対1で勝負できる。総合力の週ごとのランキングもある（3位以内でスマホコイン+10）",
+    "「アイドルプロデュース」ができた。アイドルを1人選んで、歌・ダンス・表情のレッスンで育てる。育つと新しい曲と衣装が使えるようになる",
+    "本番は村の野外ステージで。ステージに立つと「アイドルを立たせる」が出る。コールで盛り上げて、ライブが成功するとファンが増えてお金がもらえる。ファンの数で称号もつく",
+    "闘鶏の休けいとアイドルのレッスン待ちは、スマホコイン5枚で早められる"
+  ] },
   { v: "0.56.0", date: "2026/10/29", title: "スマホコインと、スマホのゲームが4つ", items: [
     "スマホコインができた。スマホのゲームの中だけで使えるお金で、本物のお金はいっさい使わない。スマホの「財布」の「スマホコイン」で、所持金（100Gで1コイン）か現金（1,000G札1枚で12コイン）で買える。1日100コインまで",
     "毎日のログイン・村のビンゴ・スマホのゲームのランキング（この1週間で3位以内）でも、コインがもらえる。財布で、きょう・今週に使った量が見られる",
@@ -22005,6 +22023,422 @@ const TTL100 = [["おしゃれ番長", "ペットの服を5つ持つ", () => (wo
 for (const t of TTL100) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 F100.ready = true;
 
+// =================== v101: スマホのゲーム「こもれび闘鶏」（にわとりを鍛えてレース・友だちのにわとりと勝負・週のランキング） ===================
+// にわとりを選んで、走り・ジャンプ・体力を鍛える。鍛えると疲れがたまり、休ませないと力が出ない（疲れは本物の時間で少しずつ回復・休ませると3分で回復・5コインで時短）。
+// もともとの力は、本物の牧場のにわとりのなかよし度（hearts）で決まる。牧場ににわとりがいなければ、レンタルのにわとり。
+// レース：村のにわとり3羽と（1日3回まで賞金）。オンラインなら、友だちのにわとり（サーバーの CoinService の tori）と1対1の勝負。
+// ランキング：総合力をスマホのゲームと同じ grank（ゲームの名前 "tori"）で送る。全期間と1週間。
+var F101 = {};
+const TORIPAY101 = 3, REST101 = 180000, TRAIN_FAT101 = 25, RACE_FAT101 = 20;
+const tori101 = () => {
+  const t = world.tori101 = world.tori101 && typeof world.tori101 === "object" && !Array.isArray(world.tori101) ? world.tori101 : {};
+  if (!t.tr || typeof t.tr !== "object") t.tr = {};
+  for (const k of ["wins", "races", "best", "fwins", "sent"]) t[k] = Number.isFinite(+t[k]) ? Math.max(0, Math.floor(+t[k])) : 0;
+  t.fat = Number.isFinite(+t.fat) ? Math.max(0, Math.min(100, +t.fat)) : 0;
+  t.at = Number.isFinite(+t.at) ? +t.at : Date.now();
+  // 疲れは本物の時間で回復（1分に10）
+  const now = Date.now(); if (now > t.at) { t.fat = Math.max(0, t.fat - (now - t.at) / 6000); t.at = now; }
+  if (t.rest && now >= t.rest) { t.rest = 0; t.fat = 0; }
+  if (t.day !== world.day) { t.day = world.day; t.paid = 0; }
+  return t;
+};
+F101.state = tori101;
+/** 選べるにわとり：牧場のにわとり（なかよし度つき）か、レンタル */
+const coop101 = () => (world.animals || []).filter(a => a && a.type === "chicken").map(a => ({ id: String(a.id), name: String(a.name || "ニワトリ"), hearts: a.hearts | 0 }));
+function cur101() {
+  const t = tori101(), L = coop101();
+  let c = L.find(x => x.id === t.pick) || L[0];
+  if (!c) c = { id: "rent", name: "レンタルのコケ吉", hearts: 0 };
+  t.pick = c.id;
+  const tr = t.tr[c.id] = t.tr[c.id] && typeof t.tr[c.id] === "object" ? t.tr[c.id] : { sp: 0, jp: 0, st: 0 };
+  for (const k of ["sp", "jp", "st"]) tr[k] = Number.isFinite(+tr[k]) ? Math.max(0, Math.min(300, Math.floor(+tr[k]))) : 0;
+  const base = 10 + c.hearts * 4;
+  return { ...c, tr, sp: base + tr.sp, jp: base + tr.jp, st: base + tr.st, base };
+}
+const power101 = c => c.sp + c.jp + c.st;
+const eff101 = fat => 1 - Math.min(100, fat) / 200;
+F101.cur = cur101;
+
+// ---- 絵：にわとり（色ちがい） ----
+function drawTori101(g, x, y, k, col, t, run, jumpY = 0) {
+  const R = (a, b, w, h, c) => { g.fillStyle = c; g.fillRect(x + a * k, y + (b - jumpY) * k, w * k, h * k); };
+  const leg = run ? Math.floor(t * 12) % 2 : 0;
+  R(3 + leg * 2, 14, 2, 4, "#e86a2a"); R(8 - leg * 2, 14, 2, 4, "#e86a2a");
+  R(0, 4, 13, 10, col); R(8, 0, 6, 6, col); R(0, 11, 13, 3, shade100(col, -.12));
+  R(2, 7, 6, 4, shade100(col, -.2)); R(9, -2, 4, 3, "#d83a3a"); R(14, 3, 3, 2, "#f0a030"); R(11, 2, 1, 2, "#222"); R(-3, 5, 4, 5, shade100(col, .2));
+}
+const TCOLS101 = ["#ffffff", "#e8c890", "#c88a4a", "#f4e0a0", "#a8a8b8", "#f0b0a0"];
+
+// ---- スマホの画面 ----
+function openTori101(note, tab) {
+  openModal("こもれび闘鶏", "dark", body => {
+    let raf = 0;
+    const draw = msg => {
+      if (!body.isConnected) return;
+      const t = tori101(), c = cur101(), L = coop101(), resting = t.rest && Date.now() < t.rest, tired = t.fat >= 100;
+      tab = tab || "home";
+      const tabs = `<div class="mtabs">${[["home", "にわとり"], ["race", "レース"], ["rank", "ランキング"]].map(([k, l]) => `<button class="chip" type="button" data-tt101="${k}" aria-pressed="${tab === k}">${l}</button>`).join("")}</div>`;
+      let html = "";
+      if (tab === "home") {
+        html = `<div class="to101"><canvas id="to101cv" width="160" height="80"></canvas>
+          <div class="stat"><span>${esc(c.name)}${c.id === "rent" ? "" : `（なかよし度 ♥${c.hearts}）`}</span><b>総合力 ${power101(c)}</b><span>走り</span><b>${c.sp}</b><span>ジャンプ</span><b>${c.jp}</b><span>体力</span><b>${c.st}</b></div>
+          <div class="fx99bar"><span>疲れ</span><i><b style="width:${Math.round(t.fat)}%;background:linear-gradient(90deg,#7ad8ff,#ff7a7a)"></b></i><em>${resting ? `休けい中（あと${Math.ceil((t.rest - Date.now()) / 1000)}秒）` : `${Math.round(t.fat)}/100`}</em></div>
+          ${L.length > 1 ? `<div class="row2">${L.map(x => `<button class="chip" type="button" data-pk101="${esc(x.id)}" aria-pressed="${x.id === c.id}">${esc(x.name)}♥${x.hearts}</button>`).join("")}</div>` : ""}
+          ${!L.length ? `<p class="mtext small">牧場ににわとりがいないので、レンタルのにわとり。牧場のにわとりは、なかよし度が高いほど、もともとの力が強いよ（こもれび牧場で迎えられる）。</p>` : `<p class="mtext small">もともとの力は、牧場のにわとりのなかよし度で決まる（いまは ${c.base}）。</p>`}
+          <h4>きたえる（疲れ +${TRAIN_FAT101}）</h4><div class="row2">${[["sp", "走り"], ["jp", "ジャンプ"], ["st", "体力"]].map(([k, l]) => `<button class="btn" type="button" data-tn101="${k}" ${resting || t.fat + TRAIN_FAT101 > 100 ? "disabled" : ""}>${l}</button>`).join("")}</div>
+          <div class="row2">${resting ? `<button class="btn light" type="button" id="to101skip">5コインで休けいを終わらせる（時短）</button>` : `<button class="btn light" type="button" id="to101rest" ${t.fat > 0 ? "" : "disabled"}>休ませる（3分で疲れがとれる）</button>`}</div>
+          <p class="mtext small">${tired || t.fat + TRAIN_FAT101 > 100 ? "疲れすぎて、もうきたえられない。休ませよう。" : "疲れていると、レースで力が出ない。疲れは時間がたつと、少しずつとれる。"}</p></div>`;
+      } else if (tab === "race") {
+        html = `<div class="to101"><p class="mtext">村のにわとり3羽とレース。1着300G・2着150G・3着60G（きょうはあと${Math.max(0, TORIPAY101 - (t.paid || 0))}回、それ以降は練習）。疲れ +${RACE_FAT101}。</p>
+          <div class="row2"><button class="btn" type="button" id="to101race" ${resting || t.fat + RACE_FAT101 > 100 ? "disabled" : ""}>村のレースに出る</button></div>
+          <h4>友だちのにわとりと勝負${F8.connected ? "" : "（オンラインのとき）"}</h4><div class="list" id="to101fr">${F8.connected ? `<p class="mtext small">さがしているよ…</p>` : `<p class="mtext small">オンラインにつなぐと、村の友だちのにわとりと1対1で勝負できる。</p>`}</div>
+          <p class="mtext small">これまで：${t.races}回出て、${t.wins}回1着・友だちに${t.fwins}勝</p></div>`;
+      } else {
+        const B = F101.board, rows = B ? B[F101.tab || "week"] : null;
+        html = `<div class="to101"><p class="mtext small">総合力のランキング。きたえた分が送られる（オンラインのとき）。</p>
+          <div class="cr74tabs"><button class="chip" type="button" data-rk101="week" aria-pressed="${(F101.tab || "week") === "week"}">この1週間</button><button class="chip" type="button" data-rk101="all" aria-pressed="${F101.tab === "all"}">全期間</button></div>
+          ${!F8.connected ? `<p class="mtext small">ランキングはオンラインのときに見られるよ</p>` : !B ? `<p class="mtext small">読みこんでいるよ…</p>` : rows.length ? `<ol class="cr74l">${rows.map((r, i) => `<li class="${r.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(r.name)}</span><b class="wi74">${esc(fmt92(r.v))}</b></li>`).join("")}</ol>` : `<p class="mtext small">まだだれもいないよ</p>`}
+          <p class="mtext small">この1週間で3位以内に入ると、財布でスマホコイン+10がもらえる（1週1回）。</p></div>`;
+      }
+      body.innerHTML = `${msg || note ? `<p class="mtext"><b>${esc(msg || note)}</b></p>` : ""}${tabs}${html}`; note = "";
+      body.querySelectorAll("[data-tt101]").forEach(b => b.onclick = () => { tab = b.dataset.tt101; draw(); if (tab === "rank") askRank101(); if (tab === "race") askList101(); });
+      body.querySelectorAll("[data-pk101]").forEach(b => b.onclick = () => { tori101().pick = b.dataset.pk101; saveWorld(); draw(); });
+      body.querySelectorAll("[data-tn101]").forEach(b => b.onclick = () => { closeModal(); train101(b.dataset.tn101); });
+      body.querySelectorAll("[data-rk101]").forEach(b => b.onclick = () => { F101.tab = b.dataset.rk101; draw(); });
+      const rs = body.querySelector("#to101rest"); if (rs) rs.onclick = () => { const t = tori101(); t.rest = Date.now() + REST101; saveWorld(); draw("にわとりを休ませた。3分で、疲れがとれる"); };
+      const sk = body.querySelector("#to101skip"); if (sk) sk.onclick = () => { sk.disabled = true; spend98(5, "torirest", ok => { if (ok) { const t = tori101(); t.rest = 0; t.fat = 0; saveWorld(); draw("すっかり元気になった！"); } else draw(); }); };
+      const rc = body.querySelector("#to101race"); if (rc) rc.onclick = () => { closeModal(); race101(null); };
+      if (tab === "race" && F101.list) renderList101(body);
+      const cv = body.querySelector("#to101cv");
+      cancelAnimationFrame(raf);
+      if (cv) { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; const col = TCOLS101[Math.abs(hash101(c.id)) % TCOLS101.length]; const frame = now => { if (!cv.isConnected) return; const t2 = now / 1000; g.fillStyle = "#7ac050"; g.fillRect(0, 0, 160, 80); g.fillStyle = "#c8b890"; g.fillRect(0, 60, 160, 20); drawTori101(g, 60, 18, 2, col, t2, false, Math.max(0, Math.sin(t2 * 3)) * 2); raf = requestAnimationFrame(frame); }; raf = requestAnimationFrame(frame); }
+    };
+    F101.redraw = draw; draw();
+    if (tab === "rank") askRank101(); if (tab === "race") askList101();
+  }, () => { F101.redraw = null; });
+}
+F101.open = openTori101;
+const hash101 = s => { let h = 7; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) | 0; return h; };
+function sendTori101() {
+  const c = cur101(), t = tori101(), p = power101(c);
+  t.best = Math.max(t.best, p);
+  if (!F8.connected || WATCH88) return;
+  send8({ type: "coin", a: "tori", t: { name: c.name.slice(0, 12), sp: c.sp, jp: c.jp, st: c.st } });
+  if (t.best > t.sent) { send8({ type: "grank", game: "tori", score: t.best }); t.sent = t.best; }
+  saveWorld();
+}
+F101.board = null;
+const askRank101 = () => { if (F8.connected) { F101.board = null; send8({ type: "grank", get: "tori" }); } };
+const askList101 = () => { if (F8.connected) send8({ type: "coin", a: "toriList", rid: "t101" }); };
+function renderList101(body) {
+  const box = body.querySelector("#to101fr"); if (!box) return;
+  const L = F101.list || [], t = tori101();
+  box.innerHTML = L.length ? L.map(f => `<div class="li"><span class="nm">${esc(f.owner)}さんの「${esc(f.name)}」<span class="sub2">総合力 ${f.sp + f.jp + f.st}（走り${f.sp}・ジャンプ${f.jp}・体力${f.st}）</span></span><span class="acts"><button class="btn light" type="button" data-fr101="${f.id}" ${t.rest && Date.now() < t.rest || t.fat + RACE_FAT101 > 100 ? "disabled" : ""}>勝負する</button></span></div>`).join("") : `<p class="mtext small">村に、ほかのにわとりはまだいないみたい。</p>`;
+  box.querySelectorAll("[data-fr101]").forEach(b => b.onclick = () => { const f = L.find(x => x.id === +b.dataset.fr101); if (f) { closeModal(); race101(f); } });
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "grank" && m.board && m.board.game === "tori") { F101.board = m.board; if (F101.redraw) F101.redraw(); return; }
+    if (m && m.type === "coin" && m.a === "toriList") { F101.list = Array.isArray(m.list) ? m.list.filter(f => f && f.id).slice(0, 20) : []; if (F101.redraw) F101.redraw(); return; }
+    _h(m);
+    if (m && m.type === "welcome" && !WATCH88) setTimeout(() => { try { if (world.tori101) sendTori101(); } catch (e) { } }, 7000);
+  };
+}
+
+// ---- きたえる（タイミングよく5回） ----
+function train101(k) {
+  const t = tori101(); if (t.rest && Date.now() < t.rest) return; if (t.fat + TRAIN_FAT101 > 100) { toast(null, "疲れすぎて、もうきたえられない"); return; }
+  const NAME = { sp: "走り", jp: "ジャンプ", st: "体力" }[k], N = 5;
+  let i = 0, hit = 0, ended = false, last = performance.now(), tt = 0, zc = .5, msg = "", msgT = 0;
+  openModal(`きたえる：${NAME}`, "ph76m", body => {
+    body.innerHTML = `<div class="gl97"><p class="mtext small">${k === "sp" ? "ゲージが緑のときに押して、ダッシュ！" : k === "jp" ? "柵の前で、タイミングよくジャンプ！" : "リズムにあわせて、がんばれ！"}（${N}回）</p><canvas id="tr101cv" width="240" height="120"></canvas><button type="button" class="btn" id="tr101b">いま！</button></div>`;
+  }, () => { if (!ended) end(true); });
+  const cv = $("tr101cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const W = () => Math.max(.12, .26 - i * .025), cur = () => Math.sin(tt * (2 + i * .35)) * .5 + .5;
+  const press = () => { if (ended || i >= N) return; const ok = Math.abs(cur() - zc) <= W() / 2; if (ok) { hit++; msg = "ナイス！"; se13("harvest"); } else { msg = "おしい…"; se13("miss"); } msgT = .5; i++; zc = .25 + Math.random() * .5; if (i >= N) setTimeout(() => end(false), 500); };
+  $("tr101b").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+  const kd = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) press(); } };
+  addEventListener("keydown", kd, true);
+  function end(closed) {
+    if (ended) return; ended = true; removeEventListener("keydown", kd, true);
+    if (closed) return;
+    const t = tori101(), c = cur101(), gain = 1 + hit + (hit === N ? 2 : 0);
+    c.tr[k] = Math.min(300, c.tr[k] + gain); t.fat = Math.min(100, t.fat + TRAIN_FAT101); t.at = Date.now(); world.stats.toriTrain101 = (world.stats.toriTrain101 || 0) + 1;
+    saveWorld(); sendTori101(); try { checkTitles42(); } catch (e) { }
+    const b = $("mbody"); if (!b) return;
+    b.innerHTML = `<div class="dk75r"><b>${hit === N ? "かんぺき！" : hit >= 3 ? "いい調子！" : "もうひといき"}</b><span>${NAME}が +${gain}（${hit}/${N}回 決まった）</span><span>疲れ ${Math.round(t.fat)}/100</span></div><div class="row2"><button class="btn" type="button" id="tr101back">闘鶏にもどる</button></div>`;
+    $("tr101back").onclick = () => { closeModal(); openTori101(); };
+  }
+  const col = TCOLS101[Math.abs(hash101(cur101().id)) % TCOLS101.length];
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt; if (msgT > 0) msgT -= dt;
+    g.fillStyle = "#7ac050"; g.fillRect(0, 0, 240, 120); g.fillStyle = "#c8b890"; g.fillRect(0, 84, 240, 36);
+    drawTori101(g, 100, 46, 2, col, tt, true, k === "jp" && msgT > 0 && msg === "ナイス！" ? 6 : 0);
+    if (k === "jp") { g.fillStyle = "#b8864a"; g.fillRect(150, 70, 6, 16); g.fillRect(162, 70, 6, 16); g.fillRect(148, 72, 22, 3); }
+    g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(20, 8, 200, 12); g.fillStyle = "#6ad06a"; g.fillRect(20 + (zc - W() / 2) * 200, 8, W() * 200, 12); g.fillStyle = "#ffd86a"; g.fillRect(20 + cur() * 200 - 1, 4, 3, 20);
+    g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${Math.min(N, i + 1)}/${N}・決まった ${hit}`, 6, 26);
+    if (msgT > 0) { g.textAlign = "center"; g.font = "bold 14px sans-serif"; g.fillText(msg, 120, 34); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F101.T = { press, setZ: () => { zc = cur(); }, end: () => end(false), state: () => ({ i, hit }) };
+}
+
+// ---- レース（村のにわとり3羽／友だちと1対1） ----
+function race101(friend) {
+  const t = tori101(); if (t.rest && Date.now() < t.rest) return; if (t.fat + RACE_FAT101 > 100) { toast(null, "疲れすぎて、走れない。休ませよう"); return; }
+  const c = cur101(), me = { name: c.name, sp: c.sp, jp: c.jp, st: c.st, col: TCOLS101[Math.abs(hash101(c.id)) % TCOLS101.length], me: true, eff: eff101(t.fat) };
+  const avg = power101(c) / 3, NPC = ["ピヨ吉", "コケ美", "トサカ丸", "ヒヨ子", "ニワ太"];
+  const L = friend ? [me, { name: `${friend.owner}さんの${friend.name}`, sp: friend.sp, jp: friend.jp, st: friend.st, col: TCOLS101[Math.abs(hash101("f" + friend.id)) % TCOLS101.length], eff: 1 }]
+    : [me, ...[0, 1, 2].map(k => { const s = avg * (.75 + Math.random() * .55); return { name: NPC[(k + rnd(5)) % 5], sp: Math.round(s * (.8 + Math.random() * .4)), jp: Math.round(s * (.8 + Math.random() * .4)), st: Math.round(s * (.8 + Math.random() * .4)), col: TCOLS101[(k + 1) % TCOLS101.length], eff: 1 }; })];
+  // 走りの速さ（1秒あたり）：走りを中心に、ジャンプ（柵）と体力（後半）が少し効く。毎回ゆらぎ
+  for (const r of L) { r.v = (r.sp * 1 + r.jp * .55 + r.st * .45) * r.eff * (.88 + Math.random() * .24); r.x = 0; r.late = r.st / Math.max(1, r.sp + r.st); }
+  const GOAL = 100, W = 320, H = 40 + L.length * 34;
+  let cheer = 0, ended = false, last = performance.now(), tt = 0, order = []; F101.done = false;
+  openModal(friend ? "友だちと勝負" : "村のレース", "ph76m", body => {
+    body.innerHTML = `<div class="wk97"><canvas id="rc101cv" width="${W}" height="${H}"></canvas><button type="button" class="btn" id="rc101b">おうえんする！</button><p class="mtext small">おうえんすると、自分のにわとりが少しだけ速くなる（5回まで）</p></div>`;
+  }, () => { if (!ended) finish(true); });
+  const cv = $("rc101cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  $("rc101b").addEventListener("pointerdown", e => { e.preventDefault(); if (cheer < 5) { cheer++; se13("small"); } });
+  const scale = Math.max(...L.map(r => r.v)) || 1;
+  function finish(closed) {
+    if (ended) return; ended = true;
+    if (closed && order.length < L.length) { order = L.slice().sort((a, b) => b.x - a.x); }
+    const t = tori101(), place = order.indexOf(me) + 1;
+    t.fat = Math.min(100, t.fat + RACE_FAT101); t.at = Date.now(); t.races++; if (place === 1) { t.wins++; if (friend) t.fwins++; }
+    let pay = 0;
+    if (!friend && t.paid < TORIPAY101) { pay = [0, 300, 150, 60, 0][place] || 0; if (pay) { t.paid++; addMoney(pay); } }
+    else if (friend && place === 1 && t.paid < TORIPAY101) { pay = 100; t.paid++; addMoney(pay); }
+    saveWorld(); sendTori101(); try { checkTitles42(); } catch (e) { }
+    if (closed || !$("mbody")) { F7.notify(`闘鶏のレース：${place}着${pay ? `（${fmt(pay)}）` : ""}`, null); return; }
+    $("mbody").innerHTML = `<div class="dk75r"><b>${place === 1 ? "1着！" : place + "着"}</b>${order.map((r, i) => `<span>${i + 1}着 ${esc(r.name)}${r.me ? "（あなた）" : ""}</span>`).join("")}<span>${pay ? `賞金 <em>${fmt(pay)}</em>` : friend ? (place === 1 ? "勝った！（きょうの賞金はもうもらった）" : "負けちゃった…") : "賞金はなし（練習）"}</span></div>
+      <div class="row2"><button class="btn" type="button" id="rc101back">闘鶏にもどる</button></div>`;
+    se13(place === 1 ? "big" : "small");
+    $("rc101back").onclick = () => { closeModal(); openTori101(null, "race"); };
+  }
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt;
+    for (const r of L) {
+      if (order.includes(r)) continue;
+      const late = r.x > GOAL * .6 ? 1 + (r.late - .5) * .4 : 1, hurdle = Math.floor(r.x / 25) !== Math.floor((r.x + 1) / 25) ? r.jp / Math.max(1, r.sp) : 1;
+      r.x += r.v / scale * 18 * dt * late * (r.me ? 1 + cheer * .012 : 1) * Math.min(1.1, Math.max(.9, hurdle));
+      if (r.x >= GOAL) { r.x = GOAL; order.push(r); }
+    }
+    if (order.length === L.length && !F101.done) { F101.done = true; setTimeout(() => finish(false), 600); }
+    g.fillStyle = "#7ac050"; g.fillRect(0, 0, W, H);
+    L.forEach((r, i) => {
+      const y = 26 + i * 34; g.fillStyle = i % 2 ? "#c8b890" : "#d8c8a0"; g.fillRect(0, y, W, 30);
+      for (let f = 25; f < GOAL; f += 25) { const fx = 20 + f / GOAL * 270; g.fillStyle = "#b8864a"; g.fillRect(fx, y + 14, 3, 12); }
+      g.fillStyle = "#fff"; g.fillRect(292, y, 3, 30);
+      drawTori101(g, 14 + r.x / GOAL * 270, y + 4, 1.2, r.col, tt, !order.includes(r), 0);
+      g.fillStyle = r.me ? "#ffe27a" : "#fff"; g.font = "bold 10px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(r.name.slice(0, 12), 4, y - 11);
+    });
+    g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(W - 92, 2, 90, 16); g.fillStyle = "#fff"; g.font = "bold 10px sans-serif"; g.fillText(`おうえん ${"♪".repeat(cheer)}`, W - 88, 5);
+    if (order.length < L.length) requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F101.R = { L, finish: () => { for (const r of L) if (!order.includes(r)) { r.x = GOAL; order.push(r); } finish(false); } };
+}
+{
+  const _og = openGames92;
+  openGames92 = function () {
+    const r = _og.apply(this, arguments);
+    const hub = document.querySelector("#mbody .gm92hub"); if (!hub || hub.querySelector("[data-g101]")) return r;
+    const at = hub.querySelectorAll("[data-g100]"); const ref = at.length ? at[at.length - 1] : hub.querySelector("p");
+    const c = cur101();
+    ref.insertAdjacentHTML("afterend", `<button class="gm92c" type="button" data-g101="tori"><b>こもれび闘鶏</b><span>にわとりを鍛えてレース。友だちのにわとりとも勝負</span><em>${esc(c.name)}・総合力 ${power101(c)}</em></button>`);
+    hub.querySelector("[data-g101]").onclick = () => { closeModal(); openTori101(); };
+    return r;
+  };
+  F92.hub = openGames92;
+}
+const TTL101 = [["闘鶏デビュー", "こもれび闘鶏のレースで、はじめて1着になる", () => (world.tori101?.wins || 0) >= 1], ["名トレーナー", "にわとりの総合力を300にする", () => (world.tori101?.best || 0) >= 300], ["友だちに勝った！", "友だちのにわとりとの勝負で、3回勝つ", () => (world.tori101?.fwins || 0) >= 3]];
+for (const t of TTL101) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+F101.ready = true;
+
+// =================== v102: スマホのゲーム「アイドルプロデュース」（レッスン・新しい曲と衣装・野外ステージで本番・ファンと称号） ===================
+// アイドルを1人選んで、歌・ダンス・表情のレッスンで育てる（world.idol102）。レッスンのあとは「レッスン待ち」2分（5コインで時短）。
+// 育つと新しい曲（3曲）と衣装（4着）が使えるようになる。本番は、共同プロジェクトの野外ステージ（v85）に立ったときの「アイドルを立たせる」から。
+// 本番はコール＆レスポンス：流れてくる音符にあわせてコールする。アイドルの力（6割）とコール（4割）で決まり、成功するとファンが増えてお金がもらえる（1日2回まで）。
+var F102 = {};
+const IDOLS102 = [
+  { name: "ひかり", trait: "vo", desc: "元気いっぱい。歌がのびやすい", cfg: { skin: "やや明るめ", hair: "ツインテール", hairc: "ピンク", top: "フリルブラウス", topc: "ピンク", bottom: "フリルスカート", bottomc: "白", hat: "なし", acc: "なし", shoesc: "白" } },
+  { name: "しずく", trait: "ex", desc: "クールでおだやか。表情がのびやすい", cfg: { skin: "色白", hair: "ロング", hairc: "ネイビー", top: "シルクのブラウス", topc: "水色", bottom: "プリーツスカート", bottomc: "青", hat: "なし", acc: "なし", shoesc: "黒" } },
+  { name: "つばさ", trait: "da", desc: "かっこいい系。ダンスがのびやすい", cfg: { skin: "小麦色", hair: "ウルフカット", hairc: "金", top: "ライダース", topc: "黒", bottom: "ショートパンツ", bottomc: "赤", hat: "なし", acc: "なし", shoesc: "黒" } },
+];
+const STAT102 = [["vo", "歌"], ["da", "ダンス"], ["ex", "表情"]];
+const SONG102 = [["はじまりのうた", 0, 1, 16, 90], ["こもれびダンサー", 90, 1.5, 20, 180], ["きらめき☆スターライト", 240, 2.2, 24, 330]];   // [名前, 必要な合計, ファンの倍率, 音符の数, 力の目安]
+const OUTFIT102 = [["ふだん着", 0, null], ["ステージ衣装", 60, { top: "ドレス", topc: "白" }], ["きらめき衣装", 150, { top: "ロリータドレス", topc: "ラベンダー" }], ["スター衣装", 300, { top: "ドレス", topc: "虹" }]];
+const LESSON_WAIT102 = 120000, LIVEPAY102 = 2;
+const idol102 = () => {
+  const d = world.idol102 = world.idol102 && typeof world.idol102 === "object" && !Array.isArray(world.idol102) ? world.idol102 : {};
+  d.pick = Number.isInteger(d.pick) && d.pick >= 0 && d.pick < IDOLS102.length ? d.pick : -1;
+  if (!d.st || typeof d.st !== "object") d.st = {};
+  for (const [k] of STAT102) d.st[k] = Number.isFinite(+d.st[k]) ? Math.max(0, Math.min(300, Math.floor(+d.st[k]))) : 0;
+  for (const k of ["fans", "lessons", "lives", "best", "outfit", "song"]) d[k] = Number.isFinite(+d[k]) ? Math.max(0, Math.floor(+d[k])) : 0;
+  d.wait = Number.isFinite(+d.wait) ? +d.wait : 0;
+  if (d.day !== world.day) { d.day = world.day; d.paid = 0; }
+  return d;
+};
+F102.state = idol102;
+const total102 = () => { const s = idol102().st; return s.vo + s.da + s.ex; };
+const idolCfg102 = () => { const d = idol102(), I = IDOLS102[Math.max(0, d.pick)], O = OUTFIT102[d.outfit] && total102() >= OUTFIT102[d.outfit][1] ? OUTFIT102[d.outfit][2] : null; return { ...DEFAULT, ...I.cfg, ...(O || {}) }; };
+const stageReady102 = () => !!(world.projects && world.projects.stage35 && world.projects.stage35.done);
+const fanTitle102 = f => f >= 5000 ? "伝説のプロデューサー" : f >= 1000 ? "人気プロデューサー" : f >= 100 ? "新人プロデューサー" : "";
+function openIdol102(note) {
+  openModal("アイドルプロデュース", "dark", body => {
+    const draw = msg => {
+      if (!body.isConnected) return;
+      const d = idol102();
+      if (d.pick < 0) {
+        body.innerHTML = `<p class="mtext">プロデュースするアイドルを選んでね（あとから変えられない）。</p><div class="id102pick">${IDOLS102.map((I, i) => `<button class="gm92c" type="button" data-ip102="${i}"><img src="${charIcon13(I.cfg)}" alt=""><b>${esc(I.name)}</b><span>${esc(I.desc)}</span></button>`).join("")}</div>`;
+        body.querySelectorAll("[data-ip102]").forEach(b => b.onclick = () => { idol102().pick = +b.dataset.ip102; saveWorld(); draw(`${IDOLS102[+b.dataset.ip102].name}「よろしくおねがいします、プロデューサー！」`); });
+        return;
+      }
+      const I = IDOLS102[d.pick], tot = total102(), waiting = Date.now() < d.wait, fanT = fanTitle102(d.fans);
+      body.innerHTML = `${msg || note ? `<p class="mtext"><b>${esc(msg || note)}</b></p>` : ""}<div class="id102"><div class="id102l"><canvas id="id102cv" width="64" height="64"></canvas><b>${esc(I.name)}</b><span class="mtext small">ファン ${fmt92(d.fans)}人${fanT ? `・あなたは「${fanT}」` : ""}</span></div>
+        <div class="id102r"><div class="stat">${STAT102.map(([k, n]) => `<span>${n}${I.trait === k ? "★" : ""}</span><b>${d.st[k]}</b>`).join("")}<span>合計</span><b>${tot}</b></div>
+          <h4>レッスン</h4><div class="row2">${STAT102.map(([k, n]) => `<button class="btn" type="button" data-ls102="${k}" ${waiting ? "disabled" : ""}>${n}</button>`).join("")}</div>
+          ${waiting ? `<p class="mtext small">レッスン待ち（あと${Math.ceil((d.wait - Date.now()) / 1000)}秒）<button class="btn light" type="button" id="id102skip">5コインで時短</button></p>` : `<p class="mtext small">レッスンのあとは2分休けい。</p>`}
+          <h4>曲</h4><div class="list">${SONG102.map(([n, need], i) => `<div class="li"><span class="nm">${esc(n)}<span class="sub2">${tot >= need ? "歌える" : `合計${need}で使える`}</span></span><span class="acts">${tot >= need ? `<button class="chip" type="button" data-sg102="${i}" aria-pressed="${d.song === i}">本番で歌う</button>` : ""}</span></div>`).join("")}</div>
+          <h4>衣装</h4><div class="row2">${OUTFIT102.map(([n, need], i) => `<button class="chip" type="button" data-of102="${i}" aria-pressed="${d.outfit === i}" ${tot >= need ? "" : "disabled"}>${esc(n)}${tot >= need ? "" : `（${need}）`}</button>`).join("")}</div>
+          <p class="mtext small">本番は、村の広場の<b>野外ステージ</b>で（ステージに立って「アイドルを立たせる」）。${stageReady102() ? "" : "野外ステージは、共同プロジェクトでできるよ。"}成功するとファンが増えて、お金がもらえる（1日2回まで）。これまでのライブ ${d.lives}回。</p></div></div>`;
+      body.querySelectorAll("[data-ls102]").forEach(b => b.onclick = () => { closeModal(); lesson102(b.dataset.ls102); });
+      body.querySelectorAll("[data-sg102]").forEach(b => b.onclick = () => { idol102().song = +b.dataset.sg102; saveWorld(); draw(); });
+      body.querySelectorAll("[data-of102]").forEach(b => b.onclick = () => { idol102().outfit = +b.dataset.of102; saveWorld(); draw(); });
+      const sk = body.querySelector("#id102skip"); if (sk) sk.onclick = () => { sk.disabled = true; spend98(5, "idolwait", ok => { if (ok) { idol102().wait = 0; saveWorld(); draw("レッスン待ちが終わった！"); } else draw(); }); };
+      const cv = body.querySelector("#id102cv"); if (cv) { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#3a2450"; g.fillRect(0, 0, 64, 64); g.drawImage(renderChar(idolCfg102(), "down", 0), 0, 0, 64, 64); }
+    };
+    draw();
+  });
+}
+F102.open = openIdol102;
+function lesson102(k) {
+  const d = idol102(); if (Date.now() < d.wait) return;
+  const NAME = STAT102.find(s => s[0] === k)[1], N = 4; let i = 0, hit = 0, ended = false, last = performance.now(), tt = 0, zc = .5, msg = "", msgT = 0;
+  openModal(`レッスン：${NAME}`, "ph76m", body => { body.innerHTML = `<div class="gl97"><p class="mtext small">ゲージが緑のときに「いま！」（${N}回）</p><canvas id="ls102cv" width="240" height="120"></canvas><button type="button" class="btn" id="ls102b">いま！</button></div>`; }, () => { if (!ended) end(true); });
+  const cv = $("ls102cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const Wd = () => Math.max(.12, .24 - i * .03), cur = () => Math.sin(tt * (2.2 + i * .4)) * .5 + .5;
+  const press = () => { if (ended || i >= N) return; const ok = Math.abs(cur() - zc) <= Wd() / 2; if (ok) { hit++; msg = ["いいね！", "その調子！", "すてき！"][rnd(3)]; se13("harvest"); } else { msg = "もう少し！"; se13("miss"); } msgT = .6; i++; zc = .25 + Math.random() * .5; if (i >= N) setTimeout(() => end(false), 500); };
+  $("ls102b").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+  const kd = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) press(); } };
+  addEventListener("keydown", kd, true);
+  function end(closed) {
+    if (ended) return; ended = true; removeEventListener("keydown", kd, true); if (closed) return;
+    const d = idol102(), I = IDOLS102[d.pick], before = total102();
+    const gain = Math.max(1, Math.round((2 + hit * 2 + (hit === N ? 2 : 0)) * (I.trait === k ? 1.3 : 1) * Math.max(.35, 1 - before / 1200)));
+    d.st[k] = Math.min(300, d.st[k] + gain); d.lessons++; d.wait = Date.now() + LESSON_WAIT102; saveWorld(); try { checkTitles42(); } catch (e) { }
+    const after = total102(), news = [...SONG102.filter(s => before < s[1] && after >= s[1]).map(s => `新しい曲「${s[0]}」`), ...OUTFIT102.filter(o => o[1] > 0 && before < o[1] && after >= o[1]).map(o => `新しい衣装「${o[0]}」`)];
+    const b = $("mbody"); if (!b) return;
+    b.innerHTML = `${staffSay13(charIcon13(idolCfg102()), esc(hit >= 3 ? "プロデューサー、見ててくれた？ 手ごたえ、あったよ！" : "うーん、まだまだ……もっと練習しなきゃ"))}<div class="dk75r"><b>${NAME} +${gain}</b><span>${hit}/${N}回 決まった</span>${news.map(n => `<span>${esc(n)}が使えるようになった！</span>`).join("")}</div><div class="row2"><button class="btn" type="button" id="ls102back">プロデュースにもどる</button></div>`;
+    $("ls102back").onclick = () => { closeModal(); openIdol102(); };
+    if (news.length) se13("big");
+  }
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt; if (msgT > 0) msgT -= dt;
+    g.fillStyle = "#2a1838"; g.fillRect(0, 0, 240, 120); g.fillStyle = "#4a2a5a"; g.fillRect(0, 86, 240, 34);
+    const dir = ["down", "left", "right", "down"][Math.floor(tt * (k === "da" ? 4 : 1.5)) % 4];
+    g.drawImage(renderChar(idolCfg102(), dir, Math.floor(tt * 6) % 3), 96, 34, 48, 48);
+    if (k === "vo") { g.fillStyle = "#ffe27a"; for (let q = 0; q < 3; q++) g.fillRect(150 + q * 14, 40 - ((tt * 30 + q * 10) % 26), 3, 6); }
+    g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(20, 8, 200, 12); g.fillStyle = "#6ad06a"; g.fillRect(20 + (zc - Wd() / 2) * 200, 8, Wd() * 200, 12); g.fillStyle = "#ffd86a"; g.fillRect(20 + cur() * 200 - 1, 4, 3, 20);
+    if (msgT > 0) { g.fillStyle = "#fff"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText(msg, 120, 34); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  F102.L = { press, setZ: () => { zc = cur(); }, end: () => end(false) };
+}
+F102.lesson = lesson102;
+// ---- 本番：野外ステージで、コール＆レスポンス ----
+function live102(body) {
+  const d = idol102(), I = IDOLS102[d.pick], S = SONG102[d.song] && total102() >= SONG102[d.song][1] ? SONG102[d.song] : SONG102[0], paid = (d.paid || 0) < LIVEPAY102;
+  const N = S[3], W = 320, H = 180, HX = 64, SPD = 110, notes = []; let tt = 0, ended = false, last = performance.now(), good = 0, miss = 0, judge = "", judgeT = 0;
+  for (let k = 0; k < N; k++) notes.push({ t: 1.6 + k * (k % 4 === 3 ? .9 : .6) + (k > N / 2 ? -.05 * (k - N / 2) * .3 : 0), hit: false, gone: false });
+  body.innerHTML = `<div class="wk97"><p class="mtext small">${esc(I.name)}が「${esc(S[0])}」を歌う！ 音符がわっかに重なったら「コール！」</p><canvas id="lv102cv" width="${W}" height="${H}"></canvas><button type="button" class="btn" id="lv102b">コール！</button></div>`;
+  const cv = $("lv102cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const tap = () => {
+    if (ended) return; const n = notes.find(x => !x.hit && !x.gone && Math.abs(W - (tt - x.t + (W - HX) / SPD) * SPD - HX) < 26);
+    if (n) { const dx = Math.abs(W - (tt - n.t + (W - HX) / SPD) * SPD - HX); n.hit = true; good++; judge = dx < 10 ? "PERFECT" : "GOOD"; se13("small"); } else { judge = "…"; }
+    judgeT = .4;
+  };
+  $("lv102b").addEventListener("pointerdown", e => { e.preventDefault(); tap(); }); cv.addEventListener("pointerdown", e => { e.preventDefault(); tap(); });
+  const kd = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) tap(); } };
+  addEventListener("keydown", kd, true);
+  const xOf = n => W - (tt - n.t + (W - HX) / SPD) * SPD;
+  function end() {
+    if (ended) return; ended = true; removeEventListener("keydown", kd, true);
+    const st = d.st, w = I.trait, statSum = st.vo * (w === "vo" ? 1.2 : 1) + st.da * (w === "da" ? 1.2 : 1) + st.ex * (w === "ex" ? 1.2 : 1);
+    const statScore = Math.min(1, statSum / S[4]), call = good / N, score = Math.round((statScore * .6 + call * .4) * 100), ok = score >= 50;
+    let fans = 0, pay = 0;
+    if (paid) { d.paid = (d.paid || 0) + 1; fans = ok ? Math.round(score / 100 * 30 * S[2] * (1 + Math.min(2, d.fans / 2000))) : 2; pay = ok ? fans * 10 : 0; d.fans += fans; if (pay) addMoney(pay); }
+    d.lives++; d.best = Math.max(d.best, score); saveWorld(); try { checkTitles42(); } catch (e) { }
+    const fansNear = friends.filter(f => !f.hidden && f.x >= 0).slice(0, 4); fansNear.forEach((f, k) => setTimeout(() => { f.say = { text: ok ? [`${I.name}ちゃーん！`, "アンコール！", "♪", "最高！"][k % 4] : "がんばれー", until: performance.now() + 2400 }; }, 200 + k * 300));
+    se13(ok ? (score >= 85 ? "jackpot" : "win") : "small");
+    if (ok && score >= 85) { try { acornRain95(2200, 60); } catch (e) { } }
+    body.innerHTML = `${staffSay13(charIcon13(idolCfg102()), esc(ok ? "プロデューサー！ みんなの声、ちゃんと届いたよ！ ありがとう！" : "ちょっと、緊張しちゃった……。次はもっと、がんばるね"))}
+      <div class="dk75r"><b>${ok ? "ライブ成功！" : "ライブ、もうひといき"}</b><span>スコア ${score}点（アイドルの力 ${Math.round(statScore * 100)}%・コール ${good}/${N}）</span><span>${paid ? `ファン +${fans}人${pay ? `・お金 <em>${fmt(pay)}</em>` : ""}` : "きょうの本番はもう終わり（練習なので、ファンとお金はなし）"}</span><span>ファンの合計 ${fmt92(d.fans)}人${fanTitle102(d.fans) ? `・「${fanTitle102(d.fans)}」` : ""}</span></div>
+      <div class="row2"><button class="btn light" type="button" id="lv102end">おりる</button></div>`;
+    $("lv102end").onclick = () => closeModal();
+  }
+  F102.V = { tap, end, notes, N, setT: v => { tt = v; } , perfect: () => { good = N; end(); } };
+  const loop = now => {
+    if (!cv.isConnected || ended) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt; if (judgeT > 0) judgeT -= dt;
+    for (const n of notes) if (!n.hit && !n.gone && xOf(n) < HX - 26) { n.gone = true; miss++; }
+    if (notes.every(n => n.hit || n.gone) && tt > notes[notes.length - 1].t + 3) { end(); return; }
+    // ステージ
+    g.fillStyle = "#140a24"; g.fillRect(0, 0, W, H);
+    for (let k = 0; k < 4; k++) { g.fillStyle = `hsla(${(tt * 60 + k * 90) % 360},90%,70%,.18)`; g.beginPath(); g.moveTo(60 + k * 70, 0); g.lineTo(30 + k * 70 + Math.sin(tt + k) * 30, 130); g.lineTo(90 + k * 70 + Math.sin(tt + k) * 30, 130); g.fill(); }
+    g.fillStyle = "#5a3a2a"; g.fillRect(0, 120, W, 60); g.fillStyle = "#8a5a3a"; g.fillRect(0, 120, W, 4);
+    const dir = ["down", "left", "down", "right"][Math.floor(tt * 2) % 4];
+    g.drawImage(renderChar(idolCfg102(), dir, Math.floor(tt * 6) % 3), 136, 62, 56, 56);
+    for (let k = 0; k < 7; k++) { const x = 20 + k * 44, j = Math.max(0, Math.sin(tt * 5 + k)) * 3; g.fillStyle = "#3a2a4a"; g.fillRect(x, 150 - j, 14, 16); g.fillRect(x + 3, 142 - j, 8, 8); if (Math.floor(tt * 2 + k) % 3 === 0) { g.fillStyle = ["#ff7aa8", "#7ad8ff", "#ffd84a"][k % 3]; g.fillRect(x + 12, 132 - j, 3, 10); } }
+    // 音符とわっか
+    g.strokeStyle = "#ffe27a"; g.lineWidth = 3; g.beginPath(); g.arc(HX, 30, 14, 0, 7); g.stroke();
+    for (const n of notes) { if (n.hit || n.gone) continue; const x = xOf(n); if (x > W + 20) continue; g.fillStyle = "#ff7aa8"; g.beginPath(); g.arc(x, 30, 9, 0, 7); g.fill(); g.fillStyle = "#fff"; g.fillRect(x + 4, 18, 2, 12); }
+    g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`コール ${good}/${N}`, 6, 52);
+    if (judgeT > 0) { g.fillStyle = judge === "PERFECT" ? "#ffe27a" : judge === "GOOD" ? "#8fe0ff" : "#ccc"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText(judge, HX, 52); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+F102.live = live102;
+// 野外ステージの画面に「アイドルを立たせる」を足す
+setInterval(() => {
+  if (!modalOpen || $("mtitle").textContent !== "野外ステージ") return;
+  const go = $("s85go"); if (!go || $("s102go")) return;
+  const d = idol102(); if (d.pick < 0) return;
+  go.insertAdjacentHTML("afterend", `<button class="btn light" type="button" id="s102go">アイドル「${esc(IDOLS102[d.pick].name)}」を立たせる${(d.paid || 0) < LIVEPAY102 ? "" : "（練習）"}</button>`);
+  $("s102go").onclick = () => live102($("mbody"));
+}, 300);
+{
+  const _og = openGames92;
+  openGames92 = function () {
+    const r = _og.apply(this, arguments);
+    const hub = document.querySelector("#mbody .gm92hub"); if (!hub || hub.querySelector("[data-g102]")) return r;
+    const ref = hub.querySelector("[data-g101]") || hub.querySelector("p");
+    const d = idol102();
+    ref.insertAdjacentHTML("afterend", `<button class="gm92c" type="button" data-g102="idol"><b>アイドルプロデュース</b><span>アイドルを育てて、野外ステージで本番。ファンを増やそう</span><em>${d.pick < 0 ? "まだ選んでいない" : `${esc(IDOLS102[d.pick].name)}・ファン ${fmt92(d.fans)}人`}</em></button>`);
+    hub.querySelector("[data-g102]").onclick = () => { closeModal(); openIdol102(); };
+    return r;
+  };
+  F92.hub = openGames92;
+}
+const TTL102 = [["新人プロデューサー", "アイドルのファンを100人にする", () => (world.idol102?.fans || 0) >= 100], ["人気プロデューサー", "アイドルのファンを1,000人にする", () => (world.idol102?.fans || 0) >= 1000], ["伝説のプロデューサー", "アイドルのファンを5,000人にする", () => (world.idol102?.fans || 0) >= 5000]];
+for (const t of TTL102) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["スマホのゲーム（育てる）", "fox", `
+    <p>スマホの「ゲーム」には、毎日すこしずつ育てるゲームもある。</p><ul>
+    <li><b>子ぎつね日記</b>：ごはん・なでる・話しかける（ゲームの1日ごと）。なかよしになると、季節・村のうわさ・その日にしたことを話してくれる。お話は全10話（スマホコイン8で先読み）。なかよし度100で、村でうしろをついてくる</li>
+    <li><b>ペットの着せ替え</b>：帽子・服・首輪・リボン。よろず屋の品（G）・スマホコイン・仕立て屋の服・ガチャで手に入る。季節の服を着せると、ごきげん（毎朝なつき度+1）</li>
+    <li><b>村の仕立て屋</b>：注文どおりの色・模様・布で服を作る。うまくできた服は自分の物（自分にもペットにも着せられる）</li>
+    <li><b>こもれび闘鶏</b>：にわとりを走り・ジャンプ・体力で鍛えてレース。牧場のにわとりのなかよし度が高いほど強い。休ませないと疲れて力が出ない。友だちのにわとりとも勝負・週のランキング</li>
+    <li><b>アイドルプロデュース</b>：歌・ダンス・表情のレッスン。育つと新しい曲と衣装。本番は村の野外ステージで（ステージに立って「アイドルを立たせる」）。ファンの数で称号</li>
+    <li>レッスン待ちや休けいは、スマホコイン5枚で早められる（時短）</li></ul>`]);
+F102.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -22465,7 +22899,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

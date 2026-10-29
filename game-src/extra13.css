@@ -956,3 +956,14 @@ body.watch88 #tut { display: none !important; }
 .sw100c { border-left: 10px solid var(--c) !important; }
 @media (max-width: 520px) { .dr100 { grid-template-columns: 1fr; } }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .sw100m canvas { width: 84px; height: 84px; } .dr100l canvas { width: 96px; height: 96px; } }
+
+/* v101 こもれび闘鶏・v102 アイドルプロデュース */
+.to101 { display: grid; gap: 6px; }
+.to101 canvas { width: min(100%, 320px); justify-self: center; image-rendering: pixelated; border-radius: 8px; }
+.id102pick { display: grid; gap: 8px; }
+.id102pick .gm92c img { width: 40px; height: 40px; image-rendering: pixelated; float: left; margin-right: 8px; }
+.id102 { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 2fr); gap: 12px; align-items: start; }
+.id102l { display: grid; justify-items: center; gap: 4px; text-align: center; }
+.id102l canvas { width: 112px; height: 112px; image-rendering: pixelated; border-radius: 8px; }
+@media (max-width: 520px) { .id102 { grid-template-columns: 1fr; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .to101 canvas { width: auto; height: 26vh; } .id102l canvas { width: 72px; height: 72px; } }

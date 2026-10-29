@@ -35,6 +35,7 @@ import jp.komorebi.ws.WelcomeContributor;
 public class FarmService implements WelcomeContributor {
 
     private static final Pattern ID = Pattern.compile("[a-z0-9_]{1,24}");
+    private static final Pattern COS = Pattern.compile("[a-z0-9]{1,12}");
     private static final Logger log = LoggerFactory.getLogger(FarmService.class);
     private static final int MAX_DOC = 60_000;
     private static final Duration KEEP = Duration.ofDays(60);
@@ -122,6 +123,9 @@ public class FarmService implements WelcomeContributor {
             String b = p.path(0).asText("");
             if (!ID.matcher(b).matches()) continue;
             ArrayNode o = pets.addArray(); o.add(b); o.add(Math.max(0, Math.min(20, p.path(1).asInt(0)))); o.add(clean(p.path(2).asText(""), 12));
+            // 4つ目：着せ替えの服（"h3ct25k0" のような短い英数字。v0.56.0〜）
+            String cos = p.path(3).asText("");
+            if (COS.matcher(cos).matches()) o.add(cos);
         }
         // 盗まれた作物：持ち主の画面がまだ知らずに送ってきたら、その作物は外しておく。もう消えていたら（知らせが届いた）、記録も消す
         ObjectNode old = farms.get(playerId);

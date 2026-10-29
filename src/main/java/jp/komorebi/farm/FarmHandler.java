@@ -14,7 +14,7 @@ import jp.komorebi.ws.MessageHandler;
 import jp.komorebi.ws.PlayerSession;
 
 /**
- * {"type":"farm","crops":[[x,y,"tomato",2]],"animals":[["cow","ハナ",x,y]],"pets":[["cat",3,"こむぎ"]]} … 自分の畑・家畜・ペットのようす
+ * {"type":"farm","crops":[[x,y,"tomato",2]],"animals":[["cow","ハナ",x,y]],"pets":[["cat",3,"こむぎ","h3k0"]]} … 自分の畑・家畜・ペットのようす（ペットの4つ目は着せ替えの服。なくてもいい）
  * {"type":"farm","act":"steal","owner":id,"x":10,"y":20} … ほかの人の収穫どきの作物を盗む（そばにいるときだけ）
  *   → 盗んだ人に {"type":"farmSteal","ok":true,"t":"tomato",...}、持ち主に {"type":"farmStolen","items":[[x,y,"tomato","名前"]]}
  */

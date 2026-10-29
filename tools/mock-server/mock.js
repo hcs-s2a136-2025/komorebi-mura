@@ -47,6 +47,55 @@ const jobSend = (to, o) => { for (const x of sessions) if (x.pl && x.pl.id === t
 const jobMine = s => { const v = vOf(s.pl); if (!rescues.has(v)) rescues.set(v, new Map()); return rescues.get(v); };
 const jobPurge = s => { const m = jobMine(s), now = Date.now(); for (const [k, r] of m) if (now - r.since > 20 * 60000 || ![...sessions].some(o => o.pl && o.pl.id === r.inmate && !o.watch)) m.delete(k); };
 const jobRs = new Map(); const jobSlow = new Map(); const slowJ = (k, ms) => { const n = Date.now(), p = jobSlow.get(k); jobSlow.set(k, n); return p != null && n - p < ms; };
+// スマホコイン（本物は coin/CoinService.java と同じ約束。日付は日本時間・人ごと・村ごと）
+const coinDB = new Map(), toriDB = new Map(), coinFc = [];
+const COIN_SEASON = { "春": [["f_sakura98", 3, 1.5], ["f_hina98", 3, 1.5], ["f_tanpopo98", 2, 4.25], ["f_harucush98", 2, 4.25], ["f_chocho98", 2, 4.25], ["pc98_sakura", 2, 4.25]], "夏": [["f_kingyo98", 3, 1.5], ["f_furin98", 3, 1.5], ["f_suika98", 2, 4.25], ["f_mugi98", 2, 4.25], ["f_hanabi98", 2, 4.25], ["pc98_ukiwa", 2, 4.25]], "秋": [["f_tsukimi98", 3, 1.5], ["f_momiji98", 3, 1.5], ["f_donshelf98", 2, 4.25], ["f_pumpkin98", 2, 4.25], ["f_kuri98", 2, 4.25], ["pc98_donguri", 2, 4.25]], "冬": [["f_snowchan98", 3, 1.5], ["f_xtree98", 3, 1.5], ["f_yukidaruma98", 2, 4.25], ["f_yukiusagi98", 2, 4.25], ["f_mikan98", 2, 4.25], ["pc98_tonakai", 2, 4.25]] };
+const COIN_COMMON = [["f_plant", 1, 16], ["f_lamp", 1, 16], ["f_rug", 1, 16], ["f_cushion", 1, 16], ["f_photo", 1, 16]];
+const coinSeason = () => ["春", "夏", "秋", "冬"][Math.floor((clock.day - 1) / 7) % 4];
+const coinPool = () => [...COIN_SEASON[coinSeason()], ...COIN_COMMON];
+const jstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const jstWeek = () => { const d = new Date(Date.now() + 9 * 3600e3); d.setUTCHours(0, 0, 0, 0); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const y = d.getUTCFullYear(); return y + "-W" + Math.ceil(((d - Date.UTC(y, 0, 1)) / 86400e3 + 1) / 7); };
+function coinMe(s) {
+  const k = vOf(s.pl) + ":" + s.pl.id; let m = coinDB.get(k); if (!m) coinDB.set(k, m = { b: 0, pity: 0 });
+  if (m.d !== jstDay()) Object.assign(m, { d: jstDay(), buy: 0, ga: 0, sp: 0 }); if (m.w !== jstWeek()) Object.assign(m, { w: jstWeek(), ws: 0 });
+  if (process.env.COIN_START && !m.seeded) { m.seeded = true; m.b = +process.env.COIN_START; }
+  return m;
+}
+function coinState(m) { const pool = coinPool(), tot = pool.reduce((a, p) => a + p[2], 0); return { type: "coin", a: "state", bal: m.b, today: { buy: m.buy, gacha: m.ga, spent: m.sp, date: m.d }, week: { spent: m.ws }, max: { buy: 100, gacha: 30, pity: 50 }, pity: m.pity, claimed: { login: m.lg === jstDay(), bingo: m.bg === jstDay(), rank: m.rk === jstWeek() }, season: coinSeason(), pool: pool.map(([id, star, w]) => ({ id, star, p: Math.round(w / tot * 10000) / 100 })) }; }
+function coinFcFill() { while (coinFc.length < 7) { const d = clock.day + 1 + coinFc.length, se = Math.floor((d - 1) / 7) % 4, r = Math.random(); coinFc.push(se === 3 ? (r < .5 ? "snow" : "sun") : se === 1 ? (r < .6 ? "sun" : r < .85 ? "rain" : "storm") : (r < .62 ? "sun" : r < .9 ? "rain" : "storm")); } }
+function coinHandle(s, m) {
+  if (!s.pl || s.watch) return; const a = String(m.a || ""), me = coinMe(s), out = { type: "coin", a, rid: String(m.rid || "") }, send = o => s.send(JSON.stringify(o));
+  if (a === "tori") { const t = m.t || {}; toriDB.set(vOf(s.pl) + ":" + s.pl.id, { name: String(t.name || "にわとり").slice(0, 12), sp: Math.max(0, Math.min(999, t.sp | 0)), jp: Math.max(0, Math.min(999, t.jp | 0)), st: Math.max(0, Math.min(999, t.st | 0)) }); return; }
+  if (a === "toriList") { const V = vOf(s.pl); return send({ ...out, list: [...toriDB].filter(([k]) => +k.split(":")[0] === V && +k.split(":")[1] !== s.pl.id).slice(0, 20).map(([k, t]) => ({ ...t, id: +k.split(":")[1], owner: (accounts.find(x => x.id === +k.split(":")[1]) || {}).name || "だれか" })) }); }
+  if (a === "buy") {
+    const by = String(m.by || ""), n = m.n | 0; let err = null, coins = 0;
+    if (by === "g") { if (n < 1 || n > 100) err = "買う数がおかしいよ"; coins = n; } else if (by === "cash") { if (n < 1 || n > 9) err = "お札の枚数がおかしいよ"; coins = n * 12; } else err = "買い方がわからない";
+    if (!err && me.buy + coins > 100) err = `きょう買えるのは、あと${Math.max(0, 100 - me.buy)}コインまで（1日100コイン）`;
+    if (!err) { me.buy += coins; me.b = Math.min(99999, me.b + coins); }
+    send({ ...out, by, n, coins, ok: !err, ...(err ? { text: err } : {}) });
+  } else if (a === "gacha") {
+    const n = m.n | 0, cost = n === 1 ? 10 : 90; let err = null;
+    if (n !== 1 && n !== 10) err = "回す数がおかしいよ"; else if (me.ga + n > 30) err = `きょう回せるのは、あと${Math.max(0, 30 - me.ga)}回まで（1日30回）`; else if (me.b < cost) err = `コインが足りないよ（${cost}コイン）`;
+    if (err) send({ ...out, ok: false, text: err });
+    else {
+      const pool = coinPool(), tot = pool.reduce((x, p) => x + p[2], 0), lim = pool.filter(p => p[1] === 3), items = [];
+      for (let i = 0; i < n; i++) { me.pity++; let p; if (me.pity >= 50) p = lim[Math.floor(Math.random() * lim.length)]; else { let r = Math.random() * tot; p = pool[pool.length - 1]; for (const x of pool) { r -= x[2]; if (r < 0) { p = x; break; } } } if (p[1] === 3) me.pity = 0; items.push(p[0]); }
+      me.ga += n; me.b -= cost; me.sp += cost; me.ws += cost; send({ ...out, ok: true, items });
+    }
+  } else if (a === "spend") {
+    const n = m.n | 0, what = String(m.what || ""); let err = null;
+    if (n < 1 || n > 500) err = "使う数がおかしいよ"; else if (!/^[a-z0-9]{1,12}$/.test(what)) err = "使い道がわからない"; else if (me.b < n) err = `コインが足りないよ（${n}コイン）`;
+    if (!err) { me.b -= n; me.sp += n; me.ws += n; }
+    if (!err && what === "fc") coinFcFill();
+    send({ ...out, what, ok: !err, ...(err ? { text: err } : {}), ...(!err && what === "fc" ? { fc: coinFc.slice(0, 7) } : {}) });
+  } else if (a === "earn") {
+    const why = String(m.why || ""); let add = 0;
+    if (why === "login" && me.lg !== jstDay()) { me.lg = jstDay(); add = 5; } else if (why === "bingo" && me.bg !== jstDay()) { me.bg = jstDay(); add = 3; }
+    else if (why === "rank" && me.rk !== jstWeek() && process.env.COIN_RANK === "1") { me.rk = jstWeek(); add = 10; }
+    me.b = Math.min(99999, me.b + add); send({ ...out, why, n: add });
+  } else if (a !== "get") return;
+  send(coinState(me));
+}
 function jobHandle(s, m) {
   if (!s.pl || s.watch) return; const me = s.pl.id, a = String(m.a || ""), V = vOf(s.pl);
   if (a === "letter") {
@@ -236,7 +285,7 @@ const server = http.createServer(async (req, res) => {
   if (m) { const t = threads.find(t => t.id === +m[1] && t.player === pl); if (!t) return json(res, 404, {}); if (m[2] === "read") { t.playerUnread = false; return json(res, 204); } const b = await body(req); t.messages.push({ sender: "PLAYER", body: b.body, createdAt: new Date().toISOString() }); t.adminUnread = true; t.updatedAt = new Date().toISOString(); return json(res, 200, view(t)); }
   json(res, 404, {});
 });
-function advance(reason, pl) { clock.day++; clock.start = Date.now(); clock.weather = ["sun", "rain", "sun"][clock.day % 3]; const msg = { type: "clock", ...cstate(), reason, ...(pl ? { by: pl.id, byName: pl.name } : {}) }; for (const o of sessions) o.pl && o.send(JSON.stringify(msg)); }
+function advance(reason, pl) { clock.day++; clock.start = Date.now(); clock.weather = coinFc.length ? coinFc.shift() : ["sun", "rain", "sun"][clock.day % 3]; const msg = { type: "clock", ...cstate(), reason, ...(pl ? { by: pl.id, byName: pl.name } : {}) }; for (const o of sessions) o.pl && o.send(JSON.stringify(msg)); }
 setInterval(() => { if (ctime() >= 1440) advance("midnight"); }, 500);
 server.listen(PORT, () => console.log("mock on", PORT));
 const wss = new WebSocketServer({ server, path: "/ws" });
@@ -275,6 +324,7 @@ wss.on("connection", s => {
       if (e.l === "houses") { const cur = shared.houses?.[e.k]; const o = cur ? +(cur.ownerId || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { if (typeof e.v !== "object") continue; e.v = { ...e.v, ownerId: o > 0 ? o : s.pl.id }; } }
       if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name }; } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
     if (m.type === "job") return jobHandle(s, m);
+    if (m.type === "coin") return coinHandle(s, m);
     if (m.type === "grank") {
       const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(0), from = jst(6);
       const g = String(m.game || ""); if (/^[a-z0-9]{1,12}$/.test(g) && +m.score > 0) { const G = grank[g] = grank[g] || {}; const e = G[s.pl.id] = G[s.pl.id] || { b: 0, d: {} }; e.b = Math.max(e.b, +m.score); e.d[today] = Math.max(e.d[today] || 0, +m.score); }
@@ -337,7 +387,7 @@ wss.on("connection", s => {
       s.send(JSON.stringify({ type: "farmSteal", ok: true, t, owner, name: f.name, x, y })); bc(f, null);
       for (const o of sessions) if (o.pl && o.pl.id === owner) o.send(JSON.stringify({ type: "farmStolen", items: [[x, y, t, s.pl.name]] })); return; }
     if (m.type === "farm") { const old = farms.get(s.pl.id); let pend = old && old.stolen ? old.stolen : [];
-      const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 20) };
+      const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 20).filter(x => Array.isArray(x)).map(x => [String(x[0]), x[1] | 0, String(x[2] || "").slice(0, 12), ...(/^[a-z0-9]{1,12}$/.test(String(x[3] || "")) ? [String(x[3])] : [])]) };
       pend = pend.filter(p => { const i = f.crops.findIndex(c => c[0] === p[0] && c[1] === p[1] && c[2] === p[2] && (c[3] | 0) >= 2); if (i >= 0) { f.crops.splice(i, 1); return true; } return false; }); if (pend.length) f.stolen = pend;
       farms.set(s.pl.id, f); bc(f, s); }
     if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); }

@@ -898,3 +898,61 @@ body.watch88 #tut { display: none !important; }
   .gl97 canvas, .cn97 canvas { width: auto; height: 40vh; }
   .sh97shelf { grid-template-columns: repeat(6, minmax(0, 1fr)); width: 100%; }
 }
+
+/* v98 スマホコイン・ガチャ・天気予報 */
+.wt98 { margin-bottom: 6px; }
+.cn98 .cn98b { color: #2a8aa0; font-size: 1.1rem; }
+.cn98 h4 small { font-weight: normal; font-size: .75rem; opacity: .8; }
+.ga98m { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ga98cap { width: 64px; height: 64px; image-rendering: pixelated; }
+.ga98cap.spin { animation: cap98 .35s ease-in-out infinite alternate; }
+@keyframes cap98 { from { transform: rotate(-14deg) scale(1); } to { transform: rotate(14deg) scale(1.08); } }
+.ga98res { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; margin: 8px 0; }
+.ga98it { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; border-radius: 8px; background: #2a2440; border: 2px solid #5a5a7a; text-align: center; animation: it98 .45s ease-out both; animation-delay: var(--d); }
+.ga98it img { width: 32px; height: 32px; image-rendering: pixelated; }
+.ga98it span { font-size: .66rem; color: #c8c0e0; }
+.ga98it b { font-size: .72rem; line-height: 1.25; color: #fff; }
+.ga98it.s2 { border-color: #7ad8ff; box-shadow: 0 0 10px rgba(122, 216, 255, .45); }
+.ga98it.s3 { border-color: #ffd84a; background: linear-gradient(#5a3a10, #2a1a08); box-shadow: 0 0 16px rgba(255, 216, 74, .7); }
+.ga98it.s3 span { color: #ffe27a; font-weight: bold; }
+@keyframes it98 { from { opacity: 0; transform: translateY(10px) scale(.8); } }
+.ga98l .li img { width: 24px; height: 24px; image-rendering: pixelated; }
+.ga98c { border-color: #ffd84a !important; }
+.fc98 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 8px 0; }
+.fc98d { display: grid; justify-items: center; gap: 2px; background: #eef6fc; border: 1px solid #b8d4ec; border-radius: 6px; padding: 6px 2px; color: #2a3a4a; }
+.fc98d b { font-size: 1.4rem; line-height: 1.2; }
+.fc98d small { font-size: .62rem; opacity: .8; }
+.fc98d span { font-size: .72rem; }
+@media (max-width: 420px) { .fc98 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .ga98cap.spin, .ga98it { animation: none; } }
+
+/* v99 子ぎつね日記 */
+.fx99 { display: grid; gap: 6px; }
+.fx99 canvas { width: min(100%, 384px); justify-self: center; image-rendering: pixelated; border-radius: 8px; }
+.fx99say { text-align: center; background: #fff8ec; color: #4a3020; border-radius: 12px; padding: 6px 12px; margin: 0 auto; max-width: 420px; font-size: .88rem; }
+.fx99bar { display: flex; align-items: center; gap: 8px; font-size: .8rem; }
+.fx99bar i { flex: 1; height: 10px; background: #3a3040; border-radius: 6px; overflow: hidden; }
+.fx99bar i b { display: block; height: 100%; background: linear-gradient(90deg, #ff9ab8, #ffd84a); }
+.fx99bar em { font-style: normal; white-space: nowrap; }
+.fx99btn .btn small { font-size: .68rem; opacity: .85; }
+.fx99st summary { cursor: pointer; font-weight: bold; }
+.fx99read .mtext { line-height: 1.9; font-size: .95rem; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .fx99 canvas { width: auto; height: 34vh; } }
+
+/* v100 ペットの着せ替え・村の仕立て屋 */
+.dr100 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 12px; align-items: start; }
+.dr100l { display: grid; gap: 6px; justify-items: center; }
+.dr100l canvas { width: 144px; height: 144px; image-rendering: pixelated; border-radius: 8px; }
+.dr100pets { justify-content: center; }
+.dr100h { color: #ff9ad0; }
+.dr100s { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.dr100s select { flex: 1; min-width: 0; padding: 6px; border-radius: 6px; }
+.dr100ic { width: 32px; height: 32px; image-rendering: pixelated; background: #3a3450; border-radius: 4px; flex: none; }
+.tl100 .list .li { padding: 4px 8px; }
+.sw100 { display: grid; gap: 4px; }
+.sw100m { position: relative; display: flex; justify-content: center; }
+.sw100m canvas { width: 128px; height: 128px; image-rendering: pixelated; border-radius: 8px; }
+.sw100t { position: absolute; right: calc(50% - 100px); top: 4px; font-size: 1.4rem; color: #ffe27a; }
+.sw100c { border-left: 10px solid var(--c) !important; }
+@media (max-width: 520px) { .dr100 { grid-template-columns: 1fr; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .sw100m canvas { width: 84px; height: 84px; } .dr100l canvas { width: 96px; height: 96px; } }

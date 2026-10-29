@@ -1,5 +1,8 @@
 package jp.komorebi.clock;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -24,6 +27,7 @@ import jp.komorebi.ws.WelcomeContributor;
  * - 時刻は 6:00（360分）から 24:00（1440分）まで、TIME_RATE（ゲーム内の分 / 現実の1秒）で進む
  * - だれかが眠るか、24:00 になると、全員が次の日の朝になる
  * - 時計は村ごと（共有の村の "_clock" に、その村の日にちと天気を持つ）
+ * - 天気は7日先まで先に決めておく（"fc"）。朝になったら先頭を使って、うしろに1日足す。スマホの「天気予報屋」が見る（forecast()）
  */
 @Service
 public class ClockService implements WelcomeContributor {
@@ -44,7 +48,10 @@ public class ClockService implements WelcomeContributor {
         long dayStartMs;
         String weather = "sun";
         long lastSync;
+        final ArrayDeque<String> fc = new ArrayDeque<>();
     }
+
+    static final int FORECAST = 7;
 
     private final PerVillage<C> clocks;
 
@@ -60,9 +67,11 @@ public class ClockService implements WelcomeContributor {
             JsonNode saved = world.getSystem("_clock");
             c.day = saved != null ? Math.max(1, saved.path("day").asInt(1)) : 1;
             c.weather = saved != null ? saved.path("weather").asText("sun") : "sun";
+            if (saved != null) for (JsonNode w : saved.path("fc")) if (c.fc.size() < FORECAST && WEATHERS.contains(w.asText(""))) c.fc.add(w.asText());
+            fill(c);
             // サーバーを再起動したら、その日の朝から再開する
             c.dayStartMs = System.currentTimeMillis();
-            world.putSystem("_clock", om.createObjectNode().put("day", c.day).put("weather", c.weather));
+            save(c);
             return c;
         }));
     }
@@ -102,8 +111,10 @@ public class ClockService implements WelcomeContributor {
         synchronized (c) {
             c.day++;
             c.dayStartMs = System.currentTimeMillis();
-            c.weather = rollWeather(c.day);
-            world.putSystem("_clock", om.createObjectNode().put("day", c.day).put("weather", c.weather));
+            fill(c);
+            c.weather = c.fc.isEmpty() ? rollWeather(c.day) : c.fc.poll();
+            fill(c);
+            save(c);
             msg = state().put("type", "clock").put("reason", reason);
             if (who != null) msg.put("by", who.playerId()).put("byName", who.name());
         }
@@ -130,6 +141,26 @@ public class ClockService implements WelcomeContributor {
             GameSocketHandler h = hub.getIfAvailable();
             if (h != null) h.broadcastTo(Villages.current(), state().put("type", "clock").put("reason", "sync"), null);
         }
+    }
+
+    static final java.util.Set<String> WEATHERS = java.util.Set.of("sun", "rain", "storm", "snow");
+
+    /** 7日先までの天気をうめる（c.fc の先頭が明日） */
+    private void fill(C c) {
+        while (c.fc.size() < FORECAST) c.fc.add(rollWeather(c.day + 1 + c.fc.size()));
+    }
+
+    private void save(C c) {
+        ObjectNode o = om.createObjectNode().put("day", c.day).put("weather", c.weather);
+        var arr = o.putArray("fc");
+        for (String w : c.fc) arr.add(w);
+        world.putSystem("_clock", o);
+    }
+
+    /** いまの村の、明日から7日分の天気（天気予報屋） */
+    public List<String> forecast() {
+        C c = c();
+        synchronized (c) { fill(c); return new ArrayList<>(c.fc); }
     }
 
     private String rollWeather(int d) {

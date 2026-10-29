@@ -3938,7 +3938,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.57.0";
+const CLIENT_VERSION = "0.57.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6016,6 +6016,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.57.1", date: "2026/10/29", title: "スマホのゲームの一覧と、表示のずれを直した", items: [
+    "スマホの「ゲーム」に、子ぎつね日記・ペットの着せ替え・村の仕立て屋・こもれび闘鶏・アイドルプロデュースが出ていなかったのを直した",
+    "「村のビンゴ」のカードに「false,false,…」と出ていたのを、「0ライン／0マス」の形に直した",
+    "称号の「つける」「つけている」などのボタンや文字が、左にはみ出して切れていたのを直した"] },
   { v: "0.57.0", date: "2026/10/29", title: "こもれび闘鶏と、アイドルプロデュース", items: [
     "スマホの「ゲーム」に「こもれび闘鶏」ができた。にわとりを走り・ジャンプ・体力できたえて、レースに出る。牧場のにわとりのなかよし度が高いほど、もともとの力が強い。休ませないと、疲れて力が出ない",
     "オンラインなら、友だちのにわとりと1対1で勝負できる。総合力の週ごとのランキングもある（3位以内でスマホコイン+10）",
@@ -16963,7 +16967,7 @@ function openGames92() {
   const g = g92(), bg = bingoInfo92();
   openModal("ゲーム", "dark", body => {
     body.innerHTML = `<div class="gm92hub"><p class="mtext">スマホで遊べるゲーム。ランキングのあるものは、村のみんなと競えるよ。</p>
-      <button class="gm92c" type="button" data-g92="bingo"><b>村のビンゴ</b><span>きょうの村のお題（9つ）を、そろえて遊ぶ。ラインがそろうと、ごほうび</span><em>${bg.lines}ライン／${bg.done}マス${bg.claim ? "・ごほうびあり！" : ""}</em></button>
+      <button class="gm92c" type="button" data-g92="bingo"><b>村のビンゴ</b><span>きょうの村のお題（9つ）を、そろえて遊ぶ。ラインがそろうと、ごほうび</span><em>${bg.L}ライン／${bg.done}マス${bg.claim ? "・ごほうびあり！" : ""}</em></button>
       <button class="gm92c" type="button" data-g92="blk"><b>こもれびブロック</b><span>落ちものパズル。横1列をそろえて消す</span><em>自己ベスト ${fmt92(blk77().best)}点</em></button>
       ${IDS92.map(id => `<button class="gm92c" type="button" data-g92="${id}"><b>${esc(GM92[id].name)}</b><span>${esc(GM92[id].intro.split("。")[0])}</span><em>自己ベスト ${fmt92(g[id].best)}${GM92[id].unit}</em></button>`).join("")}</div>`;
     body.querySelectorAll("[data-g92]").forEach(b => b.onclick = () => {
@@ -16973,7 +16977,7 @@ function openGames92() {
   });
 }
 F92.hub = openGames92;
-F76.add({ id: "game", name: "ゲーム", ch: "遊", c: "#f07a40", open: openGames92, badge: () => { try { return bingoInfo92().claim ? 1 : 0; } catch (e) { return 0; } } });
+F76.add({ id: "game", name: "ゲーム", ch: "遊", c: "#f07a40", open: () => openGames92(), badge: () => { try { return bingoInfo92().claim ? 1 : 0; } catch (e) { return 0; } } });
 
 // =================== 村のビンゴ ===================
 const BG92 = [
@@ -19413,7 +19417,7 @@ F98.gacha = openGacha98;
     return r;
   };
   F92.hub = openGames92;
-  F76.add({ id: "game", name: "ゲーム", ch: "遊", c: "#f07a40", open: openGames92, badge: () => { try { return bingoInfo92().claim ? 1 : 0; } catch (e) { return 0; } } });
+  F76.add({ id: "game", name: "ゲーム", ch: "遊", c: "#f07a40", open: () => openGames92(), badge: () => { try { return bingoInfo92().claim ? 1 : 0; } catch (e) { return 0; } } });
 }
 
 // ---- 天気予報屋（1週間先の天気。オフラインは手もとで先に決めておく） ----

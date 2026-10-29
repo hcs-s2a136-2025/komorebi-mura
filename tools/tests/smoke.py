@@ -56,6 +56,10 @@ STEPS = [
     ("みなと町", f"window.KOMO.closeModal(); {G}.enter({G}.makePort(), 12, 5, 'down')"),
     ("村にもどる", f"{G}.enter({G}.village2, 20, 9, 'down')"),
     ("スマホ", "document.getElementById('phoneBtn76').click()"),
+    # スマホのアプリ経由で開く（アプリが古い関数を持ったままだと、あとから足したカードが出ない）
+    ("スマホのゲーム一覧", "document.querySelector('[data-app76=game]').click(); new Promise(r => setTimeout(r, 400)).then(() => { const miss = ['g98', 'g99', 'g100', 'g101', 'g102'].filter(a => !document.querySelector('[data-' + a + ']')); const bg = document.querySelector('[data-g92=bingo] em'); if (miss.length) throw new Error('一覧にない: ' + miss); if (/false|true|NaN|undefined/.test(bg ? bg.textContent : '')) throw new Error('ビンゴの表記: ' + (bg && bg.textContent)); })"),
+    # ボタンや文字が行の左にはみ出していないか（グリッドの列の取りちがい）
+    ("スマホの称号と財布の並び", "(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); const chk = n => { const bad = [...document.querySelectorAll('#mbody .li')].filter(li => { const a = li.querySelector('.acts'); return a && [...a.children].some(c => c.getBoundingClientRect().left < li.getBoundingClientRect().left - 1); }); if (bad.length) throw new Error(n + ' ではみ出し ' + bad.length + ' 行'); }; window.KOMO.closeModal(); document.getElementById('phoneBtn76').click(); await w(300); document.querySelector('[data-app76=title]').click(); await w(400); chk('称号'); window.KOMO.closeModal(); document.getElementById('phoneBtn76').click(); await w(300); document.querySelector('[data-app76=wallet]').click(); await w(400); [...document.querySelectorAll('#mbody button')].find(b => b.textContent.trim() === 'スマホコイン').click(); await w(300); chk('財布のスマホコイン'); })()"),
     ("番付", f"window.KOMO.closeModal(); {G}.F74.open()"),
     ("荷積み", f"window.KOMO.closeModal(); {G}.F75.play()"),
     ("こもれびブロック", f"window.KOMO.closeModal(); {G}.F77.play()"),

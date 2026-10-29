@@ -819,3 +819,49 @@ body.watch88 #tut { display: none !important; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) {
   #lt93sky { width: auto; height: calc(100dvh - 215px); max-height: 200px; }
 }
+
+/* v95 VIPの高レートスロット */
+.vs95w { display: block; }
+.vs95m { position: relative; display: flex; justify-content: center; margin: 4px 0; }
+.vs95m canvas { width: min(100%, 300px); aspect-ratio: 76 / 70; image-rendering: pixelated; border-radius: 6px; box-shadow: 0 0 18px rgba(255, 210, 90, .35); }
+.vs95ev { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: rgba(40, 6, 24, .86); color: #ffe27a; font-weight: 900; padding: 4px 14px; border-radius: 6px; border: 2px solid #f0c040; font-size: 1.2rem; text-shadow: 0 0 8px rgba(255, 200, 60, .9); pointer-events: none; white-space: nowrap; }
+.vs95aim { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); background: #ff4a7a; color: #fff; font-weight: bold; padding: 2px 10px; border-radius: 999px; animation: aim95 .5s steps(2) infinite; pointer-events: none; white-space: nowrap; font-size: .85rem; }
+@keyframes aim95 { 50% { background: #ffd84a; color: #3a0f22; } }
+.vs95stops { display: flex; gap: 6px; justify-content: center; margin: 4px 0; }
+.vs95stops .btn { flex: 1; max-width: 110px; background: linear-gradient(#ff7aa8, #c8304f); color: #fff; border-color: #7a1a3a; }
+.vs95stops .btn:disabled { opacity: .4; }
+.vs95kk { text-align: center; color: #ff9ad0; font-weight: bold; margin: 2px 0; animation: kk95 .8s ease-in-out infinite alternate; }
+@keyframes kk95 { to { color: #ffe27a; } }
+.vs95tb { border-collapse: collapse; margin: 6px 0; font-size: .8rem; }
+.vs95tb td, .vs95tb th { border: 1px solid #7a5a22; padding: 2px 8px; }
+.vs95pick { display: grid; gap: 8px; margin: 8px 0; }
+.rain95 { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 9050; pointer-events: none; }
+.ev95 { position: fixed; inset: 0; z-index: 9100; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(60, 10, 40, .55), rgba(0, 0, 0, .25)); animation: ev95in .35s ease-out; }
+.ev95 b { font-size: clamp(2.4rem, 12vw, 5.5rem); font-weight: 900; color: #fff3b0; -webkit-text-stroke: 3px #5a2a00; text-shadow: 0 0 24px rgba(255, 200, 60, .95), 0 0 60px rgba(255, 90, 150, .6); letter-spacing: .06em; animation: ev95b .5s ease-in-out infinite alternate; }
+.ev95 span { margin-top: 8px; font-size: clamp(1rem, 4vw, 1.6rem); font-weight: bold; color: #fff; text-shadow: 0 2px 6px #000; }
+.ev95.fz { background: radial-gradient(circle, rgba(10, 20, 60, .75), rgba(0, 0, 0, .55)); }
+.ev95.kk b { color: #ffd0f0; }
+.ev95.zen b { color: #fff8c8; }
+.ev95.out { opacity: 0; transition: opacity .55s; }
+@keyframes ev95in { from { opacity: 0; transform: scale(1.4); } }
+@keyframes ev95b { to { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .ev95 b, .vs95aim, .vs95kk { animation: none; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .vs95w { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: 12px; align-items: start; }
+  .vs95m canvas { width: auto; height: min(118px, 30vh); }
+  .vs95m { margin: 2px 0; }
+  .vs95stops .btn { padding: 4px 6px; font-size: .78rem; }
+  .vs95l .vp90-res { margin: 2px 0; font-size: .8rem; }
+  .vs95top .say13 { padding: 3px 6px; margin-bottom: 2px; }
+  .vs95top .say13 img { width: 28px; height: 28px; }
+  .vs95top .say13 p { font-size: .72rem; line-height: 1.35; }
+  .vs95r .vp90-row { margin: 3px 0; gap: 4px; }
+  .vs95r .chip { padding: 4px 8px; font-size: .78rem; }
+}
+
+/* v96 闇バイト */
+.sn96 { display: grid; gap: 8px; justify-items: center; }
+.sn96 canvas { width: min(100%, 480px); image-rendering: pixelated; border-radius: 6px; touch-action: none; }
+.sn96 .btn { width: min(100%, 320px); user-select: none; -webkit-user-select: none; touch-action: none; }
+.mbox.yami .list > .btn small { display: block; font-size: .72rem; opacity: .8; font-weight: normal; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .sn96 canvas { width: auto; height: 52vh; } }

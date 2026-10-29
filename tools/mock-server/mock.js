@@ -70,6 +70,13 @@ function jobHandle(s, m) {
     if (r.helper && r.helper !== me) return s.send(JSON.stringify({ ...out, ok: false, text: "ほかの人が助けに行っているよ" }));
     r.helper = me; r.helperName = s.pl.name; s.send(JSON.stringify({ ...out, ok: true, name: r.name })); return jobSend(id, { type: "job", ev: { kind: "joined", id: me, name: s.pl.name } });
   }
+  if (a === "gift") {
+    const id = +m.id | 0, g = m.g | 0, out = { type: "job", a: "gift", id }; let err = null;
+    if (id === me) err = "自分には届けられないよ"; else if (g < 0 || g > 7) err = "差し入れが見つからなかった"; else if (slowJ("g" + me, 3000)) err = "少し待ってから届けてね";
+    else { jobPurge(s); if (!mm.get(id)) err = "その人の「助けて」は、もう終わったみたい"; }
+    if (!err) jobSend(id, { type: "job", ev: { kind: "gift", id: me, name: s.pl.name, g } });
+    return s.send(JSON.stringify({ ...out, ok: !err, ...(err ? { text: err } : {}) }));
+  }
   if (a === "rs") {
     { const n = Date.now(); const w = jobRs.get(me) || { t: n, c: 0 }; if (n - w.t > 1000) { w.t = n; w.c = 0; } w.c++; jobRs.set(me, w); if (w.c > 20) return; } const id = +m.id | 0, r = mm.get(id); if (!r || !r.helper) return;
     const isIn = me === r.inmate, isHe = me === r.helper; if (!isIn && !isHe) return; const to = isIn ? r.helper : r.inmate, op = String(m.op || "");

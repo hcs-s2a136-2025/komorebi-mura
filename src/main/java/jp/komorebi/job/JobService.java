@@ -26,12 +26,14 @@ import jp.komorebi.ws.WelcomeContributor;
  *   次の welcome（"job93": [...]）で渡す（1人20通まで）。お手紙の中身は文面の番号（0〜5）だけ。文面はゲーム側にある
  * ・脱走の手引き：労働施設の中の人が「助けて」を出す（help）→ 村のほかの人が一覧で見て、引き受ける（join）→ 2人で合図を送りあう（rs）。
  *   助けを求めている人・組はつないでいるあいだだけメモリに持つ（サーバーを再起動すると消える）。20分で期限切れ
+ * ・差し入れ：「助けて」を出している人に、村の人が差し入れを届ける（gift）。中の人に {"ev":{"kind":"gift","id":届けた人,"name","g":品物の番号}} が届き、
+ *   中の人のつとめ（ノルマ）が少し減る（減らすのはゲーム側）。同じ人からは3秒に1回まで。「助けて」は出したまま
  */
 @Service
 public class JobService implements WelcomeContributor {
 
     static final String KEY = "_job";
-    static final int MAX_PEND = 20, MAX_KIND = 5;
+    static final int MAX_PEND = 20, MAX_KIND = 5, MAX_GIFT = 7;
     static final long HELP_TTL = 20 * 60_000L;
     static final Set<String> OPS = Set.of("flash", "hit", "miss", "next", "ready", "lost", "bye");
 
@@ -189,6 +191,21 @@ public class JobService implements WelcomeContributor {
         ObjectNode e = ev("joined");
         ((ObjectNode) e.get("ev")).put("id", me).put("name", r.helperName);
         hub.sendToPlayer(inmate, e);
+    }
+
+    /** 差し入れを届ける。null なら届いた。文字列ならうまくいかなかった理由 */
+    public synchronized String gift(GameSocketHandler hub, PlayerSession from, long inmate, int kind) {
+        long me = from.playerId();
+        if (inmate == me) return "自分には届けられないよ";
+        if (kind < 0 || kind > MAX_GIFT) return "差し入れが見つからなかった";
+        if (slow("g" + me, 3000)) return "少し待ってから届けてね";
+        purge(hub, from);
+        Rescue r = mine(from).get(inmate);
+        if (r == null) return "その人の「助けて」は、もう終わったみたい";
+        ObjectNode e = ev("gift");
+        ((ObjectNode) e.get("ev")).put("id", me).put("name", from.name() == null ? "だれか" : from.name()).put("g", kind);
+        hub.sendToPlayer(inmate, e);
+        return null;
     }
 
     /** 2人のあいだで合図を送りあう。helper が "won" を送るとおしまい（中の人が解放される） */

@@ -1281,6 +1281,52 @@ body.watch88 #tut { display: none !important; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) {
   #lt93sky { width: auto; height: calc(100dvh - 215px); max-height: 200px; }
 }
+
+/* v95 VIPの高レートスロット */
+.vs95w { display: block; }
+.vs95m { position: relative; display: flex; justify-content: center; margin: 4px 0; }
+.vs95m canvas { width: min(100%, 300px); aspect-ratio: 76 / 70; image-rendering: pixelated; border-radius: 6px; box-shadow: 0 0 18px rgba(255, 210, 90, .35); }
+.vs95ev { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); background: rgba(40, 6, 24, .86); color: #ffe27a; font-weight: 900; padding: 4px 14px; border-radius: 6px; border: 2px solid #f0c040; font-size: 1.2rem; text-shadow: 0 0 8px rgba(255, 200, 60, .9); pointer-events: none; white-space: nowrap; }
+.vs95aim { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); background: #ff4a7a; color: #fff; font-weight: bold; padding: 2px 10px; border-radius: 999px; animation: aim95 .5s steps(2) infinite; pointer-events: none; white-space: nowrap; font-size: .85rem; }
+@keyframes aim95 { 50% { background: #ffd84a; color: #3a0f22; } }
+.vs95stops { display: flex; gap: 6px; justify-content: center; margin: 4px 0; }
+.vs95stops .btn { flex: 1; max-width: 110px; background: linear-gradient(#ff7aa8, #c8304f); color: #fff; border-color: #7a1a3a; }
+.vs95stops .btn:disabled { opacity: .4; }
+.vs95kk { text-align: center; color: #ff9ad0; font-weight: bold; margin: 2px 0; animation: kk95 .8s ease-in-out infinite alternate; }
+@keyframes kk95 { to { color: #ffe27a; } }
+.vs95tb { border-collapse: collapse; margin: 6px 0; font-size: .8rem; }
+.vs95tb td, .vs95tb th { border: 1px solid #7a5a22; padding: 2px 8px; }
+.vs95pick { display: grid; gap: 8px; margin: 8px 0; }
+.rain95 { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 9050; pointer-events: none; }
+.ev95 { position: fixed; inset: 0; z-index: 9100; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(60, 10, 40, .55), rgba(0, 0, 0, .25)); animation: ev95in .35s ease-out; }
+.ev95 b { font-size: clamp(2.4rem, 12vw, 5.5rem); font-weight: 900; color: #fff3b0; -webkit-text-stroke: 3px #5a2a00; text-shadow: 0 0 24px rgba(255, 200, 60, .95), 0 0 60px rgba(255, 90, 150, .6); letter-spacing: .06em; animation: ev95b .5s ease-in-out infinite alternate; }
+.ev95 span { margin-top: 8px; font-size: clamp(1rem, 4vw, 1.6rem); font-weight: bold; color: #fff; text-shadow: 0 2px 6px #000; }
+.ev95.fz { background: radial-gradient(circle, rgba(10, 20, 60, .75), rgba(0, 0, 0, .55)); }
+.ev95.kk b { color: #ffd0f0; }
+.ev95.zen b { color: #fff8c8; }
+.ev95.out { opacity: 0; transition: opacity .55s; }
+@keyframes ev95in { from { opacity: 0; transform: scale(1.4); } }
+@keyframes ev95b { to { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .ev95 b, .vs95aim, .vs95kk { animation: none; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .vs95w { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: 12px; align-items: start; }
+  .vs95m canvas { width: auto; height: min(118px, 30vh); }
+  .vs95m { margin: 2px 0; }
+  .vs95stops .btn { padding: 4px 6px; font-size: .78rem; }
+  .vs95l .vp90-res { margin: 2px 0; font-size: .8rem; }
+  .vs95top .say13 { padding: 3px 6px; margin-bottom: 2px; }
+  .vs95top .say13 img { width: 28px; height: 28px; }
+  .vs95top .say13 p { font-size: .72rem; line-height: 1.35; }
+  .vs95r .vp90-row { margin: 3px 0; gap: 4px; }
+  .vs95r .chip { padding: 4px 8px; font-size: .78rem; }
+}
+
+/* v96 闇バイト */
+.sn96 { display: grid; gap: 8px; justify-items: center; }
+.sn96 canvas { width: min(100%, 480px); image-rendering: pixelated; border-radius: 6px; touch-action: none; }
+.sn96 .btn { width: min(100%, 320px); user-select: none; -webkit-user-select: none; touch-action: none; }
+.mbox.yami .list > .btn small { display: block; font-size: .72rem; opacity: .8; font-weight: normal; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .sn96 canvas { width: auto; height: 52vh; } }
 </style>
 
 <header>
@@ -1407,7 +1453,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.53.0";
+  const VER = "0.54.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5874,7 +5920,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.53.0";
+const CLIENT_VERSION = "0.54.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7952,6 +7998,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.54.0", date: "2026/10/29", title: "VIPの高レートスロットと、裏の求人", items: [
+    "VIPルームに「高レートスロット」ができた（ルナのとなりの金の台）。現金だけで、1回に5・10・20・50枚。はじめに「おまかせ」か「目押し」を選べる（あとから変えられる）",
+    "目押しでは、STOPで1つずつ自分のタイミングで止める。大きい役（金のどんぐり・7・金塊）が当たると、ランプとルナが「狙え」と教えてくれる。上手でも勝ちすぎないように、還元率は約97%まで",
+    "VIPのフリーズ・確変・全回転は、画面いっぱいの演出つき。大当たりでは金のどんぐりが降ってくる。ルナの声（読み上げ）は台でON・OFFできる。勝ち負けは番付と今日の負け上限につながる",
+    "十日屋に「裏の求人」ができた。取り立て屋の助手（強く出ると評判が下がって、村の人の反応が冷たくなる）・夜の宝掘り（北の丘で現金を掘る。ハズレは偽札。巡査ケイに見つかると取り上げ）",
+    "労働施設の人の「助けて」に、差し入れ（料理・野菜・魚）を届けられるようになった。届けると中の人のつとめが1回へる",
+    "同居人になっている家の中でも、偽札を刷れるようになった（1日10枚までは人ごと。見つかっても、疑われるのは刷った人だけ）"
+  ] },
   { v: "0.53.0", date: "2026/10/28", title: "労働施設の出口で「助けて」", items: [
     "オンラインでほかの人がいるとき、労働施設の出口に立つと「助けて」を出せるようになった。出口の前で、自分でこっそり抜けるか、村の人に手引きをお願いするかを選べる",
     "「助けて」が出ると、ほかの人に知らせが届いて、スマホに「頼まれごと」が現れる。引き受けると、2人で合図（赤・青・緑・黄）を交代で送りあう協力ゲームで、中の人を脱走させられる。お礼は200G（1日3回まで）",
@@ -19662,6 +19716,909 @@ function openCalls94() {
 }
 F76.add({ id: "yami94", name: "頼まれごと", ch: "頼", c: "#6a4a7a", open: openCalls94, show: () => F8.connected && !WATCH88 && !world.labor && calls94().length > 0, badge: () => calls94().filter(c => !c.busy).length });
 
+// =================== v95: VIPルームの高レートスロット（おまかせ・目押し・ルナの声・金のどんぐりの雨） ===================
+var F95 = {};
+// VIPルーム専用のスロット。賭けも払い戻しも現金（1,000G札）だけ。1回に 5・10・20・50 枚（5ライン固定）。
+// しくみは「内部抽選」：スピンした瞬間に、どの役が当たっているか（フラグ）を決めて、リールの止まり方をそれに合わせる。
+//  おまかせ：当たったフラグは必ずそろう。
+//  目押し ：自分で1つずつ止める。大きい役（金のどんぐり・7・金塊）が当たっていると、スピンのときにランプとルナが教えてくれる。
+//           大きい役は、押した位置から4コマまでしかすべらないので、ねらった絵柄が見えているうちに押さないとそろわない（取りこぼし）。
+//           小さい役（コイン・タイ・トマト）は、台が引きこんでそろえる。はずれのときは、どんなに上手でもそろわない。
+//           目押しの大きい役だけ当たりを1.05倍にしてあるので、取りこぼしなしで還元率は約97%（おまかせは約95%）。上手な人ほど勝ちすぎる、にはならない。
+// 勝ち負けは settle91（v91）を通す：番付・負け上限・メダル・会員ランクは、本物のお札で賭けた分だけ数える。払い戻しは最大 5,000 枚。
+const BETS95 = [5, 10, 20, 50], MAXPAY95 = 5000, SLIDE95 = 4, N95 = 21, SPEED95 = 19, KK95 = 8;
+const SYM95 = { A: "s95_acorn", "7": "seven", B: "goldbar", L: "coin", F: "fish_タイ", C: "tomato", M: "cabbage" };
+const SN95 = { A: "金のどんぐり", "7": "7", B: "金塊", L: "コイン", F: "タイ", C: "トマト", M: "キャベツ" };
+const PAY95 = { A: 100, "7": 40, B: 15, L: 5, F: 3, C: 1 };
+const BIG95 = ["A", "7", "B"];
+// 当たり（フラグ）の確率。目押しは大きい役だけ 1.05 倍（還元率：おまかせ 約95.1%・目押しで取りこぼしなし 約96.8%）
+const FLAGP95 = {
+  auto: [["A", 1 / 1600], ["7", 1 / 320], ["B", 1 / 100], ["L", 1 / 20], ["F", 1 / 16], ["C", 1 / 8.5]],
+};
+FLAGP95.meoshi = FLAGP95.auto.map(([s, p]) => [s, BIG95.includes(s) ? p * 1.05 : p]);
+// 割り込み（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の8回、そろった配当が2倍／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）
+const EV95 = { zen: 1 / 2500, freeze: 1 / 600, kaku: 1 / 500 };
+const FREEZE95 = [[10, .6], [20, .3], [50, .1]];
+const ZEN95 = [["L", .5], ["F", .3], ["B", .15], ["7", .045], ["A", .005]];
+const pickW95 = list => { let r = Math.random(); for (const [v, w] of list) if ((r -= w) < 0) return v; return list[0][0]; };
+// ---- リールの帯（21コマ・3本）と、止まり方の表 ----
+function strip95(seed) {
+  const cnt = { A: 1, "7": 1, B: 2, L: 4, F: 4, C: 4, M: 5 }, a = [];
+  for (const [s, n] of Object.entries(cnt)) for (let i = 0; i < n; i++) a.push(s);
+  let x = seed >>> 0; const r = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
+  for (let tries = 0; tries < 400; tries++) {
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    if (a.every((s, i) => s !== a[(i + 1) % a.length])) break;
+  }
+  return a;
+}
+const STR95 = [strip95(11), strip95(29), strip95(47)];
+const LN95 = [[1, 1, 1], [0, 0, 0], [2, 2, 2], [0, 1, 2], [2, 1, 0]];
+const LNN95 = ["中段", "上段", "下段", "右下がり", "右上がり"];
+const cell95 = (r, t, row) => STR95[r][((t + row) % N95 + N95) % N95];
+const dec95 = c => [Math.floor(c / 441), Math.floor(c / 21) % 21, c % 21];
+function lines95(t) { const out = []; LN95.forEach((l, i) => { const a = cell95(0, t[0], l[0]), b = cell95(1, t[1], l[1]), c = cell95(2, t[2], l[2]); if (a === b && b === c && PAY95[a]) out.push([i, a]); }); return out; }
+// G95[役] = その役が「ちょうど1ラインだけ」そろう止まり方の一覧。G95.none = どのラインもそろわない止まり方
+const G95 = { none: [] }; for (const k of Object.keys(PAY95)) G95[k] = [];
+for (let c = 0; c < N95 * N95 * N95; c++) { const r = lines95(dec95(c)); if (!r.length) G95.none.push(c); else if (r.length === 1) G95[r[0][1]].push(c); }
+const fits95 = (c, fixed, i, t) => { const d = dec95(c); if (d[i] !== t) return false; for (let j = 0; j < 3; j++) if (j !== i && fixed[j] != null && fixed[j] !== d[j]) return false; return true; };
+/** 目押しで reel i を位置 p で押したとき、どこに止まるか（4コマまですべる）。フラグに合う位置がなければ、はずれ（取りこぼし）に切りかえる */
+function stopAt95(S, i, p) {
+  const base = Math.ceil(p - 1e-6);
+  for (const g of [S.want, "none"]) {
+    if (!g || !G95[g]) continue;
+    const far = g !== "none" && !BIG95.includes(g) ? N95 - 1 : SLIDE95;   // 小さい役は引きこむ
+    for (let k = 0; k <= far; k++) {
+      const t = (base + k) % N95;
+      if (G95[g].some(c => fits95(c, S.tops, i, t))) { if (g !== S.want) { S.lost = S.want; S.want = g; } return t; }
+    }
+  }
+  return base % N95;
+}
+const randOf95 = g => { const L = G95[g] && G95[g].length ? G95[g] : G95.none; return dec95(L[rnd(L.length)]); };
+function lot95(mode) { let u = Math.random(); for (const [s, p] of FLAGP95[mode === "meoshi" ? "meoshi" : "auto"]) if ((u -= p) < 0) return s; return null; }
+function ev95(kk) { const u = Math.random(); if (u < EV95.zen) return "zen"; if (u < EV95.zen + EV95.freeze) return "freeze"; if (!kk && u < EV95.zen + EV95.freeze + EV95.kaku) return "kaku"; return null; }
+F95.STR = STR95; F95.G = G95; F95.PAY = PAY95; F95.FLAGP = FLAGP95; F95.EV = EV95; F95.stopAt = stopAt95; F95.lines = lines95; F95.BETS = BETS95;
+
+const vs95 = () => {
+  const v = world.vs95 = world.vs95 && typeof world.vs95 === "object" && !Array.isArray(world.vs95) ? world.vs95 : {};
+  v.mode = v.mode === "meoshi" || v.mode === "auto" ? v.mode : "";
+  if (!BETS95.includes(v.bet)) v.bet = BETS95[0];
+  v.kk = Number.isFinite(+v.kk) ? Math.max(0, Math.min(KK95, Math.floor(+v.kk))) : 0;
+  v.pos = Array.isArray(v.pos) && v.pos.length === 3 ? v.pos.map(n => ((Math.floor(+n) || 0) % N95 + N95) % N95) : [0, 7, 14];
+  if (v.voice !== false) v.voice = true;
+  if (v.spin != null && !(v.spin && typeof v.spin === "object" && v.spin.bet > 0)) v.spin = null;
+  return v;
+};
+F95.state = vs95;
+
+// ---- 絵：金のどんぐり・スロット台 ----
+const SPR95 = {
+  acorn: [16, 16, (s, r) => {
+    r(4, 3, 8, 4, C13["#7a5410"]); r(3, 4, 10, 3, C13["#b8841c"]); for (const [x, y] of [[4, 5], [7, 4], [10, 5], [6, 6], [9, 6]]) s(x, y, C13["#7a5410"]); r(7, 1, 2, 3, C13["#7a5410"]);
+    ell13(s, 8, 10, 4.6, 4.6, C13["#f0b030"]); ell13(s, 7, 9, 2.4, 3, C13["#ffe27a"]); s(6, 8, C13["#fffaf0"]); ell13(s, 10, 12, 1.4, 1.6, C13["#c88a18"]);
+  }],
+  slot: [16, 30, (s, r) => {
+    r(1, 0, 14, 5, C13["#8a1a3a"]); r(1, 0, 14, 1, C13["#e0506e"]); for (let x = 2; x < 14; x += 3) s(x, 2, C13["#ffe27a"]);
+    r(0, 5, 16, 24, C13["#b8841c"]); r(0, 5, 16, 1, C13["#fff0a0"]); r(1, 6, 14, 22, C13["#f0c040"]);
+    r(2, 8, 12, 9, C13["#2a1020"]); for (const x of [3, 7, 11]) { r(x, 9, 3, 7, C13["#fffaf0"]); } s(4, 12, C13["#d83a3a"]); s(8, 12, C13["#f0b030"]); s(12, 12, C13["#d83a3a"]); r(2, 12, 12, 1, C13["#ff5f8a"]);
+    r(2, 19, 12, 3, C13["#8a1a3a"]); r(3, 20, 3, 1, C13["#ffe27a"]); r(7, 20, 3, 1, C13["#ffe27a"]); r(11, 20, 2, 1, C13["#ffe27a"]);
+    r(3, 23, 10, 4, C13["#7a5410"]); r(4, 24, 8, 2, C13["#3a1e10"]); r(0, 28, 16, 2, C13["#4a2a14"]);
+    r(15, 9, 1, 8, C13["#c8c0a8"]); s(15, 8, C13["#d83a3a"]);
+  }],
+};
+for (const [k, [w, h, fn]] of Object.entries(SPR95)) { IMG["s95_" + k] = pix13(w, h, fn); ASSETS["s95_" + k] = IMG["s95_" + k].toDataURL(); }
+IMG.s95_acornBig = pix13(16, 16, SPR95.acorn[2], false);
+
+// ---- VIPルームに台を2つ置く（ルナのとなり・カーペットの左） ----
+{
+  const _mi = makeInterior;
+  makeInterior = function (kind) {
+    const m = _mi.apply(this, arguments);
+    if (kind === "vip" && !m.interact["7,7"]) {
+      for (const x of [7, 8]) { m.objs.push({ img: "s95_slot", x: x * TS, y: 8 * TS - 30, sortY: 8 * TS - 1 }); m.base[7][x] = true; m.interact[x + ",7"] = () => openSlot95(); }
+      m.labels.push({ x: 8 * TS, y: 8 * TS - 38, text: "高レートスロット" });
+    }
+    return m;
+  };
+}
+
+// ---- 称号 ----
+const TTL95 = [
+  ["金のどんぐり", "VIPの高レートスロットで、金のどんぐりを3つそろえる", () => (world.stats.vipSlotA95 || 0) >= 1],
+  ["目押しの名人", "目押しで、大きい役（金のどんぐり・7・金塊）を10回そろえる", () => (world.stats.vipMeo95 || 0) >= 10],
+  ["黄金の全回転", "VIPの高レートスロットで、全回転を見る", () => (world.stats.vipZen95 || 0) >= 1],
+];
+for (const t of TTL95) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
+// ---- ルナの声（ふきだし＋声。声は端末の読み上げを使う。効果音がOFFのときと、声をOFFにしたときは出さない） ----
+const LUNA95 = {
+  hello: ["ようこそ、VIPの台へ。今夜は、どの夢を回されますか？", "いらっしゃいませ。金色のリールが、あなたさまをお待ちしておりました"],
+  reach: ["……リーチでございます", "あら……そろいそうですわ"],
+  win: ["おめでとうございます", "お見事でございます"],
+  big: ["素晴らしい……！ 金色の夜になりましたわ", "恐れ入りました。今夜の主役は、あなたさまです"],
+  acorn: ["金のどんぐり……！ わたくし、震えております"],
+  freeze: ["……時が、止まりましたわ"],
+  kaku: ["確変でございます。しばらく、運はあなたさまの味方です"],
+  zen: ["全回転……！ 伝説を、この目で見ました"],
+  lost: ["……いま、何か光った気がいたしましたわ", "惜しゅうございました。手もとが、ほんの少し"],
+  meo: ["見事な目押しでございます", "その指先、只者ではございませんわね"],
+  lose: ["運は巡るものでございます", "次こそは……", ""],
+};
+const AIM95 = { A: "金のどんぐり", "7": "赤い7", B: "金塊" };
+F95.say = "";
+function luna95(k, force) { const L = LUNA95[k]; if (!L) return; const t = L[rnd(L.length)]; if (t) lunaSay95(t, force); }
+function lunaSay95(t, force) {
+  F95.say = t; const el = document.getElementById("vs95say"); if (el) el.textContent = t;
+  if (!vs95().voice || !(typeof SFX !== "undefined" && SFX.on)) return;
+  try {
+    const sy = window.speechSynthesis; if (!sy || typeof SpeechSynthesisUtterance === "undefined") return;
+    if (!force && sy.speaking) sy.cancel();
+    const u = new SpeechSynthesisUtterance(t.replace(/[……]/g, "、")); u.lang = "ja-JP"; u.rate = 1.04; u.pitch = 1.25; u.volume = .85;
+    const vs = sy.getVoices ? sy.getVoices().filter(v => /^ja/i.test(v.lang)) : []; const f = vs.find(v => /female|kyoko|haruka|nanami|mizuki|o-ren/i.test(v.name)) || vs[0]; if (f) u.voice = f;
+    sy.speak(u);
+  } catch (e) { }
+}
+
+// ---- 画面いっぱいの金のどんぐりの雨・VIPの割り込みの大きな文字 ----
+function acornRain95(ms = 4200, n = 140) {
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { n = Math.round(n / 4); ms = Math.min(ms, 2000); }
+  const cv = document.createElement("canvas"); cv.className = "rain95"; cv.setAttribute("aria-hidden", "true"); document.body.appendChild(cv);
+  const g = cv.getContext("2d"), dpr = Math.min(2, window.devicePixelRatio || 1); let W = 0, H = 0;
+  const fit = () => { W = innerWidth; H = innerHeight; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.imageSmoothingEnabled = false; };
+  fit(); addEventListener("resize", fit);
+  const img = IMG.s95_acornBig, u = Math.max(2, Math.min(4, Math.round(Math.min(innerWidth, innerHeight) / 180)));
+  const P = []; let made = 0; const t0 = performance.now(); let last = t0;
+  const add = () => { P.push({ x: Math.random() * W, y: -30 - Math.random() * 60, vy: 120 + Math.random() * 160, vx: (Math.random() - .5) * 40, rot: Math.random() * 6.28, vr: (Math.random() - .5) * 5, s: u * (.7 + Math.random() * .6) }); made++; };
+  const loop = now => {
+    const t = now - t0, dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (t > ms + 2500 || !cv.isConnected) { cv.remove(); removeEventListener("resize", fit); return; }
+    if (t < ms) { const want = Math.floor(n * t / ms); while (made < want) add(); }
+    g.clearRect(0, 0, W, H);
+    for (let i = P.length - 1; i >= 0; i--) {
+      const p = P[i]; p.vy += 60 * dt; p.y += p.vy * dt; p.x += p.vx * dt; p.rot += p.vr * dt; if (p.y > H + 40) { P.splice(i, 1); continue; }
+      g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.drawImage(img, -8 * p.s, -8 * p.s, 16 * p.s, 16 * p.s);
+      if ((Math.floor(now / 120) + i) % 7 === 0) { g.fillStyle = "rgba(255,255,230,.9)"; g.fillRect(-2 * p.s, -5 * p.s, p.s, p.s); }
+      g.restore();
+    }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+F95.rain = acornRain95;
+function banner95(text, sub, ms = 1700, cls = "") {
+  const d = document.createElement("div"); d.className = "ev95 " + cls; d.setAttribute("aria-live", "polite");
+  d.innerHTML = `<b>${esc(text)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}`; document.body.appendChild(d);
+  setTimeout(() => d.classList.add("out"), ms); setTimeout(() => d.remove(), ms + 600);
+}
+F95.banner = banner95;
+
+// ---- 1回の勝負 ----
+// S = { bet, mode, flag, ev, fm, zen, kk, paid:{fu,fk}, want, tops:[..], lost, meo }
+function newSpin95(bet, mode, paid) {
+  const V = vs95(), kk = V.kk > 0, ev = F95.force || ev95(kk); F95.force = null;
+  const flag = F95.forceFlag !== undefined ? F95.forceFlag : lot95(mode); F95.forceFlag = undefined;
+  const S = { bet, mode, flag, ev, fm: ev === "freeze" ? pickW95(FREEZE95) : 0, zen: ev === "zen" ? pickW95(ZEN95) : null, kk, paid: { fu: paid ? paid.fu || 0 : 0, fk: paid ? paid.fk || 0 : 0 }, want: flag || "none", tops: [null, null, null], lost: null, at: Date.now() };
+  if (kk) V.kk--;
+  if (ev === "kaku") V.kk = KK95;
+  return S;
+}
+/** 止まった位置から払い戻しを決める */
+function calc95(S) {
+  const t = S.tops.map(x => x == null ? 0 : x);
+  let pay = 0, line = -1, sym = null, lines = [];
+  if (S.zen) { sym = S.zen; pay = PAY95[sym] * 5 * S.bet; lines = [0, 1, 2, 3, 4]; }
+  else { const r = lines95(t); if (r.length) { line = r[0][0]; sym = r[0][1]; lines = [line]; pay = PAY95[sym] * S.bet * (S.kk ? 2 : 1); } }
+  const bonus = S.ev === "freeze" ? S.bet * S.fm : 0;
+  const raw = pay + bonus;
+  return { pay: Math.min(MAXPAY95, raw), capped: raw > MAXPAY95, line, sym, lines, bonus, lineBase: pay };
+}
+F95.calc = calc95; F95.newSpin = newSpin95;
+/** 決着：払い戻しに村の偽札がまざるか聞いてから、settle91 で番付・負け上限・卓の上まで */
+function settle95(S, done) {
+  const R = calc95(S), st = world.stats, V = vs95();
+  V.spin = null; V.pos = S.tops.map(x => x == null ? 0 : x);
+  st.vipSlot95 = (st.vipSlot95 || 0) + 1;
+  if (R.sym === "A" && !S.zen) st.vipSlotA95 = (st.vipSlotA95 || 0) + 1;
+  if (S.zen) st.vipZen95 = (st.vipZen95 || 0) + 1;
+  if (S.mode === "meoshi" && R.sym && BIG95.includes(R.sym) && !S.zen) st.vipMeo95 = (st.vipMeo95 || 0) + 1;
+  const fin = k => {
+    const out = R.pay > S.bet ? "win" : R.pay > 0 ? "push" : "lose";
+    const s = settle91({ game: "slot", bet: S.bet, pay: R.pay, k, paid: S.paid, out });
+    st.vipSlotBest95 = Math.max(st.vipSlotBest95 || 0, Math.round(s.share * (R.pay - k)));
+    saveWorld();
+    const mult = R.pay / S.bet, tier = out === "win" ? tier90(true, R.pay, mult) : 0;
+    done({ ...R, k, out, tier: S.zen || R.sym === "A" ? Math.max(tier, 3) : tier, credit: s.credit, pot: s.pot });
+  };
+  if (R.pay) drawPool78(R.pay, fin); else fin(0);
+}
+// 目押しの途中で読み込み直した・画面がこわれたとき：その回は「押さなかった」ことにする（大きい役は取りこぼし・小さい役はそろう）
+function autoResolve95() {
+  const V = vs95(), S = V.spin; if (!S || F95.live) return;
+  S.want = S.flag && !BIG95.includes(S.flag) ? S.flag : "none"; if (S.flag && BIG95.includes(S.flag)) S.lost = S.flag;
+  S.tops = randOf95(S.want);
+  settle95(S, r => F7.notify(`VIPスロット（目押しの途中）：${r.pay ? `${billTxt78(r.pay)}の払い戻し` : "はずれ"}${S.lost ? "（止めずに終わったので、取りこぼし）" : ""}`, "s95_acorn"));
+}
+setInterval(() => { try { if (world.vs95 && world.vs95.spin && !F95.live) autoResolve95(); } catch (e) { } }, 2500);
+
+// ---- 台の画面 ----
+F95.live = null;
+const holdHud95 = on => { if (on) { F90.hold = true; setTimeout(release90, 9000); } else release90(); };
+function openSlot95(arg) {
+  const V = vs95();
+  if (!V.mode && !(arg && arg.S)) { chooseMode95(); return; }
+  const TITLE = "VIPルーム　高レートスロット";
+  let L = null;   // いまの演出（アニメーション）
+  openModal(TITLE, "dark vip90 vs95", body => paint(body), () => {
+    // 途中で閉じたとき：目押しなら、のこりのリールをいまの位置で止めたことにして決着
+    const live = F95.live; F95.live = null;
+    if (live && live.S && !live.settled) { live.closing = true; for (let i = 0; i < 3; i++) if (live.S.tops[i] == null) live.S.tops[i] = stopAt95(live.S, i, live.pos[i]); live.settled = true; settle95(live.S, r => F7.notify(`VIPスロット：${r.pay ? `${billTxt78(r.pay)}の払い戻し` : "はずれ"}`, "s95_acorn")); }
+    if (live && live.res) F7.notify(`VIPスロット：${live.res.pay ? `${billTxt78(live.res.pay)}の払い戻し` : "はずれ"}`, "s95_acorn");
+    if (live) holdHud95(false);
+    onClose91();
+  });
+  function paint(body, res) {
+    const c = cash78(), busy = !!F95.live, V = vs95();
+    const cashN = busy && F95.live.cashPre != null ? F95.live.cashPre : c.n;
+    body.innerHTML = `<div class="vs95w"><div class="vs95l">
+      <div class="vs95top">${staffSay13(charIcon13(NPC90.manager.cfg), `<span id="vs95say">${esc(F95.say || LUNA95.hello[0])}</span>`)}</div>
+      <div class="vs95m"><canvas id="vs95cv" width="76" height="70" aria-label="スロットのリール"></canvas><div class="vs95ev" id="vs95ev" hidden></div><div class="vs95aim" id="vs95aim" ${busy && F95.live.lamp && F95.live.S.mode === "meoshi" && F95.live.spinning.some(Boolean) ? "" : "hidden"}>${busy && F95.live.lamp ? `★ ${esc(AIM95[F95.live.lamp])}を狙え` : ""}</div></div>
+      <div class="vs95stops" ${V.mode === "meoshi" ? "" : "hidden"}>${[0, 1, 2].map(i => `<button class="btn" type="button" data-st95="${i}" disabled>STOP ${i + 1}</button>`).join("")}</div>
+      ${V.kk > 0 ? `<p class="vs95kk">確変中！ あと${V.kk}回、そろった配当が2倍</p>` : ""}
+      <p class="mtext vp90-res ${res ? (res.out === "win" ? "win" : "lose") : ""}" id="vs95res">${res ? esc(res.text) : busy ? "……" : V.mode === "meoshi" ? "スピンしてから、STOP（1・2・3キー）で1つずつ止めよう" : "賭ける枚数を選んで、スピン"}</p></div><div class="vs95r">
+      <p class="mtext">現金 <b id="vs95cash">${billTxt78(cashN)}</b>（${fmt(cashN * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
+      ${duHtml91(res || null)}
+      <div class="vp90-row"><span class="lbl">1回</span>${BETS95.map(b => `<button class="chip" type="button" data-b95="${b}" aria-pressed="${V.bet === b}" ${!busy && c.n >= b ? "" : "disabled"}>${b}枚</button>`).join("")}</div>
+      <div class="vp90-row"><span class="lbl">止め方</span><button class="chip" type="button" data-m95="auto" aria-pressed="${V.mode === "auto"}" ${busy ? "disabled" : ""}>おまかせ</button><button class="chip" type="button" data-m95="meoshi" aria-pressed="${V.mode === "meoshi"}" ${busy ? "disabled" : ""}>目押し</button><button class="chip" type="button" id="vs95v" aria-pressed="${V.voice}">ルナの声 ${V.voice ? "ON" : "OFF"}</button></div>
+      <div class="row2"><button class="btn vp90-go" type="button" id="vs95go" ${!busy && c.n >= V.bet ? "" : "disabled"}>${busy ? "…" : `スピン（${V.bet}枚）`}</button></div>
+      ${c.n >= BETS95[0] ? "" : `<p class="mtext small">現金が足りないよ（最低${BETS95[0]}枚）。信用金庫の「現金の窓口」で引き出してから来てね</p>`}
+      <details class="paytable vs95pt"><summary>配当表と確率</summary>${payHtml95()}</details></div></div>`;
+    draw(body);
+    const re = r => paint(body, r === undefined ? res : r);
+    body.querySelectorAll("[data-b95]").forEach(b => b.onclick = () => { vs95().bet = +b.dataset.b95; saveWorld(); re(); });
+    body.querySelectorAll("[data-m95]").forEach(b => b.onclick = () => { vs95().mode = b.dataset.m95; saveWorld(); re(); });
+    body.querySelector("#vs95v").onclick = () => { const v = vs95(); v.voice = !v.voice; saveWorld(); try { if (!v.voice) speechSynthesis.cancel(); } catch (e) { } re(); };
+    duBind91(body, res || {}, () => re());
+    body.querySelector("#vs95go").onclick = () => spin(body);
+    body.querySelectorAll("[data-st95]").forEach(b => b.onclick = () => press(+b.dataset.st95));
+    if (F95.live) bindLive(body);
+  }
+  function spin(body) {
+    const V = vs95(), bet = V.bet; if (F95.live || cash78().n < bet) return;
+    if (K.betAllowed && !K.betAllowed(bet * BILL78)) { const r = body.querySelector("#vs95res"); if (r) r.textContent = K.betMsg(); return; }
+    closeModal();
+    payCash78("vip", bet, (ok, d) => {
+      if (!ok) return;
+      const S = newSpin95(bet, V.mode, d), cashPre = cash78().n; F95.lastLines = [];
+      F95.live = { S, pos: vs95().pos.slice(), spinning: [true, true, true], remain: [-1, -1, -1], speed: [SPEED95, SPEED95, SPEED95], frozen: false, settled: false, res: null, cashPre, t0: performance.now(), timers: [] };
+      if (V.mode === "auto") { S.tops = randOf95(S.want); F95.live.settled = true; holdHud95(true); settle95(S, r => { if (F95.live && F95.live.S === S) F95.live.res = r; }); }
+      else { vs95().spin = S; saveWorld(); }
+      openSlot95({ S });
+      saveWorld();
+    });
+  }
+  // 演出の動き
+  function bindLive(body) {
+    const Lv = F95.live; if (!Lv || Lv.bound) { if (Lv) loop(body); return; } Lv.bound = true;
+    const S = Lv.S, auto = S.mode === "auto";
+    try { SFX.lever(); SFX.spinStart(); } catch (e) { }
+    if (S.flag && BIG95.includes(S.flag)) {
+      Lv.lamp = S.flag;
+      if (S.mode === "meoshi") { aim(`★ ${AIM95[S.flag]}を狙え`); lunaSay95(`……光りましたわ。${AIM95[S.flag]}を、狙ってくださいませ`); }
+    }
+    const later = (fn, ms) => Lv.timers.push(setTimeout(() => { if (F95.live === Lv) fn(); }, ms));
+    if (S.ev === "freeze") later(() => freeze(Lv), 700);
+    else startStops(Lv);
+    loop(body);
+    function startStops(Lv) {
+      if (auto) [700, 1150, 1600].forEach((t, i) => later(() => autoStop(i), t));
+      else { enableStops(true); later(() => { [0, 1, 2].forEach(i => { if (Lv.spinning[i] && Lv.remain[i] < 0) press(i); }); }, 9000); }
+    }
+    function freeze(Lv) {
+      Lv.frozen = true; enableStops(false); evText("……"); luna95("freeze"); try { SFX.reach(); } catch (e) { }
+      later(() => evText("フリーズ！？"), 1100);
+      later(() => { evText("FREEZE!!"); banner95("FREEZE!!", `ボーナス ×${S.fm}`, 1800, "fz"); acornRain95(1800, 60); try { SFX.big(); } catch (e) { } }, 2300);
+      later(() => { Lv.frozen = false; evText(""); startStops(Lv); }, 3500);
+    }
+    F95.autoStop = autoStop;
+  }
+  function autoStop(i) {
+    const Lv = F95.live; if (!Lv || !Lv.spinning[i] || Lv.remain[i] >= 0) return;
+    const t = Lv.S.tops[i]; let d = ((t - Lv.pos[i]) % N95 + N95) % N95; if (d < 1.5) d += N95; Lv.remain[i] = d;
+  }
+  function press(i) {
+    const Lv = F95.live; if (!Lv || Lv.frozen || !Lv.spinning[i] || Lv.remain[i] >= 0) return;
+    if (Lv.S.mode === "auto") { autoStop(i); return; }
+    const t = stopAt95(Lv.S, i, Lv.pos[i]); Lv.S.tops[i] = t;
+    Lv.remain[i] = ((t - Lv.pos[i]) % N95 + N95) % N95;
+    const b = document.querySelector(`[data-st95="${i}"]`); if (b) b.disabled = true;
+  }
+  F95.press = press;
+  function enableStops(on) { document.querySelectorAll("[data-st95]").forEach(b => { const Lv = F95.live; b.disabled = !on || !Lv || !Lv.spinning[+b.dataset.st95] || Lv.remain[+b.dataset.st95] >= 0; }); }
+  function aim(t) { const e = document.getElementById("vs95aim"); if (!e) return; e.textContent = t; e.hidden = !t; }
+  function evText(t) { const e = document.getElementById("vs95ev"); if (!e) return; e.textContent = t; e.hidden = !t; }
+  function onReelStop(i) {
+    const Lv = F95.live, n = Lv.spinning.filter(x => !x).length; try { SFX.reelStop(n - 1); } catch (e) { }
+    if (n === 2) {
+      const left = [0, 1, 2].find(k => Lv.spinning[k]), fixed = [0, 1, 2].filter(k => k !== left);
+      const reach = LN95.some(l => { const a = cell95(fixed[0], Lv.pos[fixed[0]], l[fixed[0]]), b = cell95(fixed[1], Lv.pos[fixed[1]], l[fixed[1]]); return a === b && BIG95.includes(a); });
+      if (reach && !Lv.S.zen) { Lv.reach = true; evText("リーチ！"); luna95("reach"); try { SFX.reach(); if (Lv.S.mode === "auto") { Lv.speed[left] = 7; SFX.spinSlow(); } } catch (e) { } }
+    }
+    if (n === 3) finish();
+  }
+  function finish() {
+    const Lv = F95.live, S = Lv.S; Lv.timers.forEach(clearTimeout); evText(""); aim(""); try { SFX.spinStop(); } catch (e) { }
+    const show = r => {
+      if (F95.live !== Lv) return;
+      F95.live = null; holdHud95(false); F95.lastLines = r.lines;
+      const head = S.zen ? `全回転！！ ${SN95[S.zen]}が5ラインぜんぶにそろった` : r.sym ? `${LNN95[r.line]}に${SN95[r.sym]}がそろった${S.kk ? "（確変2倍）" : ""}` : S.lost ? "……取りこぼし。何かがそろいそうだった" : "はずれ…";
+      const fz = r.bonus ? `　フリーズのボーナス ×${S.fm}` : "";
+      const text = r.pay ? `${head}${fz}　${billTxt78(r.pay)}（${fmt(r.pay * BILL78)}）${r.capped ? "（上限5,000枚）" : ""}${r.credit ? "。" + payText91(r.pay, r.credit) : ""}` : `${head}${fz}　${billTxt78(S.bet)} を失った`;
+      Lv.win = r.lines; Lv.flash = r.pay > S.bet ? 1 : 0;
+      if (S.ev === "kaku") { banner95("確変突入！", `次の${KK95}回、そろった配当が2倍`, 2000, "kk"); luna95("kaku"); try { SFX.big(); } catch (e) { } }
+      if (S.zen) { banner95("全回転！！", `${SN95[S.zen]}が9マスぜんぶ`, 2200, "zen"); luna95("zen"); }
+      else if (r.sym === "A") luna95("acorn");
+      else if (r.tier >= 3) luna95("big");
+      else if (r.out === "win" && S.mode === "meoshi" && BIG95.includes(r.sym)) luna95("meo");
+      else if (r.out === "win") luna95("win");
+      else if (S.lost) luna95("lost");
+      else if (Math.random() < .3) luna95("lose");
+      const b = document.getElementById("vs95cv"); const body = b && b.closest("#mbody");
+      const res = { ...r, text, busy: false };
+      if (body && $("mtitle").textContent === TITLE) paint(body, res);
+      if (r.out === "win") {
+        shine90(Math.max(1, r.tier));
+        if (r.tier >= 3 || r.sym === "A" || S.zen) acornRain95(r.tier >= 4 ? 5200 : 3800, r.tier >= 4 ? 220 : 150);
+        const fx = () => winFx90({ tier: Math.max(1, r.tier), pay: r.pay, label: S.zen ? "全回転" : r.sym ? `${SN95[r.sym]}がそろった` : `フリーズ ×${S.fm}` });
+        if (S.zen || S.ev === "kaku") setTimeout(fx, 2000); else fx();
+      } else if (r.out === "push") se13("small"); else se13("miss");
+    };
+    if (S.mode === "auto") { if (Lv.res) show(Lv.res); else { const iv = setInterval(() => { if (Lv.res || F95.live !== Lv) { clearInterval(iv); if (Lv.res) show(Lv.res); } }, 80); } }
+    else { Lv.settled = true; settle95(S, show); }
+  }
+  function loop(body) {
+    const cv = body.querySelector("#vs95cv"); if (!cv) return;
+    const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; let last = performance.now();
+    const frame = now => {
+      if (!cv.isConnected) return;
+      const Lv = F95.live, dt = Math.min(.05, (now - last) / 1000); last = now;
+      if (Lv && Lv.bound) {
+        for (let i = 0; i < 3; i++) if (Lv.spinning[i] && !Lv.frozen) {
+          let mv = Lv.speed[i] * dt; if (Lv.remain[i] >= 0) { mv = Math.min(mv, Lv.remain[i]); Lv.remain[i] -= mv; }
+          Lv.pos[i] = (Lv.pos[i] + mv) % N95;
+          if (Lv.remain[i] === 0 || (Lv.remain[i] >= 0 && Lv.remain[i] < 1e-9)) { Lv.spinning[i] = false; Lv.pos[i] = Lv.S.tops[i]; Lv.remain[i] = -1; onReelStop(i); if (!F95.live) break; }
+        }
+      }
+      draw(body, now);
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+  function draw(body, now = performance.now()) {
+    const cv = body.querySelector("#vs95cv"); if (!cv) return;
+    const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+    const Lv = F95.live, P = Lv ? Lv.pos : vs95().pos, spin = Lv ? Lv.spinning : [false, false, false], zen = Lv && Lv.S.zen && !Lv.spinning.some(Boolean) ? Lv.S.zen : null;
+    // 外わく（金）と、まわりのランプ
+    g.fillStyle = "#3a0f22"; g.fillRect(0, 0, 76, 70); g.fillStyle = "#b8841c"; g.fillRect(2, 2, 72, 66); g.fillStyle = "#f0c040"; g.fillRect(3, 3, 70, 64); g.fillStyle = "#2a0a18"; g.fillRect(6, 6, 64, 58);
+    const lit = Math.floor(now / (Lv ? 70 : 260));
+    for (let k = 0; k < 18; k++) { const per = k < 9 ? [4 + k * 8, 1] : [4 + (k - 9) * 8, 66]; g.fillStyle = (k + lit) % 3 === 0 ? "#fffaf0" : (k + lit) % 3 === 1 ? "#ff5f8a" : "#ffd84a"; g.fillRect(per[0], per[1], 3, 2); }
+    for (let r = 0; r < 3; r++) {
+      const x = 8 + r * 20;
+      g.fillStyle = "#fff8e8"; g.fillRect(x, 8, 18, 54);
+      const p = P[r], base = Math.floor(p), frac = p - base;
+      g.save(); g.beginPath(); g.rect(x, 8, 18, 54); g.clip();
+      for (let row = -1; row < 4; row++) {
+        const s = zen || STR95[r][((base + row) % N95 + N95) % N95], y = 9 + Math.round((row - frac) * 18);
+        const im = IMG[SYM95[s]]; if (im) g.drawImage(im, x + 1, y);
+      }
+      g.restore();
+      if (spin[r]) { g.fillStyle = `rgba(255,232,150,${.18 + .12 * Math.sin(now / 60 + r)})`; g.fillRect(x, 8, 18, 54); g.fillStyle = "#ffd84a"; g.fillRect(x - 1, 8, 1, 54); g.fillRect(x + 18, 8, 1, 54); }
+    }
+    // 中段の目じるし
+    g.fillStyle = "#ff5f8a"; g.fillRect(6, 34, 2, 2); g.fillRect(68, 34, 2, 2);
+    const W = Lv && Lv.win ? Lv.win : (F95.lastLines || []);
+    for (const w of W) {
+      g.strokeStyle = ["#ffd84a", "#ff7aa8", "#7ad0ff", "#9bf07a", "#c49bff"][w]; g.lineWidth = 1.4; g.globalAlpha = .55 + .45 * Math.sin(now / 90);
+      g.beginPath(); LN95[w].forEach((row, i) => { const xx = 8 + i * 20 + 9, yy = 8 + row * 18 + 9; i ? g.lineTo(xx, yy) : g.moveTo(xx - 9, yy); }); g.lineTo(68, 8 + LN95[w][2] * 18 + 9); g.stroke(); g.globalAlpha = 1;
+    }
+    if (Lv && Lv.frozen) { g.fillStyle = `rgba(10,0,20,${.45 + .1 * Math.sin(now / 120)})`; g.fillRect(6, 6, 64, 58); }
+    if (Lv && Lv.reach && Lv.spinning.some(Boolean)) { g.strokeStyle = `rgba(255,95,138,${.6 + .4 * Math.sin(now / 70)})`; g.lineWidth = 2; g.strokeRect(5, 5, 66, 60); }
+    // 大きい役のランプ（上のまんなか）
+    if (Lv && Lv.lamp && (Lv.S.mode === "meoshi" || !Lv.spinning.some(Boolean))) { const on = Math.floor(now / 110) % 2; g.fillStyle = on ? "#fffaf0" : (Lv.lamp === "A" ? "#ffd84a" : Lv.lamp === "7" ? "#ff4a5a" : "#f0c040"); g.fillRect(34, 0, 8, 4); g.fillStyle = "#7a5410"; g.fillRect(34, 4, 8, 1); }
+  }
+  if (!arg && !F95.greeted) { F95.greeted = true; luna95("hello"); }
+}
+F95.open = openSlot95;
+function payHtml95() {
+  const P = FLAGP95.auto, M = FLAGP95.meoshi, pct = p => (p * 100 >= 1 ? (p * 100).toFixed(1) : (p * 100).toFixed(2)) + "%";
+  return `<div class="pay">${Object.entries(PAY95).map(([s, m]) => `<span><img src="${ASSETS[SYM95[s]]}" alt="">${esc(SN95[s])}×3　${m}倍</span>`).join("")}</div>
+    <table class="vs95tb"><tr><th>役</th><th>おまかせ</th><th>目押し</th></tr>${P.map(([s, p], i) => `<tr><td>${esc(SN95[s])}</td><td>${pct(p)}</td><td>${pct(M[i][1])}</td></tr>`).join("")}</table>
+    <p class="mtext small">5ライン固定。1回に賭けた枚数×倍率が払い戻し（最大${MAXPAY95.toLocaleString("ja-JP")}枚）。当たりはスピンした瞬間に決まり、リールはそれに合わせて止まる。<b>おまかせ</b>は当たりを必ずそろえる（還元率 約95%）。<b>目押し</b>は、大きい役（金のどんぐり・7・金塊）が当たっていると、ランプとルナが「狙え」と教えてくれる。大きい役は押した位置から4コマまでしかすべらないので、その絵柄が見えているうちに押さないとそろわない（取りこぼし）。小さい役は台が引きこんでそろえる。目押しの大きい役は当たりが1.05倍なので、取りこぼしなしで約97%。はずれのときは、どう押してもそろわない。</p>
+    <p class="mtext small"><b>特別な割り込み</b>（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の${KK95}回、そろった配当が2倍／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）</p>`;
+}
+function chooseMode95() {
+  openModal("VIPルーム　高レートスロット", "dark vip90 vs95", body => {
+    body.innerHTML = `${staffSay13(charIcon13(NPC90.manager.cfg), "ようこそ、VIPの台へ。まずは、リールの止め方をお選びくださいませ。あとからでも変えられますわ")}
+      <div class="vs95pick"><button class="gm92c" type="button" data-pm95="auto"><b>おまかせ</b><span>リールは台が止める。当たっていれば必ずそろう。のんびり楽しみたい方に</span></button>
+      <button class="gm92c" type="button" data-pm95="meoshi"><b>目押し</b><span>STOP で1つずつ、自分のタイミングで止める。大きい役が当たるとルナが「狙え」と教えてくれるので、その絵柄をねらって止める（はずすと取りこぼし）。腕の見せどころ</span></button></div>
+      <p class="mtext small">現金（1,000G札）だけ。1回に5・10・20・50枚。どちらでも、勝ちすぎることはない作りです（還元率は おまかせ 約95%・目押し 最大で約97%）。</p>`;
+    body.querySelectorAll("[data-pm95]").forEach(b => b.onclick = () => { vs95().mode = b.dataset.pm95; saveWorld(); closeModal(); luna95("hello"); openSlot95(); });
+  }, onClose91);
+}
+// キー：1・2・3 で STOP、Space でスピン（台の画面のときだけ）
+addEventListener("keydown", e => {
+  if (!modalOpen || !$("mbox").classList.contains("vs95") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  const i = { "1": 0, "2": 1, "3": 2 }[e.key];
+  if (i != null && F95.live) { e.preventDefault(); e.stopPropagation(); if (F95.press) F95.press(i); return; }
+  if ((e.key === " " || e.key === "Enter") && !F95.live && !e.repeat) { const b = $("vs95go"); if (b && !b.disabled) { e.preventDefault(); e.stopPropagation(); b.click(); } }
+}, true);
+GUIDE54.push(["VIPのスロット", "s95_acorn", `
+    <p>VIPルームの左の<b>高レートスロット</b>（ルナのとなりの金の台）。現金（1,000G札）だけで、1回に5・10・20・50枚。払い戻しは最大5,000枚。</p><ul>
+    <li>はじめに<b>おまかせ</b>か<b>目押し</b>を選ぶ（あとから変えられる）。おまかせは当たりが必ずそろう。目押しは STOP（1・2・3キー）で自分で止める。大きい役（金のどんぐり・7・金塊）が当たると、ランプとルナが「狙え」と教えてくれるので、その絵柄が見えているうちに押す（小さい役は台が引きこむ）</li>
+    <li>当たりはスピンした瞬間に決まっていて、はずれのときはどう押してもそろわない。目押しが上手でも、還元率は約97%まで（勝ちすぎない作り）</li>
+    <li>フリーズ・確変・全回転は、VIPだと画面いっぱいの演出つき。大当たりでは金のどんぐりが降ってくる。ルナの声は台の「ルナの声」でON・OFF</li>
+    <li>勝ち負けは、ほかのカジノと同じく番付・今日の負け上限・会員ランクにつながる。勝ったあとはダブルアップもできる</li></ul>`]);
+F95.ready = true;
+
+// =================== v96: 闇バイト（取り立て屋の助手・差し入れ屋・夜の宝掘り）と、同居人の家での偽札づくり ===================
+// 十日屋の中の「裏の求人」から受ける、表には出せないアルバイト。
+//  取り立て屋の助手：取り立て屋といっしょに、返済が遅れている村の人の家を3軒まわる。強く出るほど取り立てられるけど、評判が下がって、村の人の反応が冷たくなる
+//  差し入れ屋　　　：労働施設の中の人が「助けて」を出しているとき、見張りに見つからないように差し入れを届ける。中の人のつとめが1回へる（サーバーは JobService の gift）
+//  夜の宝掘り　　　：夜（19時〜）、北の丘に埋められた現金を掘る。ハズレは偽札。巡査ケイの見回り（6マス）で見つかると、その夜に掘った物は取り上げ
+var F96 = {};
+const j96 = () => {
+  const j = world.j96 = world.j96 && typeof world.j96 === "object" && !Array.isArray(world.j96) ? world.j96 : {};
+  for (const k of ["collN", "strongN", "softN", "giftN", "digN", "digFake", "digCaught", "recv"]) j[k] = Number.isFinite(+j[k]) ? Math.max(0, Math.floor(+j[k])) : 0;
+  j.harsh = Number.isFinite(+j.harsh) ? Math.max(0, Math.min(12, Math.floor(+j.harsh))) : 0;
+  if (j.day !== world.day) {
+    const d = Number.isFinite(+j.day) ? world.day - +j.day : 0; if (d > 0) j.harsh = Math.max(0, j.harsh - d);
+    j.day = world.day; j.paid = { coll: 0, gift: 0, dig: 0 }; j.gifted = {}; j.round = null; j.dig = null; j.recv = 0;
+  }
+  if (!j.paid || typeof j.paid !== "object") j.paid = { coll: 0, gift: 0, dig: 0 };
+  if (!j.gifted || typeof j.gifted !== "object") j.gifted = {};
+  if (j.round && (typeof j.round !== "object" || !Array.isArray(j.round.list))) j.round = null;
+  if (j.dig && (typeof j.dig !== "object" || !Array.isArray(j.dig.spots))) j.dig = null;
+  return j;
+};
+F96.state = j96;
+const CAP96 = { coll: 1, gift: 3, dig: 5 };
+const cold96 = () => j96().harsh >= 3;
+const BOARD96 = [8, 5];
+
+// ---- 絵：裏の求人（黒い板）・掘ったあとの穴 ----
+const SPR96 = {
+  board: [16, 24, (s, r) => {
+    r(2, 22, 12, 2, C13["#3a2a1a"]); r(7, 10, 2, 13, C13["#4a3424"]); r(1, 1, 14, 10, C13["#2a1e1e"]); r(2, 2, 12, 8, C13["#4a3434"]);
+    r(3, 3, 5, 3, C13["#c8b890"]); r(3, 3, 5, 1, C13["#8a7a5a"]); s(4, 4, C13["#7a1d26"]); r(9, 3, 4, 2, C13["#c8b890"]); r(3, 7, 9, 2, C13["#c8b890"]); s(10, 8, C13["#7a1d26"]); s(12, 1, C13["#d83a3a"]);
+  }],
+  hole: [16, 16, (s, r) => { ell13(s, 8, 10, 6, 3.4, C13["#5a3a22"]); ell13(s, 8, 10, 4.4, 2.2, C13["#2a1a10"]); r(2, 12, 3, 1, C13["#8a6a3a"]); r(11, 7, 3, 1, C13["#8a6a3a"]); }, false],
+};
+for (const [k, [w, h, fn, ol]] of Object.entries(SPR96)) { IMG["s96_" + k] = pix13(w, h, fn, ol !== false); ASSETS["s96_" + k] = IMG["s96_" + k].toDataURL(); }
+{
+  const _mi = makeInterior;
+  makeInterior = function (kind) {
+    const m = _mi.apply(this, arguments);
+    if (kind === "yami" && !m.interact[BOARD96.join(",")]) {
+      const [x, y] = BOARD96;
+      m.objs.push({ img: "s96_board", x: x * TS, y: y * TS - 8, sortY: (y + 1) * TS - 1 }); m.base[y][x] = true;
+      m.interact[x + "," + y] = () => openUra96();
+      m.labels.push({ x: x * TS + 8, y: y * TS - 14, text: "裏の求人" });
+    }
+    return m;
+  };
+}
+
+// ---- 裏の求人 ----
+function openUra96(note) {
+  const j = j96(), night = world.time >= 1140, R = j.round, D = j.dig;
+  openModal("裏の求人", "yami", body => {
+    const card = (img, name, desc, status, btn) => `<div class="li"><img src="${ASSETS[img]}" alt=""><span class="nm">${name}<span class="sub2">${desc}</span><span class="sub2 st93">${status}</span></span><span class="acts">${btn || ""}</span></div>`;
+    const owe = typeof overdueLoans === "function" && overdueLoans().length > 0;
+    const collBtn = R ? `<button class="btn light" type="button" data-u96="collList">まわる家を見る</button>` : j.paid.coll >= CAP96.coll ? "" : owe ? "" : `<button class="btn" type="button" data-u96="collStart">受ける</button>`;
+    const collSt = R ? `まわっている（${R.list.filter(x => x.done).length}/${R.list.length}軒）` : j.paid.coll >= CAP96.coll ? "きょうはもう回った" : owe ? "自分の借金が遅れているうちは、手伝わせてもらえない" : "1日1回・3軒";
+    const digSt = D ? `掘っている（${D.n}/${CAP96.dig}か所）` : j.paid.dig >= CAP96.dig ? "きょうはもう掘りつくした" : night ? "いまならできる（夜）" : `夜（19時〜）だけ・いまは${clockStr()}`;
+    const digBtn = D ? `<button class="btn light" type="button" data-u96="digList">場所を見る</button>` : j.paid.dig < CAP96.dig && night ? `<button class="btn" type="button" data-u96="digStart">受ける</button>` : "";
+    body.innerHTML = staffSay13(charIcon13({ skin: "小麦色", hair: "モヒカン", hairc: "黒", top: "ジャケット", topc: "黒", glasses: true }), "……表の掲示板には出せねえ仕事だ。やるかどうかは、あんたしだいだぜ")
+      + `${note ? `<p class="mtext"><b>${esc(note)}</b></p>` : ""}<div class="list">
+      ${card("s78_vip", "取り立て屋の助手", "取り立て屋といっしょに、返済が遅れている家を3軒まわる。やさしく・ふつう・強く、の出方で、取り立てられる額が変わる。お給料は1軒100G＋取り立てた額の1割。強く出すぎると評判が下がって、村の人の反応が冷たくなる", collSt, collBtn)}
+      ${card("s93_jobs", "差し入れ屋", "労働施設の中の人が「助けて」を出しているとき、見張りの目をかいくぐって差し入れ（料理・野菜・魚）を届ける。中の人のつとめが1回へる。お礼は150G（1日3回・同じ人は1日1回）。スマホの「頼まれごと」から始める", F8.connected ? `きょうはあと${Math.max(0, CAP96.gift - j.paid.gift)}回` : "オンラインのときだけ", "")}
+      ${card("s96_hole", "夜の宝掘り", "夜のうちに、北の丘に埋められた現金を掘り出す（5か所）。ハズレだと偽札が出てくる。丘の巡査ケイの見回り（6マス以内）で掘っているのを見つかると、その夜に掘った物はぜんぶ取り上げられる", digSt, digBtn)}
+      </div><p class="mtext small">いまの評判のうわさ：${j.harsh >= 6 ? "「あの取り立ての人…」と、村じゅうでひそひそされている" : j.harsh >= 3 ? "村の人の目が、少し冷たい" : "とくに何も言われていない"}（日がたつと、うわさは少しずつ消える）</p>`;
+    body.querySelectorAll("[data-u96]").forEach(b => b.onclick = () => {
+      const k = b.dataset.u96;
+      if (k === "collStart") { closeModal(); startColl96(); }
+      else if (k === "collList") showColl96();
+      else if (k === "digStart") { closeModal(); startDig96(); }
+      else if (k === "digList") showDig96();
+    });
+  });
+}
+F96.ura = openUra96;
+
+// =================== 取り立て屋の助手 ===================
+const DEBT96 = [
+  { id: "tatsu", name: "ギャンブル好きのタツ", debt: 6000, p: [.3, .6, .95], cfg: { skin: "小麦色", hair: "ウルフカット", hairc: "黒", top: "スカルT", topc: "黒", bottom: "ジーンズ", bottomc: "青" },
+    hi: "げっ、取り立て屋！ あ、明日の競どんぐりで当てるから、それまで待ってくれよ～", ok: ["ちっ……わかったよ。ほらよ", "くそー、今月のこづかいが……"], ng: ["あっ、あんなところに金のどんぐりが！（逃げられた）", "ないもんはないんだって！"], soft: 0 },
+  { id: "gen", name: "店をたたんだゲンさん", debt: 3000, p: [.75, .6, .95], cfg: { skin: "やや明るめ", hair: "ぼうず", hairc: "グレー", top: "カーディガン", topc: "茶", bottom: "パンツ", bottomc: "グレー" },
+    hi: "ああ……もう来たのかい。店をたたんでから、どうにも首が回らなくてねえ", ok: ["すまないねえ。これで、なんとか", "わかったよ。孫のおもちゃ代だったけど……"], ng: ["今日は、本当に何もないんだよ……", "すまない、来週まで待ってくれんか"], soft: 4 },
+  { id: "miyu", name: "見栄っぱりのミユ", debt: 5000, p: [.45, .75, .9], cfg: { skin: "色白", hair: "縦ロール", hairc: "金", top: "シルクのブラウス", topc: "ピンク", bottom: "ロングスカート", bottomc: "白" },
+    hi: "ちょっと！ 大きな声で言わないでよ、ご近所に聞こえるでしょ！", ok: ["……わかったわよ。このバッグ、売ってくるわ", "はいはい、払えばいいんでしょ"], ng: ["いま手持ちがないの。カードは使えないの？", "また今度にして！ いまから美容室なの"], soft: 0 },
+  { id: "kou", name: "夢追いバンドマンのコウ", debt: 4000, p: [.5, .55, .9], cfg: { skin: "やや明るめ", hair: "アシメ", hairc: "赤", top: "ライダース", topc: "黒", bottom: "ジーンズ", bottomc: "黒" },
+    hi: "あ、どうも……。次のライブが当たったら、ぜんぶ返すつもりなんで！", ok: ["ギター、質に入れてきます……", "これ、ライブのチケット代だったんすけど……"], ng: ["いや、マジで今は無理っす！", "ロックは金じゃねえ！（ドアが閉まった）"], soft: 0 },
+  { id: "sachi", name: "子だくさんのサチ", debt: 3500, p: [.7, .65, .95], cfg: { skin: "小麦色", hair: "おだんご", hairc: "ブラウン", top: "カーディガン", topc: "ミント", bottom: "ワイドパンツ", bottomc: "ベージュ" },
+    hi: "あら、ごめんなさいね、子どもたちが寝たところで……。今月は学校のものが多くて", ok: ["わかりました。夕飯のおかずを一品へらしますね", "これで、少しだけでも……"], ng: ["ごめんなさい、今日はどうしても……", "給料日まで、待ってもらえませんか"], soft: 4 },
+];
+const SPOT96 = [[12, 14], [46, 12], [56, 22], [30, 26], [16, 30], [44, 34], [8, 22]];
+const BOSS96 = { name: "取り立て屋 ゴウ", cfg: { skin: "小麦色", hair: "モヒカン", hairc: "黒", top: "ジャケット", topc: "黒", bottom: "パンツ", bottomc: "黒", glasses: true } };
+const boss96 = entity(39, 8, { ...DEFAULT, ...BOSS96.cfg }, BOSS96.name, "staff"); boss96.home = village; boss96.speed = 1.05;
+F96.ents = new Map();
+F96.boss = boss96;
+const debt96 = id => DEBT96.find(d => d.id === id);
+function startColl96() {
+  const j = j96(); if (j.round || j.paid.coll >= CAP96.coll) return;
+  if (typeof overdueLoans === "function" && overdueLoans().length) { toast(null, "自分の借金が遅れているうちは、手伝わせてもらえない"); return; }
+  const pool = DEBT96.slice(); for (let i = pool.length - 1; i > 0; i--) { const k = rnd(i + 1); [pool[i], pool[k]] = [pool[k], pool[i]]; }
+  const spots = SPOT96.slice(); for (let i = spots.length - 1; i > 0; i--) { const k = rnd(i + 1); [spots[i], spots[k]] = [spots[k], spots[i]]; }
+  j.round = { list: pool.slice(0, 3).map((d, i) => { const [x, y] = village.solid && village.solid[spots[i][1]] && !village.solid[spots[i][1]][spots[i][0]] ? spots[i] : freeNear(village, spots[i][0], spots[i][1]); return { id: d.id, x, y, done: false }; }), got: 0 };
+  j.paid.coll++; saveWorld();
+  F96.trail = null; placeAt(boss96, player.x, player.y, player.dir);
+  if (map !== village) toast(null, "村に出ると、取り立て屋のゴウが待っている");
+  F7.notify("取り立て屋のゴウ「よっしゃ、行くで。3軒まわるからな。相手の前でⒶで話しかけるんや」", null);
+  setTimeout(showColl96, 0);
+}
+function showColl96() {
+  const R = j96().round; if (!R) return;
+  const dir = (x, y) => { const dx = x - player.x, dy = y - player.y; return `${Math.abs(dy) > 2 ? (dy < 0 ? "北" : "南") : ""}${Math.abs(dx) > 2 ? (dx < 0 ? "西" : "東") : ""}` || "すぐそば"; };
+  openModal("取り立てのまわり先", "yami", body => {
+    body.innerHTML = staffSay13(charIcon13(BOSS96.cfg), "相手の前に立って、Ⓐで話しかけるんや。出方はおまえにまかせる。……ただ、やりすぎると村での評判に響くで")
+      + `<div class="list">${R.list.map(s => { const d = debt96(s.id); return `<div class="li"><span class="nm">${esc(d.name)}<span class="sub2">${s.done ? esc(s.res || "済んだ") : `借金 ${fmt(d.debt)}・${map === village ? dir(s.x, s.y) + "のほう" : "村の中"}`}</span></span><span class="acts">${s.done ? "✓" : ""}</span></div>`; }).join("")}</div>
+      <p class="mtext small">取り立てた額：${fmt(R.got)}</p><div class="row2"><button class="btn light" type="button" id="cl96c">とじる</button><button class="btn light" type="button" id="cl96q">きょうはやめる</button></div>`;
+    body.querySelector("#cl96c").onclick = closeModal;
+    body.querySelector("#cl96q").onclick = () => { j96().round = null; saveWorld(); closeModal(); toast(null, "ゴウ「なんや、もう帰るんか。まあええわ」"); };
+  });
+}
+function debtEnts96() {
+  const R = j96().round; if (!R) { if (F96.ents.size) F96.ents.clear(); return []; }
+  const out = [];
+  for (const s of R.list) {
+    if (s.done) { F96.ents.delete(s.id); continue; }
+    let e = F96.ents.get(s.id);
+    if (!e) { const d = debt96(s.id); if (!d) continue; e = entity(s.x, s.y, { ...DEFAULT, ...d.cfg }, d.name, "staff"); e.home = village; e.dir = "down"; F96.ents.set(s.id, e); }
+    if (e.x !== s.x || e.y !== s.y) placeAt(e, s.x, s.y, "down");
+    e.say = { text: "……", until: performance.now() + 2000 };
+    out.push(e);
+  }
+  return out;
+}
+{
+  const _ev = F6.entsVillage; F6.entsVillage = () => [..._ev(), ...debtEnts96()];
+  // 取り立て屋は、ペットのうしろについてくる（ぶつからないように、絵だけ足す）
+  const _atl = F7.addToList;
+  F7.addToList = (list, now) => {
+    _atl(list, now);
+    if (map === village && j96().round) list.push({ s: boss96.py + 15, d: () => drawEnt(boss96) });
+    if (map === village && F96.digOn()) for (const p of j96().dig.spots) {
+      if (p.done) { list.push({ s: p.y * TS + 1, d: () => ctx.drawImage(IMG.s96_hole, p.x * TS, p.y * TS) }); continue; }
+      list.push({ s: p.y * TS + 2, d: () => { const k = Math.floor(now / 220 + p.x) % 4; ctx.fillStyle = k === 0 ? "#fff8c8" : "#ffd84a"; ctx.fillRect(p.x * TS + 7, p.y * TS + 7 - (k % 2), 2, 2); if (k < 2) { ctx.fillRect(p.x * TS + 4, p.y * TS + 8, 1, 1); ctx.fillRect(p.x * TS + 11, p.y * TS + 9, 1, 1); } } });
+    }
+  };
+  const _uc = updateCollector;
+  updateCollector = function (dt) {
+    _uc.apply(this, arguments);
+    try {
+      if (map !== village || !j96().round) { F96.trail = null; return; }
+      F96.trail = trailStep(F96.trail, village, player.x, player.y, 12);
+      const e = boss96, tr = F96.trail, t = tr[Math.min(1 + (petEnts ? petEnts.length : 0), tr.length - 1)];
+      if (!e.moving && t && !(t[0] === player.x && t[1] === player.y)) {
+        const dx = t[0] - e.x, dy = t[1] - e.y, dist = Math.abs(dx) + Math.abs(dy);
+        if (dist > 7) placeAt(e, t[0], t[1]);
+        else if (dist > 0) {
+          let moved = false;
+          for (const d of Math.abs(dx) >= Math.abs(dy) ? [dx ? (dx > 0 ? "right" : "left") : null, dy ? (dy > 0 ? "down" : "up") : null] : [dy ? (dy > 0 ? "down" : "up") : null, dx ? (dx > 0 ? "right" : "left") : null]) {
+            if (!d) continue; const [sx, sy] = DIRS[d], nx = e.x + sx, ny = e.y + sy;
+            if (nx < 0 || ny < 0 || nx >= village.w || ny >= village.h || village.solid[ny][nx]) continue;
+            e.dir = d; e.fx = nx; e.fy = ny; e.moving = true; e.prog = 0; moved = true; break;
+          }
+          if (!moved && (e.stuck = (e.stuck || 0) + dt) > 1.2) { placeAt(e, t[0], t[1]); e.stuck = 0; } else if (moved) e.stuck = 0;
+        }
+      }
+      updateEnt(e, dt);
+    } catch (x) { }
+  };
+  const _a = act;
+  act = function () {
+    if (map === village && !modalOpen && !placing && !fish && !busy && !player.moving) {
+      const R = j96().round, [tx, ty] = front();
+      if (R) { const s = R.list.find(s => !s.done && s.x === tx && s.y === ty); if (s) { openDebtor96(s); return; } }
+      if (R && boss96.x === tx && boss96.y === ty) { showColl96(); return; }
+      const D = F96.digOn() ? j96().dig : null;
+      if (D) { const p = D.spots.find(p => !p.done && ((p.x === tx && p.y === ty) || (p.x === player.x && p.y === player.y))); if (p) { dig96(p); return; } }
+    }
+    return _a.apply(this, arguments);
+  };
+}
+function openDebtor96(s) {
+  const d = debt96(s.id); if (!d) return;
+  const e = F96.ents.get(s.id); if (e) e.dir = { up: "down", down: "up", left: "right", right: "left" }[player.dir];
+  openModal(d.name, "yami", body => {
+    body.innerHTML = staffSay13(charIcon13(d.cfg), esc(d.hi)) + staffSay13(charIcon13(BOSS96.cfg), `（小声で）借金は${fmt(d.debt)}や。どう出る？`)
+      + `<div class="list"><button class="btn light" type="button" data-dt96="0">やさしく頼む<small>（そろそろ、少しだけでも…）</small></button>
+        <button class="btn light" type="button" data-dt96="1">ふつうに催促する<small>（期限はとっくに過ぎてますよ）</small></button>
+        <button class="btn" type="button" data-dt96="2">強く出る<small>（払うまで帰らねえぞ！）</small></button>
+        <button class="btn light" type="button" data-dt96="3">今日は見のがす</button></div>
+      <p class="mtext small">やさしいほど取り立てられる額は少なく、うまくいかないことも多い。強く出ると、ほぼ取り立てられるけど、評判が下がる。</p>`;
+    body.querySelectorAll("[data-dt96]").forEach(b => b.onclick = () => settleDebt96(s, +b.dataset.dt96, body));
+  });
+}
+function settleDebt96(s, how, body) {
+  const j = j96(), R = j.round, d = debt96(s.id); if (!R || s.done || !d) return;
+  let got = 0, line = "", boss = "", repD = 0, harshD = 0;
+  if (how === 3) { line = "……助かった。恩に着るよ"; boss = "甘いなあ、おまえ。ま、ええけどな"; repD = 1; harshD = -1; s.res = "見のがした"; }
+  else {
+    const ok = Math.random() < d.p[how];
+    got = ok ? Math.round(d.debt * [.5, .8, 1][how] / 100) * 100 : 0;
+    line = ok ? d.ok[rnd(d.ok.length)] : d.ng[rnd(d.ng.length)];
+    boss = how === 2 ? (ok ? "……ま、こんなもんやな" : "ちっ、逃げ足の速いやつや") : ok ? "ほう、うまいこと言うやないか" : "なめられとるで、おまえ";
+    if (how === 2) { repD = -(6 + d.soft); harshD = 2 + (d.soft ? 1 : 0); j.strongN++; }
+    if (how === 0 && ok) { repD = 1; j.softN++; }
+    s.res = ok ? `${["やさしく", "ふつうに", "強く"][how]}言って ${fmt(got)} 取り立てた` : `${["やさしく", "ふつうに", "強く"][how]}言ったけど、取り立てられなかった`;
+  }
+  s.done = true; R.got += got; j.collN++;
+  const pay = 100 + Math.round(got * .1);
+  addMoney(pay); if (repD) addRep(repD); j.harsh = Math.max(0, Math.min(12, j.harsh + harshD));
+  saveWorld(); try { checkTitles42(); } catch (x) { }
+  const left = R.list.filter(x => !x.done).length;
+  body.innerHTML = staffSay13(charIcon13(d.cfg), esc(line)) + staffSay13(charIcon13(BOSS96.cfg), esc(boss))
+    + `<div class="stat"><span>取り立てた額</span><b>${fmt(got)}</b><span>お給料</span><b>${fmt(pay)}</b>${repD ? `<span>評判</span><b>${repD > 0 ? "+" : ""}${repD}</b>` : ""}</div>
+    ${repD < 0 ? `<p class="note">強く出たところを、村の人に見られていた…（評判が下がった${j.harsh >= 3 ? "。村の人の反応が冷たくなっている" : ""}）</p>` : ""}
+    <p class="mtext small">${left ? `のこり${left}軒` : "3軒まわり終えた！"}</p><div class="row2"><button class="btn" type="button" id="dt96ok">${left ? "つぎへ" : "おしまい"}</button></div>`;
+  body.querySelector("#dt96ok").onclick = closeModal;
+  se13(got ? "harvest" : "miss");
+  if (!left) { const tot = R.got; j.round = null; saveWorld(); F7.notify(`取り立て屋のゴウ「きょうはここまでや。${fmt(tot)}も取り立てたら上出来やで。また頼むわ」`, null); }
+}
+F96.debt = settleDebt96;
+// 評判のうわさ：村の人の反応が冷たくなる
+{
+  const COLD = ["……あ、取り立ての人だ", "（目をそらされた）", "こ、こんにちは……（足早に去っていく）", "うちは借金なんてないからね！", "……なにか用？"];
+  const _tt = talkTo;
+  talkTo = function (npc, item, sel) {
+    const r = _tt.apply(this, arguments);
+    try { if (cold96() && npc && npc.say && !(item && sel)) { npc.say = { text: COLD[rnd(COLD.length)], until: performance.now() + 2600 }; if (j96().harsh >= 6 && Math.random() < .5) toast(null, "村の人の目が冷たい……（評判のうわさは、日がたつと消えていく）"); } } catch (x) { }
+    return r;
+  };
+}
+
+// =================== 差し入れ屋 ===================
+const GIFT96 = [["料理", "dish_"], ["野菜", "crop"], ["魚", "fish_"]];
+const giftKind96 = id => id.startsWith("dish_") ? 0 : id.startsWith("fish_") ? 2 : CROP_INFO[id] ? 1 : -1;
+const giftable96 = () => [...new Set(world.inv.filter(Boolean).map(x => x.id))].filter(id => ITEMS[id] && giftKind96(id) >= 0);
+function openGift96(id) {
+  const c = F94.calls[id], j = j96();
+  if (!c) { toast(null, "その「助けて」は、もう終わったみたい"); return; }
+  if (!F8.connected) { toast(null, "オンラインのときだけ届けられるよ"); return; }
+  const done = j.gifted[id] === world.day, left = CAP96.gift - j.paid.gift, list = giftable96();
+  openModal("差し入れ屋", "yami", body => {
+    body.innerHTML = `<p class="mtext">${esc(c.name)}さんに、こっそり差し入れを届ける。見張りの目と、探照灯の光をかいくぐって、窓まで運ぼう。</p>
+      <p class="mtext small">届けると、中の人のつとめが1回へる。お礼は150G（1日3回・同じ人は1日1回）。見つかると、差し入れは取り上げられる。${done ? "<br>この人には、きょうもう届けたよ（お礼はなし）。" : left <= 0 ? "<br>きょうのお礼は、もうもらいきったよ。" : ""}</p>
+      ${list.length ? `<h4>なにを届ける？</h4><div class="list">${list.slice(0, 12).map(i => itemLi(i, `${GIFT96[giftKind96(i)][0]}・${count(i)}個`, `<button class="btn" type="button" data-g96="${esc(i)}">これにする</button>`)).join("")}</div>` : `<p class="note">料理・野菜・魚を持っていないよ。持ち物に入れてから来てね</p>`}`;
+    body.querySelectorAll("[data-g96]").forEach(b => b.onclick = () => { const it = b.dataset.g96; closeModal(); playSneak96(ok => giftDone96(id, c.name, it, ok)); });
+  });
+}
+F96.gift = openGift96;
+function giftDone96(id, name, it, ok) {
+  if (!count(it)) return;
+  removeItem(it, 1); saveWorld();
+  if (!ok) { toast(null, `見張りに見つかって、差し入れ（${ITEMS[it].name}）は取り上げられた…`); return; }
+  F96.giftWait = { id, name, it, at: Date.now() };
+  send8({ type: "job", a: "gift", id, g: giftKind96(it) });
+  setTimeout(() => { if (F96.giftWait && Date.now() - F96.giftWait.at > 5500) { F96.giftWait = null; toast(null, "差し入れの返事がなかった…"); } }, 6000);
+}
+function giftAck96(m) {
+  const w = F96.giftWait; F96.giftWait = null; if (!w) return;
+  if (!m.ok) { toast(null, String(m.text || "届けられなかった").slice(0, 40)); if (count(w.it) >= 0) addItem(w.it, 1, true); return; }
+  const j = j96(); j.giftN++;
+  if (j.gifted[w.id] !== world.day && j.paid.gift < CAP96.gift) { j.gifted[w.id] = world.day; j.paid.gift++; addMoney(150); F7.notify(`${w.name}さんに差し入れ（${ITEMS[w.it].name}）を届けた。お礼に150Gもらった`, ITEMS[w.it].icon); }
+  else F7.notify(`${w.name}さんに差し入れ（${ITEMS[w.it].name}）を届けた`, ITEMS[w.it].icon);
+  saveWorld(); try { checkTitles42(); } catch (x) { }
+}
+function giftGot96(e) {
+  const j = j96(), name = String(e.name || "だれか").slice(0, 20), what = (GIFT96[e.g | 0] || GIFT96[0])[0];
+  if (!world.labor) { F7.notify(`${name}さんから差し入れ（${what}）が届いた…けど、もう外にいる`, null); return; }
+  if (j.recv >= 3) { F7.notify(`${name}さんから差し入れ（${what}）が届いた。ありがたく、いただいた`, null); return; }
+  j.recv++; const L = world.labor; L.quota = Math.max(L.done + 1, L.quota - 1);
+  saveWorld(); updateHud(true);
+  F7.notify(`${name}さんから差し入れ（${what}）が届いた！ 元気が出て、つとめが1回へった（${L.done}/${L.quota}）`, null);
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "job" && m.a === "gift") { giftAck96(m); return; }
+    if (m && m.type === "job" && m.ev && m.ev.kind === "gift") { giftGot96(m.ev); return; }
+    _h(m);
+  };
+  // 「頼まれごと」に、差し入れのボタンを足す
+  const _rc = renderCalls94;
+  renderCalls94 = function () {
+    _rc.apply(this, arguments);
+    const box = document.getElementById("cl94box"); if (!box) return;
+    box.querySelectorAll("[data-c94]").forEach(b => { if (b.parentElement.querySelector("[data-g94]")) return; b.insertAdjacentHTML("afterend", `<button class="btn light" type="button" data-g94="${b.dataset.c94}">差し入れ</button>`); });
+    box.querySelectorAll("[data-g94]").forEach(b => b.onclick = () => { closeModal(); openGift96(+b.dataset.g94); });
+  };
+  const _oc = openCall94;
+  openCall94 = function (id) {
+    _oc.apply(this, arguments);
+    const y = document.getElementById("cl94y"); if (!y || document.getElementById("cl96g")) return;
+    y.insertAdjacentHTML("afterend", `<button class="btn light" type="button" id="cl96g">差し入れを届ける</button>`);
+    document.getElementById("cl96g").onclick = () => { closeModal(); openGift96(id); };
+    const p = y.closest(".row2"); if (p) p.insertAdjacentHTML("beforebegin", `<p class="mtext small">脱走の手引きのかわりに、差し入れ（料理・野菜・魚）を届けて、つとめを1回へらすこともできる（お礼150G）。</p>`);
+  };
+  F94.open = openCall94;
+}
+/** 差し入れのミニゲーム：押しているあいだ進む。探照灯の光の中で、しげみの外にいると見つかる */
+function playSneak96(done) {
+  const W = 320, H = 180, GX = 296, BUSH = [[78, 26], [150, 28], [222, 26]];
+  let x = 14, t = 0, hold = false, ended = false, last = performance.now(), beam = 0, msg = "", phase = 0;
+  const speed = 46, beamW = 46;
+  openModal("差し入れ", "ph76m", body => {
+    body.innerHTML = `<div class="sn96"><canvas id="sn96cv" width="${W}" height="${H}"></canvas>
+      <button type="button" class="btn" id="sn96b">押しているあいだ進む</button><p class="mtext small">探照灯の光が来たら、しげみに隠れて待とう。Space・→ キーでも進める。</p></div>`;
+  }, () => { if (!ended) end(false, true); });
+  const cv = $("sn96cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const bt = $("sn96b");
+  const on = e => { e.preventDefault(); hold = true; }, off = e => { if (e) e.preventDefault(); hold = false; };
+  bt.addEventListener("pointerdown", on); bt.addEventListener("pointerup", off); bt.addEventListener("pointerleave", off); bt.addEventListener("pointercancel", off);
+  cv.addEventListener("pointerdown", on); cv.addEventListener("pointerup", off); cv.addEventListener("pointerleave", off);
+  const kd = e => { if (e.key === " " || e.key === "ArrowRight" || e.key === "d") { e.preventDefault(); e.stopPropagation(); hold = true; } };
+  const ku = e => { if (e.key === " " || e.key === "ArrowRight" || e.key === "d") { e.preventDefault(); e.stopPropagation(); hold = false; } };
+  addEventListener("keydown", kd, true); addEventListener("keyup", ku, true);
+  const inBush = () => BUSH.some(([bx, bw]) => x >= bx - bw / 2 + 3 && x <= bx + bw / 2 - 3);
+  const beamX = () => 160 + Math.sin(beam) * 150;
+  function end(ok, closed) {
+    if (ended) return; ended = true; removeEventListener("keydown", kd, true); removeEventListener("keyup", ku, true);
+    msg = ok ? "届いた！" : closed ? "" : "見つかった！";
+    se13(ok ? "harvest" : "miss");
+    setTimeout(() => { if (!closed && $("sn96cv")) closeModal(); setTimeout(() => done(ok), 30); }, closed ? 0 : 900);
+  }
+  F96.sneak = { get x() { return x; }, set x(v) { x = v; }, beamX, inBush, end, setHold: v => { hold = v; } };
+  const loop = now => {
+    if (!cv.isConnected) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (!ended) {
+      t += dt; phase += dt;
+      beam += dt * (0.9 + Math.min(1.1, t * .03) + Math.sin(t * .7) * .35);
+      if (hold) x = Math.min(GX, x + speed * dt);
+      const lit = Math.abs(beamX() - x) < beamW / 2;
+      if (lit && !inBush() && t > .8) end(false);
+      else if (x >= GX) end(true);
+      else if (t > 45) { msg = "夜が明けてきた…"; end(false); }
+    }
+    // 夜の庭
+    g.fillStyle = "#0e1428"; g.fillRect(0, 0, W, H); g.fillStyle = "#1a2a1e"; g.fillRect(0, 118, W, 62);
+    g.fillStyle = "#3a3a44"; g.fillRect(256, 40, 64, 80); g.fillStyle = "#2a2a32"; for (let k = 0; k < 4; k++) g.fillRect(256, 50 + k * 18, 64, 2);
+    g.fillStyle = "#e8c860"; g.fillRect(286, 92, 14, 12); g.fillStyle = "#5a4a2a"; g.fillRect(292, 92, 2, 12); g.fillRect(286, 97, 14, 2);
+    g.fillStyle = "#4a4a50"; for (let k = 0; k < 8; k++) g.fillRect(k * 8 + 2, 100, 2, 22); g.fillRect(0, 104, 64, 2);
+    // 見張りの塔と光
+    g.fillStyle = "#2a2a34"; g.fillRect(150, 10, 20, 30); g.fillStyle = "#f8f0c0"; g.fillRect(156, 30, 8, 6);
+    const bx = beamX(); const grd = g.createLinearGradient(160, 36, bx, 130); grd.addColorStop(0, "rgba(255,248,200,.55)"); grd.addColorStop(1, "rgba(255,248,200,.25)");
+    g.fillStyle = grd; g.beginPath(); g.moveTo(156, 36); g.lineTo(164, 36); g.lineTo(bx + beamW / 2, 132); g.lineTo(bx - beamW / 2, 132); g.closePath(); g.fill();
+    g.fillStyle = "rgba(255,248,200,.35)"; g.beginPath(); g.ellipse(bx, 130, beamW / 2, 6, 0, 0, 7); g.fill();
+    // しげみ
+    for (const [cx, w] of BUSH) { g.fillStyle = "#2f5a2a"; g.beginPath(); g.ellipse(cx, 124, w / 2, 11, 0, 0, 7); g.fill(); g.fillStyle = "#3f7a36"; g.beginPath(); g.ellipse(cx - 4, 120, w / 3, 7, 0, 0, 7); g.fill(); }
+    // 自分（しゃがんで運ぶ）
+    const hidden = inBush();
+    g.globalAlpha = hidden ? .55 : 1; g.fillStyle = "#e8b890"; g.fillRect(x - 3, 116, 6, 5); g.fillStyle = "#3a4a8a"; g.fillRect(x - 4, 121, 8, 7); g.fillStyle = "#f4f0e8"; g.fillRect(x + 3, 120, 5, 4); g.globalAlpha = 1;
+    g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(6, 6, 120, 16); g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(hidden ? "しげみにかくれている" : hold ? "そろり、そろり…" : "とまっている", 10, 8);
+    g.fillStyle = "#ffd86a"; g.fillRect(10, 26, Math.round((x - 14) / (GX - 14) * 100), 3);
+    if (msg) { g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(0, 70, W, 28); g.fillStyle = "#fff"; g.font = "bold 15px sans-serif"; g.textAlign = "center"; g.fillText(msg, W / 2, 76); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+F96.playSneak = playSneak96;
+F96.send = m => send8(m);   // テスト用
+
+// =================== 夜の宝掘り ===================
+F96.digOn = () => { const D = j96().dig; return !!(D && D.day === world.day && (world.time >= 1140 || world.time < 300)); };
+function startDig96() {
+  const j = j96(); if (j.dig || j.paid.dig >= CAP96.dig) return;
+  if (world.time < 1140) { toast(null, `夜（19時〜）から。いまは${clockStr()}`); return; }
+  let s = (world.day * 2654435761 + 97) >>> 0; const r = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  const spots = [];
+  for (let k = 0; k < 400 && spots.length < CAP96.dig; k++) {
+    const x = 13 + Math.floor(r() * 16), y = NY0 + 8 + Math.floor(r() * (VH - NY0 - 11));
+    if (Math.abs(x - NGAP[0]) < 2 || !village.solid || !village.solid[y] || village.solid[y][x]) continue;
+    if (spots.some(p => Math.abs(p.x - x) + Math.abs(p.y - y) < 5)) continue;
+    spots.push({ x, y, done: false });
+  }
+  j.dig = { day: world.day, spots, n: 0, real: 0, fake: 0 }; saveWorld();
+  F7.notify("カゲ「北の丘の、光っているところを掘れ。……巡査ケイに見られるなよ」（光の前に立ってⒶ）", "s96_hole");
+  setTimeout(showDig96, 0);
+}
+function showDig96() {
+  const D = j96().dig; if (!D) return;
+  openModal("宝の地図（うわさ）", "yami", body => {
+    body.innerHTML = `<p class="mtext">北の丘（パレスの左のすき間から北へ）に、${D.spots.length}か所の光る場所がある。夜のうちに掘ろう（光の上か前でⒶ）。</p>
+      <div class="stat"><span>掘った場所</span><b>${D.n}/${D.spots.length}</b><span>今夜の収穫</span><b>${billTxt78(D.real + D.fake)}${D.fake ? `（うち偽札${D.fake}枚）` : ""}</b></div>
+      <p class="mtext small">巡査ケイは丘の道（まんなかの縦の道）を行ったり来たりしている。掘り終わったときにケイが6マス以内にいると見つかって、今夜掘った物はぜんぶ取り上げられる。</p>
+      <div class="row2"><button class="btn light" type="button" id="dg96c">とじる</button></div>`;
+    body.querySelector("#dg96c").onclick = closeModal;
+  });
+}
+function dig96(p) {
+  const j = j96(), D = j.dig; if (!D || p.done) return;
+  let t0 = performance.now(), fin = false;
+  openModal("掘っている…", "yami", body => {
+    body.innerHTML = `<p class="mtext">ざく……ざく……（まわりに気をつけて）</p><div class="lt93g"><i id="dg96bar" style="left:0;width:4px"></i></div>`;
+    const tick = () => {
+      if (fin) return; const k = Math.min(1, (performance.now() - t0) / 1600), b = $("dg96bar"); if (!b) { finish(false); return; }
+      b.style.width = Math.round(k * 100) + "%"; if (k >= 1) { finish(true); return; } requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, () => { if (!fin) finish(false); });
+  function finish(full) {
+    if (fin) return; fin = true;
+    if (!full) { setTimeout(() => { if (modalOpen && $("mtitle").textContent === "掘っている…") closeModal(); }, 0); return; }
+    const near = Math.abs(player.x - police93.x) + Math.abs(player.y - police93.y) <= 6;
+    p.done = true; D.n++; j.paid.dig++; j.digN++;
+    if (near || F96.forceCaught) { F96.forceCaught = false; caught(); return; }
+    const fake = Math.random() < .45, n = fake ? 1 + rnd(4) : 1 + rnd(3);
+    if (fake) { addCash78(n, { fk: n, q: .35 + Math.random() * .25 }); D.fake += n; j.digFake += n; }
+    else { addCash78(n); D.real += n; }
+    saveWorld(); try { checkTitles42(); } catch (x) { }
+    const b = $("mbody"); if (!b) return;
+    b.innerHTML = `<div class="dk75r"><b>${fake ? "……ハズレ" : "掘り当てた！"}</b><span>${fake ? `出てきた札束は、よく見ると偽札だった（${n}枚）` : `${billTxt78(n)}（${fmt(n * BILL78)}）が出てきた`}</span><span>今夜の収穫 ${billTxt78(D.real + D.fake)}・のこり${D.spots.length - D.n}か所</span></div><div class="row2"><button class="btn light" type="button" id="dg96ok">とじる</button></div>`;
+    $("dg96ok").onclick = closeModal; se13(fake ? "miss" : "big");
+  }
+  function caught() {
+    const c = cash78(), fk = Math.min(D.fake, c.fk), real = Math.min(D.real, Math.max(0, c.n - c.fk - c.fu));
+    c.n -= fk + real; c.fk -= fk; const lost = fk + real; D.real = 0; D.fake = 0; j.digCaught++;
+    saveWorld(); updateHud(true);
+    const b = $("mbody"); if (!b) return;
+    b.innerHTML = staffSay13(charIcon13(POLICE93.cfg), `こんな夜ふけに、なにを掘っているのかな？ ……${lost ? `今夜掘り出した物（${billTxt78(lost)}）は、預かっておくよ` : "あやしい物は預かるよ"}。今回は見のがすけど、次はないからね`)
+      + `<div class="row2"><button class="btn" type="button" id="dg96ok">すみません…</button></div>`;
+    $("dg96ok").onclick = closeModal; se13("miss");
+  }
+}
+F96.dig = dig96;
+
+// =================== 同居人の家でも、偽札を刷れる ===================
+// 同居人（模様替えできる合鍵の人）になっている家の中でも、偽札の版を手に持ってAで刷れる。1日10枚は人ごと（world.cash78.made）。
+// 取り調べで調べるのは、自分の持ち物と自分の家（evidence78）。同居人の家で刷っても、家の持ち主は疑われない（持ち主の端末には何も残らない）
+const mateRoom96 = () => map === room && room.data && room.data.visitor && typeof mateHouse17 === "function" && mateHouse17(roomKey);
+{
+  const _a = act;
+  act = function () {
+    if (!modalOpen && !placing && !fish && !busy && !player.moving) {
+      const sel = world.inv[world.sel];
+      if (sel && sel.id === "plate78" && mateRoom96()) { openPrint78(); return; }
+    }
+    return _a.apply(this, arguments);
+  };
+  const _pr = openPrint78;
+  openPrint78 = function () {
+    const r = _pr.apply(this, arguments);
+    if (mateRoom96()) { const b = $("mbody"); const h = houseOf17(roomKey); if (b) b.insertAdjacentHTML("afterbegin", `<p class="mtext small">ここは${esc((h && h.owner) || "だれか")}さんの家（あなたは同居人）。刷った偽札はあなたの財布に入る。見つかっても、疑われるのはあなただけ。</p>`); }
+    return r;
+  };
+  F78.print = openPrint78;
+}
+
+// ---- 称号 ----
+const TTL96 = [
+  ["取り立ての鬼", "取り立て屋の助手で、強く出て10回取り立てる", () => (world.j96?.strongN || 0) >= 10],
+  ["仏の取り立て", "取り立て屋の助手で、やさしく頼んで5回取り立てる", () => (world.j96?.softN || 0) >= 5],
+  ["差し入れ名人", "労働施設の人に、差し入れを5回届ける", () => (world.j96?.giftN || 0) >= 5],
+  ["夜の宝さがし", "夜の宝掘りで、10か所掘る", () => (world.j96?.digN || 0) >= 10],
+];
+for (const t of TTL96) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["裏の求人（闇バイト）", "s96_board", `
+    <p>十日屋の右の<b>裏の求人</b>から受ける、表には出せないアルバイト。</p><ul>
+    <li><b>取り立て屋の助手</b>：取り立て屋のゴウといっしょに、返済が遅れている村の人を3軒まわる（1日1回）。やさしく・ふつう・強くの出方を選ぶ。強く出るほど取り立てられるけど、評判が下がって、しばらく村の人の反応が冷たくなる</li>
+    <li><b>差し入れ屋</b>：労働施設の中の人が「助けて」を出しているとき、スマホの「頼まれごと」から差し入れを届けられる。探照灯の光が来たら、しげみに隠れて待とう。届けると中の人のつとめが1回へる</li>
+    <li><b>夜の宝掘り</b>：夜（19時〜）、北の丘の光っている場所を掘る（5か所）。ハズレは偽札。巡査ケイが6マス以内にいるときに掘り終わると、その夜に掘った物は取り上げられる</li>
+    <li>同居人（模様替えできる合鍵の人）になっている家の中でも、偽札の版で偽札を刷れる。1日10枚までは人ごと。見つかっても、疑われるのは刷った人だけ</li></ul>`]);
+F96.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -20122,7 +21079,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

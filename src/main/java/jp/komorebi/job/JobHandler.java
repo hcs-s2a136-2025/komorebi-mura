@@ -14,6 +14,7 @@ import jp.komorebi.ws.PlayerSession;
  * {"type":"job","a":"help","on":true} … 労働施設の中の人が「助けて」を出す（false でひっこめる）。村のみんなに {"ev":{"kind":"help",...}}
  * {"type":"job","a":"list"} … 助けを求めている人の一覧 → {"type":"job","a":"list","list":[{id,name,busy}]}
  * {"type":"job","a":"join","id":12} … 12番の人を助けに行く → {"type":"job","a":"joined","ok",...}。相手に {"ev":{"kind":"joined",...}}
+ * {"type":"job","a":"gift","id":12,"g":3} … 「助けて」を出している12番の人に差し入れ（品物3番）。{"type":"job","a":"gift","ok",...} が返り、相手に {"ev":{"kind":"gift",...}}
  * {"type":"job","a":"rs","id":12,"op":"flash","c":2,"n":3} … 2人の合図（flash・hit・miss・next・ready・lost・bye）。助ける人が "won" を送ると、中の人に {"ev":{"kind":"freed"}}
  */
 @Component
@@ -42,6 +43,11 @@ public class JobHandler implements MessageHandler {
             case "help" -> jobs.help(hub, from, msg.path("on").asBoolean(false));
             case "list" -> { if (!jobs.slow("ls" + from.playerId(), 500)) jobs.list(hub, from); }
             case "join" -> { if (!jobs.slow("jn" + from.playerId(), 800)) jobs.join(hub, from, msg.path("id").asLong(0)); }
+            case "gift" -> {
+                String err = jobs.gift(hub, from, msg.path("id").asLong(0), msg.path("g").asInt(-1));
+                var out = hub.json().createObjectNode().put("type", "job").put("a", "gift").put("id", msg.path("id").asLong(0));
+                hub.send(from, err == null ? out.put("ok", true) : out.put("ok", false).put("text", err));
+            }
             case "rs" -> { if (jobs.rsOk(from.playerId())) jobs.relay(hub, from, msg.path("id").asLong(0), msg.path("op").asText(""), msg.path("c").asInt(0), msg.path("n").asInt(0)); }
             default -> { }
         }

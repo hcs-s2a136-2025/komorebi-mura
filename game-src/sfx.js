@@ -152,6 +152,18 @@ const SFX = (() => {
     },
     // サイコロが丼から飛び出した（ションベン）
     diceOut() { if (!ctx()) return; const t = ac.currentTime; tone(t, 2600, .25, { type: "triangle", vol: .2, f2: 900 }); noise(t + .25, .08, { vol: .35, lp: 900 }); tone(t + .25, 140, .15, { type: "sine", vol: .5, f2: 70 }); },
+    // ---- VIPルーム（v0.58.0）：チップを置く「カチッ」・カードをめくる「シュッ」・ルーレットの回る音と玉の止まる音・お札を数える音・レジ ----
+    chip(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 2200, .035, { type: "square", vol: .1 * v, filt: 5200 }); tone(t + .025, 1650, .05, { type: "triangle", vol: .16 * v }); noise(t, .02, { vol: .14 * v, hp: 3000 }); },
+    cardFlip(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .07, { vol: .2 * v, hp: 1800, lp: 7000 }); tone(t + .05, 320, .05, { type: "triangle", vol: .12 * v, f2: 180 }); },
+    wheel(dur = 3.6) {
+      if (!ctx()) return; const t = ac.currentTime; let d = 0, gap = .045;
+      // 玉がポケットの仕切りに当たる「カラカラ」：だんだん間があいて、最後に「コトン」
+      while (d < dur - .25) { tone(t + d, 2600 + Math.random() * 500, .025, { type: "triangle", vol: .13 }); noise(t + d, .015, { vol: .07, hp: 3500 }); gap *= 1.045; d += gap; }
+      tone(t + 0, 90, dur * .8, { type: "sine", vol: .08, f2: 55 });
+      tone(t + dur - .12, 1900, .06, { type: "triangle", vol: .2 }); tone(t + dur, 1300, .12, { type: "triangle", vol: .24, f2: 900 }); noise(t + dur, .05, { vol: .2, lp: 1600 });
+    },
+    bills(n = 6) { if (!ctx()) return; const t = ac.currentTime; const k = Math.max(2, Math.min(14, n)); for (let i = 0; i < k; i++) { noise(t + i * .055, .04, { vol: .14, hp: 2400, lp: 8000 }); tone(t + i * .055, 900, .02, { type: "triangle", vol: .05 }); } },
+    register() { if (!ctx()) return; const t = ac.currentTime; noise(t, .06, { vol: .2, lp: 1800 }); tone(t + .05, 180, .08, { type: "square", vol: .1, filt: 900 }); bell(t + .14, 93, .6, .2); bell(t + .14, 88, .5, .1); },
     // チャットの「ぽこん」
     chat() { if (!ctx()) return; const t = ac.currentTime; tone(t, 880, .08, { type: "sine", vol: .16, f2: 1320 }); },
     jackpot() {

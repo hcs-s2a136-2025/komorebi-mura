@@ -971,3 +971,33 @@ body.watch88 #tut { display: none !important; }
 .id102l canvas { width: 112px; height: 112px; image-rendering: pixelated; border-radius: 8px; }
 @media (max-width: 520px) { .id102 { grid-template-columns: 1fr; } }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .to101 canvas { width: auto; height: 26vh; } .id102l canvas { width: 72px; height: 72px; } }
+
+/* ---- v103（v0.58.0）：暗い画面の一覧を読みやすく・名前をつける・共有・クラフトの数・スマホの模様替え ---- */
+.li { color: var(--ink); }
+.mbox.dark .li, .mbox.ph76m .li { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .16); color: inherit; }
+.mbox.dark .li .sub2 { color: #d6c3e4; }
+.mbox.ph76m .li .sub2 { color: #c4ccdc; }
+.mbox.vip90 .li { background: rgba(255, 236, 200, .06); border-color: #6a4a26; }
+.mbox.vip90 .li .sub2 { color: #e0c8b2; }
+.mbox.vip90 .btn:disabled, .mbox.vip90 .chip:disabled { opacity: .55; }
+.mbox.dark .chip:disabled { opacity: .6; }
+.slot .k { color: #4a382a; }
+.mbox.dark .say13, .mbox.ph76m .say13 { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .18); }
+.mbox.vip90 .say13 { background: rgba(255, 236, 200, .08); border-color: #6a4a26; }
+.nm103 { display: flex; gap: 12px; align-items: center; }
+.nm103 img { width: 48px; height: 48px; image-rendering: pixelated; object-fit: contain; flex: none; }
+#nm103in { flex: 1; min-width: 0; font-size: 1rem; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--panel-2); background: #fffaf0; color: var(--ink); }
+.sh103box { background: var(--panel-2); border-radius: 8px; padding: 6px 10px; margin: 6px 0; }
+.sh103box b { font-size: .9rem; }
+.sh103 { flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.sh103got { margin: 4px 0 8px; padding-left: 1.2em; }
+.crq103 { font: inherit; font-size: .82rem; padding: 4px 4px; border-radius: 6px; border: 2px solid var(--panel-2); background: #fffaf0; color: var(--ink); max-width: 76px; }
+@media (hover: none), (pointer: coarse) {
+  body.decor103 .hud { display: none; }
+  body.decor103 .placebar.decorbar { top: 6px; bottom: auto; font-size: .82rem; padding: 4px 8px; gap: 6px; z-index: 4; }
+  body.decor103 .toast { top: 108px; bottom: auto; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  body.decor103 .placebar.decorbar { top: 6px; left: 8px; transform: none; max-width: min(230px, 30%); flex-direction: column; align-items: stretch; }
+  body.decor103 .toast { top: 6px; bottom: auto; left: auto; right: 8px; transform: none; max-width: min(300px, 38%); }
+}

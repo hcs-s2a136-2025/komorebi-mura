@@ -13,6 +13,7 @@ import jp.komorebi.ws.PlayerSession;
 
 /**
  * {"type":"grank","game":"blk","score":12345} … スマホのゲームのスコアを送る
+ * {"type":"grank","game":"tori","list":[{"k":"171...","n":"ピヨ","s":120}]} … 1人で何羽も持つゲーム（にわとりごと）
  * {"type":"grank","get":"blk"} … ランキングをもらう。{"type":"grank","board":{...}} が本人に返る
  */
 @Component
@@ -36,7 +37,14 @@ public class GameRankHandler implements MessageHandler {
         if (id == null) return;
         long now = System.currentTimeMillis();
         String game = msg.path("game").asText("");
-        if (msg.has("score") && GameRankService.validGame(game)) {
+        if (msg.path("list").isArray() && GameRankService.validGame(game)) {
+            // こもれび闘鶏など、1人が何羽ぶんも持つゲーム：{"list":[{"k":にわとりのID,"n":名前,"s":スコア}, ...]}
+            Long prev = lastPut.get(id);
+            if (prev == null || now - prev >= 500) {
+                lastPut.put(id, now);
+                ranks.recordList(game, id, msg.path("list"));
+            }
+        } else if (msg.has("score") && GameRankService.validGame(game)) {
             Long prev = lastPut.get(id);
             if (prev == null || now - prev >= 500) {
                 lastPut.put(id, now);

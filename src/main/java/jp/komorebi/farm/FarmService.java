@@ -127,6 +127,16 @@ public class FarmService implements WelcomeContributor {
             String cos = p.path(3).asText("");
             if (COS.matcher(cos).matches()) o.add(cos);
         }
+        // ビニールハウス：[x, y, [いっしょに使う人のID...]]（4つまで・相手は8人まで。v0.58.0〜）
+        ArrayNode gh = f.putArray("gh");
+        for (JsonNode g : msg.path("gh")) {
+            if (gh.size() >= 4) break;
+            int x = g.path(0).asInt(-1), y = g.path(1).asInt(-1);
+            if (x < 0 || y < 0 || x > 200 || y > 200) continue;
+            ArrayNode o = gh.addArray(); o.add(x); o.add(y);
+            ArrayNode who = o.addArray();
+            for (JsonNode w : g.path(2)) { long sid = w.asLong(0); if (sid > 0 && sid != playerId && who.size() < 8) who.add(sid); }
+        }
         // 盗まれた作物：持ち主の画面がまだ知らずに送ってきたら、その作物は外しておく。もう消えていたら（知らせが届いた）、記録も消す
         ObjectNode old = farms.get(playerId);
         ArrayNode pend = old == null ? null : (ArrayNode) (old.get("stolen") instanceof ArrayNode a ? a : null);

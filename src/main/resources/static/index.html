@@ -1433,6 +1433,36 @@ body.watch88 #tut { display: none !important; }
 .id102l canvas { width: 112px; height: 112px; image-rendering: pixelated; border-radius: 8px; }
 @media (max-width: 520px) { .id102 { grid-template-columns: 1fr; } }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .to101 canvas { width: auto; height: 26vh; } .id102l canvas { width: 72px; height: 72px; } }
+
+/* ---- v103（v0.58.0）：暗い画面の一覧を読みやすく・名前をつける・共有・クラフトの数・スマホの模様替え ---- */
+.li { color: var(--ink); }
+.mbox.dark .li, .mbox.ph76m .li { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .16); color: inherit; }
+.mbox.dark .li .sub2 { color: #d6c3e4; }
+.mbox.ph76m .li .sub2 { color: #c4ccdc; }
+.mbox.vip90 .li { background: rgba(255, 236, 200, .06); border-color: #6a4a26; }
+.mbox.vip90 .li .sub2 { color: #e0c8b2; }
+.mbox.vip90 .btn:disabled, .mbox.vip90 .chip:disabled { opacity: .55; }
+.mbox.dark .chip:disabled { opacity: .6; }
+.slot .k { color: #4a382a; }
+.mbox.dark .say13, .mbox.ph76m .say13 { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .18); }
+.mbox.vip90 .say13 { background: rgba(255, 236, 200, .08); border-color: #6a4a26; }
+.nm103 { display: flex; gap: 12px; align-items: center; }
+.nm103 img { width: 48px; height: 48px; image-rendering: pixelated; object-fit: contain; flex: none; }
+#nm103in { flex: 1; min-width: 0; font-size: 1rem; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--panel-2); background: #fffaf0; color: var(--ink); }
+.sh103box { background: var(--panel-2); border-radius: 8px; padding: 6px 10px; margin: 6px 0; }
+.sh103box b { font-size: .9rem; }
+.sh103 { flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.sh103got { margin: 4px 0 8px; padding-left: 1.2em; }
+.crq103 { font: inherit; font-size: .82rem; padding: 4px 4px; border-radius: 6px; border: 2px solid var(--panel-2); background: #fffaf0; color: var(--ink); max-width: 76px; }
+@media (hover: none), (pointer: coarse) {
+  body.decor103 .hud { display: none; }
+  body.decor103 .placebar.decorbar { top: 6px; bottom: auto; font-size: .82rem; padding: 4px 8px; gap: 6px; z-index: 4; }
+  body.decor103 .toast { top: 108px; bottom: auto; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  body.decor103 .placebar.decorbar { top: 6px; left: 8px; transform: none; max-width: min(230px, 30%); flex-direction: column; align-items: stretch; }
+  body.decor103 .toast { top: 6px; bottom: auto; left: auto; right: 8px; transform: none; max-width: min(300px, 38%); }
+}
 </style>
 
 <header>
@@ -1559,7 +1589,7 @@ body.watch88 #tut { display: none !important; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.57.1";
+  const VER = "0.58.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -2069,6 +2099,18 @@ const SFX = (() => {
     },
     // サイコロが丼から飛び出した（ションベン）
     diceOut() { if (!ctx()) return; const t = ac.currentTime; tone(t, 2600, .25, { type: "triangle", vol: .2, f2: 900 }); noise(t + .25, .08, { vol: .35, lp: 900 }); tone(t + .25, 140, .15, { type: "sine", vol: .5, f2: 70 }); },
+    // ---- VIPルーム（v0.58.0）：チップを置く「カチッ」・カードをめくる「シュッ」・ルーレットの回る音と玉の止まる音・お札を数える音・レジ ----
+    chip(v = 1) { if (!ctx()) return; const t = ac.currentTime; tone(t, 2200, .035, { type: "square", vol: .1 * v, filt: 5200 }); tone(t + .025, 1650, .05, { type: "triangle", vol: .16 * v }); noise(t, .02, { vol: .14 * v, hp: 3000 }); },
+    cardFlip(v = 1) { if (!ctx()) return; const t = ac.currentTime; noise(t, .07, { vol: .2 * v, hp: 1800, lp: 7000 }); tone(t + .05, 320, .05, { type: "triangle", vol: .12 * v, f2: 180 }); },
+    wheel(dur = 3.6) {
+      if (!ctx()) return; const t = ac.currentTime; let d = 0, gap = .045;
+      // 玉がポケットの仕切りに当たる「カラカラ」：だんだん間があいて、最後に「コトン」
+      while (d < dur - .25) { tone(t + d, 2600 + Math.random() * 500, .025, { type: "triangle", vol: .13 }); noise(t + d, .015, { vol: .07, hp: 3500 }); gap *= 1.045; d += gap; }
+      tone(t + 0, 90, dur * .8, { type: "sine", vol: .08, f2: 55 });
+      tone(t + dur - .12, 1900, .06, { type: "triangle", vol: .2 }); tone(t + dur, 1300, .12, { type: "triangle", vol: .24, f2: 900 }); noise(t + dur, .05, { vol: .2, lp: 1600 });
+    },
+    bills(n = 6) { if (!ctx()) return; const t = ac.currentTime; const k = Math.max(2, Math.min(14, n)); for (let i = 0; i < k; i++) { noise(t + i * .055, .04, { vol: .14, hp: 2400, lp: 8000 }); tone(t + i * .055, 900, .02, { type: "triangle", vol: .05 }); } },
+    register() { if (!ctx()) return; const t = ac.currentTime; noise(t, .06, { vol: .2, lp: 1800 }); tone(t + .05, 180, .08, { type: "square", vol: .1, filt: 900 }); bell(t + .14, 93, .6, .2); bell(t + .14, 88, .5, .1); },
     // チャットの「ぽこん」
     chat() { if (!ctx()) return; const t = ac.currentTime; tone(t, 880, .08, { type: "sine", vol: .16, f2: 1320 }); },
     jackpot() {
@@ -2679,7 +2721,8 @@ function decorAct(tx, ty) {
   } else {
     for (let y = ty; y < ty + F.h; y++) for (let x = tx; x < tx + F.w; x++) {
       if (x < 0 || x >= R.w || y < 2 || y >= R.h || (room.exit[0] === x && room.exit[1] === y)) { toast(F.img, "ここには置けないよ"); return; }
-      if (furnAt(R, x, y, F.floor ? "floor" : "obj") || (!F.floor && player.x === x && player.y === y)) { toast(F.img, "ほかの家具と重なってるよ"); return; }
+      if (furnAt(R, x, y, F.floor ? "floor" : "obj")) { toast(F.img, "ほかの家具と重なってるよ"); return; }
+      if (!F.floor && player.x === x && player.y === y) { toast(F.img, "自分のいる場所と重なるので置けないよ。一歩はなれてから置いてね"); return; }
     }
   }
   R.furn.push({ id: it.furn, x: tx, y: F.wall ? 1 : ty }); removeItem(sel.id, 1); rebuildSolid(); saveWorld();
@@ -6026,7 +6069,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.57.1";
+const CLIENT_VERSION = "0.58.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8104,6 +8147,19 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.58.0", date: "2026/11/01", title: "家畜を手放す・名前をつける・料理を飾る・設備をいっしょに使う", items: [
+    "こもれび牧場の「うちの子」で、家畜を引き取ってもらえるようになった（買った値段の半分＋なかよし度に合わせて上乗せ）",
+    "家畜とペットに、自分で名前をつけられるようになった。迎えたときに名前をつける画面が出るよ。あとから「うちの子」で変えることもできる",
+    "家の中で、料理を持ってテーブルや調理台に向かってⒶを押すと、机の上に飾れるようになった（何も持たずにⒶで下ろせる）",
+    "ビニールハウスと電気の設備（避雷針・蓄電池・スプリンクラー・自動販売機・まわし車・釣りのしかけ・自動収穫機）を、えらんだ人といっしょに使えるようになった（スマホの「共有」か、設備の画面から。電気は使う人のぶん）",
+    "クラフトで、作る数をえらんで、まとめて作れるようになった",
+    "農業・釣り・採集・クラフトのレベルが、Lv20まで上がるようになった（新しい力と称号も）",
+    "こもれび闘鶏のランキングに、牧場のにわとりが1羽ずつのるようになった",
+    "VIPルームに音がふえた（チップを置く音・ルーレットの回る音・カードをめくる音・お札を受けとる音・景品交換のレジ・ドリンクの乾杯）",
+    "借金しているときだけ釣れる魚が、前より釣れやすくなった",
+    "暗い画面の一覧で、文字が背景にとけて読みにくかったところを直した",
+    "スマホで模様替えをするとき、説明の帯やお知らせが部屋にかぶって、家具やキャラが見えなかったのを直した",
+    "自分のいる場所に家具を置こうとしたとき、「自分と重なっている」とわかるお知らせにした"] },
   { v: "0.57.1", date: "2026/10/29", title: "スマホのゲームの一覧と、表示のずれを直した", items: [
     "スマホの「ゲーム」に、子ぎつね日記・ペットの着せ替え・村の仕立て屋・こもれび闘鶏・アイドルプロデュースが出ていなかったのを直した",
     "「村のビンゴ」のカードに「false,false,…」と出ていたのを、「0ライン／0マス」の形に直した",
@@ -10284,7 +10340,7 @@ for (const [id, b] of Object.entries(B32)) reg32(id, b);
 const foot32 = (k, d) => { const [x, y] = k.split(",").map(Number), b = B32[d.id]; return { x0: x, y0: y - b.h + 1, x1: x + b.w - 1, y1: y }; };
 const builds32 = () => Object.entries(world.decor || {}).filter(([, d]) => B32[d.id]);
 const COMBO32 = { sprharv80: ["sprinkler33", "harv80"] }; // 同じマスに重ねた建物（v0.48.0）。中の建物ぜんぶの仕事をする
-const mine32 = id => builds32().filter(([, d]) => (d.id === id || (COMBO32[d.id] || []).includes(id)) && myDecor27(d)).map(([k]) => k);
+const mine32 = id => builds32().filter(([, d]) => (d.id === id || (COMBO32[d.id] || []).includes(id)) && (myDecor27(d) || share103(d))).map(([k]) => k);
 const buildAt32 = (x, y) => builds32().find(([k, d]) => { const f = foot32(k, d); return x >= f.x0 && x <= f.x1 && y >= f.y0 && y <= f.y1; });
 F32.cap = () => 8 + 6 * Math.min(2, mine32("barn32").length);
 F32.mine = mine32;
@@ -11286,7 +11342,8 @@ decorAct = function (tx, ty) {
     for (let y = ty; y < ty + F.h; y++) for (let x = tx; x < tx + F.w; x++) {
       const ch = P.g[y]?.[x];
       if (!ch || !(ch >= "0" && ch <= "9")) { toast(F.img, ch === "D" || ch === "E" ? "ドアや入口には置けないよ" : "ここには置けないよ"); return; }
-      if (furnAt(R, x, y, F.floor ? "floor" : "obj") || (!F.floor && player.x === x && player.y === y)) { toast(F.img, "ほかの家具と重なってるよ"); return; }
+      if (furnAt(R, x, y, F.floor ? "floor" : "obj")) { toast(F.img, "ほかの家具と重なってるよ"); return; }
+      if (!F.floor && player.x === x && player.y === y) { toast(F.img, "自分のいる場所と重なるので置けないよ。一歩はなれてから置いてね"); return; }
     }
   }
   R.furn.push({ id: it.furn, x: tx, y: ty }); removeItem(sel.id, 1); rebuildSolid(); saveWorld();
@@ -18703,7 +18760,7 @@ function openLuna91(tab) {
       payCash78("vip", d.cost, ok => {
         if (!ok) return;
         fxSet91(f => { f.drink = k; }); world.stats.vipDrink91 = (world.stats.vipDrink91 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { }
-        se13("small"); toast(null, `${d.name}をたのんだ。${d.say}`); openLuna91("drink");
+        se13("clink"); toast(null, `${d.name}をたのんだ。${d.say}`); openLuna91("drink");
       }, { noMix: true });
     });
     body.querySelectorAll("[data-wr91]").forEach(b => b.onclick = () => {
@@ -18734,7 +18791,7 @@ function openExchange91(note) {
       payCash78("vip", price, ok => {
         if (!ok) return;
         giveItem91("f_" + id, 1); world.stats.vipShop91 = (world.stats.vipShop91 || 0) + 1; saveWorld(); try { renderHotbar(); } catch (e) { }
-        se13("small"); toast(FURN91[id].img, `「${FURN91[id].name}」と交換した`); openExchange91(`「${FURN91[id].name}」でございます。お大事にお使いくださいませ`);
+        se13("register"); toast(FURN91[id].img, `「${FURN91[id].name}」と交換した`); openExchange91(`「${FURN91[id].name}」でございます。お大事にお使いくださいませ`);
       });
     });
   }, onClose91);
@@ -18843,7 +18900,7 @@ function openRoulette91(res) {
         if ($("mtitle").textContent === TITLE) paint(body, res);
         if (res.pay > res.total) { shine90(res.tier || 1); if (res.tier) winFx90({ tier: res.tier, pay: res.pay, label: res.label }); } else se13("miss");
       };
-      try { if (typeof SFX !== "undefined" && SFX.diceRoll) SFX.diceRoll(1.2); } catch (e) { }
+      try { if (typeof SFX !== "undefined" && SFX.wheel) SFX.wheel(D / 1000); } catch (e) { }
       requestAnimationFrame(frame);
     } else drawWheel91(cv, res ? rouEnd91(res.p) : 0, res ? { a: -1.5708, r: .75 } : null, res ? res.p : null);
   }
@@ -18941,7 +18998,7 @@ function openBaccarat91(res) {
             if (res.pay > res.bet) { shine90(res.tier || 1); if (res.tier) winFx90({ tier: res.tier, pay: res.pay, label: res.label }); } else if (res.pay < res.bet) se13("miss");
           }, 500); return;
         }
-        const [k] = order[i++]; up[k]++; lastK = k; se13("small"); draw(); setTimeout(step, 520);
+        const [k] = order[i++]; up[k]++; lastK = k; se13("cardFlip"); draw(); setTimeout(step, 520);
       };
       draw(); setTimeout(step, 500);
     }
@@ -22447,6 +22504,445 @@ GUIDE54.push(["スマホのゲーム（育てる）", "fox", `
     <li>レッスン待ちや休けいは、スマホコイン5枚で早められる（時短）</li></ul>`]);
 F102.ready = true;
 
+// =================== v103: 家畜を売る・名前をつける・料理を机に飾る・設備をいっしょに使う・まとめてクラフト・レベル上限・闘鶏のにわとりごとのランキング・VIPの音 ===================
+var F103 = {};
+// ---------- 名前（家畜・ペット）：10文字まで。< > や見えない文字はのぞく ----------
+const NAME_MAX103 = 10;
+const cleanName103 = s => String(s || "").replace(/[\u0000-\u001f\u007f<>]/g, "").trim().slice(0, NAME_MAX103);
+/** 名前をつける画面。kind は "animal" か "pet"。done はつけたあと（または、そのままにしたあと）に呼ぶ */
+function openName103(kind, id, done, fresh) {
+  const a = kind === "animal" ? (world.animals || []).find(x => String(x.id) === String(id)) : null;
+  if (kind === "animal" && !a) { if (done) done(); return; }
+  if (kind === "pet" && !(world.pets || []).includes(id)) { if (done) done(); return; }
+  const now = kind === "animal" ? String(a.name || "") : String(petNameOf43(id));
+  const kindName = kind === "animal" ? (ANIMALS[a.type]?.name || "家畜") : (PETS[basePet43(id)]?.name || "ペット");
+  const icon = kind === "animal" ? ASSETS[a.type] : ASSETS[petSprite43(id)] || ASSETS[basePet43(id)];
+  openModal(fresh ? `${kindName}がやってきた` : "名前を変える", "", body => {
+    body.innerHTML = `<div class="nm103"><img src="${icon}" alt=""><p class="mtext">${fresh ? `新しい${esc(kindName)}に、名前をつけてあげよう。` : `${esc(kindName)}「${esc(now)}」の名前を変える。`}（${NAME_MAX103}文字まで）</p></div>
+      <div class="row2"><input id="nm103in" type="text" maxlength="${NAME_MAX103}" value="${esc(now)}" autocomplete="off" aria-label="名前"><button class="btn" type="button" id="nm103ok">決める</button></div>
+      <p class="mtext small" id="nm103msg">${fresh ? "あとからでも、こもれび牧場の「うちの子」で変えられるよ。" : ""}</p>
+      <div class="row2"><button class="btn light" type="button" id="nm103no">${fresh ? "このままでいい" : "やめる"}</button></div>`;
+    const inp = body.querySelector("#nm103in");
+    const ok = () => {
+      const n = cleanName103(inp.value);
+      if (!n) { body.querySelector("#nm103msg").textContent = "名前を入れてね"; return; }
+      if (kind === "animal") { a.name = n; const e = animalEnts.find(x => x.aid === a.id); if (e) e.name = n; }
+      else { petNames43()[id] = n; const e = petEnts.find(p => p.ptype === id); if (e) e.name = n; }
+      world.stats.named103 = (world.stats.named103 || 0) + 1;
+      saveWorld(); closeModal(); toast(kind === "animal" ? a.type : petSprite43(id), `「${n}」という名前になった`);
+      if (done) done();
+    };
+    body.querySelector("#nm103ok").onclick = ok;
+    inp.addEventListener("keydown", e => { if (e.key !== "Escape") e.stopPropagation(); if (e.key === "Enter" && !e.isComposing) ok(); });
+    body.querySelector("#nm103no").onclick = () => { closeModal(); if (done) done(); };
+    setTimeout(() => { try { inp.focus(); inp.select(); } catch (e) { } }, 50);
+  });
+}
+F103.name = openName103;
+// ---------- 家畜を売る：買った値段の半分＋なかよし度1つにつき3%（最大8割） ----------
+const sellPrice103 = a => Math.round((ANIMALS[a.type]?.price || 0) * (.5 + Math.min(10, a.hearts | 0) * .03));
+function sellAnimal103(id) {
+  const i = (world.animals || []).findIndex(x => String(x.id) === String(id)); if (i < 0) return 0;
+  const a = world.animals[i], p = sellPrice103(a);
+  if (walk31.e && walk31.e.aid === a.id) { try { stopWalk31(); } catch (e) { walk31.e = null; } }
+  world.animals.splice(i, 1);
+  const t = world.tori101; if (t && typeof t === "object") { if (t.pick === String(a.id)) t.pick = ""; if (t.tr) delete t.tr[String(a.id)]; }
+  syncAnimals(); addMoney(p); world.stats.soldAnimals103 = (world.stats.soldAnimals103 || 0) + 1; saveWorld();
+  if (F8.connected && world.tori101) setTimeout(() => { try { sendTori101(); } catch (e) { } }, 300);
+  return p;
+}
+F103.sell = sellAnimal103; F103.sellPrice = sellPrice103;
+function confirmSell103(id) {
+  const a = (world.animals || []).find(x => String(x.id) === String(id)); if (!a) return;
+  const p = sellPrice103(a), info = ANIMALS[a.type];
+  openModal("家畜を手放す", "", body => {
+    body.innerHTML = `<div class="nm103"><img src="${ASSETS[a.type]}" alt=""><p class="mtext">${esc(info.name)}の「${esc(a.name)}」（♥${a.hearts | 0}）を、こもれび牧場に引き取ってもらう？<br>引き取り額 <b>${fmt(p)}</b>（なかよし度が高いほど高い）</p></div>
+      <p class="mtext small">引き取ってもらうと、もとにはもどせないよ。${a.type === "chicken" ? "こもれび闘鶏できたえた分も、なくなる。" : ""}</p>
+      <div class="row2"><button class="btn light" type="button" id="sl103no">やめる</button><button class="btn" type="button" id="sl103ok">引き取ってもらう</button></div>`;
+    body.querySelector("#sl103no").onclick = () => { closeModal(); openAnimalShop(); };
+    body.querySelector("#sl103ok").onclick = () => { const got = sellAnimal103(id); closeModal(); toast(a.type, `「${a.name}」を引き取ってもらった（${fmt(got)}）。元気でね`); openAnimalShop(); };
+  });
+}
+// ---------- こもれび牧場：「うちの子」（名前を変える・家畜を売る）と、迎えたらすぐ名前をつける ----------
+{
+  const _oas = openAnimalShop;
+  openAnimalShop = function () {
+    const r = _oas.apply(this, arguments);
+    const body = $("mbody"); if (!body || $("mtitle").textContent !== "こもれび牧場") return r;
+    // 迎えたあとに、名前をつける画面を出す
+    body.querySelectorAll("[data-ab43]").forEach(b => {
+      const [kind] = b.dataset.ab43.split(":"); if (kind !== "animal" && kind !== "pet") return;
+      const f = b.onclick;
+      b.onclick = ev => {
+        const beforeA = new Set((world.animals || []).map(a => String(a.id))), beforeP = new Set(world.pets || []);
+        f.call(b, ev);
+        const na = (world.animals || []).find(a => !beforeA.has(String(a.id))), np = (world.pets || []).find(p => !beforeP.has(p));
+        if (na) { closeModal(); openName103("animal", na.id, () => openAnimalShop(), true); }
+        else if (np) { closeModal(); openName103("pet", np, () => openAnimalShop(), true); }
+      };
+    });
+    const A = world.animals || [], P = world.pets || [];
+    const rowsA = A.map(a => `<div class="li"><img src="${ASSETS[a.type]}" alt=""><span class="nm">${esc(a.name)}<span class="sub2">${esc(ANIMALS[a.type]?.name || "家畜")}・♥${a.hearts | 0}・引き取り ${fmt(sellPrice103(a))}</span></span><span class="acts"><button class="btn light" type="button" data-nm103="animal:${a.id}">名前</button><button class="btn light" type="button" data-sl103="${a.id}">売る</button></span></div>`).join("");
+    const rowsP = P.map(id => `<div class="li"><img src="${ASSETS[petSprite43(id)] || ASSETS[basePet43(id)]}" alt=""><span class="nm">${esc(petNameOf43(id))}<span class="sub2">${esc(PETS[basePet43(id)]?.name || "ペット")}・♥${world.petHearts[id] || 0}</span></span><span class="acts"><button class="btn light" type="button" data-nm103="pet:${esc(id)}">名前</button></span></div>`).join("");
+    body.insertAdjacentHTML("beforeend", `<h3 class="lbl" id="uchi103">うちの子（名前を変える・家畜を手放す）</h3>
+      ${A.length || P.length ? `<div class="list">${rowsA}${rowsP}</div>` : `<p class="mtext">まだ家畜もペットもいないよ。</p>`}
+      <p class="mtext small">家畜は、買った値段の半分に、なかよし度1つにつき3%を足した額で引き取ってもらえる。ペットは手放せないよ。</p>`);
+    body.querySelectorAll("[data-nm103]").forEach(b => b.onclick = () => { const s = b.dataset.nm103, k = s.indexOf(":"); closeModal(); openName103(s.slice(0, k), s.slice(k + 1), () => openAnimalShop()); });
+    body.querySelectorAll("[data-sl103]").forEach(b => b.onclick = () => { closeModal(); confirmSell103(b.dataset.sl103); });
+    return r;
+  };
+}
+
+// ---------- 料理を机の上に飾る（家の中で、料理を持ってテーブル・調理台などに向かってⒶ。何も持たずにⒶで下ろす） ----------
+let surf103 = null;
+const SURF_RE103 = /テーブル|机|デスク|ちゃぶ台|調理台|カウンター|こたつ|作業台|ワゴン/;
+const surfaces103 = () => surf103 || (surf103 = new Set(Object.keys(FURN).filter(k => { const F = FURN[k]; return F && !F.wall && !F.floor && SURF_RE103.test(F.name || ""); })));
+const topCap103 = f => { const F = FURN[f.id]; return Math.max(1, Math.min(4, (F?.w || 1) * (F?.h || 1))); };
+const canTouch103 = () => !(map === room && sharedHouse17(roomKey) && !mineHouse17(roomKey) && !mateHouse17(roomKey));
+const isFood103 = it => !!(it && it.food && !it.tool && !it.furn && !it.place);
+F103.surfaces = () => [...surfaces103()];
+{
+  const _fa = F6.act;
+  F6.act = (tx, ty, key, sel, item, other) => {
+    if (map === room && !decor && !modalOpen && !other) {
+      const f = furnAt(room.data, tx, ty, "obj");
+      if (f && surfaces103().has(f.id)) {
+        const top = Array.isArray(f.top) ? f.top : [];
+        if (isFood103(item) || top.length) {
+          if (!canTouch103()) { toast(FURN[f.id].img, top.length ? `${top.map(id => ITEMS[id]?.name || "料理").join("・")}が並んでいる。おいしそう` : "人の家の机には置けないよ"); return true; }
+          if (isFood103(item)) {
+            if (top.length >= topCap103(f)) { toast(item.icon, `この${FURN[f.id].name}には、もう置けないよ（${topCap103(f)}つまで）。何も持たずにⒶで下ろせる`); return true; }
+            f.top = [...top, sel.id]; removeItem(sel.id, 1); saveWorld(); world.stats.dishTop103 = (world.stats.dishTop103 || 0) + 1;
+            toast(item.icon, `${item.name}を${FURN[f.id].name}に置いた`); return true;
+          }
+          const id = top[top.length - 1];
+          if (!ITEMS[id]) { f.top = top.slice(0, -1); saveWorld(); return true; }
+          if (!addItem(id, 1, true)) { toast(null, "持ち物がいっぱいで、下ろせないよ"); return true; }
+          f.top = top.slice(0, -1); if (!f.top.length) delete f.top; saveWorld();
+          toast(ITEMS[id].icon, `${ITEMS[id].name}を下ろした`); return true;
+        }
+      }
+    }
+    return _fa(tx, ty, key, sel, item, other);
+  };
+  // 模様替えで机を片付けるときは、のっている料理を先に下ろす（料理が消えないように）
+  const _da = decorAct;
+  decorAct = function (tx, ty) {
+    const R = room.data, f = furnAt(R, tx, ty, "obj");
+    if (f && Array.isArray(f.top) && f.top.length) {
+      const left = [];
+      for (const id of f.top) if (ITEMS[id] && !addItem(id, 1, true)) left.push(id);
+      if (left.length) { f.top = left; saveWorld(); toast(null, "持ち物がいっぱいで、のっている料理を下ろしきれないよ"); return; }
+      delete f.top; saveWorld(); toast(FURN[f.id].img, "のっていた料理を下ろした。もう一度Ⓐで片付けられる"); return;
+    }
+    return _da.apply(this, arguments);
+  };
+  // オンラインの家の並び：机の上の料理（top）も通す
+  const _cf = cleanFurn17;
+  cleanFurn17 = function (list, R) {
+    const out = _cf.apply(this, arguments), src = Array.isArray(list) ? list.slice(0, 200) : [];
+    let j = 0;
+    for (const f of src) {
+      if (j >= out.length) break;
+      const o = out[j];
+      if (!f || f.id !== o.id || (f.x | 0) !== o.x || (f.y | 0) !== o.y) continue;
+      j++;
+      if (Array.isArray(f.top) && surfaces103().has(o.id)) { const t = f.top.filter(id => typeof id === "string" && ITEMS[id] && ITEMS[id].food).slice(0, topCap103(o)); if (t.length) o.top = t; }
+    }
+    return out;
+  };
+  // 描く：机の上に、小さく料理を並べる
+  const _atl = F7.addToList;
+  F7.addToList = (list, now) => {
+    _atl(list, now);
+    if (map !== room || !room.data || !Array.isArray(room.data.furn)) return;
+    for (const f of room.data.furn) {
+      if (!Array.isArray(f.top) || !f.top.length) continue;
+      const F = FURN[f.id]; if (!F || !IMG[F.img]) continue;
+      const img = IMG[F.img], top = f.top.filter(id => ITEMS[id] && IMG[ITEMS[id].icon]);
+      const W = F.w * TS, n = top.length, y0 = f.y * TS + F.oy + Math.max(0, Math.min(6, img.height - F.h * TS - F.oy)) - 5;
+      list.push({ s: (f.y + F.h) * TS - .5, d: () => {
+        top.forEach((id, i) => {
+          const cx = f.x * TS + (W / (n + 1)) * (i + 1) - 5, cy = y0 + (n > 2 && i % 2 ? 3 : 0);
+          ctx.fillStyle = "rgba(255,255,255,.75)"; ctx.fillRect(cx, cy + 8, 10, 2);
+          ctx.drawImage(IMG[ITEMS[id].icon], 0, 0, 16, 16, cx, cy, 10, 10);
+        });
+      } });
+    }
+  };
+}
+
+// ---------- ビニールハウスと電気の設備を、えらんだ人といっしょに使う（オンライン） ----------
+// 電気の設備：共有の村の decor に s（使わせる人のID・8人まで）をつける。使う人は、自分の電気で、自分の畑や魚のぶんを動かす。
+// ビニールハウス：畑のようす（farm）に gh: [[x, y, [ID...]]] をのせて送る。えらばれた人の作物も、そのハウスの中なら季節が変わっても枯れない。
+const SHARE_DEV103 = ["rod33", "battery33", "sprinkler33", "vending33", "wheel79", "trap79", "harv80", "sprharv80"];
+const shareOk103 = id => SHARE_DEV103.includes(id);
+const shareIds103 = d => Array.isArray(d && d.s) ? d.s.map(Number).filter(x => x > 0) : [];
+const ghIn103 = new Map(); // 持ち主のID → [[x, y, [ID...]], ...]
+/** ほかの人のビニールハウスのうち、自分も使えるもの */
+function ghShared103() {
+  const me = F8.connected ? F8.myId() : 0; if (!me) return [];
+  const out = [];
+  for (const [pid, L] of ghIn103) for (const g of L) if (Array.isArray(g) && Array.isArray(g[2]) && g[2].map(Number).includes(me)) out.push({ x: g[0] | 0, y: g[1] | 0, o: pid, n: farms44.get(pid)?.name || "だれか" });
+  return out;
+}
+const inSharedGH103 = (x, y) => ghShared103().find(g => x >= g.x && x < g.x + GH_W65 && y >= g.y && y < g.y + GH_H65);
+F103.ghShared = ghShared103;
+/** いっしょに使う人の候補：同じ村の人（畑のようすが届いている人と、いまつないでいる人） */
+function people103() {
+  const m = new Map();
+  for (const [pid, f] of farms44) if (pid && pid !== F8.myId()) m.set(+pid, f.name);
+  for (const [rid, e] of remotes) if (rid > 0 && rid !== F8.myId()) m.set(+rid, e.name || m.get(+rid) || "だれか");
+  return [...m.entries()].map(([id, name]) => ({ id, name: String(name || "だれか").slice(0, 16) })).sort((a, b) => a.name.localeCompare(b.name, "ja"));
+}
+const nameOf103 = id => { const f = farms44.get(id) || farms44.get(+id); if (f) return f.name; const e = remotes.get(+id); return e ? e.name : "（いまはいない人）"; };
+function chips103(cur, key) {
+  const P = people103(), ids = new Set(cur.map(Number));
+  for (const id of ids) if (!P.some(p => p.id === id)) P.push({ id, name: nameOf103(id) });
+  if (!P.length) return `<p class="mtext small">村に、ほかの人がまだいないみたい。</p>`;
+  return `<div class="row2 sh103">${P.map(p => `<button class="chip" type="button" data-sh103="${key}|${p.id}" aria-pressed="${ids.has(p.id)}">${esc(p.name)}</button>`).join("")}</div>`;
+}
+function toggleShare103(key, pid) {
+  const [kind, k] = [key.slice(0, 2), key.slice(3)];
+  if (kind === "dv") {
+    const d = world.decor[k]; if (!d || !myDecor27(d) || !shareOk103(d.id)) return;
+    const s = new Set(shareIds103(d)); if (s.has(pid)) s.delete(pid); else { if (s.size >= 8) { toast(null, "いっしょに使えるのは8人まで"); return; } s.add(pid); }
+    if (s.size) d.s = [...s]; else delete d.s;
+  } else {
+    const [x, y] = k.split(",").map(Number), g = ghs65().find(g => g.x === x && g.y === y); if (!g) return;
+    const s = new Set(Array.isArray(g.s) ? g.s.map(Number) : []); if (s.has(pid)) s.delete(pid); else { if (s.size >= 8) { toast(null, "いっしょに使えるのは8人まで"); return; } s.add(pid); }
+    if (s.size) g.s = [...s]; else delete g.s;
+    farmLast44 = "";
+  }
+  saveWorld();
+}
+F103.toggle = toggleShare103;
+/** スマホの「共有」：自分のビニールハウスと電気の設備を、だれと使うか選ぶ／使わせてもらっている物 */
+function openShare103(note) {
+  openModal("設備の共有", "", body => {
+    if (!F8.connected) { body.innerHTML = `<p class="mtext">オンラインにつないでいるときに、ビニールハウスや電気の設備を、村の人といっしょに使えるよ。</p>`; return; }
+    const devs = Object.entries(world.decor || {}).filter(([, d]) => d && shareOk103(d.id) && myDecor27(d) && B32[d.id]);
+    const ghs = ghs65();
+    const gotD = Object.entries(world.decor || {}).filter(([, d]) => d && shareOk103(d.id) && !myDecor27(d) && shareIds103(d).includes(F8.myId()));
+    const gotG = ghShared103();
+    let h = note ? `<p class="mtext"><b>${esc(note)}</b></p>` : "";
+    h += `<p class="mtext">えらんだ人は、あなたのビニールハウスの中に植えた作物が枯れなくなったり、あなたの電気の設備を<b>自分の電気で</b>使えたりする（スプリンクラーはその人の畑に水をまき、自動販売機や釣りのしかけの中身はその人のぶん）。片付けたり動かしたりできるのは、あなただけ。</p>`;
+    h += `<h3 class="lbl">ビニールハウス</h3>` + (ghs.length ? ghs.map(g => `<div class="sh103box"><b>ビニールハウス（${g.x}, ${g.y}）</b>${chips103(Array.isArray(g.s) ? g.s : [], "gh|" + g.x + "," + g.y)}</div>`).join("") : `<p class="mtext small">まだ建てていないよ（よろず屋のキット）。</p>`);
+    h += `<h3 class="lbl">電気の設備</h3>` + (devs.length ? devs.map(([k, d]) => `<div class="sh103box"><b>${esc(B32[d.id].name)}（${k.replace(",", ", ")}）</b>${chips103(shareIds103(d), "dv|" + k)}</div>`).join("") : `<p class="mtext small">村に置いた電気の設備がないよ。</p>`);
+    h += `<h3 class="lbl">使わせてもらっている物</h3>` + (gotD.length || gotG.length ? `<ul class="mtext sh103got">${gotG.map(g => `<li>${esc(g.n)}さんのビニールハウス（${g.x}, ${g.y}）</li>`).join("")}${gotD.map(([k, d]) => `<li>${esc(d.n || "だれか")}さんの${esc(B32[d.id].name)}（${k.replace(",", ", ")}）</li>`).join("")}</ul>` : `<p class="mtext small">いまはないよ。</p>`);
+    body.innerHTML = h;
+    body.querySelectorAll("[data-sh103]").forEach(b => b.onclick = () => { const v = b.dataset.sh103, i = v.lastIndexOf("|"); toggleShare103(v.slice(0, i), +v.slice(i + 1)); closeModal(); openShare103(); });
+  });
+}
+F103.open = openShare103;
+/** 使っていい設備か（自分の物か、使わせてもらっている物）。mine32 から呼ぶ（電気の設備だけ） */
+function share103(d) {
+  try {
+    if (!d || !F8.connected || !Array.isArray(d.s)) return false;
+    if (!["rod33", "battery33", "sprinkler33", "vending33", "wheel79", "trap79", "harv80", "sprharv80"].includes(d.id)) return false;
+    return d.s.map(Number).includes(F8.myId());
+  } catch (e) { return false; }
+}
+{
+  // 建物の画面：持ち主には「いっしょに使う人」、使わせてもらっている人には自分の物と同じ画面
+  const _ex = F32.extra, _wi = F32.wire;
+  F32.extra = (d, k, mine) => {
+    const sh = !mine && share103(d);
+    let h = _ex ? _ex(d, k, mine || sh) : "";
+    if (sh) h = `<p class="mtext small">${esc(d.n || "だれか")}さんが、いっしょに使わせてくれている設備。電気は自分のぶんを使うよ。</p>` + h;
+    if (mine && shareOk103(d.id) && F8.connected && !WATCH88) h += `<h3 class="lbl">いっしょに使う人</h3>${chips103(shareIds103(d), "dv|" + k)}<p class="mtext small">えらんだ人は、この設備を自分の電気で使える。</p>`;
+    return h;
+  };
+  F32.wire = (body, d, k, mine) => {
+    if (_wi) _wi(body, d, k, mine || share103(d));
+    body.querySelectorAll("[data-sh103]").forEach(b => b.onclick = () => { const v = b.dataset.sh103, i = v.lastIndexOf("|"); toggleShare103(v.slice(0, i), +v.slice(i + 1)); closeModal(); openBuild32(k); });
+  };
+  // 畑のようすに、自分のビニールハウス（とだれと使うか）をのせる
+  const _fs = farmSnap44;
+  farmSnap44 = function () { const s = _fs.apply(this, arguments); s.gh = ghs65().slice(0, 4).map(g => [g.x | 0, g.y | 0, Array.isArray(g.s) ? g.s.map(Number).filter(x => x > 0).slice(0, 8) : []]); return s; };
+  const _h = handle8;
+  handle8 = m => {
+    _h(m);
+    try {
+      if (m && m.type === "farm" && m.id) ghIn103.set(m.id, Array.isArray(m.gh) ? m.gh : []);
+      else if (m && m.type === "welcome") { ghIn103.clear(); for (const f of Array.isArray(m.farms) ? m.farms : []) if (f && f.id) ghIn103.set(f.id, Array.isArray(f.gh) ? f.gh : []); setTimeout(watchShare103, 6000); }
+    } catch (e) { if (window.__komoErr) window.__komoErr(e, "v103 net"); }
+  };
+  // 季節が変わるとき：使わせてもらっているハウスの中の作物も守る
+  const _w = witherOutOfSeason;
+  witherOutOfSeason = function () {
+    const si = seasonIdx();
+    for (const k in world.crops) { const c = world.crops[k]; if (!c || c.dead) continue; const [x, y] = k.split(",").map(Number); if (inSharedGH103(x, y) && !(Number.isFinite(c.guard65) && c.guard65 >= si - 1)) c.guard65 = si - 1; }
+    return _w.apply(this, arguments);
+  };
+  // 描く：使わせてもらっているハウス
+  const _atl = F7.addToList;
+  F7.addToList = (list, now) => {
+    _atl(list, now);
+    if (map !== village) return;
+    for (const g of ghShared103()) {
+      const X = g.x * TS, Y = g.y * TS, W = GH_W65 * TS, H = GH_H65 * TS;
+      list.push({ s: (g.y + GH_H65) * TS + 1, d: () => {
+        ctx.fillStyle = "rgba(220,240,250,.2)"; ctx.fillRect(X, Y, W, H);
+        ctx.strokeStyle = "rgba(150,180,195,.9)"; ctx.lineWidth = 1; ctx.strokeRect(X + .5, Y + .5, W - 1, H - 1);
+        for (let x = 1; x < GH_W65; x++) { ctx.fillStyle = "rgba(150,180,195,.4)"; ctx.fillRect(X + x * TS, Y, 1, H); }
+        ctx.fillStyle = "rgba(150,180,195,.7)"; ctx.fillRect(X, Y + H - 2, W, 2);
+      } });
+    }
+  };
+}
+// 使わせてもらえるようになったら、お知らせ
+let shareSeen103 = null;
+function watchShare103() {
+  if (!F8.connected || WATCH88) { shareSeen103 = null; return; }
+  const me = F8.myId(), now = new Map();
+  for (const [k, d] of Object.entries(world.decor || {})) if (d && share103(d)) now.set("d" + k, `${d.n || "だれか"}さんの${B32[d.id]?.name || "設備"}`);
+  for (const g of ghShared103()) now.set(`g${g.o}:${g.x},${g.y}`, `${g.n}さんのビニールハウス`);
+  if (shareSeen103) { const fresh = [...now.keys()].filter(k => !shareSeen103.has(k)); if (fresh.length && me) F7.notify(`${fresh.slice(0, 3).map(k => now.get(k)).join("・")}を、いっしょに使えるようになった（スマホの「共有」）`, null); }
+  shareSeen103 = new Set(now.keys());
+}
+setInterval(() => { try { watchShare103(); } catch (e) { } }, 8000);
+F76.add({ id: "share103", name: "共有", ch: "共", c: "#5a9a8a", open: () => openShare103(), show: () => F8.connected && !WATCH88 });
+
+// ---------- クラフト：数をえらんで、まとめて作る ----------
+function craftMax103(r) {
+  let m = 99;
+  for (const [id, n] of Object.entries(r.need)) {
+    const have = id === "anyfish" ? world.inv.filter(it => it && ITEMS[it.id]?.fish).reduce((a, it) => a + it.n, 0) : count(id);
+    m = Math.min(m, Math.floor(have / Math.max(1, n)));
+  }
+  return Math.max(0, m);
+}
+F103.craftMax = craftMax103;
+function craftMany103(i, n) {
+  const r = RECIPES[i]; if (!r) return 0;
+  if ((r.cook && !roomHas("stove")) || (r.rep && F7.lv() < r.rep)) return 0;
+  let made = 0;
+  for (let k = 0; k < n; k++) {
+    if (!canCraft(r)) break;
+    const took = [];
+    for (const [id, q] of Object.entries(r.need)) { const real = id === "anyfish" ? fishSlotId() : id; removeItem(real, q); took.push([real, q]); }
+    if (!addItem(r.out, r.n, true)) { for (const [id, q] of took) addItem(id, q, true); if (!made) toast(null, "持ち物がいっぱい"); break; }
+    if (r.cook) world.stats.cook++;
+    F7.ev(r.cook ? "cook" : "craft", r.out); made++;
+  }
+  if (made) { saveWorld(); toast(ITEMS[r.out].icon, `${ITEMS[r.out].name}${made > 1 ? `を${made * r.n}個` : ""}ができた！`); }
+  return made;
+}
+F103.craft = craftMany103;
+{
+  const _rc = renderCraft;
+  renderCraft = function () {
+    const out = _rc.apply(this, arguments);
+    $("craftList").querySelectorAll("[data-cr]").forEach(b => {
+      const i = +b.dataset.cr, r = RECIPES[i]; if (!r) return;
+      const M = b.disabled ? 0 : craftMax103(r);
+      if (M >= 2) {
+        const opts = [...new Set([1, 2, 3, 5, 10, 20, 50, M].filter(x => x <= M))].sort((a, c) => a - c);
+        b.insertAdjacentHTML("beforebegin", `<select class="crq103" data-crq103="${i}" aria-label="作る数">${opts.map(x => `<option value="${x}">×${x}</option>`).join("")}</select>`);
+      }
+      b.onclick = () => {
+        const sel = $("craftList").querySelector(`[data-crq103="${i}"]`), n = Math.max(1, Math.min(99, +(sel ? sel.value : 1) || 1));
+        craftMany103(i, n); renderCraft();
+      };
+    });
+    return out;
+  };
+}
+
+// ---------- 腕前のレベルの上限を Lv20 に ----------
+SK_T.push(2400, 3050, 3800, 4650, 5600, 6650, 7800, 9050, 10400, 11850);
+PERKS.farm.push([12, "作物と畜産物の売値がさらに+10%"], [15, "収穫のおまけが45%に"], [20, "作物と畜産物の売値がさらに+15%"]);
+PERKS.fish.push([12, "魚の売値がさらに+10%"], [15, "アタリの時間がもっと長くなる"], [20, "魚の売値がさらに+15%"]);
+PERKS.gather.push([12, "木材・石・鉱石などの売値がさらに+10%"], [15, "木を切ると、木材がもう1つ出やすい（70%）"], [20, "木材・石・鉱石などの売値がさらに+15%"]);
+PERKS.craft.push([12, "料理の売値がさらに+10%"], [15, "作ると30%で1個おまけ"], [20, "料理の売値がさらに+15%"]);
+{
+  const _sm = F7.sellMul;
+  F7.sellMul = id => {
+    let m = _sm(id); const it = ITEMS[id]; if (!it || !world.skills) return m;
+    const k = CROPS7.includes(id) || ANIMAL_GOODS.includes(id) ? "farm" : it.fish ? "fish" : id.startsWith("dish_") ? "craft" : MATS7.includes(id) ? "gather" : "";
+    if (k) { if (hasSk(k, 12)) m += .1; if (hasSk(k, 20)) m += .15; }
+    return m;
+  };
+  const _bw = F7.biteWin;
+  F7.biteWin = () => _bw() * (hasSk("fish", 15) ? 1.15 : 1);
+  // Lv15 のおまけ（農業：収穫・採集：木・クラフト：作る）。もとのおまけとは別に、少しだけ
+  const _ev = F7.ev;
+  F7.ev = (name, ...a) => {
+    const r = _ev(name, ...a);
+    try {
+      if (name === "harvest" && hasSk("farm", 15) && Math.random() < .1 && a[0] && ITEMS[a[0]]) addItem(a[0], 1, true);
+      if (name === "chop" && hasSk("gather", 15) && Math.random() < .2) addItem("wood", 1, true);
+      if (name === "craft" && hasSk("craft", 15) && Math.random() < .1 && a[0] && ITEMS[a[0]]) addItem(a[0], 1, true);
+    } catch (e) { }
+    return r;
+  };
+}
+const TTL103 = [["大地の守り手", "農業をLv20にする", () => skLv("farm") >= 20], ["海の主", "釣りをLv20にする", () => skLv("fish") >= 20], ["森の主", "採集をLv20にする", () => skLv("gather") >= 20], ["伝説の職人", "クラフトをLv20にする", () => skLv("craft") >= 20], ["名付け親", "家畜かペットに名前をつける", () => (world.stats.named103 || 0) >= 1], ["食卓の演出家", "料理を机に飾る", () => (world.stats.dishTop103 || 0) >= 1]];
+for (const t of TTL103) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
+// ---------- こもれび闘鶏：にわとりごとにランキングへ ----------
+const power103 = (c, t) => { const tr = (t.tr && t.tr[c.id]) || {}; const base = 10 + (c.hearts | 0) * 4, v = k => Math.max(0, Math.min(300, Math.floor(+tr[k] || 0))); return base * 3 + v("sp") + v("jp") + v("st"); };
+F103.toriList = () => {
+  const t = tori101(), L = coop101(), rent = t.tr && t.tr.rent, trained = rent && (rent.sp | 0) + (rent.jp | 0) + (rent.st | 0) > 0;
+  const list = (L.length ? L : trained ? [{ id: "rent", name: "レンタルのコケ吉", hearts: 0 }] : []).slice(0, 20);
+  return list.map(c => ({ k: String(c.id).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16) || "rent", n: String(c.name).slice(0, 12), s: power103(c, t) }));
+};
+sendTori101 = function () {
+  const c = cur101(), t = tori101(), p = power101(c);
+  t.best = Math.max(t.best, p);
+  if (!F8.connected || WATCH88) return;
+  send8({ type: "coin", a: "tori", t: { name: c.name.slice(0, 12), sp: c.sp, jp: c.jp, st: c.st } });
+  const list = F103.toriList(), sig = JSON.stringify(list);
+  if (list.length && sig !== t.sentL) { send8({ type: "grank", game: "tori", list }); t.sentL = sig; t.sent = t.best; }
+  saveWorld();
+};
+{
+  // ランキングの画面の説明を、にわとりごとに
+  const _ot = openTori101;
+  openTori101 = function () { const r = _ot.apply(this, arguments); const p = document.querySelector("#mbody .to101 > p.mtext.small"); if (p && /総合力のランキング/.test(p.textContent)) p.textContent = "総合力のランキング。牧場のにわとり1羽ずつ、きたえた分が送られる（オンラインのとき）。"; return r; };
+  F101.open = openTori101;
+  const _h = handle8;
+  handle8 = m => { _h(m); if (m && m.type === "welcome" && !WATCH88) setTimeout(() => { try { const t = tori101(); if (coop101().length || world.tori101) { t.sentL = ""; sendTori101(); } } catch (e) { } }, 7600); };
+}
+
+// ---------- VIPルームの音：チップを置く・カードをめくる・お札を受けとる ----------
+$("mbox").addEventListener("pointerdown", e => {
+  const mb = $("mbox"); if (!mb.classList.contains("vip90")) return;
+  const b = e.target.closest("button"); if (!b || b.disabled) return;
+  if (b.matches("[data-rt], [data-rch], .chip") || b.closest(".vp90-row, .rb91")) se13("chip");
+}, true);
+{
+  const _dp = duPlay91;
+  duPlay91 = function () { se13("cardFlip"); return _dp.apply(this, arguments); };
+  F91.duPlay = duPlay91;
+  const _tp = takePot91;
+  takePot91 = function (quiet) { const r = _tp.apply(this, arguments); if (r && r.p && !quiet) { try { if (typeof SFX !== "undefined" && SFX.bills) SFX.bills(Math.ceil(Math.log2(1 + r.p.n))); } catch (e) { } } return r; };
+  F91.takePot = takePot91;
+}
+
+// ---------- 借金しているときだけの魚：出やすく ----------
+{
+  const _pf = pickFish;
+  pickFish = at => {
+    if (totalDebt() > 0) {
+      const f = FISH6.find(x => x.debt && x.at === at), od = overdueLoans().length > 0;
+      if (f && fishOk(f) && Math.random() < (at === "sea" ? .012 : .015) * (od ? 2 : 1)) return f.n;
+    }
+    return _pf(at);
+  };
+  const _fh = fishHint;
+  fishHint = f => f.debt ? `${f.at === "sea" ? "みなと町の海" : "村の池"}／借金があるときだけ／まれに（返済が遅れていると、もう少し）` : _fh(f);
+}
+
+// ---------- スマホ：模様替えのときは、帯とお知らせを上に（下の家具やキャラにかぶらないように） ----------
+{
+  const _sd = setDecor;
+  setDecor = function () { const r = _sd.apply(this, arguments); document.body.classList.toggle("decor103", !!decor); return r; };
+}
+F103.wither = () => witherOutOfSeason(); F103.sendTori = () => sendTori101();
+F103.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -22907,7 +23403,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

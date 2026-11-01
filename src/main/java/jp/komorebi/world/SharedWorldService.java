@@ -108,6 +108,12 @@ public class SharedWorldService implements WelcomeContributor {
                     if (!v.isObject() || !id.matches("[a-z0-9_]{1,32}")) ok = false;
                     else {
                         ObjectNode nv = om.createObjectNode().put("id", id).put("o", playerId).put("n", name == null ? "" : name);
+                        // 電気の設備などを使わせる相手（s：プレイヤーIDの配列・8人まで・自分はふくめない）
+                        if (v.path("s").isArray()) {
+                            java.util.LinkedHashSet<Long> share = new java.util.LinkedHashSet<>();
+                            for (JsonNode x : v.path("s")) { long sid = x.asLong(0); if (sid > 0 && sid != playerId && share.size() < 8) share.add(sid); }
+                            if (!share.isEmpty()) { var arr = nv.putArray("s"); share.forEach(arr::add); }
+                        }
                         v = nv; // 置いた人は、サーバーが知っている本人にする
                     }
                 }

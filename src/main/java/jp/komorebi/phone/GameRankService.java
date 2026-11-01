@@ -68,6 +68,43 @@ public class GameRankService {
         world.putSystem(KEY, all);
     }
 
+    static final Pattern SUB = Pattern.compile("[a-z0-9]{1,16}");
+    static final int MAX_SUBS = 20;
+
+    /**
+     * 1人が何羽ぶんも持つゲーム（こもれび闘鶏）。鍵は「プレイヤーID:にわとりのID」で、名前（n）もいっしょに持つ。
+     * 送られてきた一覧にないその人の分（売った・手放したにわとり）と、ひとりで1つだった前の形の分は消す。
+     */
+    public synchronized void recordList(String game, long playerId, JsonNode list) {
+        if (!validGame(game) || list == null || !list.isArray() || list.isEmpty()) return;
+        ObjectNode all = data();
+        ObjectNode g = all.path(game) instanceof ObjectNode o ? o : all.putObject(game);
+        String prefix = playerId + ":";
+        g.remove(String.valueOf(playerId));
+        java.util.Set<String> keep = new java.util.HashSet<>();
+        LocalDate now = LocalDate.now(JST);
+        String day = now.toString(), oldest = now.minusDays(WEEK).toString();
+        int n = 0;
+        for (JsonNode x : list) {
+            if (++n > MAX_SUBS) break;
+            String k = x.path("k").asText("");
+            long s = Math.min(MAX_SCORE, x.path("s").asLong(0));
+            if (!SUB.matcher(k).matches() || s <= 0) continue;
+            String key = prefix + k;
+            keep.add(key);
+            ObjectNode e = g.path(key) instanceof ObjectNode o ? o : g.putObject(key);
+            String nm = x.path("n").asText("").replaceAll("[\\p{Cntrl}<>]", "").trim();
+            e.put("n", nm.isEmpty() ? "にわとり" : nm.length() > 12 ? nm.substring(0, 12) : nm);
+            if (s > e.path("b").asLong(0)) e.put("b", s);
+            ObjectNode d = e.path("d") instanceof ObjectNode o ? o : e.putObject("d");
+            if (s > d.path(day).asLong(0)) d.put(day, s);
+            for (Iterator<String> it = d.fieldNames(); it.hasNext(); ) if (it.next().compareTo(oldest) < 0) it.remove();
+        }
+        if (keep.isEmpty()) return;
+        for (Iterator<String> it = g.fieldNames(); it.hasNext(); ) { String f = it.next(); if (f.startsWith(prefix) && !keep.contains(f)) it.remove(); }
+        world.putSystem(KEY, all);
+    }
+
     private record Row(long id, String name, long v) { }
 
     /** {all:[{name,v,me?}], week:[...], me:{all, week, allRank, weekRank}, from, to} */
@@ -109,9 +146,12 @@ public class GameRankService {
             for (Iterator<Map.Entry<String, JsonNode>> it = g.fields(); it.hasNext(); ) {
                 var f = it.next();
                 long id;
-                try { id = Long.parseLong(f.getKey()); } catch (NumberFormatException ex) { continue; }
+                String key = f.getKey();
+                int colon = key.indexOf(':');
+                try { id = Long.parseLong(colon < 0 ? key : key.substring(0, colon)); } catch (NumberFormatException ex) { continue; }
                 String name = names.get(id);
                 if (name == null) continue;
+                if (colon >= 0) name = name + "の" + f.getValue().path("n").asText("にわとり");
                 long b = f.getValue().path("b").asLong(0), wk = 0;
                 for (Iterator<Map.Entry<String, JsonNode>> dt = f.getValue().path("d").fields(); dt.hasNext(); ) {
                     var x = dt.next();
@@ -128,7 +168,7 @@ public class GameRankService {
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
             boolean isMe = me != null && r.id() == me;
-            if (isMe) { v = r.v(); rank = i + 1; }
+            if (isMe && rank == 0) { v = r.v(); rank = i + 1; }
             if (i < TOP) { ObjectNode o = arr.addObject().put("name", r.name()).put("v", r.v()); if (isMe) o.put("me", true); }
         }
         mine.put(tag, v).put(tag + "Rank", rank);

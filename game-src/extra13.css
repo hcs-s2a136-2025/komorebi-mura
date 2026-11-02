@@ -1059,3 +1059,8 @@ button.jn106.lock { opacity: .45; }
   .hf108 { width: 30px; }
   .hffield108 { min-height: 54px; }
 }
+
+/* ---- v112（v0.60.0）：ひそひそチャット ---- */
+.dmto112 { flex: none; max-width: 40%; font: inherit; font-size: .82rem; padding: 4px; border: 2px solid var(--wood); border-radius: 6px; background: #fffaf0; color: var(--ink); }
+.chat11 div.dm b, .mclog44 div.dm b { color: #f6a8d8; }
+.chat11 div.dm { background: rgba(70, 30, 60, .78); }

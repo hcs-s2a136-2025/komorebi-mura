@@ -1521,6 +1521,11 @@ button.jn106.lock { opacity: .45; }
   .hf108 { width: 30px; }
   .hffield108 { min-height: 54px; }
 }
+
+/* ---- v112（v0.60.0）：ひそひそチャット ---- */
+.dmto112 { flex: none; max-width: 40%; font: inherit; font-size: .82rem; padding: 4px; border: 2px solid var(--wood); border-radius: 6px; background: #fffaf0; color: var(--ink); }
+.chat11 div.dm b, .mclog44 div.dm b { color: #f6a8d8; }
+.chat11 div.dm { background: rgba(70, 30, 60, .78); }
 </style>
 
 <header>
@@ -1647,7 +1652,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.59.0";
+  const VER = "0.60.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -1997,6 +2002,12 @@ const BGM = (() => {
       fadeTo(0, .35); setTimeout(() => { if (want === name && enabled) { switchNow(); fadeTo(vol * .9, .5); } }, 380);
     },
     setVolume(v) { vol = v; if (enabled && ac) fadeTo(vol * .9, .15); },
+    // 音の出口が止まっていたら（iPhone などで、ほかの画面や音のあとに suspended / interrupted になる）もう一度鳴らす
+    wake() {
+      if (!enabled || !ac) return;
+      try { if (ac.state !== "running" && ac.state !== "closed") { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } } catch (e) { }
+      if (!cur) switchNow();
+    },
     // カラオケ中などに、いったん小さくする（false で元にもどす）
     duck(on) { if (enabled && ac) fadeTo(on ? 0 : vol * .9, .3); },
     SONGS,
@@ -6127,7 +6138,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.59.0";
+const CLIENT_VERSION = "0.60.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6785,7 +6796,7 @@ function renderChat() {
   const el = $("chat11"), open = !$("chatbar11").hidden, now = Date.now();
   const lines = chatLog.filter(c => open || now - c.at < 15000).slice(open ? -12 : -6);
   el.hidden = !F8.connected || !lines.length;
-  el.innerHTML = lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}"><b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("");
+  el.innerHTML = lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}${c.dm ? " dm" : ""}"><b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("");
   document.body.classList.toggle("chat-open", open); el.scrollTop = el.scrollHeight;
 }
 function addChat(c) { chatLog.push(c); if (chatLog.length > 60) chatLog.shift(); renderChat(); }
@@ -8205,6 +8216,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.60.0", date: "2026/11/03", title: "ひそひそチャット・小屋のえさ箱・飼料を数えて買う", items: [
+    "チャットで、ひとりだけに話しかけられるようになった（入力欄の左で相手をえらぶ）。相手がいないときは、次に来たときに届くよ",
+    "家畜小屋のえさ箱に飼料をためておくと、毎朝、小屋の家畜が自分で食べるようになった",
+    "小屋の集荷箱から、卵やミルクをそのまま家の収納箱へ送れるようになった",
+    "こもれび牧場で、飼料を好きな数だけ買えるようになった",
+    "天文台とツリーハウスは、北の丘ではなく村の中に建つようにした（北の丘にあったものは村の中へお引っこし）",
+    "着替えたあとなどに、BGMが止まったままになることがあったのを直した",
+  ] },
   { v: "0.59.0", date: "2026/11/02", title: "職業・討伐クエスト・ひみつの場所・花札・馬主・家畜小屋", items: [
     "職業ができた（スマホの「職業」）。農家・料理人・漁師・大工・商人・冒険者から1つえらんで、Lv10まで育てられる。Lv4とLv8は2つの道から1つをえらぶツリー。Lv10で称号",
     "討伐クエスト：ときどき、北の丘やみなと町の沖に大物の魔物があらわれる。みんなで攻撃してたおすとごほうび。たおしたあとは「宴」で、料理を持ち寄ると次の討伐が楽になる（スマホの「討伐」で予定が見られる）",
@@ -12888,7 +12907,7 @@ function renderMChat44() {
   // 上にスクロールして読んでいるときは、新しい発言が来ても勝手に下へ戻さない
   const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
   const tag = c => c.sys ? "" : tb ? (c.t ? `<i class="tt">卓</i>` : `<i class="ta">みんな</i>`) : "";
-  el.innerHTML = lines.length ? lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}${c.t ? " t" : ""}">${tag(c)}<b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("")
+  el.innerHTML = lines.length ? lines.map(c => `<div class="${c.me ? "me" : c.sys ? "sys" : ""}${c.t ? " t" : ""}${c.dm ? " dm" : ""}">${tag(c)}<b>${esc(c.name)}</b>${esc(c.text)}</div>`).join("")
     : `<div class="sys">${tb ? (view === "table" ? "卓のチャットはまだないよ" : view === "all" ? "みんなのチャットはまだないよ" : "「卓」は同じ卓の人だけ、「みんな」はサーバーの全員に届くよ") : "ここからチャットできるよ"}</div>`;
   if (atBottom || mcForceBottom44) el.scrollTop = el.scrollHeight;
   mcForceBottom44 = false;
@@ -24630,6 +24649,173 @@ GUIDE54.push(["討伐クエスト", "sword_iron", `<p>ときどき、管理人�
   <li>たおしたあとの10分は「宴」。食卓に料理を持ち寄ると、次の討伐でみんなの攻撃が強くなります。ごちそうを食べるとHPが全回復</li></ul>`]);
 F111.ready = true;
 
+// =================== v112: 天文台とツリーハウスを村の中へ・ひとりあてのチャット・BGMが止まらないように・小屋のえさ箱と集荷箱・牧場で飼料を数えて買う ===================
+var F112 = {};
+// ---------- 天文台とツリーハウスは、北の丘ではなく、もとからの村（y < VH0）に建てる ----------
+// 前から北の丘に建っていたものは、村の中へ置きなおす（場所は家と地形から決めるので、だれの画面でも同じ）
+const MOVE112 = { tree72: [10, 28], observ72: [58, 20] };
+for (const [id, pref] of Object.entries(MOVE112)) if (PROJ35[id]) { PROJ35[id].north = false; PROJ35[id].pref = pref; }
+const _rebuildSolid112 = rebuildSolid;
+rebuildSolid = function () {
+  try {
+    for (const id of Object.keys(MOVE112)) { const p = world.projects?.[id]; if (p && p.done && Array.isArray(p.at) && p.at[1] >= NY0) delete p.at; }
+  } catch (e) { }
+  return _rebuildSolid112.apply(this, arguments);
+};
+// 前の版の人から、北の丘の場所が届いても使わない
+const _metaToProj112 = metaToProj14;
+metaToProj14 = function (k, v) {
+  if (k && MOVE112[String(k).slice(5)] && v && Array.isArray(v.at) && v.at[1] >= NY0) v = { ...v, at: undefined };
+  return _metaToProj112.call(this, k, v);
+};
+F112.moved = () => Object.keys(MOVE112).map(id => [id, world.projects?.[id]?.at]);
+
+// ---------- ひとりあてのチャット（ひそひそ） ----------
+// {type:"dm", to, text} → サーバー（ws/DmHandler）が、相手がいれば届けて、いなければ取っておいて次に来たときに渡す。同じ村の人だけ
+F112.to = "";
+(() => {
+  const bar = $("chatbar11"); if (!bar) return;
+  const sel = document.createElement("select"); sel.id = "dmTo112"; sel.className = "dmto112"; sel.setAttribute("aria-label", "だれに送る");
+  bar.insertBefore(sel, bar.firstChild);
+  const fill = () => {
+    const P = typeof people103 === "function" ? people103() : [];
+    const html = `<option value="">みんな</option>` + P.map(p => `<option value="${p.id}">→ ${esc(p.name)}${remotes.has(p.id) ? "" : "（留守）"}</option>`).join("");
+    if (sel.dataset.sig !== html) { sel.dataset.sig = html; sel.innerHTML = html; }
+    if (F112.to && !P.some(p => String(p.id) === String(F112.to))) F112.to = "";
+    sel.value = F112.to; $("chatIn").placeholder = F112.to ? "この人だけに話しかける（ひそひそ）" : "みんなに話しかける";
+  };
+  F112.fill = fill;
+  sel.addEventListener("change", () => { F112.to = sel.value; fill(); $("chatIn").focus(); });
+  sel.addEventListener("keydown", e => e.stopPropagation());
+  setInterval(() => { if (!bar.hidden) fill(); }, 1500);
+  const _open = openChat;
+  openChat = function (on) { const r = _open.apply(this, arguments); if (on) fill(); return r; };
+  F11.openChat = openChat;
+  document.addEventListener("submit", e => {
+    if (e.target !== bar || !F112.to) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const t = $("chatIn").value.trim(); if (!t) { openChat(false); return; }
+    if (Date.now() - chatLast < 1200) { toast(null, "少し待ってから送ってね"); return; }
+    chatLast = Date.now();
+    const to = +F112.to, nm = nameOf103(to);
+    send8({ type: "dm", to, text: t });
+    addChat({ name: `あなた→${nm}`, text: t, at: Date.now(), me: true, dm: true });
+    $("chatIn").value = ""; openChat(false);
+  }, true);
+})();
+// ほかの人にⒶで話しかけたあとなど、すぐにひそひそを送れるように
+F112.dmTo = id => { F112.to = String(id); openChat(true); };
+const _handle112 = handle8;
+handle8 = m => {
+  if (m && m.type === "dm") {
+    try {
+      const nm = String(m.name || "だれか").slice(0, 16), t = String(m.text || "").slice(0, 60);
+      addChat({ name: `${nm}→あなた`, text: t, at: Date.now(), dm: true });
+      toast(null, `${nm}さんから、ひそひそ：「${t.length > 24 ? t.slice(0, 23) + "…" : t}」`); se13("chat");
+      F112.last = { id: +m.id, name: nm };
+    } catch (e) { }
+    return;
+  }
+  if (m && m.type === "dmOk") { if (m.online === false) addChat({ name: "", text: `${String(m.name || "相手")}さんはいまいないので、次に来たときに届くよ`, at: Date.now(), sys: true }); return; }
+  if (m && m.type === "dmNg") { addChat({ name: "", text: String(m.text || "ひそひそを送れなかった"), at: Date.now(), sys: true }); return; }
+  _handle112(m);
+  if (m && m.type === "welcome" && Array.isArray(m.dm) && m.dm.length) {
+    for (const d of m.dm.slice(-20)) addChat({ name: `${String(d.name || "だれか").slice(0, 16)}→あなた`, text: String(d.text || "").slice(0, 60), at: Date.now(), dm: true });
+    F7.notify(`いないあいだに、ひそひそが${m.dm.length}件届いていたよ（チャットで見られる）`, null);
+  }
+};
+
+// ---------- BGM：音が止まったままにならないように ----------
+// スマホ（とくに iPhone）では、着替えの画面を開いたり、ほかの音が鳴ったりしたときに、音の出口が止まる（suspended / interrupted）ことがある。
+// 止まっていたら、次にさわったときにもう一度鳴らす
+const wake112 = () => { try { if (typeof BGM !== "undefined" && BGM.wake) BGM.wake(); } catch (e) { } };
+for (const ev of ["pointerdown", "touchend", "keydown", "click"]) addEventListener(ev, wake112, true);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) wake112(); });
+setInterval(wake112, 2000);
+
+// ---------- 家畜小屋：えさ箱にためて毎朝自動で・集荷箱から家の箱へ ----------
+const trough112 = () => world.barn112 = world.barn112 && typeof world.barn112 === "object" ? world.barn112 : {};
+const TROUGH_MAX112 = 999;
+const _feedAll112 = feedAll105;
+feedAll105 = function (key) { openTrough112(key); };
+function openTrough112(key, note) {
+  openModal("えさ箱", "", body => {
+    const T = trough112(), n = T[key] | 0, mine = myBarnAnimals105(key), hungry = mine.filter(a => !a.fed).length, have = count("feed");
+    body.innerHTML = `${note ? `<p class="mtext small"><b>${esc(note)}</b></p>` : ""}<p class="mtext">えさ箱の飼料 <b>${n}</b> / ${TROUGH_MAX112}個。持っている飼料 ${have}個</p>
+      <p class="mtext small">えさ箱に入れておくと、毎朝、この小屋の自分の家畜（${mine.length}頭）が1頭1個ずつ自分で食べるよ。いまおなかをすかせているのは ${hungry}頭。</p>
+      <div class="row2"><input id="tq112" class="crq103" type="number" min="1" max="${TROUGH_MAX112}" value="${Math.max(1, Math.min(have || 1, 10))}" style="max-width:90px"><button class="btn" type="button" id="tin112" ${have && n < TROUGH_MAX112 ? "" : "disabled"}>入れる</button><button class="btn light" type="button" id="tall112" ${have && n < TROUGH_MAX112 ? "" : "disabled"}>全部入れる</button><button class="btn light" type="button" id="tout112" ${n ? "" : "disabled"}>取り出す</button></div>
+      <div class="row2"><button class="btn" type="button" id="tnow112" ${hungry && (n || have) ? "" : "disabled"}>いますぐ食べさせる（えさ箱から先に使う）</button></div>`;
+    const q = () => Math.max(1, Math.min(TROUGH_MAX112, Math.floor(+body.querySelector("#tq112").value || 1)));
+    const put = k => { const T2 = trough112(), room = TROUGH_MAX112 - (T2[key] | 0), m = Math.min(k, count("feed"), room); if (m <= 0) return; removeItem("feed", m); T2[key] = (T2[key] | 0) + m; saveWorld(); openTrough112(key, `飼料を${m}個入れた`); };
+    body.querySelector("#tin112").onclick = () => put(q());
+    body.querySelector("#tall112").onclick = () => put(count("feed"));
+    body.querySelector("#tout112").onclick = () => { const T2 = trough112(), m = Math.min(q(), T2[key] | 0); if (m <= 0) return; if (!addItem("feed", m, true)) { openTrough112(key, "持ち物がいっぱい"); return; } T2[key] -= m; if (!T2[key]) delete T2[key]; saveWorld(); openTrough112(key, `飼料を${m}個取り出した`); };
+    body.querySelector("#tnow112").onclick = () => {
+      const T2 = trough112(); let a = 0, b = 0;
+      for (const x of myBarnAnimals105(key)) { if (x.fed) continue; if ((T2[key] | 0) > 0) { T2[key]--; a++; } else if (count("feed")) { removeItem("feed", 1); b++; } else break; x.fed = true; x.hearts = Math.min(10, (x.hearts || 0) + 1); }
+      if (!T2[key]) delete T2[key]; saveWorld();
+      if (map.kind === "barn105") for (const e of map.statics) if (e.kind === "animal") e.say = { text: (ANIMALS[e.sprite]?.say || "♪") + "♪", until: performance.now() + 1400 };
+      openTrough112(key, `${a + b}頭がエサを食べた${a ? `（えさ箱から${a}個）` : ""}`);
+    };
+  });
+}
+F112.trough = openTrough112;
+const _newday112 = F6.onNewDay;
+F6.onNewDay = () => {
+  _newday112();
+  try {
+    const T = trough112(); let n = 0, out = 0;
+    for (const a of world.animals || []) {
+      if (!a.barn || a.fed) continue;
+      if ((T[a.barn] | 0) > 0) { T[a.barn]--; a.fed = true; a.hearts = Math.min(10, (a.hearts || 0) + 1); n++; if (!T[a.barn]) { delete T[a.barn]; out++; } }
+    }
+    if (n) F7.notify(`小屋の家畜${n}頭が、えさ箱の飼料を食べたよ${out ? "（からっぽになったえさ箱がある）" : ""}`, "feed");
+  } catch (e) { }
+};
+// 集荷箱：持ち物に入れる／家の箱へ送る
+const _collect112 = collect105;
+collect105 = function (key) { openGoods112(key); };
+function openGoods112(key, note) {
+  const G = goods105(), L = (G[key] || []).filter(s => ITEMS[s.id]);
+  openModal("集荷箱", "", body => {
+    body.innerHTML = `${note ? `<p class="mtext small"><b>${esc(note)}</b></p>` : ""}${L.length ? `<div class="list">${L.map(s => itemLi(s.id, `${s.n}個`, "")).join("")}</div>
+      <div class="row2"><button class="btn" type="button" id="gt112">持ち物に入れる</button><button class="btn light" type="button" id="gh112">家の収納箱へ送る</button></div>
+      <p class="mtext small">「家の収納箱へ送る」は、そのまま${F8.connected ? "みんなの家の「自分だけの箱」" : "家の収納箱"}に入るよ（持ち物がいっぱいでもだいじょうぶ）。</p>`
+      : `<p class="mtext">集荷箱はからっぽ。小屋の家畜は、エサを食べた次の朝に、ここへ卵やミルクを入れてくれるよ。</p>`}`;
+    body.querySelector("#gt112")?.addEventListener("click", () => { closeModal(); _collect112(key); if ((goods105()[key] || []).length) openGoods112(key, "持ち物がいっぱいで、入りきらなかった分があるよ"); });
+    body.querySelector("#gh112")?.addEventListener("click", () => {
+      const G2 = goods105(), L2 = G2[key] || []; let n = 0;
+      for (const s of L2) { if (!ITEMS[s.id]) continue; homeStore18(s.id, s.n); n += s.n; world.stats.barnGoods105 = (world.stats.barnGoods105 || 0) + s.n; }
+      delete G2[key]; saveWorld(); openGoods112(key, `${n}個を家の収納箱へ送った`);
+    });
+  });
+}
+F112.goods = openGoods112;
+
+// ---------- こもれび牧場：飼料を数をえらんで買う ----------
+const FEED112 = 20;
+const _animalShop112 = openAnimalShop;
+openAnimalShop = function () {
+  const r = _animalShop112.apply(this, arguments);
+  try {
+    const b = document.querySelector('#mbody [data-ab43="item:feed"], #mbody [data-ab="item:feed"]'); if (!b) return r;
+    const li = b.closest(".li"); li.querySelector(".nm").innerHTML = `飼料<span class="sub2">1個 ${fmt(FEED112)}・家畜のエサ（持っている ${count("feed")}個）</span>`;
+    const acts = li.querySelector(".acts");
+    acts.innerHTML = `<input id="fq112" class="crq103" type="number" min="1" max="999" value="10" aria-label="買う数" style="max-width:70px"><button class="btn" type="button" id="fb112">買う</button>`;
+    const inp = acts.querySelector("#fq112"), btn = acts.querySelector("#fb112");
+    const n = () => Math.max(1, Math.min(999, Math.floor(+inp.value || 1)));
+    const label = () => { btn.textContent = `${n()}個 買う（${fmt(n() * FEED112)}）`; btn.disabled = world.money < n() * FEED112; };
+    inp.addEventListener("input", label); inp.addEventListener("keydown", e => e.stopPropagation()); label();
+    btn.onclick = () => {
+      const k = n(), cost = k * FEED112; if (world.money < cost) return;
+      if (!addItem("feed", k, true)) { toast(null, "持ち物がいっぱい"); return; }
+      addMoney(-cost); saveWorld(); toast("feed", `飼料を${k}個買った（${fmt(cost)}）`); closeModal(); openAnimalShop();
+    };
+  } catch (e) { }
+  return r;
+};
+F112.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -25090,7 +25276,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

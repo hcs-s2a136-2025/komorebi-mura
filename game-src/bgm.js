@@ -145,6 +145,12 @@ const BGM = (() => {
       fadeTo(0, .35); setTimeout(() => { if (want === name && enabled) { switchNow(); fadeTo(vol * .9, .5); } }, 380);
     },
     setVolume(v) { vol = v; if (enabled && ac) fadeTo(vol * .9, .15); },
+    // 音の出口が止まっていたら（iPhone などで、ほかの画面や音のあとに suspended / interrupted になる）もう一度鳴らす
+    wake() {
+      if (!enabled || !ac) return;
+      try { if (ac.state !== "running" && ac.state !== "closed") { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } } catch (e) { }
+      if (!cur) switchNow();
+    },
     // カラオケ中などに、いったん小さくする（false で元にもどす）
     duck(on) { if (enabled && ac) fadeTo(on ? 0 : vol * .9, .3); },
     SONGS,

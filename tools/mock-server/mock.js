@@ -39,6 +39,7 @@ if (fs.existsSync(BJ_CP)) {
 }
 // みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
 let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPending = new Map(), crank = new Map();
+const dmPend = new Map(); // 留守の人へのひそひそ
 const rankHidden = new Set(); // ランキングに出さない人（本物は GameRankService の _gamerankHidden。本人には出る）
 const grank = {}, cashLed = new Map(), cashPend = new Map(); let cashPool = 0;
 function cashDeliver(to, ev) { const on = [...sessions].filter(o => o.pl && o.pl.id === to); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "cash77", ev }))); else { const l = cashPend.get(to) || []; l.push(ev); cashPend.set(to, l); } }
@@ -331,7 +332,7 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -464,6 +465,12 @@ wss.on("connection", s => {
       if (!bridges.length) { s.send(JSON.stringify({ type: "tchatNg" })); return; }
       tReq.set(rid, { from: s.pl.id, s, left: bridges.length, msg: { type: "tchat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() } });
       for (const br of bridges) br.stdin.write(["M", s.pl.id, rid].join("\t") + "\n"); return; }
+    // ひとりあてのチャット（本物は ws/DmHandler.java）
+    if (m.type === "dm") { const t = String(m.text || "").replace(/[\u0000-\u001f]/g, "").slice(0, 60).trim(), to = Math.floor(+m.to || 0); if (!t || !to || to === s.pl.id || s.pl.id <= 0) return;
+      const a = accounts.find(x => x.id === to && !x.deleted); if (!a || vOf(a) !== vOf(s.pl)) { s.send(JSON.stringify({ type: "dmNg", text: "その人には、ひそひそを送れないみたい" })); return; }
+      const line = { type: "dm", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() }, on = [...sessions].filter(o => o.pl && o.pl.id === to && !o.watch);
+      if (on.length) on.forEach(o => o.send(JSON.stringify(line))); else { const L = dmPend.get(to) || []; L.push({ id: line.id, name: line.name, text: t, at: line.at }); dmPend.set(to, L.slice(-20)); }
+      s.send(JSON.stringify({ type: "dmOk", to, name: a.name, online: !!on.length })); return; }
     if (m.type === "chat") { const t = String(m.text || "").slice(0, 60).trim(); if (!t) return; chat.push({ name: s.pl.name, text: t, at: Date.now(), v: vOf(s.pl) }); bc({ type: "chat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() }, s); }
   });
   s.on("close", () => { sessions.delete(s); if (s.pl && !s.watch) bc({ type: "leave", id: s.pl.id }, s); });

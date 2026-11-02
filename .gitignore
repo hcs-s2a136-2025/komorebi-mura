@@ -7,3 +7,4 @@ data/
 # テスト用のにせサーバーの依存
 tools/mock-server/node_modules/
 tools/mock-server/package-lock.json
+tools/mock-server/bj/out/

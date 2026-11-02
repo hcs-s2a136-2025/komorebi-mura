@@ -63,3 +63,7 @@ table.players td.acts form { display: flex; gap: 4px; align-items: center; margi
 .vbar select { font: inherit; padding: 4px 8px; }
 .vbar form { margin: 0; }
 .allrow { background: #f4f9ee; border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+/* 討伐クエストの予定のフォーム */
+.grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 12px; align-items: end; }
+.grid2 label { display: grid; gap: 4px; font-size: .9rem; }
+.grid2 .btn { justify-self: start; }

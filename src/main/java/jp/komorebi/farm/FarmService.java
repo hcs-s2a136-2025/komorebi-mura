@@ -34,6 +34,7 @@ import jp.komorebi.ws.WelcomeContributor;
 @Service
 public class FarmService implements WelcomeContributor {
 
+    private static final java.util.regex.Pattern BARN = java.util.regex.Pattern.compile("\\d{1,3},\\d{1,3}");
     private static final Pattern ID = Pattern.compile("[a-z0-9_]{1,24}");
     private static final Pattern COS = Pattern.compile("[a-z0-9]{1,12}");
     private static final Logger log = LoggerFactory.getLogger(FarmService.class);
@@ -116,6 +117,9 @@ public class FarmService implements WelcomeContributor {
             int x = a.path(2).asInt(-1), y = a.path(3).asInt(-1);
             if (!ID.matcher(t).matches() || x < 0 || y < 0 || x > 200 || y > 200) continue;
             ArrayNode o = animals.addArray(); o.add(t); o.add(clean(a.path(1).asText(""), 12)); o.add(x); o.add(y);
+            // 5つ目：入っている家畜小屋の場所（"48,21"。v0.59.0〜）。小屋にいる家畜は牧場には出ない
+            String barn = a.path(4).asText("");
+            if (BARN.matcher(barn).matches()) o.add(barn);
         }
         ArrayNode pets = f.putArray("pets");
         for (JsonNode p : msg.path("pets")) {

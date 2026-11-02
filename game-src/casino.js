@@ -763,7 +763,7 @@ function renderRaceBody(cb, body, st) {
   const keepBet = el.querySelector("#rbet")?.value;
   const R = raceBets(), mine = R.bets.filter(b => b.id === st.id && !!b.local === !!st.local);
   const open = st.phase === "bet" && (st.local || msLeft(st) > 500);
-  const rows = st.runners.map((r, i) => `<div class="rrow"><span class="rnum" style="background:${r.color}">${i + 1}</span><span class="rname">${esc(r.name)}<small>調子：${esc(r.formName || FORM_NAME[r.form] || "")}${st.local ? "" : `・みんなの賭け ${fmt(r.pool || 0)}`}</small></span>
+  const rows = st.runners.map((r, i) => `<div class="rrow"><span class="rnum" style="background:${r.color}">${i + 1}</span><span class="rname">${esc(r.name)}${r.ownerName ? `<em class="own107">${esc(r.ownerName)}さんの</em>` : ""}<small>調子：${esc(r.formName || FORM_NAME[r.form] || "")}${st.local ? "" : `・みんなの賭け ${fmt(r.pool || 0)}`}</small></span>
       <span class="rodds">単勝 <b>${r.win}</b>倍<br>複勝 <b>${r.place}</b>倍</span>
       <span class="racts">${open ? `<button class="btn" type="button" data-rb="${i}:win">単勝</button><button class="btn light" type="button" data-rb="${i}:place">複勝</button>` : ""}</span></div>`).join("");
   const myList = mine.length ? `<div class="mybets"><b>あなたの賭け</b>（合計 ${fmt(mine.reduce((a, b) => a + b.amount, 0))}）：${mine.map(b => `${b.runner + 1}番${b.kind === "win" ? "単勝" : "複勝"} ${fmt(b.amount)}`).join("・")}</div>` : "";
@@ -773,6 +773,7 @@ function renderRaceBody(cb, body, st) {
   el.innerHTML = `<p class="mtext small">レース ${st.id}　${st.phase === "bet" ? "受付中" : st.phase === "run" ? "レース中" : "結果"}</p>
     ${open ? betRow("rbet", "賭け金", Math.max(10, Math.min(S.lastBet || 100, K.world.money || 10))) : ""}
     <div class="rlist">${rows}</div>${myList}${RC.ui && RC.ui.msg ? `<p class="mtext small">${esc(RC.ui.msg)}</p>` : ""}${last}${others}${hist}
+    ${!st.local && K.openStable ? `<div class="row2"><button class="btn light" type="button" id="rStable">馬主の厩舎（自分のどんぐりを走らせる）</button></div>` : ""}
     ${st.local ? `<div class="row2">${st.phase === "bet" ? `<button class="btn" type="button" id="rGo">出走！</button>` : st.phase === "result" ? `<button class="btn" type="button" id="rNext">次のレースへ</button>` : ""}</div>` : ""}`;
   wireBets(el);
   if (keepBet && el.querySelector("#rbet")) el.querySelector("#rbet").value = keepBet;
@@ -786,6 +787,7 @@ function renderRaceBody(cb, body, st) {
     if (st.local) { K.addMoney(-amt); R.bets.push({ id: st.id, runner: +i, kind, amount: amt, odds: kind === "win" ? r.win : r.place, local: true, t: Date.now() }); K.saveWorld(); RC.ui.msg = `${+i + 1}番に${kind === "win" ? "単勝" : "複勝"} ${fmt(amt)} 賭けた`; RC.ui.dirty = true; }
     else K.net.send({ type: "race", act: "bet", runner: +i, kind, amount: amt });
   });
+  const stb = el.querySelector("#rStable"); if (stb) stb.onclick = () => K.openStable();
   const go = el.querySelector("#rGo"); if (go) go.onclick = () => { if (st.phase !== "bet") return; localRun(st); RC.ui.dirty = true; if (typeof SFX !== "undefined" && SFX.lever) SFX.lever(); };
   const nx = el.querySelector("#rNext"); if (nx) nx.onclick = () => { RC.local = localRace(st.id + 1); RC.lastRes = null; RC.ui.msg = ""; RC.ui.dirty = true; };
 }
@@ -888,7 +890,7 @@ function renderMJM() {
   const err = mjM.err ? `<div class="warn">${esc(mjM.err)}</div>` : "";
   if (!st || st.me < 0) { renderMJLobby(cb, err); return; }
   if (st.phase === "wait") {
-    cb.innerHTML = `<div class="mjlobby"><h3 class="lbl">卓${st.id}　${st.south ? "半荘戦" : "東風戦"}・${esc(st.rateName)}</h3>
+    cb.innerHTML = `<div class="mjlobby"><h3 class="lbl">卓${st.id}　${st.south ? "半荘戦" : "東風戦"}・${esc(st.rateName)}${st.noNaki ? "・鳴きなし" : ""}</h3>
       <div class="list">${st.seats.map((s, i) => `<div class="li"><span class="nm">${s ? esc(s.name) + (i === st.me ? "（あなた）" : "") : "空席"}</span></div>`).join("")}</div>
       <p class="mtext small">4人そろうと始まります。${st.owner ? "そろう前でも、空いた席にCPUを入れて始められるよ。" : "卓を立てた人が、CPUを入れて始めることもできます。"}</p>
       <p class="mtext small">麻雀にまだ自信がなければ、「ヒント」をオンにしておくと安心だよ。${st.rate === 0 ? "ノーレートの卓なので、最初から「おまかせ打ち」（CPUが代わりに打つ）にしておくこともできます。" : "おまかせ打ちは、ノーレートの卓だけで使えます。"}</p>
@@ -970,7 +972,7 @@ function renderMJM() {
   const pos = { 1: "下家", 2: "対面", 3: "上家" };
   cb.innerHTML = `<div class="mj">
     ${[3, 2, 1].map(d => opp((me + d) % 4, pos[d])).join("")}
-    <div class="mj-center"><span>${st.kyoku < 4 ? "東" : "南"}${st.kyoku % 4 + 1}局 ${st.honba}本場</span><span>残り ${st.left}</span><span>ドラ表示 ${(st.dora || []).map(t => tid(t, "sm")).join("")}</span><span>供託 ${st.sticks}本</span><span>${st.south ? "半荘戦" : "東風戦"}・${esc(MJ_RATES[st.rate]?.[1] || "")}</span></div>
+    <div class="mj-center"><span>${st.kyoku < 4 ? "東" : "南"}${st.kyoku % 4 + 1}局 ${st.honba}本場</span><span>残り ${st.left}</span><span>ドラ表示 ${(st.dora || []).map(t => tid(t, "sm")).join("")}</span><span>供託 ${st.sticks}本</span><span>${st.south ? "半荘戦" : "東風戦"}・${esc(MJ_RATES[st.rate]?.[1] || "")}${st.noNaki ? "・鳴きなし" : ""}</span></div>
     <div class="mj-me${st.turn === me && st.sub === "turn" ? " turn" : ""}">${nameLine(my, me, "")}
       <div class="mj-river">${riverHtml(my)}</div>
       <div class="mj-hand">${handTiles}${my.melds && my.melds.length ? `<span class="mjmelds">${meldHtml(my)}</span>` : ""}</div>
@@ -998,18 +1000,20 @@ function renderMJLobby(cb, err) {
   const L = mjM.lobby, tables = L ? L.tables : [];
   cb.innerHTML = `<div class="mjlobby">
     <h3 class="lbl">卓の一覧</h3>
-    <div class="list">${tables.length ? tables.map(t => { const free = t.seats.some(s => !s); return `<div class="li"><span class="nm">卓${t.id}　${t.south ? "半荘戦" : "東風戦"}・${esc(MJ_RATES[t.rate]?.[1] || "")}
+    <div class="list">${tables.length ? tables.map(t => { const free = t.seats.some(s => !s); return `<div class="li"><span class="nm">卓${t.id}　${t.south ? "半荘戦" : "東風戦"}・${esc(MJ_RATES[t.rate]?.[1] || "")}${t.noNaki ? "・鳴きなし" : ""}
         <span class="sub2">${t.seats.map(s => s ? esc(s) : "空席").join("・")}　${t.phase === "wait" ? "メンバー待ち" : "対局中"}</span></span>
         <span class="acts">${t.phase === "wait" && free ? `<button class="btn" type="button" data-sit="${t.id}" data-rate="${t.rate}">座る</button>` : ""}</span></div>`; }).join("") : `<p class="mtext">いまは卓がありません。卓を立ててみよう。</p>`}</div>
     <h3 class="lbl">卓を立てる</h3>
     <div class="mtabs">${["東風戦", "半荘戦"].map((l, i) => `<button class="chip" type="button" data-len="${i}" aria-pressed="${mjM.len === i}">${l}</button>`).join("")}</div>
+    <div class="mtabs">${["鳴きあり", "鳴きなし"].map((l, i) => `<button class="chip" type="button" data-nk="${i}" aria-pressed="${(mjM.noNaki ? 1 : 0) === i}">${l}</button>`).join("")}</div>
     <div class="mtabs">${MJ_RATES.map(([g, l], i) => `<button class="chip" type="button" data-rt="${i}" aria-pressed="${mjM.rate === i}">${l}${g ? `（1000点=${g}G）` : ""}</button>`).join("")}</div>
-    <p class="mtext small">麻雀がはじめてなら、ノーレートの卓がおすすめ。卓では「ヒント」（おすすめの牌やテンパイを教えてくれる）と「おまかせ打ち」（CPUが代わりに打つ）が使えます。</p>
+    <p class="mtext small">「鳴きなし」の卓では、ポン・チー・明槓ができません（ロン・暗槓・リーチはできます）。門前でじっくり打ちたいときに。<br>麻雀がはじめてなら、ノーレートの卓がおすすめ。卓では「ヒント」（おすすめの牌やテンパイを教えてくれる）と「おまかせ打ち」（CPUが代わりに打つ）が使えます。</p>
     ${err}<div class="row2"><button class="btn" type="button" id="mjCreate">卓を立てる</button><button class="btn light" type="button" id="mjSoloGo">ひとりで打つ</button></div>${mjGuide}${mjRules}</div>`;
   cb.querySelectorAll("[data-len]").forEach(b => b.onclick = () => { mjM.len = +b.dataset.len; renderMJM(); });
   cb.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { mjM.rate = +b.dataset.rt; renderMJM(); });
+  cb.querySelectorAll("[data-nk]").forEach(b => b.onclick = () => { mjM.noNaki = b.dataset.nk === "1"; renderMJM(); });
   cb.querySelectorAll("[data-sit]").forEach(b => b.onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[+b.dataset.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "sit", a: +b.dataset.sit }); });
-  cb.querySelector("#mjCreate").onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[mjM.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "create", a: mjM.len, b: mjM.rate }); };
+  cb.querySelector("#mjCreate").onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[mjM.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "create", a: mjM.len | (mjM.noNaki ? 2 : 0), b: mjM.rate }); };
   cb.querySelector("#mjSoloGo").onclick = () => { S.mjMode = "solo"; clearInterval(mjM.timer); K.net.onMj = null; setupMahjongLobby(cb, mjM.body); };
 }
 function later(fn, ms) { const id = setTimeout(() => { if (mj && mj.alive) fn(); }, window.__mjFast ? 3 : ms); mj.timers.push(id); }

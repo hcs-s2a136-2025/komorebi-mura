@@ -39,6 +39,7 @@ if (fs.existsSync(BJ_CP)) {
 }
 // みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
 let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPending = new Map(), crank = new Map();
+const rankHidden = new Set(); // ランキングに出さない人（本物は GameRankService の _gamerankHidden。本人には出る）
 const grank = {}, cashLed = new Map(), cashPend = new Map(); let cashPool = 0;
 function cashDeliver(to, ev) { const on = [...sessions].filter(o => o.pl && o.pl.id === to); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "cash77", ev }))); else { const l = cashPend.get(to) || []; l.push(ev); cashPend.set(to, l); } }
 // 村のアルバイト（本物は JobService.java。お手紙は取っておき、脱走の手引きはメモリだけ）
@@ -251,6 +252,13 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
   if (p === "/mock/world") { if (u.searchParams.has("v")) useV(+u.searchParams.get("v")); return json(res, 200, shared); }
   if (p === "/mock/villages") return json(res, 200, villages);
+  if (p === "/mock/rankhide") { const id = +u.searchParams.get("id"); if (id) { if (u.searchParams.get("hide") === "0") rankHidden.delete(id); else rankHidden.add(id); } return json(res, 200, [...rankHidden]); }
+  if (p === "/mock/raid") { const q = u.searchParams, v = +q.get("v") || 1, R = raidOf(v), act = q.get("act") || "";
+    if (act === "plan") { const id = ++R.seq; R.plans.push({ id, kind: q.get("kind") || "boar", place: q.get("place") || "hill", start: Date.now() + (+q.get("in") || 0) * 1000, mins: +q.get("mins") || 10, hp: +q.get("hp") || 3000, reward: +q.get("reward") || 3000 }); bcVil(v, raidState(v)); return json(res, 200, { id }); }
+    if (act === "start") { const i = R.plans.findIndex(x => x.id === +q.get("id")); if (i >= 0 && !R.cur) raidBegin(v, R.plans.splice(i, 1)[0]); }
+    if (act === "stop" && R.cur) raidEnd(v, false, true);
+    if (act === "hp" && R.cur) { R.cur.hp = Math.max(1, +q.get("hp") || 1); }
+    return json(res, 200, { ...raidState(v), plansFull: R.plans, cur: R.cur || null }); }
   if (p === "/mock/watch") { const v = +u.searchParams.get("village") || 1; const t = "w_" + crypto.randomBytes(12).toString("base64url"); watchTokens.set(t, v); return json(res, 200, { token: t }); }
   if (p === "/mock/event/start") { const q = u.searchParams; ev = { id: evNext++, name: q.get("name") || "テスト大会", kind: q.get("kind") || "fishing", scoring: q.get("scoring") || "points", rules: q.get("rules") || "", startsAt: Date.now(), endsAt: Date.now() + (+q.get("secs") || 60) * 1000, joinFee: +q.get("fee") || 0, minLevel: +q.get("lv") || 0, rewards: { r1: q.get("r1") || "", r2: q.get("r2") || "", r3: q.get("r3") || "", all: q.get("all") || "", goal: q.get("goal") || "", goalScore: q.get("goalScore") || "0" }, scores: new Map() };
     for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evState", event: evNode(ev, -1) })); return json(res, 200, { id: ev.id }); }
@@ -291,6 +299,20 @@ server.listen(PORT, () => console.log("mock on", PORT));
 const wss = new WebSocketServer({ server, path: "/ws" });
 const desc = s => ({ id: s.pl.id, name: s.pl.name, map: s.map, x: s.x, y: s.y, dir: s.dir, cfg: s.cfg || {} });
 // 全員に送る：送った人（ex）の村、いなければいまの村の人にだけ
+// 討伐クエスト（本物は raid/RaidService.java）。予定・討伐中・宴・前回の結果を村ごとに
+const raidBy = new Map(), raidOf = v => { if (!raidBy.has(v)) raidBy.set(v, { plans: [], seq: 0, buff: 0, hitAt: {} }); return raidBy.get(v); };
+const bcVil = (v, m) => { const t = JSON.stringify(m); for (const o of sessions) if (o.pl && vOf(o.pl) === v) o.send(t); };
+const raidTop = (c, n) => Object.entries(c.dmg).sort((a, b) => b[1] - a[1]).slice(0, n).map(([id, d]) => ({ id: +id, name: c.names[id] || "", dmg: d }));
+const raidView = c => ({ id: c.id, kind: c.kind, place: c.place, hp: c.hp, max: c.max, start: c.start, end: c.end, buff: c.buff, now: Date.now(), top: raidTop(c, 3) });
+function raidState(v) { const R = raidOf(v); return { type: "raid", ev: "state", ...(R.cur ? { raid: raidView(R.cur) } : {}), plans: R.plans.slice().sort((a, b) => a.start - b.start).map(p => ({ id: p.id, kind: p.kind, place: p.place, start: p.start, mins: p.mins })), ...(R.feast && Date.now() < R.feast.until ? { feast: R.feast } : {}), buff: R.buff, ...(R.last ? { last: R.last } : {}), now: Date.now() }; }
+function raidBegin(v, p) { const R = raidOf(v), now = Date.now(); R.cur = { id: p.id, kind: p.kind, place: p.place, hp: p.hp, max: p.hp, reward: p.reward, start: now, end: now + p.mins * 60000, buff: Math.min(50, R.buff), dmg: {}, names: {} }; R.buff = 0; R.feast = null; bcVil(v, { type: "raid", ev: "start", raid: raidView(R.cur) }); }
+function raidEnd(v, won, stopped) { const R = raidOf(v), c = R.cur, now = Date.now(); R.cur = null; const people = Object.keys(c.dmg).length;
+  const total = Object.values(c.dmg).reduce((a, b) => a + b, 0), pay = {}; if (won && total > 0) { const first = Object.entries(c.dmg).sort((a, b) => b[1] - a[1])[0][0]; for (const [id, d] of Object.entries(c.dmg)) pay[id] = Math.round(c.reward * (1 + Math.min(1, d / total * people)) * (id === first ? 1.5 : 1)); }
+  R.last = { id: c.id, kind: c.kind, won, at: now, top: raidTop(c, 10), people, pay }; if (won) R.feast = { until: now + 600000, raid: c.id, dishes: [], by: {} };
+  bcVil(v, { type: "raid", ev: won ? "won" : "fail", id: c.id, kind: c.kind, stopped, top: R.last.top, people, pay, ...(won ? { feast: R.feast } : {}) }); }
+setInterval(() => { const now = Date.now(); for (const [v, R] of raidBy) {
+  if (R.cur) { if (now >= R.cur.end) raidEnd(v, false, false); else if (R.cur.dirty && now - (R.hpAt || 0) > 500) { R.cur.dirty = false; R.hpAt = now; bcVil(v, { type: "raid", ev: "hp", id: R.cur.id, hp: R.cur.hp, max: R.cur.max, top: raidTop(R.cur, 3) }); } continue; }
+  const i = R.plans.findIndex(p => p.start <= now); if (i >= 0) raidBegin(v, R.plans.splice(i, 1)[0]); } }, 1000);
 const bc = (m, ex) => { const v = ex && ex.pl ? vOf(ex.pl) : curV; const t = JSON.stringify(m); for (const o of sessions) if (o !== ex && o.pl && vOf(o.pl) === v) o.send(t); };
 wss.on("connection", s => {
   sessions.add(s);
@@ -301,7 +323,7 @@ wss.on("connection", s => {
       const v = watchTokens.get(m.token); if (!v) { s.send(JSON.stringify({ type: "error", code: "watch", text: "見学の期限が切れたみたい" })); return s.close(); }
       s.pl = { id: -(watchN++), name: "管理人（見学）", village: v }; s.watch = true; useV(v); Object.assign(s, { map: "village", x: 0, y: 0, dir: "down" });
       const V = villages.find(x => x.id === v) || villages[0];
-      return s.send(JSON.stringify({ type: "welcome", version: VERSION, watch: true, you: { id: s.pl.id, name: s.pl.name }, village: { id: V.id, name: V.name, main: V.id === 1 }, players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === v).map(desc), world: shared, worldEpoch: epoch, chat: chat.filter(c => (c.v || 1) === v).slice(-30), clock: cstate(), jackpot, farms: [...farms].filter(([id]) => (accounts.find(a => a.id === id) || {}).village === v || (v === 1 && !(accounts.find(a => a.id === id) || {}).village)).map(([, f]) => f) }));
+      return s.send(JSON.stringify({ type: "welcome", version: VERSION, watch: true, you: { id: s.pl.id, name: s.pl.name }, village: { id: V.id, name: V.name, main: V.id === 1 }, players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === v).map(desc), world: shared, worldEpoch: epoch, chat: chat.filter(c => (c.v || 1) === v).slice(-30), clock: cstate(), raid: raidState(v), jackpot, farms: [...farms].filter(([id]) => (accounts.find(a => a.id === id) || {}).village === v || (v === 1 && !(accounts.find(a => a.id === id) || {}).village)).map(([, f]) => f) }));
     }
     if (s.watch && m.type !== "ping") return;
     if (!s.pl) {
@@ -309,7 +331,7 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -325,6 +347,14 @@ wss.on("connection", s => {
       if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const sh = Array.isArray(e.v.s) ? [...new Set(e.v.s.map(x => Math.floor(+x)).filter(x => x > 0 && x !== s.pl.id))].slice(0, 8) : []; e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name, ...(sh.length ? { s: sh } : {}) }; } } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
     if (m.type === "job") return jobHandle(s, m);
     if (m.type === "coin") return coinHandle(s, m);
+    if (m.type === "raid") { const v = vOf(s.pl), R = raidOf(v), a = String(m.a || ""), now = Date.now(), id = String(s.pl.id);
+      if (a === "look") { s.send(JSON.stringify(raidState(v))); return; }
+      if (a === "hit" && R.cur && now < R.cur.end && R.cur.hp > 0 && s.pl.id > 0) { if (now - (R.hitAt[id] || 0) < 250) return; R.hitAt[id] = now;
+        const dd = Math.round(Math.max(1, Math.min(80, Math.floor(+m.d || 0))) * (1 + R.cur.buff / 100)); R.cur.hp = Math.max(0, R.cur.hp - dd); R.cur.dmg[id] = (R.cur.dmg[id] || 0) + dd; R.cur.names[id] = s.pl.name; R.cur.dirty = true;
+        if (R.cur.hp <= 0) raidEnd(v, true, false); return; }
+      if (a === "dish" && R.feast && now < R.feast.until && /^[a-z0-9_]{1,32}$/.test(String(m.id || "")) && s.pl.id > 0) { const n = R.feast.by[id] || 0; if (n >= 3) return; R.feast.by[id] = n + 1;
+        if (R.feast.dishes.length < 60) R.feast.dishes.push({ id: String(m.id), n: String(m.n || "").slice(0, 16), who: s.pl.name }); R.buff = Math.min(50, R.buff + 2); bcVil(v, { type: "raid", ev: "feast", feast: R.feast, buff: R.buff }); }
+      return; }
     if (m.type === "grank") {
       const jst = d => new Date(Date.now() + 9 * 3600e3 - d * 86400e3).toISOString().slice(0, 10), today = jst(0), from = jst(6);
       const g = String(m.game || "");
@@ -334,7 +364,7 @@ wss.on("connection", s => {
         for (const key of Object.keys(G)) if (key.startsWith(s.pl.id + ":") && !keep.has(key)) delete G[key]; }
       if (/^[a-z0-9]{1,12}$/.test(g) && +m.score > 0) { const G = grank[g] = grank[g] || {}; const e = G[s.pl.id] = G[s.pl.id] || { b: 0, d: {} }; e.b = Math.max(e.b, +m.score); e.d[today] = Math.max(e.d[today] || 0, +m.score); }
       const q = String(m.get || ""); if (/^[a-z0-9]{1,12}$/.test(q)) {
-        const G = grank[q] || {}, rows = Object.entries(G).map(([key, e]) => { const id = +String(key).split(":")[0], a = accounts.find(x => x.id === id); if (!a || a.deleted || !(m.everywhere || vOf(a) === vOf(s.pl))) return null; const nm = m.everywhere ? `${a.name}（${(villages.find(v => v.id === vOf(a)) || villages[0]).name}）` : a.name; return { id, name: String(key).includes(":") ? `${nm}の${e.n || "にわとり"}` : nm, b: e.b, w: Math.max(0, ...Object.entries(e.d).filter(([k]) => k >= from && k <= today).map(([, v]) => v)) }; }).filter(Boolean);
+        const G = grank[q] || {}, rows = Object.entries(G).map(([key, e]) => { const id = +String(key).split(":")[0], a = accounts.find(x => x.id === id); if (!a || a.deleted || !(m.everywhere || vOf(a) === vOf(s.pl))) return null; if (rankHidden.has(id) && id !== s.pl.id) return null; const nm = m.everywhere ? `${a.name}（${(villages.find(v => v.id === vOf(a)) || villages[0]).name}）` : a.name; return { id, name: String(key).includes(":") ? `${nm}の${e.n || "にわとり"}` : nm, b: e.b, w: Math.max(0, ...Object.entries(e.d).filter(([k]) => k >= from && k <= today).map(([, v]) => v)) }; }).filter(Boolean);
         const me = {}, part = (k, tag) => { const L = rows.filter(r => r[k] > 0).sort((x, y) => y[k] - x[k] || x.id - y.id); const i = L.findIndex(r => r.id === s.pl.id); me[tag] = i >= 0 ? L[i][k] : 0; me[tag + "Rank"] = i + 1; return L.slice(0, 10).map(r => ({ name: r.name, v: r[k], ...(r.id === s.pl.id ? { me: true } : {}) })); };
         s.send(JSON.stringify({ type: "grank", board: { all: part("b", "all"), week: part("w", "week"), me, game: q, from, to: today } }));
       }
@@ -395,7 +425,7 @@ wss.on("connection", s => {
       const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 20).filter(x => Array.isArray(x)).map(x => [String(x[0]), x[1] | 0, String(x[2] || "").slice(0, 12), ...(/^[a-z0-9]{1,12}$/.test(String(x[3] || "")) ? [String(x[3])] : [])]), gh: (Array.isArray(m.gh) ? m.gh : []).slice(0, 4).filter(g => Array.isArray(g) && g[0] >= 0 && g[1] >= 0 && g[0] <= 200 && g[1] <= 200).map(g => [g[0] | 0, g[1] | 0, (Array.isArray(g[2]) ? g[2] : []).map(x => Math.floor(+x)).filter(x => x > 0).slice(0, 8)]) };
       pend = pend.filter(p => { const i = f.crops.findIndex(c => c[0] === p[0] && c[1] === p[1] && c[2] === p[2] && (c[3] | 0) >= 2); if (i >= 0) { f.crops.splice(i, 1); return true; } return false; }); if (pend.length) f.stolen = pend;
       farms.set(s.pl.id, f); bc(f, s); }
-    if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); }
+    if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); else if (m.act === "own" && s.pl.id > 0) race.stdin.write(["O", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.op || "list").replace(/\W/g, ""), String(m.name || "").replace(/[\t\n\r]/g, ""), String(m.k || "").replace(/\W/g, "")].join("\t") + "\n"); }
     if (m.type === "news") { const day = Math.floor(+m.day || 0);
       if (m.act === "put" && day >= clock.day - 2 && day <= clock.day && day >= 1) { (news[day] = news[day] || {})[s.pl.id] = { name: s.pl.name, items: (Array.isArray(m.items) ? m.items : []).slice(0, 12).map(it => ({ k: String(it.k || "").slice(0, 12), t: String(it.t || "").slice(0, 90), s: Math.max(0, Math.min(999, it.s | 0)) })).filter(it => it.t), sum: m.sum && typeof m.sum === "object" ? m.sum : {} }; }
       else if (m.act === "get") { const reps = Object.entries(news[day] || {}).map(([id, r]) => ({ ...r, id })); if (race) { newsWait.set(s.pl.id + ":" + day, { s, reps }); race.stdin.write("S\t" + s.pl.id + "\t" + day + "\n"); } else s.send(JSON.stringify({ type: "news", day, reports: reps, race: { races: 0 } })); } }

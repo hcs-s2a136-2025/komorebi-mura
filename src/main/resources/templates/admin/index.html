@@ -49,6 +49,18 @@
   </section>
 
   <section class="card">
+    <h2>ゲームのランキング</h2>
+    <p class="muted">スマホのゲームのランキングに、えらんだ人をほかの人の画面で出さないようにできます。</p>
+    <div class="row"><a class="btn" href="/admin/rank">ランキングを開く</a></div>
+  </section>
+
+  <section class="card">
+    <h2>討伐クエスト</h2>
+    <p class="muted">村に大物の魔物を呼んで、みんなで討伐します。魔物・場所・時間・強さをえらべます。</p>
+    <div class="row"><a class="btn" href="/admin/raid">討伐を開く・見る</a></div>
+  </section>
+
+  <section class="card">
     <h2>村の時計</h2>
     <p th:text="${clockText}">1日目</p>
     <form class="row" method="post" th:action="@{/admin/clock/morning}"><button class="btn ghost" type="submit">次の日の朝にする</button></form>

@@ -64,7 +64,9 @@ public final class MjGame {
                 if (t != null && "wait".equals(t.phase)) { t.leave(pid, now); t = null; }
                 if (t != null) { busyElsewhere(pid, t, now); return; }
                 if (tables.size() >= MAX_TABLES) { ng(pid, "いまは卓がいっぱい。空くまで少し待ってね"); return; }
-                Table nt = new Table(nextId++, pid, a == 1, Math.max(0, Math.min(RATES.length - 1, b)));
+                // a：1のビット＝半荘戦、2のビット＝鳴きなし（ポン・チー・明槓なし。前の版は0か1だけを送る）
+                Table nt = new Table(nextId++, pid, (a & 1) == 1, Math.max(0, Math.min(RATES.length - 1, b)));
+                nt.noNaki = (a & 2) == 2;
                 tables.put(nt.id, nt);
                 nt.seats[0] = Seat.human(pid, name);
                 where.put(pid, nt.id);
@@ -146,6 +148,7 @@ public final class MjGame {
             e.put("south", t.south);
             e.put("rate", t.rate);
             e.put("rateName", RATE_NAMES[t.rate]);
+            e.put("noNaki", t.noNaki);
             e.put("phase", t.phase);
             List<Object> names = new ArrayList<>();
             for (Seat s : t.seats) names.add(s == null ? null : s.name + (s.cpu ? "（CPU）" : ""));
@@ -195,7 +198,7 @@ public final class MjGame {
 
     private Map<String, Object> saveTable(Table t) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", t.id); m.put("owner", t.owner); m.put("south", t.south); m.put("rate", t.rate);
+        m.put("id", t.id); m.put("owner", t.owner); m.put("south", t.south); m.put("rate", t.rate); m.put("noNaki", t.noNaki);
         m.put("phase", t.phase); m.put("deadline", t.deadline); m.put("msg", t.msg);
         List<Object> seats = new ArrayList<>(); for (Seat s : t.seats) seats.add(saveSeat(s)); m.put("seats", seats);
         m.put("kyoku", t.kyoku); m.put("honba", t.honba); m.put("sticks", t.sticks);
@@ -220,6 +223,7 @@ public final class MjGame {
     private Table loadTable(Map<?, ?> m, long shift) {
         if (m == null) return null;
         Table t = new Table((int) num(m.get("id")), num(m.get("owner")), bool(m.get("south")), (int) num(m.get("rate")));
+        t.noNaki = bool(m.get("noNaki"));
         t.phase = str(m.get("phase"), "wait"); t.deadline = num(m.get("deadline")); if (t.deadline > 0) t.deadline += shift; t.msg = str(m.get("msg"), "");
         List<?> seats = list(m.get("seats"));
         for (int i = 0; i < 4 && i < seats.size(); i++) t.seats[i] = loadSeat(map(seats.get(i)), shift);
@@ -380,6 +384,8 @@ public final class MjGame {
         int turn;
         String sub = "turn";
         boolean afterCall, rinshan, noCalls, chankanClaim;
+        /** 鳴きなしの卓（ポン・チー・明槓ができない。ロンはできる） */
+        boolean noNaki;
         int lastTile = -1, lastFrom = -1;
         final Map<Integer, Claim> claims = new HashMap<>();
         int discards;
@@ -609,7 +615,7 @@ public final class MjGame {
                     s.furitenTemp = true;
                     if (s.riichi) s.furitenRiichi = true;
                 }
-                if (!chankan && remaining() > 0 && !s.riichi) {
+                if (!chankan && !noNaki && remaining() > 0 && !s.riichi) {
                     int n = 0;
                     for (int t : s.hand) if (MjRules.kind(t) == k) n++;
                     if (n >= 2) c.pon = true;
@@ -1185,6 +1191,7 @@ public final class MjGame {
             m.put("south", south);
             m.put("rate", rate);
             m.put("rateName", RATE_NAMES[rate]);
+            m.put("noNaki", noNaki);
             m.put("owner", owner == pid);
             m.put("me", me);
             m.put("msg", msg);

@@ -70,6 +70,23 @@ STEPS = [
     ("2・3階", f"window.KOMO.closeModal(); {G}.F80.demo()"),
     ("建てた家の階", f"window.KOMO.closeModal(); {G}.F82.demo(); window.KOMO.closeModal(); {G}.F82.open('11,9')"),
     ("船着き場", f"window.KOMO.closeModal(); {G}.enter({G}.makePort(), 18, 12, 'right'); {G}.F81.openBoat()"),
+    ("島ゆきの船", f"window.KOMO.closeModal(); {G}.enter({G}.makePort(), 18, 14, 'left'); {G}.act()"),
+    ("南の島", f"window.KOMO.closeModal(); {G}.F109.go('isle', 'port', [18, 13])"),
+    ("空に浮かぶ庭", f"{G}.F109.go('sky', 'village', [34, 48])"),
+    ("地下の遺跡", f"{G}.F109.go('ruin', 'village', [39, 17])"),
+    ("遺跡の考古学者", f"{G}.act ? (window.KOMO.closeModal(), {G}.placeAt({G}.player, 12, 4, 'up'), {G}.act()) : 0"),
+    ("村にもどる（v109）", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down')"),
+    ("職業", f"{G}.F106.open()"),
+    ("職業（農家）", f"window.KOMO.closeModal(); {G}.world.job106 = {{ cur: 'farmer', xp: {{ farmer: 700 }}, pick: {{}} }}; {G}.F106.open('farmer')"),
+    ("収納箱の区分", f"window.KOMO.closeModal(); {G}.enterRoom('home', [7, 9]); {G}.addItem('tomato', 3); {G}.addItem('wood', 5); {G}.F104.openBox()"),
+    ("家畜小屋の中", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down'); {G}.world.decor = {G}.world.decor || {{}}; {G}.world.decor['30,30'] = {{ id: 'barn32', o: 0, n: 'me' }}; {G}.F105.enter('30,30')"),
+    ("家畜小屋の家畜", f"{G}.F105.open('30,30')"),
+    ("花札の卓", f"window.KOMO.closeModal(); {G}.enter({G}.makeInterior('casino'), 4, 10, 'up'); {G}.world.money = 50000; {G}.F108.open()"),
+    ("花札の勝負", f"{G}.F108.start(100)"),
+    ("馬主の厩舎", f"window.KOMO.closeModal(); {G}.F107.open()"),
+    ("討伐", f"window.KOMO.closeModal(); {G}.F111.open()"),
+    ("天気（空の予報）", f"window.KOMO.closeModal(); {G}.F98.forecast()"),
+    ("村にもどる（最後）", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down')"),
 ]
 async def main():
     bad = 0

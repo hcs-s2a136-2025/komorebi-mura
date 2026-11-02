@@ -29,6 +29,8 @@ import jp.komorebi.world.SharedWorldService;
 public class GameRankService {
 
     static final String KEY = "_gamerank";
+    /** ランキングに出さない人（管理人室でえらぶ）。本人の画面には、ほかの人と同じように出る */
+    static final String HIDDEN = "_gamerankHidden";
     static final ZoneId JST = ZoneId.of("Asia/Tokyo");
     static final Pattern GAME = Pattern.compile("[a-z0-9]{1,12}");
     public static final long MAX_SCORE = 100_000_000L;
@@ -125,11 +127,13 @@ public class GameRankService {
                 JsonNode d = world.getSystemIn(v.id(), KEY);
                 Map<Long, String> names = new HashMap<>();
                 for (Player p : by.getOrDefault(v.id(), List.of())) names.put(p.getId(), p.getName() + "（" + v.name() + "）");
+                hideOthers(names, hiddenOf(world.getSystemIn(v.id(), HIDDEN)), me);
                 rows(validGame(game) && d != null ? d.path(game) : null, names, from, to, a, w);
             }
         } else {
             Map<Long, String> names = new HashMap<>();
             for (Player p : players.listAll()) names.put(p.getId(), p.getName());
+            hideOthers(names, hidden(), me);
             rows(validGame(game) ? data().path(game) : null, names, from, to, a, w);
         }
         Comparator<Row> cmp = Comparator.comparingLong(Row::v).reversed().thenComparingLong(Row::id);
@@ -172,6 +176,31 @@ public class GameRankService {
             if (i < TOP) { ObjectNode o = arr.addObject().put("name", r.name()).put("v", r.v()); if (isMe) o.put("me", true); }
         }
         mine.put(tag, v).put(tag + "Rank", rank);
+    }
+
+    /** 出さない人は、見ている本人でなければ名前の表から外す（名前がない人は rows で飛ばされる） */
+    private static void hideOthers(Map<Long, String> names, java.util.Set<Long> hidden, Long me) {
+        for (Long id : hidden) if (me == null || !id.equals(me)) names.remove(id);
+    }
+
+    private static java.util.Set<Long> hiddenOf(JsonNode n) {
+        java.util.Set<Long> s = new java.util.HashSet<>();
+        if (n != null && n.isArray()) for (JsonNode x : n) { long id = x.asLong(0); if (id > 0) s.add(id); }
+        return s;
+    }
+
+    /** いまの村で、ランキングに出さない人 */
+    public synchronized java.util.Set<Long> hidden() {
+        return hiddenOf(world.getSystem(HIDDEN));
+    }
+
+    /** いまの村で、その人をランキングに出す・出さない（スコアは消さない） */
+    public synchronized void setHidden(long playerId, boolean hide) {
+        java.util.Set<Long> s = new java.util.TreeSet<>(hidden());
+        if (hide) s.add(playerId); else s.remove(playerId);
+        ArrayNode arr = om.createArrayNode();
+        s.forEach(arr::add);
+        world.putSystem(HIDDEN, arr);
     }
 
     private ObjectNode data() {

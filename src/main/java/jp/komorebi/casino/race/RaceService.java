@@ -26,12 +26,20 @@ public class RaceService implements WelcomeContributor {
     private final jp.komorebi.village.PerVillage<RaceGame> games;
     private final ObjectProvider<jp.komorebi.village.VillageService> villages;
 
-    public RaceService(ObjectProvider<GameSocketHandler> hub, ObjectMapper om, ClockService clock, ObjectProvider<jp.komorebi.village.VillageService> villages) {
+    /** 馬主のどんぐり（厩舎）を保存する場所（共有の村のサーバーだけの情報） */
+    static final String STABLE = "_racestable";
+
+    public RaceService(ObjectProvider<GameSocketHandler> hub, ObjectMapper om, ClockService clock, ObjectProvider<jp.komorebi.village.VillageService> villages,
+                       ObjectProvider<jp.komorebi.world.SharedWorldService> world) {
         this.hub = hub;
         this.om = om;
         this.clock = clock;
         this.villages = villages;
-        this.games = new jp.komorebi.village.PerVillage<>(v -> new RaceGame(new SecureRandom(), new RaceGame.Out() {
+        this.games = new jp.komorebi.village.PerVillage<>(v -> makeGame(v, hub, om, world));
+    }
+
+    private static RaceGame makeGame(long v, ObjectProvider<GameSocketHandler> hub, ObjectMapper om, ObjectProvider<jp.komorebi.world.SharedWorldService> world) {
+        RaceGame g = new RaceGame(new SecureRandom(), new RaceGame.Out() {
             @Override
             public void toAll(Map<String, Object> msg) {
                 GameSocketHandler h = hub.getIfAvailable();
@@ -43,7 +51,19 @@ public class RaceService implements WelcomeContributor {
                 GameSocketHandler h = hub.getIfAvailable();
                 if (h != null) h.sendToPlayer(playerId, om.valueToTree(msg));
             }
-        }));
+
+            @Override
+            public void saveStable(Map<String, Object> stable) {
+                jp.komorebi.world.SharedWorldService w = world.getIfAvailable();
+                if (w != null) jp.komorebi.village.Villages.run(v, () -> w.putSystem(STABLE, om.valueToTree(stable)));
+            }
+        });
+        jp.komorebi.world.SharedWorldService w = world.getIfAvailable();
+        if (w != null) {
+            com.fasterxml.jackson.databind.JsonNode saved = w.getSystemIn(v, STABLE);
+            if (saved != null && saved.isObject()) g.loadStable(om.convertValue(saved, Map.class));
+        }
+        return g;
     }
 
     private RaceGame game() {
@@ -60,6 +80,10 @@ public class RaceService implements WelcomeContributor {
 
     public void bet(PlayerSession from, int runner, String kind, int amount) {
         game().bet(from.playerId(), from.name(), runner, kind, amount, System.currentTimeMillis());
+    }
+
+    public void own(PlayerSession from, String op, String arg, String key) {
+        game().own(from.playerId(), from.name(), op, arg, key);
     }
 
     public ObjectNode state() {

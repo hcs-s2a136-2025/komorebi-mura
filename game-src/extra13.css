@@ -1001,3 +1001,61 @@ body.watch88 #tut { display: none !important; }
   body.decor103 .placebar.decorbar { top: 6px; left: 8px; transform: none; max-width: min(230px, 30%); flex-direction: column; align-items: stretch; }
   body.decor103 .toast { top: 6px; bottom: auto; left: auto; right: 8px; transform: none; max-width: min(300px, 38%); }
 }
+
+/* ---- v104〜v111（v0.59.0）：収納箱の区分・職業・馬主・花札・討伐 ---- */
+.cats104 { flex-wrap: wrap; gap: 4px; margin: 2px 0 6px; }
+.cats104 .chip { padding: 3px 9px; font-size: .8rem; }
+.cat104 { font-size: .78rem; font-weight: bold; color: var(--ink); opacity: .75; margin: 6px 2px 2px; border-bottom: 1px dashed currentColor; }
+.jobs106 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
+.job106 { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 10px; border: 2px solid var(--panel-2); background: #fffaf0; color: var(--ink); font: inherit; font-size: .85rem; cursor: pointer; }
+.job106 img { width: 28px; height: 28px; image-rendering: pixelated; }
+.job106 small { font-size: .72rem; opacity: .8; }
+.job106.sel { border-color: var(--jc); box-shadow: 0 0 0 2px var(--jc) inset; }
+.job106.cur::after { content: "いまの職業"; font-size: .64rem; background: var(--jc); color: #fff; border-radius: 6px; padding: 0 5px; }
+.jbar106 { height: 8px; border-radius: 4px; background: #e2d4bc; border: 1px solid #c8b490; overflow: hidden; margin: 2px 0 4px; }
+.jbar106 i { display: block; height: 100%; background: linear-gradient(90deg, #8ad06a, #4aa04a); }
+.jtree106 { display: grid; gap: 6px; margin: 8px 0; }
+.jn106 { display: flex; flex-direction: column; gap: 1px; text-align: left; padding: 6px 8px; border-radius: 8px; border: 2px dashed #c8b8a0; background: rgba(255, 255, 255, .5); color: var(--ink); font: inherit; opacity: .6; }
+.jn106.on { opacity: 1; border-style: solid; border-color: #6aa04a; background: #f2fbe8; }
+.jn106 .jnm { font-weight: bold; font-size: .88rem; }
+.jn106 small { font-size: .74rem; }
+.jbr106 > b { font-size: .8rem; }
+.jpair106 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 3px; }
+button.jn106:not(:disabled) { cursor: pointer; opacity: .85; }
+button.jn106.lock { opacity: .45; }
+.own107 { font-style: normal; font-size: .72rem; margin-left: 4px; padding: 0 5px; border-radius: 6px; background: #f2d070; color: #4a3010; }
+.hf108wrap { display: grid; gap: 4px; }
+.hf108 { position: relative; display: inline-block; width: 38px; margin: 2px; vertical-align: top; }
+.hf108 img { width: 38px; height: 60px; image-rendering: pixelated; display: block; border-radius: 3px; }
+.hf108 b, .hf108 i { position: absolute; top: 2px; font-size: 9px; line-height: 1; font-style: normal; font-weight: bold; color: #2a1a1a; background: rgba(255, 250, 235, .85); border-radius: 3px; padding: 1px 2px; }
+.hf108 b { left: 2px; }
+.hf108 i { right: 2px; }
+.hf108 i:empty { display: none; }
+.hf108[role="button"] { cursor: pointer; }
+.hf108.can img { box-shadow: 0 0 0 2px #f2c840, 0 0 6px #f2c840; }
+.hf108[role="button"]:hover img, .hf108[role="button"]:focus-visible img { transform: translateY(-3px); }
+.hfrow108 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hfback108 img { width: 16px; height: 25px; image-rendering: pixelated; margin-right: 1px; }
+.koi108 { font-style: normal; background: #d83a3a; color: #fff; border-radius: 6px; padding: 0 6px; font-size: .78rem; }
+.hffield108 { display: flex; flex-wrap: wrap; align-items: flex-start; padding: 6px; border-radius: 10px; background: #2a6a3a; min-height: 70px; }
+.hfdeck108 { position: relative; margin: 2px 8px 2px 2px; }
+.hfdeck108 img { width: 38px; height: 60px; image-rendering: pixelated; }
+.hfdeck108 small { position: absolute; bottom: 2px; left: 0; right: 0; text-align: center; color: #fff; font-weight: bold; font-size: .75rem; text-shadow: 0 1px 2px #000; }
+.hfhand108 { display: flex; flex-wrap: wrap; justify-content: center; padding: 4px; border-radius: 10px; background: rgba(0, 0, 0, .06); }
+.hfcap108 { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: .72rem; }
+.hfg108 { display: inline-flex; align-items: center; gap: 1px; flex-wrap: wrap; }
+.hfg108 small { margin-right: 3px; opacity: .8; }
+.hfg108 img { width: 12px; height: 19px; image-rendering: pixelated; }
+.hfmsg108 { margin: 2px 0; }
+.hflog108 { opacity: .75; min-height: 2.6em; }
+@media (max-width: 420px) {
+  .hf108 { width: 34px; margin: 1px; }
+  .hf108 img, .hfdeck108 img { width: 34px; height: 54px; }
+  .jobs106 { grid-template-columns: repeat(3, 1fr); }
+  .jpair106 { grid-template-columns: 1fr; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .hf108 img, .hfdeck108 img { width: 30px; height: 47px; }
+  .hf108 { width: 30px; }
+  .hffield108 { min-height: 54px; }
+}

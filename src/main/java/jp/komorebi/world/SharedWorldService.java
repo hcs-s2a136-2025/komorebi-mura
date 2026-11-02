@@ -37,7 +37,7 @@ public class SharedWorldService implements WelcomeContributor {
     public static final Set<String> LAYERS = Set.of("terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths",
         "stakes", "tilled", "houses", "quarry", "meta", "decor", "ccrops", "cfarm");
     private static final Pattern KEY = Pattern.compile("[A-Za-z0-9,:_\\-]{1,24}");
-    private static final int MAX_VALUE = 600, MAX_KEYS = 6000, MAX_DOC = 990_000;
+    private static final int MAX_VALUE = 600, MAX_HOUSE = 2400, MAX_KEYS = 6000, MAX_DOC = 990_000;
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper om;
@@ -159,7 +159,8 @@ public class SharedWorldService implements WelcomeContributor {
                 if (layer.remove(k) == null) continue;
                 v = NullNode.getInstance();
             } else {
-                if (v.toString().length() > MAX_VALUE) continue;
+                // 家は合鍵（20人まで）を持つので、ほかより長くてよい
+                if (v.toString().length() > ("houses".equals(l) ? MAX_HOUSE : MAX_VALUE)) continue;
                 if (!layer.has(k) && layer.size() >= MAX_KEYS) continue;
                 layer.set(k, v);
             }

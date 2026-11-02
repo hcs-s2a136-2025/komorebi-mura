@@ -16,7 +16,7 @@ import jp.komorebi.ws.PlayerSession;
 public class RaceHandler implements MessageHandler {
 
     private final RaceService race;
-    private final Map<Long, Long> last = new ConcurrentHashMap<>();
+    private final Map<Long, Long> last = new ConcurrentHashMap<>(), lastOwn = new ConcurrentHashMap<>();
 
     public RaceHandler(RaceService race) {
         this.race = race;
@@ -31,6 +31,14 @@ public class RaceHandler implements MessageHandler {
     public void handle(PlayerSession from, JsonNode msg, GameSocketHandler hub) {
         String act = msg.path("act").asText("");
         if ("look".equals(act)) { hub.send(from, race.state()); return; }
+        if ("own".equals(act)) {
+            long now0 = System.currentTimeMillis();
+            Long p0 = lastOwn.put(from.playerId(), now0);
+            if (p0 != null && now0 - p0 < 400) return;
+            if (from.playerId() <= 0) return;
+            race.own(from, msg.path("op").asText("list"), msg.path("name").asText(""), msg.path("k").asText(""));
+            return;
+        }
         if (!"bet".equals(act)) return;
         long now = System.currentTimeMillis();
         Long prev = last.put(from.playerId(), now);

@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 /** 管理人室のどの画面にも「いまえらんでいる村」と「村の一覧」を渡す（上の村の帯に使う） */
-@ControllerAdvice(basePackages = { "jp.komorebi.web", "jp.komorebi.admin", "jp.komorebi.village" })
+@ControllerAdvice(basePackages = { "jp.komorebi.web", "jp.komorebi.admin", "jp.komorebi.village", "jp.komorebi.raid" })
 public class AdminVillageAdvice {
 
     private final VillageService villages;

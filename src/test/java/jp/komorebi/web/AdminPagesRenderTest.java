@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import jp.komorebi.raid.RaidService;
 
-@SpringBootTest(properties = {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "spring.datasource.url=jdbc:h2:mem:komorebi-admin;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH",
     "komorebi.invite-code=test-code", "komorebi.admin.password=test-pass" })
 @AutoConfigureMockMvc

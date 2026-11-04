@@ -3939,7 +3939,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.60.0";
+const CLIENT_VERSION = "0.60.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6017,6 +6017,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.60.1", date: "2026/11/04", title: "家に入れなくなったのを直した", items: [
+    "家の入口のまわりを飾りや建物がふさいで、家に入れなくなっていたのを直した。入口まで行けないときは、ふさいでいる物の上を通れるようにしたよ",
+    "前の版で、飾りや建物を自動でずらすようにしていたのをやめた（ずらした先で、ほかの家の入口をふさいでしまうことがあった）。置き場所は、持ち主が片付けて置きなおせるよ",
+  ] },
   { v: "0.60.0", date: "2026/11/03", title: "ひそひそチャット・小屋のえさ箱・飼料を数えて買う", items: [
     "チャットで、ひとりだけに話しかけられるようになった（入力欄の左で相手をえらぶ）。相手がいないときは、次に来たときに届くよ",
     "家畜小屋のえさ箱に飼料をためておくと、毎朝、小屋の家畜が自分で食べるようになった",
@@ -20937,31 +20941,7 @@ function fixLayout104() {
     world.projects[id].at = n; proj++;
   }
   if (proj) rebuildSolid();
-  // 自分の飾り・建物
-  for (const k of Object.keys(world.decor || {})) {
-    const d = world.decor[k]; if (!d || !myDecor27(d) || !DECOR27[d.id]) continue;
-    const [x, y] = k.split(",").map(Number), b = B32[d.id];
-    const foot = []; if (b) { for (let yy = y - b.h + 1; yy <= y; yy++) for (let xx = x; xx < x + b.w; xx++) foot.push([xx, yy]); } else foot.push([x, y]);
-    const im = b ? IMG["b32_" + d.id] : IMG[DECOR27[d.id].img];
-    const box = im ? objBox104(x, y, b ? b.w : Math.max(1, Math.round(im.width / TS)), im.height) : null;
-    if (!bad104(foot, box, G)) continue;
-    // 動かすあいだは、自分をどける
-    delete world.decor[k]; rebuildSolid();
-    let to = null;
-    for (let r = 1; r <= 8 && !to; r++) for (let dy = -r; dy <= r && !to; dy++) for (let dx = -r; dx <= r && !to; dx++) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-      const nx = x + dx, ny = y + dy;
-      if (b) { if (_canBuild104(d.id, nx, ny) && !bad104((() => { const f = []; for (let yy = ny - b.h + 1; yy <= ny; yy++) for (let xx = nx; xx < nx + b.w; xx++) f.push([xx, yy]); return f; })(), im ? objBox104(nx, ny, b.w, im.height) : null, G)) to = [nx, ny]; }
-      else if (_decorFree104(nx, ny) && !bad104([[nx, ny]], im ? objBox104(nx, ny, Math.max(1, Math.round(im.width / TS)), im.height) : null, G)) to = [nx, ny];
-    }
-    if (to) {
-      world.decor[to[0] + "," + to[1]] = d;
-      // 小屋の中の家畜は、小屋といっしょにお引っ越し
-      for (const a of world.animals || []) if (a.barn === k) a.barn = to[0] + "," + to[1];
-      moved++;
-    } else { homeStore18("deco_" + d.id, 1); for (const a of world.animals || []) if (a.barn === k) delete a.barn; home++; }
-    rebuildSolid();
-  }
+  // 自分の飾り・建物は、もう自動ではずらさない（v0.60.1：ずらした先で、ほかの家の入口をふさいでしまうことがあった）。入口に行けるようにするのは v113
   if (moved || home || proj) {
     saveWorld();
     if (moved || home) F7.notify(`家の入口の前や家にかぶっていた自分の飾り・建物を${moved ? `、近くへ${moved}つずらした` : ""}${home ? `${moved ? "。" : "、"}${home}つは置き場所がなかったので家の箱に入れた` : ""}`, null);
@@ -22617,6 +22597,67 @@ openAnimalShop = function () {
 };
 F112.ready = true;
 
+// =================== v113: 家の入口にかならず行けるように（ふさいでいる飾り・建物の上を通れるようにする） ===================
+var F113 = {};
+// 村の大通り（y=8）と北の丘の道（x=20）から歩いて行けるかを調べて、家（建てた家と、もとからある建物）の入口の前に行けないときは、
+// 飾り・建物・柵など「あとから置いた物」のマスを、いちばん少なくなる道すじで通れるようにする（地形・家・木・岩は通れないまま）。
+// 置いてある物はそのまま（持ち主が片付けたり動かしたりできる）。
+function reach113(S) {
+  const W = village.w, H = village.h, seen = new Uint8Array(W * H), q = [];
+  const add = (x, y) => { if (x < 0 || y < 0 || x >= W || y >= H || S[y][x]) return; const i = y * W + x; if (seen[i]) return; seen[i] = 1; q.push(i); };
+  for (let x = 0; x < W; x++) add(x, 8);
+  for (let y = NY0 + 2; y < H - 1; y++) add(NGAP[0], y);
+  for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, y = (i / W) | 0; add(x + 1, y); add(x - 1, y); add(x, y + 1); add(x, y - 1); }
+  return seen;
+}
+function houseTiles113() {
+  const T = new Set();
+  for (const h of world.houses || []) { const r = houseRect(h); for (let y = r.ty0; y <= r.ty1; y++) for (let x = r.tx0; x <= r.tx1; x++) T.add(x + "," + y); }
+  for (const b of BUILDINGS) { const r = houseRect(b); for (let y = r.ty0; y <= r.ty1; y++) for (let x = r.tx0; x <= r.tx1; x++) T.add(x + "," + y); }
+  return T;
+}
+function openDoors113() {
+  const S = village.solid, W = village.w, H = village.h; if (!S || !S.length) return 0;
+  const doors = [];
+  for (const h of world.houses || []) doors.push([h.col, h.row + 1]);
+  for (const k in (village.doors || {})) { const [x, y] = k.split(",").map(Number); doors.push([x, y + 1]); }
+  let R = reach113(S), opened = 0, HT = null;
+  for (const [dx, dy] of doors) {
+    if (dx < 0 || dy < 0 || dx >= W || dy >= H || village.base[dy]?.[dx]) continue;
+    if (!S[dy][dx] && R[dy * W + dx]) continue;
+    HT = HT || houseTiles113();
+    const hard = (x, y) => village.base[y][x] || HT.has(x + "," + y) || !!world.trees?.[x + "," + y] || !!world.trees?.[(x - 1) + "," + y] || !!world.rocks?.[x + "," + y] || /^(water|sea)/.test(village.ground[y]?.[x] || "");
+    // 0-1 BFS：ふさがっていないマスは0、あとから置いた物のマスは1
+    const dist = new Int32Array(W * H).fill(1e9), from = new Int32Array(W * H).fill(-1), dq = [], start = dy * W + dx;
+    dist[start] = S[dy][dx] ? 1 : 0; dq.push(start);
+    let goal = -1;
+    while (dq.length) {
+      const i = dq.shift(), x = i % W, y = (i / W) | 0;
+      if (R[i] && !S[y][x]) { goal = i; break; }
+      for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + ax, ny = y + ay; if (nx < 0 || ny < 0 || nx >= W || ny >= H || hard(nx, ny)) continue;
+        const j = ny * W + nx, c = S[ny][nx] ? 1 : 0, nd = dist[i] + c;
+        if (nd < dist[j]) { dist[j] = nd; from[j] = i; if (c) dq.push(j); else dq.unshift(j); }
+      }
+      if (dq.length > W * H * 4) break;
+    }
+    if (goal < 0) continue;
+    for (let i = goal; i >= 0; i = from[i]) { const x = i % W, y = (i / W) | 0; if (S[y][x]) { S[y][x] = false; opened++; } if (i === start) break; }
+    R = reach113(S);
+  }
+  F113.opened = opened;
+  return opened;
+}
+F113.open = openDoors113; F113.rebuild = () => rebuildSolid();
+const _rebuildSolid113 = rebuildSolid;
+rebuildSolid = function () {
+  const r = _rebuildSolid113.apply(this, arguments);
+  try { openDoors113(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "v113"); }
+  return r;
+};
+rebuildSolid();
+F113.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -23077,5 +23118,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

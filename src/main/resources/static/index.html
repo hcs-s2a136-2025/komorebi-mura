@@ -1652,7 +1652,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.60.2";
+  const VER = "0.60.3";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6138,7 +6138,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.60.2";
+const CLIENT_VERSION = "0.60.3";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();

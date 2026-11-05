@@ -3939,7 +3939,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.61.0";
+const CLIENT_VERSION = "0.61.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6017,6 +6017,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.61.1", date: "2026/11/05", title: "押し順ベルにナビ", items: [
+    "VIPの高レートスロットの押し順ベルは、いつでも押し順をナビ（①②③と光るリール）で教えてくれるようにした。目押しはナビどおりに押せばそろうよ",
+    "そのかわりベルの配当は賭け金の2倍に。AT は「ベルラッシュ」（ベルが約4割の回で当たる）になった",
+  ] },
   { v: "0.61.0", date: "2026/11/05", title: "VIPのスロットがアツくなった・リサイクル品をみんなで", items: [
     "VIPの高レートスロットに「押し順ベル」。ベルは、リールを決まった順番で止めたときだけそろう。目押しなら自分で押し順を当てよう",
     "新しく「AT（押し順ナビ）」。入ると15回のあいだ、ルナと台が押し順を①②③で教えてくれる。AT中に7か金のどんぐりで上乗せも",
@@ -17824,18 +17828,18 @@ var F95 = {};
 const BETS95 = [5, 10, 20, 50], MAXPAY95 = 5000, SLIDE95 = 4, N95 = 21, SPEED95 = 19, KK95 = 8;
 const SYM95 = { A: "s95_acorn", "7": "seven", B: "goldbar", L: "coin", F: "fish_タイ", N: "s95_bell", M: "cabbage" };
 const SN95 = { A: "金のどんぐり", "7": "7", B: "金塊", L: "コイン", F: "タイ", N: "ベル", M: "キャベツ" };
-const PAY95 = { A: 100, "7": 40, B: 15, L: 5, F: 3, N: 4 };
+const PAY95 = { A: 100, "7": 40, B: 15, L: 5, F: 3, N: 2 };
 const BIG95 = ["A", "7", "B"];
-// 当たり（フラグ）の確率。目押しは大きい役だけ 1.05 倍（v114 から：還元率 おまかせ 約95.0%・目押しで取りこぼしなし 約96.8%。AT もふくむ）
-// ベル（N）は「押し順ベル」：3つのリールを、決まった順番（6とおり）で止めたときだけそろう。ふだんは当てずっぽう（1/6）、AT のあいだはナビが教えてくれる
+// 当たり（フラグ）の確率。目押しは大きい役だけ 1.05 倍（v0.61.1 から：還元率 おまかせ 約95.0%・目押しで取りこぼしなし 約96.7%。AT もふくむ）
+// ベル（N）は「押し順ベル」：3つのリールを、決まった順番（6とおり）で止めたときだけそろう（賭け金の2倍）。押し順はいつもナビ（①②③）が教えてくれる
 const FLAGP95 = {
-  auto: [["A", 1 / 1600], ["7", 1 / 320], ["B", 1 / 100], ["L", 1 / 21.5], ["F", 1 / 16], ["N", 1 / 6]],
+  auto: [["A", 1 / 1600], ["7", 1 / 320], ["B", 1 / 100], ["L", 1 / 29.5], ["F", 1 / 16], ["N", 1 / 12]],
 };
 FLAGP95.meoshi = FLAGP95.auto.map(([s, p]) => [s, BIG95.includes(s) ? p * 1.05 : p]);
 // 割り込み（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の8回、そろった配当が2倍／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）
-// AT（v114）＝押し順ナビ：次の AT_LEN95 回、押し順ベルの押し順を教えてくれる（そろえば賭け金の4倍）。AT のあいだに 7 か金のどんぐりが当たると +AT_ADD95 回（上乗せ）
+// AT（ベルラッシュ）：次の AT_LEN95 回、ベルがよく当たる（はずれのうち AT_BELL95 の割合がベルになる＝ベルが約4割）。AT のあいだに 7 か金のどんぐりが当たると +AT_ADD95 回（上乗せ）
 const EV95 = { zen: 1 / 2500, freeze: 1 / 600, kaku: 1 / 500, at: 1 / 300 };
-const AT_LEN95 = 15, AT_ADD95 = 10, ORD95 = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]];
+const AT_LEN95 = 15, AT_ADD95 = 10, AT_BELL95 = .392, ORD95 = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]];
 const FREEZE95 = [[10, .6], [20, .3], [50, .1]];
 const ZEN95 = [["L", .5], ["F", .3], ["B", .15], ["7", .045], ["A", .005]];
 const pickW95 = list => { let r = Math.random(); for (const [v, w] of list) if ((r -= w) < 0) return v; return list[0][0]; };
@@ -17948,7 +17952,7 @@ const TTL95 = [
   ["金のどんぐり", "VIPの高レートスロットで、金のどんぐりを3つそろえる", () => (world.stats.vipSlotA95 || 0) >= 1],
   ["目押しの名人", "目押しで、大きい役（金のどんぐり・7・金塊）を10回そろえる", () => (world.stats.vipMeo95 || 0) >= 10],
   ["黄金の全回転", "VIPの高レートスロットで、全回転を見る", () => (world.stats.vipZen95 || 0) >= 1],
-  ["押し順の勘", "VIPの高レートスロットで、ナビなしで押し順ベルを10回当てる", () => (world.stats.vipOshi95 || 0) >= 10],
+  ["ナビの達人", "VIPの高レートスロットの目押しで、ナビどおりにベルを30回そろえる", () => (world.stats.vipOshi95 || 0) >= 30],
   ["ATの夜", "VIPの高レートスロットで、ATに5回入る", () => (world.stats.vipAt95 || 0) >= 5],
   ["逆回転の奇跡", "VIPの高レートスロットで、逆回転の復活を見る", () => (world.stats.vipRev95 || 0) >= 1],
 ];
@@ -17967,10 +17971,9 @@ const LUNA95 = {
   lost: ["……いま、何か光った気がいたしましたわ", "惜しゅうございました。手もとが、ほんの少し"],
   meo: ["見事な目押しでございます", "その指先、只者ではございませんわね"],
   lose: ["運は巡るものでございます", "次こそは……", ""],
-  at: ["AT でございます。押し順は、わたくしがお教えいたしますわ", "ナビの時間でございます。どうぞ、わたくしの声のとおりに"],
+  at: ["AT でございます。ベルが、たくさんまいりますわ", "ベルラッシュの時間でございます。押し順は、わたくしの声のとおりに"],
   uwa: ["上乗せでございます……！ 夜は、まだ続きますわ"],
   atEnd: ["AT はここまで。楽しい夜でございました", "ナビはおしまい。また、光らせてくださいませ"],
-  oshi: ["押し順、お見事……！ 勘のよろしいこと", "あら、当てられてしまいましたわ"],
 };
 const AIM95 = { A: "金のどんぐり", "7": "赤い7", B: "金塊" };
 F95.say = "";
@@ -18038,9 +18041,9 @@ function fakeTop114(S, i) {
 // S = { bet, mode, flag, ev, fm, zen, kk, paid:{fu,fk}, want, tops:[..], lost, meo }
 function newSpin95(bet, mode, paid) {
   const V = vs95(), kk = V.kk > 0, atOn = V.at > 0, ev = F95.force || ev95(kk, atOn); F95.force = null;
-  const flag = F95.forceFlag !== undefined ? F95.forceFlag : lot95(mode); F95.forceFlag = undefined;
+  let flag = F95.forceFlag !== undefined ? F95.forceFlag : lot95(mode); if (F95.forceFlag === undefined && atOn && !flag && Math.random() < AT_BELL95) flag = "N"; F95.forceFlag = undefined;
   const S = { bet, mode, flag, ev, fm: ev === "freeze" ? pickW95(FREEZE95) : 0, zen: ev === "zen" ? pickW95(ZEN95) : null, kk, paid: { fu: paid ? paid.fu || 0 : 0, fk: paid ? paid.fk || 0 : 0 }, want: flag || "none", tops: [null, null, null], lost: null, at: Date.now(),
-    nav: atOn, oshi: flag === "N" ? ORD95[rnd(6)].slice() : null, ord: [], uwa: 0, rev: false };
+    nav: flag === "N", atOn, oshi: flag === "N" ? ORD95[rnd(6)].slice() : null, ord: [], uwa: 0, rev: false };
   if (kk) V.kk--;
   if (ev === "kaku") V.kk = KK95;
   if (atOn) { V.at--; if (flag === "7" || flag === "A") { V.at += AT_ADD95; S.uwa = AT_ADD95; } }
@@ -18069,8 +18072,8 @@ function settle95(S, done) {
   if (R.sym === "A" && !S.zen) st.vipSlotA95 = (st.vipSlotA95 || 0) + 1;
   if (S.zen) st.vipZen95 = (st.vipZen95 || 0) + 1;
   if (S.mode === "meoshi" && R.sym && BIG95.includes(R.sym) && !S.zen) st.vipMeo95 = (st.vipMeo95 || 0) + 1;
-  if (S.flag === "N" && R.sym === "N" && !S.nav) st.vipOshi95 = (st.vipOshi95 || 0) + 1;
-  if (S.nav || S.ev === "at") V.atGot = (V.atGot || 0) + R.pay;
+  if (S.flag === "N" && R.sym === "N" && S.mode === "meoshi") st.vipOshi95 = (st.vipOshi95 || 0) + 1;
+  if (S.atOn || S.ev === "at") V.atGot = (V.atGot || 0) + R.pay;
   const fin = k => {
     const out = R.pay > S.bet ? "win" : R.pay > 0 ? "push" : "lose";
     const s = settle91({ game: "slot", bet: S.bet, pay: R.pay, k, paid: S.paid, out });
@@ -18112,9 +18115,9 @@ function openSlot95(arg) {
     body.innerHTML = `<div class="vs95w"><div class="vs95l">
       <div class="vs95top">${staffSay13(charIcon13(NPC90.manager.cfg), `<span id="vs95say">${esc(F95.say || LUNA95.hello[0])}</span>`)}</div>
       <div class="vs95m"><canvas id="vs95cv" width="76" height="70" aria-label="スロットのリール"></canvas><div class="vs95ev" id="vs95ev" hidden></div><div class="vs95aim" id="vs95aim" ${busy && F95.live.lamp && F95.live.S.mode === "meoshi" && F95.live.spinning.some(Boolean) ? "" : "hidden"}>${busy && F95.live.lamp ? `★ ${esc(AIM95[F95.live.lamp])}を狙え` : ""}</div></div>
-      <div class="vs95stops" ${V.mode === "meoshi" ? "" : "hidden"}>${[0, 1, 2].map(i => { const S0 = busy ? F95.live.S : null, nv = S0 && S0.flag === "N" ? (S0.nav ? "①②③"[S0.oshi.indexOf(i)] : "？") : ""; return `<button class="btn" type="button" data-st95="${i}" disabled>${nv ? `<b class="nv114${S0.nav ? " on" : ""}">${nv}</b>` : ""}STOP ${i + 1}</button>`; }).join("")}</div>
+      <div class="vs95stops" ${V.mode === "meoshi" ? "" : "hidden"}>${[0, 1, 2].map(i => { const S0 = busy ? F95.live.S : null, nv = S0 && S0.flag === "N" && S0.oshi ? "①②③"[S0.oshi.indexOf(i)] : ""; return `<button class="btn" type="button" data-st95="${i}" disabled>${nv ? `<b class="nv114${S0.nav ? " on" : ""}">${nv}</b>` : ""}STOP ${i + 1}</button>`; }).join("")}</div>
       ${V.kk > 0 ? `<p class="vs95kk">確変中！ あと${V.kk}回、そろった配当が2倍</p>` : ""}
-      ${V.at > 0 || (busy && F95.live.S.nav) ? `<p class="vs95kk vs95at">AT（押し順ナビ）中！ あと${V.at}回・このATの払い戻し ${V.atGot}枚</p>` : ""}
+      ${V.at > 0 || (busy && F95.live.S.atOn) ? `<p class="vs95kk vs95at">AT（ベルラッシュ）中！ あと${V.at}回・このATの払い戻し ${V.atGot}枚</p>` : ""}
       <p class="mtext vp90-res ${res ? (res.out === "win" ? "win" : "lose") : ""}" id="vs95res">${res ? esc(res.text) : busy ? "……" : V.mode === "meoshi" ? "スピンしてから、STOP（1・2・3キー）で1つずつ止めよう" : "賭ける枚数を選んで、スピン"}</p></div><div class="vs95r">
       <p class="mtext">現金 <b id="vs95cash">${billTxt78(cashN)}</b>（${fmt(cashN * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
       ${duHtml91(res || null)}
@@ -18160,10 +18163,7 @@ function openSlot95(arg) {
         Lv.lamp = S.flag;
         if (S.mode === "meoshi") { aim(`★ ${AIM95[S.flag]}を狙え`); lunaSay95(`……光りましたわ。${AIM95[S.flag]}を、狙ってくださいませ`); }
       }
-      if (S.flag === "N" && S.mode === "meoshi") {
-        if (S.nav) { aim(`ナビ：${S.oshi.map(i => "左中右"[i]).join("→")} の順に止めて`); try { SFX.navi(); } catch (e) { } }
-        else aim("押し順ベル！？ 押し順を当てろ");
-      }
+      if (S.flag === "N" && S.oshi) { aim(`押し順ナビ：${S.oshi.map(i => "左中右"[i]).join("→")}${S.mode === "meoshi" ? " の順に止めて" : "（台がこの順に止めるよ）"}`); try { SFX.navi(); } catch (e) { } }
       if (S.ev === "freeze") later(() => freeze(Lv), 700);
       else startStops(Lv);
     }, wait);
@@ -18242,16 +18242,15 @@ function openSlot95(arg) {
       if (F95.live !== Lv) return;
       F95.live = null; holdHud95(false); F95.lastLines = r.lines;
       const ordT = S.oshi ? S.oshi.map(i => "左中右"[i]).join("→") : "";
-      const head = S.zen ? `全回転！！ ${SN95[S.zen]}が5ラインぜんぶにそろった` : r.sym === "N" ? `${S.nav ? "ナビどおり！" : "押し順的中！"} ${LNN95[r.line]}にベルがそろった${S.kk ? "（確変2倍）" : ""}` : r.sym ? `${LNN95[r.line]}に${SN95[r.sym]}がそろった${S.kk ? "（確変2倍）" : ""}` : S.oshiMiss ? `押し順ベル……押し順がちがった（正解は ${ordT}）` : S.lost ? "……取りこぼし。何かがそろいそうだった" : "はずれ…";
+      const head = S.zen ? `全回転！！ ${SN95[S.zen]}が5ラインぜんぶにそろった` : r.sym === "N" ? `ナビどおり！ ${LNN95[r.line]}にベルがそろった${S.kk ? "（確変2倍）" : ""}` : r.sym ? `${LNN95[r.line]}に${SN95[r.sym]}がそろった${S.kk ? "（確変2倍）" : ""}` : S.oshiMiss ? `押し順ベル……押し順がちがった（正解は ${ordT}）` : S.lost ? "……取りこぼし。何かがそろいそうだった" : "はずれ…";
       const fz = r.bonus ? `　フリーズのボーナス ×${S.fm}` : "";
       const text = r.pay ? `${head}${fz}　${billTxt78(r.pay)}（${fmt(r.pay * BILL78)}）${r.capped ? "（上限5,000枚）" : ""}${r.credit ? "。" + payText91(r.pay, r.credit) : ""}` : `${head}${fz}　${billTxt78(S.bet)} を失った`;
       Lv.win = r.lines; Lv.flash = r.pay > S.bet ? 1 : 0;
       if (S.ev === "kaku") { banner95("確変突入！", `次の${KK95}回、そろった配当が2倍`, 2000, "kk"); luna95("kaku"); try { SFX.big(); } catch (e) { } }
-      if (S.ev === "at") { world.stats.vipAt95 = (world.stats.vipAt95 || 0) + 1; banner95("AT突入！！", `押し順ナビ ${AT_LEN95}回`, 2200, "kk"); luna95("at"); try { SFX.big(); } catch (e) { } acornRain95(2400, 70); }
+      if (S.ev === "at") { world.stats.vipAt95 = (world.stats.vipAt95 || 0) + 1; banner95("AT突入！！", `ベルラッシュ ${AT_LEN95}回`, 2200, "kk"); luna95("at"); try { SFX.big(); } catch (e) { } acornRain95(2400, 70); }
       if (S.uwa) setTimeout(() => { banner95(`上乗せ +${S.uwa}回！`, `AT あと${vs95().at}回`, 1800, "kk"); luna95("uwa"); try { SFX.kyuin(1); } catch (e) { } }, 1400);
       if (Lv.fake) { world.stats.vipRev95 = (world.stats.vipRev95 || 0) + 1; banner95("復活！！", "逆回転で、そろった", 1600, "zen"); }
-      if (S.nav && S.ev !== "at" && vs95().at === 0) { const got = vs95().atGot; setTimeout(() => { banner95("AT終了", `このATの払い戻し ${got}枚`, 2200); luna95("atEnd"); }, 1500); vs95().atGot = 0; saveWorld(); }
-      if (r.sym === "N" && !S.nav) luna95("oshi");
+      if (S.atOn && S.ev !== "at" && vs95().at === 0) { const got = vs95().atGot; setTimeout(() => { banner95("AT終了", `このATの払い戻し ${got}枚`, 2200); luna95("atEnd"); }, 1500); vs95().atGot = 0; saveWorld(); }
       if (S.zen) { banner95("全回転！！", `${SN95[S.zen]}が9マスぜんぶ`, 2200, "zen"); luna95("zen"); }
       else if (r.sym === "A") luna95("acorn");
       else if (r.tier >= 3) luna95("big");
@@ -18329,7 +18328,7 @@ function openSlot95(arg) {
     if (Lv && Lv.yk && now - Lv.ykT < (YKMS114[Lv.yk] || 1700)) { const a = .22 + .18 * Math.sin(now / 55); g.fillStyle = Lv.yk === 1 ? `rgba(60,140,255,${a})` : Lv.yk === 2 ? `rgba(255,40,70,${a})` : `hsla(${(now / 3) % 360},100%,60%,${a + .08})`; g.fillRect(6, 6, 64, 58); }
     if (Lv && Lv.dim) { g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(6, 6, 64, 58); }
     if (Lv && Lv.revT && now - Lv.revT < 1600) { g.fillStyle = `hsla(${(now / 2) % 360},100%,65%,${.25 + .15 * Math.sin(now / 40)})`; g.fillRect(6, 6, 64, 58); }
-    // 押し順ナビ（AT のとき・押し順ベル）：次に止めるリールを赤く光らせる（番号は STOP ボタンの上）
+    // 押し順ナビ（押し順ベルのとき）：次に止めるリールを赤く光らせる（番号は STOP ボタンの上）
     if (Lv && Lv.S.flag === "N" && Lv.S.nav && Lv.spinning.some(Boolean) && !Lv.frozen) { const nx = Lv.S.oshi[(Lv.S.ord || []).length]; if (nx != null && Lv.spinning[nx]) { g.strokeStyle = `rgba(255,58,90,${.65 + .35 * Math.sin(now / 80)})`; g.lineWidth = 2; g.strokeRect(7 + nx * 20, 7, 20, 56); } }
     if (Lv && Lv.reach && Lv.spinning.some(Boolean)) { const b = Math.sin(now / 70); g.strokeStyle = `rgba(255,95,138,${.6 + .4 * b})`; g.lineWidth = 2; g.strokeRect(5, 5, 66, 60); g.fillStyle = `rgba(255,40,90,${.08 + .06 * b})`; g.fillRect(6, 6, 64, 58); }
     // 大きい役のランプ（上のまんなか）
@@ -18343,14 +18342,14 @@ function payHtml95() {
   return `<div class="pay">${Object.entries(PAY95).map(([s, m]) => `<span><img src="${ASSETS[SYM95[s]]}" alt="">${esc(SN95[s])}×3　${m}倍</span>`).join("")}</div>
     <table class="vs95tb"><tr><th>役</th><th>おまかせ</th><th>目押し</th></tr>${P.map(([s, p], i) => `<tr><td>${esc(SN95[s])}</td><td>${pct(p)}</td><td>${pct(M[i][1])}</td></tr>`).join("")}</table>
     <p class="mtext small">5ライン固定。1回に賭けた枚数×倍率が払い戻し（最大${MAXPAY95.toLocaleString("ja-JP")}枚）。当たりはスピンした瞬間に決まり、リールはそれに合わせて止まる。<b>おまかせ</b>は当たりを必ずそろえる（還元率 約95%）。<b>目押し</b>は、大きい役（金のどんぐり・7・金塊）が当たっていると、ランプとルナが「狙え」と教えてくれる。大きい役は押した位置から4コマまでしかすべらないので、その絵柄が見えているうちに押さないとそろわない（取りこぼし）。小さい役は台が引きこんでそろえる。目押しの大きい役は当たりが1.05倍なので、取りこぼしなしで約97%。はずれのときは、どう押してもそろわない。</p>
-    <p class="mtext small"><b>押し順ベル</b>：ベルは、3つのリールを決まった順番（6とおり）で止めたときだけそろう（賭け金の4倍）。目押しでは自分で順番を当てる（「？」が出る）。おまかせは台が左から止める。<b>AT</b>（押し順ナビ）のあいだは、正しい順番を①②③で教えてくれる。</p>
-    <p class="mtext small"><b>特別な割り込み</b>（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の${KK95}回、そろった配当が2倍／AT＝次の${AT_LEN95}回、押し順ナビ（AT中に7か金のどんぐりで +${AT_ADD95}回の上乗せ）／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）。スピンのときに青・赤・虹に光ったら予告（虹は確定）。おまかせの7と金のどんぐりは、いちど外れたように見えて、逆回転でそろうことも。</p>`;
+    <p class="mtext small"><b>押し順ベル</b>：ベルは、3つのリールを決まった順番（6とおり）で止めたときだけそろう（賭け金の2倍）。押し順はナビが①②③で教えてくれる（目押しはそのとおりに押す・おまかせは台がその順に止める）。<b>AT</b>（ベルラッシュ）のあいだは、ベルが約4割の回で当たる。</p>
+    <p class="mtext small"><b>特別な割り込み</b>（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の${KK95}回、そろった配当が2倍／AT＝次の${AT_LEN95}回、ベルラッシュ（AT中に7か金のどんぐりで +${AT_ADD95}回の上乗せ）／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）。スピンのときに青・赤・虹に光ったら予告（虹は確定）。おまかせの7と金のどんぐりは、いちど外れたように見えて、逆回転でそろうことも。</p>`;
 }
 function chooseMode95() {
   openModal("VIPルーム　高レートスロット", "dark vip90 vs95", body => {
     body.innerHTML = `${staffSay13(charIcon13(NPC90.manager.cfg), "ようこそ、VIPの台へ。まずは、リールの止め方をお選びくださいませ。あとからでも変えられますわ")}
       <div class="vs95pick"><button class="gm92c" type="button" data-pm95="auto"><b>おまかせ</b><span>リールは台が止める。当たっていれば必ずそろう。のんびり楽しみたい方に</span></button>
-      <button class="gm92c" type="button" data-pm95="meoshi"><b>目押し</b><span>STOP で1つずつ、自分のタイミングと順番で止める。大きい役が当たるとルナが「狙え」と教えてくれるので、その絵柄をねらって止める（はずすと取りこぼし）。ベルは押し順を当てるとそろう。腕と勘の見せどころ</span></button></div>
+      <button class="gm92c" type="button" data-pm95="meoshi"><b>目押し</b><span>STOP で1つずつ、自分のタイミングと順番で止める。大きい役が当たるとルナが「狙え」と教えてくれるので、その絵柄をねらって止める（はずすと取りこぼし）。ベルはナビの順番どおりに押すとそろう。腕の見せどころ</span></button></div>
       <p class="mtext small">現金（1,000G札）だけ。1回に5・10・20・50枚。どちらでも、勝ちすぎることはない作りです（還元率は おまかせ 約95%・目押し 最大で約97%）。</p>`;
     body.querySelectorAll("[data-pm95]").forEach(b => b.onclick = () => { vs95().mode = b.dataset.pm95; saveWorld(); closeModal(); luna95("hello"); openSlot95(); });
   }, onClose91);
@@ -18366,7 +18365,7 @@ GUIDE54.push(["VIPのスロット", "s95_acorn", `
     <p>VIPルームの左の<b>高レートスロット</b>（ルナのとなりの金の台）。現金（1,000G札）だけで、1回に5・10・20・50枚。払い戻しは最大5,000枚。</p><ul>
     <li>はじめに<b>おまかせ</b>か<b>目押し</b>を選ぶ（あとから変えられる）。おまかせは当たりが必ずそろう。目押しは STOP（1・2・3キー）で自分で止める。大きい役（金のどんぐり・7・金塊）が当たると、ランプとルナが「狙え」と教えてくれるので、その絵柄が見えているうちに押す（小さい役は台が引きこむ）</li>
     <li>当たりはスピンした瞬間に決まっていて、はずれのときはどう押してもそろわない。目押しが上手でも、還元率は約97%まで（勝ちすぎない作り）</li>
-    <li>ベルは<b>押し順ベル</b>。決まった順番で止めないとそろわない。ふだんは当てずっぽう、<b>AT</b>（押し順ナビ）のあいだは①②③で順番を教えてくれる。AT中に7か金のどんぐりが当たると上乗せ</li>
+    <li>ベルは<b>押し順ベル</b>。決まった順番で止めないとそろわない。押し順はナビが①②③で教えてくれる。<b>AT</b>（ベルラッシュ）のあいだはベルがたくさん当たる。AT中に7か金のどんぐりが当たると上乗せ</li>
     <li>スピンのときに光るのは予告（青→赤→虹。虹は確定）。確変やATに入る前は、台がビカビカ光る。おまかせの7と金のどんぐりは、外れたと思ったら逆回転でそろうことも</li>
     <li>フリーズ・確変・AT・全回転は、VIPだと画面いっぱいの演出つき。大当たりでは金のどんぐりが降ってくる。ルナの声は台の「ルナの声」でON・OFF</li>
     <li>勝ち負けは、ほかのカジノと同じく番付・今日の負け上限・会員ランクにつながる。勝ったあとはダブルアップもできる</li></ul>`]);

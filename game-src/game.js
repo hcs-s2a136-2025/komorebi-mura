@@ -66,7 +66,9 @@ function renderChar(cfg, dir, frame) {
   const L = [80, 64, 50, 30];
   const hc = (i, y) => special ? hsl((y * 30 + shift * 30) % 360, i === 3 ? 60 : 88, L[i]) : hcRaw[i];
   const g = Array.from({ length: 16 }, () => Array(16).fill(null));
-  const put = (x, y, c) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) g[y][x] = c; };
+  // v118：どのドットがどの部品か（1体 2下 3靴 4上 5髪 6帽子 7メガネ）。32ドットで服と顔を描きなおすときに使う
+  const own = new Uint8Array(256); let lay = 1;
+  const put = (x, y, c) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) { g[y][x] = c; own[y * 16 + x] = !c ? 0 : lay === 5 && s && (c === s[0] || c === s[1]) ? 1 : lay; } };
   const grid = (rows, y0, map) => rows.forEach((row, j) => { for (let i = 0; i < 16; i++) { const c = map[row[i]]; if (c) put(i, y0 + j, c); } });
   const s = CHAR.SKIN[cfg.skin];
   const clothPal = name => { const v = CHAR.CLOTH[name] || CHAR.CLOTH["青"]; if (typeof v !== "string") return () => v; const sh = v === "gaming" ? cShift : 0; return (x, y) => [0, 1, 2, 3].map(i => hsl((x * 24 + y * 34 + sh * 30) % 360, i === 3 ? 55 : 85, [80, 64, 50, 30][i])); };
@@ -74,11 +76,11 @@ function renderChar(cfg, dir, frame) {
   const gridC = (rows, y0, pal, idx, extra) => rows.forEach((row, j) => { for (let i = 0; i < 16; i++) { const ch = row[i]; if (ch in idx) put(i, y0 + j, pal(i, y0 + j)[idx[ch]]); else if (extra && extra[ch]) put(i, y0 + j, extra[ch]); } });
   const top = CHAR.TOPS[cfg.top];
   grid(CHAR.BODY, 0, { "1": s[0], "2": s[1], o: s[2], e: [44, 32, 48], r: [246, 150, 140] });
-  if (!top.covers) gridC(CHAR.BOTTOMS[cfg.bottom], 13, bP, { p: 1, q: 2, P: 3 });
+  lay = 2; if (!top.covers) gridC(CHAR.BOTTOMS[cfg.bottom], 13, bP, { p: 1, q: 2, P: 3 });
   const SH = SHOEC[cfg.shoesc] || SHOE;
-  grid([CHAR.SHOES], 15, { Z: SH });
-  gridC(top.rows, 10, tP, { u: 0, t: 1, v: 2, T: 3 }, CHAR.WHITE);
-  const hair = CHAR.HAIR[cfg.hair];
+  lay = 3; grid([CHAR.SHOES], 15, { Z: SH });
+  lay = 4; gridC(top.rows, 10, tP, { u: 0, t: 1, v: 2, T: 3 }, CHAR.WHITE);
+  lay = 5; const hair = CHAR.HAIR[cfg.hair];
   const HI = { b: 0, a: 1, c: 2, A: 3 };
   hair.forEach((row, y) => { for (let x = 0; x < 16; x++) if (row[x] in HI) put(x, y, hc(HI[row[x]], y)); });
   const side = dir === "left" || dir === "right";
@@ -105,14 +107,14 @@ function renderChar(cfg, dir, frame) {
       if (ch === "o") put(x, y, hc(3, y)); else if (ch !== ".") put(x, y, y === 8 ? hc(2, y) : hc(1, y));
     }
   }
-  const hat = HATS[cfg.hat]; if (hat) hat.rows.forEach((row, y) => { for (let x = 0; x < 16; x++) { const c = hat.pal[row[x]]; if (c) put(x, y, c); } });
-  if (cfg.acc === "メガネ" && dir !== "up") { const F = [70, 56, 66]; if (side) { put(4, 6, F); put(6, 6, F); put(5, 5, F); put(5, 7, F); } else { for (const x of [4, 6, 9, 11]) put(x, 6, F); put(7, 6, F); put(8, 6, F); put(5, 5, F); put(10, 5, F); put(5, 7, F); put(10, 7, F); } }
+  lay = 6; const hat = HATS[cfg.hat]; if (hat) hat.rows.forEach((row, y) => { for (let x = 0; x < 16; x++) { const c = hat.pal[row[x]]; if (c) put(x, y, c); } });
+  lay = 7; if (cfg.acc === "メガネ" && dir !== "up") { const F = [70, 56, 66]; if (side) { put(4, 6, F); put(6, 6, F); put(5, 5, F); put(5, 7, F); } else { for (const x of [4, 6, 9, 11]) put(x, 6, F); put(7, 6, F); put(8, 6, F); put(5, 5, F); put(10, 5, F); put(5, 7, F); put(10, 7, F); } }
   if ((cfg.glasses || cfg.acc === "サングラス") && dir !== "up") {
     const G = [24, 24, 32];
     if (side) { for (let x = 3; x <= 7; x++) put(x, 6, G); put(4, 7, G); put(5, 7, G); }
     else { for (let x = 4; x <= 11; x++) put(x, 6, G); put(5, 7, G); put(6, 7, G); put(9, 7, G); put(10, 7, G); put(5, 6, [120, 130, 160]); put(9, 6, [120, 130, 160]); }
   }
-  if (frame === 1) { put(5, 15, null); put(6, 15, null); put(5, 14, SH); put(6, 14, SH); }
+  lay = 3; if (frame === 1) { put(5, 15, null); put(6, 15, null); put(5, 14, SH); put(6, 14, SH); }
   if (frame === 2) { put(9, 15, null); put(10, 15, null); put(9, 14, SH); put(10, 14, SH); }
   const c = document.createElement("canvas"); c.width = c.height = 16;
   const cx = c.getContext("2d"); const id = cx.createImageData(16, 16);
@@ -120,8 +122,11 @@ function renderChar(cfg, dir, frame) {
     const col = g[y][dir === "right" ? 15 - x : x]; if (!col) continue;
     const i = (y * 16 + x) * 4; id.data[i] = col[0]; id.data[i + 1] = col[1]; id.data[i + 2] = col[2]; id.data[i + 3] = 255;
   }
-  cx.putImageData(id, 0, 0); cache.set(key, c); return c;
+  cx.putImageData(id, 0, 0); cache.set(key, c);
+  const o2 = new Uint8Array(256); for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) o2[y * 16 + x] = own[y * 16 + (dir === "right" ? 15 - x : x)];
+  own16.set(c, o2); return c;
 }
+const own16 = new WeakMap();
 const POOLS = { skin: CHAR.SKIN, hair: CHAR.HAIR, hairc: CHAR.HAIRC, top: CHAR.TOPS, topc: CHAR.CLOTH, bottom: CHAR.BOTTOMS, bottomc: CHAR.CLOTH, hat: HATS, acc: ACCS, shoesc: SHOEC };
 const randomCfg = () => { const c = Object.fromEntries(Object.entries(POOLS).map(([k, p]) => [k, pick(p)])); if (!hatUnlocked(c.hat)) c.hat = HAT_FREE[rnd(HAT_FREE.length)]; if (!topUnlocked(c.top)) c.top = "Tシャツ"; return c; };
 const DEFAULT = { skin: "やや明るめ", hair: "ショート", hairc: "ブラウン", top: "Tシャツ", topc: "青", bottom: "パンツ", bottomc: "茶", hat: "なし", acc: "なし", shoesc: "茶" };
@@ -1542,7 +1547,7 @@ function drawEnt(e) {
   if (e === player && F6?.inv > 0 && Math.floor(performance.now() / 70) % 2) return;
   const fr = e.moving ? [0, 1, 0, 2][Math.floor(e.step) % 4] : 0;
   const bob = e === player && busy && ["hoe", "axe", "pick"].includes(busy.kind) && busy.t / busy.dur > .7 ? 1 : 0;
-  ctx.drawImage(renderChar(e === player ? cfg : e.cfg, e.dir, fr), Math.round(e.px), Math.round(e.py) - (fr ? 1 : 0) + bob);
+  ctx.drawImage(charImg118(e === player ? cfg : e.cfg, e.dir, fr), Math.round(e.px), Math.round(e.py) - (fr ? 1 : 0) + bob, 16, 16);
 }
 // 画面に映す縦のはんい（村と北の丘は同じ配列だけど、となりあって見えないように分ける）
 function camBand() {
@@ -3378,7 +3383,7 @@ function openPrize() {
       body.innerHTML = `<p class="mtext">「勝ったぶんは、ここで形にしていきませんか？」</p>
       <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、まとめて交換できます）</span></p>
       <div class="list">${PRIZES.map(([id, c]) => {
-        if (id.startsWith("hat:")) { const h = id.slice(4); return `<div class="li"><img src="${renderChar({ ...cfg, hat: h }, "down", 0).toDataURL()}" alt=""><span class="nm">${h}（着せ替え）<span class="sub2">メダル${c}枚</span></span><span class="acts">${hatUnlocked(h) ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換</button>`}</span></div>`; }
+        if (id.startsWith("hat:")) { const h = id.slice(4); return `<div class="li"><img src="${charImg118({ ...cfg, hat: h }, "down", 0).toDataURL()}" alt=""><span class="nm">${h}（着せ替え）<span class="sub2">メダル${c}枚</span></span><span class="acts">${hatUnlocked(h) ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換</button>`}</span></div>`; }
         const q = Math.max(1, Math.min(maxQ(c), prizeQty[id] || 1)); prizeQty[id] = q;
         return itemLi(id, `メダル${c}枚（1個）${ITEMS[id].furn ? "・家具" : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><b class="pzq">${q}</b><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${c * q}枚）</button>`);
       }).join("")}</div>`;
@@ -3939,7 +3944,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.64.0";
+const CLIENT_VERSION = "0.65.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -5097,7 +5102,7 @@ function goTo13(id) {
 openBus = openBus13;
 
 // ---------- shop helpers ----------
-const wearIcon13 = (key, v) => renderChar({ ...cfg, [key]: v, ...(key === "top" && CHAR.TOPS[v].covers ? {} : {}) }, "down", 0).toDataURL();
+const wearIcon13 = (key, v) => charImg118({ ...cfg, [key]: v, ...(key === "top" && CHAR.TOPS[v].covers ? {} : {}) }, "down", 0).toDataURL();
 const owned13 = (key, v) => key === "top" ? topUnlocked(v) : hatUnlocked(v);
 function buyWear13(key, v, p) {
   if (world.money < p || owned13(key, v)) return false;
@@ -5120,7 +5125,7 @@ function wireBuy13(body, reopen) {
   body.querySelectorAll("[data-bi]").forEach(b => b.onclick = () => { const id = b.dataset.bi, p = +b.dataset.p; if (world.money < p) return; if (addItem(id, 1)) { addMoney(-p); toast(ITEMS[id].icon, `${ITEMS[id].name}を買った`); closeModal(); reopen(); } });
 }
 const staffSay13 = (img, text) => `<div class="say13">${img ? `<img src="${img}" alt="">` : ""}<p>${text}</p></div>`;
-const charIcon13 = c => renderChar({ ...DEFAULT, ...c }, "down", 0).toDataURL();
+const charIcon13 = c => charImg118({ ...DEFAULT, ...c }, "down", 0).toDataURL();
 const STAFF13 = {
   lumi: { skin: "色白", hair: "ボブ", hairc: "黒", top: "ドレス", topc: "白", hat: "ベレー帽", shoesc: "黒" },
   home: { skin: "小麦色", hair: "ショート", hairc: "茶" in CHAR.HAIRC ? "茶" : "ブラウン", top: "セーター", topc: "緑", bottom: "パンツ", bottomc: "茶", hat: "なし" },
@@ -5496,7 +5501,7 @@ K.jpWon = amount => { if (F8.connected) send8({ type: "jpWin", amount }); };
 const giftWait14 = new Map();
 function openGift14(e) {
   openModal(`${e.name}にお小遣いを渡す`, "shop", body => {
-    body.innerHTML = `<div class="say13"><img src="${renderChar(cleanCfg(e.cfg), "down", 0).toDataURL()}" alt=""><p>${esc(e.name)}に、お金を渡せるよ。届いたら自分の所持金から引かれます。</p></div>
+    body.innerHTML = `<div class="say13"><img src="${charImg118(cleanCfg(e.cfg), "down", 0).toDataURL()}" alt=""><p>${esc(e.name)}に、お金を渡せるよ。届いたら自分の所持金から引かれます。</p></div>
       <p class="mtext">所持金 <b>${fmt(world.money)}</b></p>
       <div class="row2">${[100, 500, 1000, 5000].map(v => `<button class="chip" type="button" data-gv="${v}" ${world.money < v ? "disabled" : ""}>${fmt(v)}</button>`).join("")}</div>
       <label class="lbl" for="giftN">渡す金額</label><input id="giftN" type="number" min="1" max="100000" step="1" value="${Math.min(500, world.money)}">
@@ -6017,6 +6022,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.65.0", date: "2026/11/05", title: "キャラのドットを細かく", items: [
+    "キャラを、いままでの4倍の細かさ（1ドットを4つ）で描くようにした。形と大きさはそのままで、顔と服がくっきり見えるよ",
+    "服は1着ずつ細かい絵にした。ボーダーのしま・チェック・セーラー服の襟・着物の帯・ボタンやフリルなど、服の柄がわかるように",
+    "目・口・ほっぺも細かく描きなおした（まつげ・目の光・口の形）",
+    "スマホが重いときは、設定の「キャラの細かいドット」をOFFにすると、前の見た目にもどるよ",
+  ] },
   { v: "0.64.0", date: "2026/11/05", title: "闘鶏の賭けとポイント", items: [
     "果たし状が受けられたとき、村にほかの人がいれば90秒の「賭けの時間」。戦うふたりのほかの人は、どっちが勝つか賭けられるよ（1勝負に1回・100〜5,000G）",
     "勝った子の持ち主には賭けられた合計の3割。残りの7割は、当てた人で賭けた額に応じて分ける（だれも当てなければ7割はなし）。賭けの勝ち負けはカジノの番付と負け上限にも数える",
@@ -7197,7 +7208,7 @@ drawEnt = function (e) {
   if (!e.kid) { _drawEnt25(e); return; }
   ctx.fillStyle = "rgba(20,30,20,.28)"; ctx.fillRect(e.px + 5, e.py + 15, 6, 1);
   const fr = e.moving ? [0, 1, 0, 2][Math.floor(e.step) % 4] : 0;
-  ctx.drawImage(renderChar(e.cfg, e.dir, fr), 0, 0, 16, 16, Math.round(e.px) + 2, Math.round(e.py) + 4 - (fr ? 1 : 0), 12, 12);
+  ctx.drawImage(charImg118(e.cfg, e.dir, fr), Math.round(e.px) + 2, Math.round(e.py) + 4 - (fr ? 1 : 0), 12, 12);
 };
 const _update25 = F6.update;
 F6.update = dt => {
@@ -7355,12 +7366,12 @@ function openSalon26() {
       const line = msg || (key === "bangs" ? "前髪ひとつで、顔の印象がぐっと変わるんですよ" : key === "hair" ? "今日はどんな感じにしましょう？ 新しいスタイルも、似合うと思いますよ" : "カラーで印象ってぜんぜん変わるんです。季節に合わせるのも素敵ですね");
       body.innerHTML = `<div class="salonhead26"><img src="${charIcon13(INT_NPC.stylist.cfg)}" alt=""><div><p class="salonname26">Stylist  MINATO</p><p>「${esc(line)}」</p></div></div>
         <div class="mtabs"><button class="chip" type="button" data-st="hair" aria-pressed="${key === "hair"}">カット（髪型）</button><button class="chip" type="button" data-st="bangs" aria-pressed="${key === "bangs"}">前髪</button><button class="chip" type="button" data-st="hairc" aria-pressed="${key === "hairc"}">カラー（髪色）</button></div>
-        <div class="salonprev26">${["down", "left", "right", "up"].map(d => `<img src="${renderChar(prev, d, 0).toDataURL()}" alt="">`).join("")}</div>
+        <div class="salonprev26">${["down", "left", "right", "up"].map(d => `<img src="${charImg118(prev, d, 0).toDataURL()}" alt="">`).join("")}</div>
         <p class="mtext small salonnow26">いま：${esc(cur)}　→　えらんだもの：<b>${esc(pickV)}</b></p>
         <div class="salongrid26">${Object.keys(pool).map(v => {
           const inf = WEAR26[key][v], o = wearOwned26(key, v);
           const tag = !inf ? "着せ替えでも選べる" : o ? "お持ちのスタイル" : `${fmt(inf.salon)}・サロン限定`;
-          const ic = key === "hair" || key === "bangs" ? renderChar({ ...cfg, [key]: v, hat: "なし" }, "down", 0).toDataURL() : null;
+          const ic = key === "hair" || key === "bangs" ? charImg118({ ...cfg, [key]: v, hat: "なし" }, "down", 0).toDataURL() : null;
           const sw = key === "hairc" ? (typeof pool[v] === "string" ? SPECIAL_SWATCH[v] : `rgb(${pool[v][1].join(",")})`) : "";
           return `<button type="button" class="salonopt26${v === pickV ? " on" : ""}${inf && !o ? " ex" : ""}" data-sv="${esc(v)}">${ic ? `<img src="${ic}" alt="">` : `<i style="background:${sw}"></i>`}<span>${esc(v)}</span><small>${tag}</small></button>`;
         }).join("")}</div>
@@ -7405,7 +7416,7 @@ function pull26() {
   }
   return pool[rnd(pool.length)];
 }
-const wearIcon26 = (key, v) => { const c = { ...cfg, [key]: v }; if (key === "bottom" && CHAR.TOPS[c.top].covers) c.top = "Tシャツ"; return renderChar(c, "down", 0).toDataURL(); };
+const wearIcon26 = (key, v) => { const c = { ...cfg, [key]: v }; if (key === "bottom" && CHAR.TOPS[c.top].covers) c.top = "Tシャツ"; return charImg118(c, "down", 0).toDataURL(); };
 function openWGacha26(results) {
   openModal("きせかえガチャ", "salon26", body => {
     const pool = gachaPool26();
@@ -7659,7 +7670,7 @@ function rewardText28(spec) {
 }
 function rewardIcon28(spec) {
   const a = String(spec || "").split(",").filter(Boolean)[0]?.split(":") || [];
-  if (a[0] === "wear") return renderChar({ ...cfg, [a[1]]: a.slice(2).join(":") }, "down", 0).toDataURL();
+  if (a[0] === "wear") return charImg118({ ...cfg, [a[1]]: a.slice(2).join(":") }, "down", 0).toDataURL();
   if (a[0] === "item" && ITEMS[a[1]]) return ASSETS[ITEMS[a[1]].icon];
   return ASSETS[a[0] === "medal" ? "goldbar" : "coin"];
 }
@@ -7993,7 +8004,7 @@ const STAFF30 = {
 function wearRow30(key, v, p) {
   const have = wearOwned26(key, v), on = cfg[key] === v;
   const pv = { ...cfg, [key]: v }; if (key === "bottom" && CHAR.TOPS[pv.top]?.covers) pv.top = "Tシャツ";
-  return `<div class="li"><img src="${renderChar(pv, key === "acc" && BACK34.has(v) ? "up" : "down", 0).toDataURL()}" alt=""><span class="nm">${esc(v)}<span class="sub2">${WEAR_LABEL26[key]}・${fmt(p)}${have ? "・持っている" : ""}</span></span><span class="acts">${have
+  return `<div class="li"><img src="${charImg118(pv, key === "acc" && BACK34.has(v) ? "up" : "down", 0).toDataURL()}" alt=""><span class="nm">${esc(v)}<span class="sub2">${WEAR_LABEL26[key]}・${fmt(p)}${have ? "・持っている" : ""}</span></span><span class="acts">${have
     ? `<button class="btn light" type="button" data-w30="${key}:${esc(v)}" ${on ? "disabled" : ""}>${on ? "着ている" : "着てみる"}</button>`
     : `<button class="btn" type="button" data-b30="${key}:${esc(v)}" data-p="${p}" ${world.money < p ? "disabled" : ""}>買う</button>`}</span></div>`;
 }
@@ -8085,7 +8096,7 @@ function openSnap30() {
     else { msg = sc >= 3 ? "うわ、今日いちばんのコーデかも。ぜひ一枚、撮らせてください" : sc >= 1.5 ? "いいね、そのコーデ。雑誌に載せてもいいかな？" : "お、さりげなくおしゃれだね。一枚どう？";
       btn = `<button class="btn" type="button" id="snapGo">撮ってもらう（モデル料 ${fmt(pay)}）</button>`; }
     body.innerHTML = staffSay13(charIcon13(photog), msg) +
-      `<div class="snap30"><img src="${renderChar(cfg, "down", 0).toDataURL()}" alt=""><div><b>今日のコーデ</b><br>${parts.length ? parts.map(esc).join("・") : "（表参道らしいアイテムなし）"}<br><small>おしゃれ度 ${sc}　表参道のお店の服・帽子・アクセサリーほど高くなる</small></div></div>${btn}`;
+      `<div class="snap30"><img src="${charImg118(cfg, "down", 0).toDataURL()}" alt=""><div><b>今日のコーデ</b><br>${parts.length ? parts.map(esc).join("・") : "（表参道らしいアイテムなし）"}<br><small>おしゃれ度 ${sc}　表参道のお店の服・帽子・アクセサリーほど高くなる</small></div></div>${btn}`;
     const go = body.querySelector("#snapGo");
     if (go) go.onclick = () => {
       if (world.snap30 === world.day) return;
@@ -8573,7 +8584,7 @@ function iconChips34() {
       b.classList.add("ic34");
       b.innerHTML = `<canvas width="32" height="32"></canvas><span>${esc(v)}${locked ? "<small>未入手</small>" : ""}</span>`;
       const x = b.firstChild.getContext("2d"); x.imageSmoothingEnabled = false;
-      try { const im = renderChar(pv, key === "acc" && BACK34.has(v) ? "up" : "down", 0); if (HEAD34.has(key)) x.drawImage(im, 2, 0, 12, 12, 4, 4, 24, 24); else x.drawImage(im, 0, 0, 16, 16, 0, 0, 32, 32); } catch {}
+      try { const im = charImg118(pv, key === "acc" && BACK34.has(v) ? "up" : "down", 0), k = im.width / 16; if (HEAD34.has(key)) x.drawImage(im, 2 * k, 0, 12 * k, 12 * k, 4, 4, 24, 24); else x.drawImage(im, 0, 0, im.width, im.height, 0, 0, 32, 32); } catch {}
     });
   }
 }
@@ -9466,13 +9477,13 @@ openSalon26 = function () {
       const cur = look[key];
       body.innerHTML = `<div class="salonhead26"><img src="${charIcon13(INT_NPC.stylist.cfg)}" alt=""><div><p class="salonname26">Stylist  MINATO</p><p>「${esc(line)}」</p></div></div>
         <div class="mtabs">${KEYS.map(k => `<button class="chip" type="button" data-st="${k}" aria-pressed="${k === key}">${LABEL[k]}${changes.includes(k) ? " ●" : ""}</button>`).join("")}</div>
-        <div class="salonprev26">${["down", "left", "right", "up"].map(d => `<img src="${renderChar({ ...look, hat: "なし" }, d, 0).toDataURL()}" alt="">`).join("")}</div>
+        <div class="salonprev26">${["down", "left", "right", "up"].map(d => `<img src="${charImg118({ ...look, hat: "なし" }, d, 0).toDataURL()}" alt="">`).join("")}</div>
         <div class="salonsum39">${KEYS.map(k => { const ch = changes.includes(k), v = ch ? picks[k] : cfg[k], p = ch ? priceOf(k, v) : 0;
           return `<span class="${ch ? "ch" : ""}">${LABEL[k]}：<b>${esc(v)}</b>${ch ? `<small>${p ? fmt(p) : "無料"}</small>` : ""}</span>`; }).join("")}</div>
         <div class="salongrid26">${Object.keys(pool).map(v => {
           const inf = WEAR26[key]?.[v], o = wearOwned26(key, v);
           const tag = !inf ? "着せ替えでも選べる" : o ? "お持ちのスタイル" : `${fmt(inf.salon)}・サロン限定`;
-          const ic = key === "hairc" ? null : renderChar({ ...look, [key]: v, hat: "なし" }, "down", 0).toDataURL();
+          const ic = key === "hairc" ? null : charImg118({ ...look, [key]: v, hat: "なし" }, "down", 0).toDataURL();
           const sw = key === "hairc" ? (typeof pool[v] === "string" ? SPECIAL_SWATCH[v] : `rgb(${pool[v][1].join(",")})`) : "";
           return `<button type="button" class="salonopt26${v === cur ? " on" : ""}${inf && !o ? " ex" : ""}" data-sv="${esc(v)}">${ic ? `<img src="${ic}" alt="">` : `<i style="background:${sw}"></i>`}<span>${esc(v)}</span><small>${tag}</small></button>`;
         }).join("")}</div>
@@ -9811,7 +9822,7 @@ function openWhereAll40() {
     const w = wearWhere40(key, v); (groups[w.place] = groups[w.place] || []).push({ key, v, text: w.text });
   }
   const places = PLACE_ORDER40.filter(p => groups[p]).concat(Object.keys(groups).filter(p => !PLACE_ORDER40.includes(p)));
-  const icon = (key, v) => { try { const im = renderChar({ ...cfg, [key]: v, ...(key === "hair" || key === "bangs" ? { hat: "なし" } : {}) }, key === "acc" && BACK34.has(v) ? "up" : "down", 0); return im.toDataURL(); } catch { return ""; } };
+  const icon = (key, v) => { try { const im = charImg118({ ...cfg, [key]: v, ...(key === "hair" || key === "bangs" ? { hat: "なし" } : {}) }, key === "acc" && BACK34.has(v) ? "up" : "down", 0); return im.toDataURL(); } catch { return ""; } };
   openModal("まだ持っていない物の入手方法", "shop", body => {
     body.innerHTML = places.length ? `<p class="mtext">お店の名前ごとにまとめたよ。表参道・都会・秋葉原・みなと町へは、村のバス停からバスで行けます。</p>` +
       places.map(p => `<h3 class="lbl">${esc(p)}（${groups[p].length}）</h3><div class="list">${groups[p].map(x => `<div class="li"><img src="${icon(x.key, x.v)}" alt=""><span class="nm">${esc(x.v)}<span class="sub2">${WLABEL40[x.key]}・${esc(x.text)}</span></span></div>`).join("")}</div>`).join("")
@@ -11518,8 +11529,8 @@ function dive55() {
     }
     for (const j of jellies) { g.globalAlpha = j.hit ? .5 : .85; g.fillStyle = "#f0c8f0"; g.beginPath(); g.arc(j.x, j.y, 6, Math.PI, 0); g.fill(); g.fillStyle = "#e0a8e8"; for (let k = -4; k <= 4; k += 2) g.fillRect(j.x + k, j.y, 1, 5 + Math.round(Math.sin(now / 200 + k) * 2)); g.globalAlpha = 1; }
     for (const b of bubbles) { g.strokeStyle = "rgba(255,255,255,.7)"; g.beginPath(); g.arc(b.x, b.y, 1.5, 0, 7); g.stroke(); }
-    const ch = renderChar(cfg, dv.y < SURF ? "down" : dv.dir === "left" ? "left" : dv.dir === "right" ? "right" : "down", Math.floor(now / 180) % 4 === 1 ? 1 : 0);
-    g.drawImage(ch, Math.round(dv.x - 8), Math.round(dv.y - 10)); g.fillStyle = "#5ad8f0"; g.fillRect(Math.round(dv.x - 4), Math.round(dv.y - 6), 8, 2);
+    const ch = charImg118(cfg, dv.y < SURF ? "down" : dv.dir === "left" ? "left" : dv.dir === "right" ? "right" : "down", Math.floor(now / 180) % 4 === 1 ? 1 : 0);
+    g.drawImage(ch, Math.round(dv.x - 8), Math.round(dv.y - 10), 16, 16); g.fillStyle = "#5ad8f0"; g.fillRect(Math.round(dv.x - 4), Math.round(dv.y - 6), 8, 2);
     if (msgT > 0 && msg) { g.font = "10px sans-serif"; g.textAlign = "center"; g.fillStyle = "rgba(0,0,0,.45)"; const w = g.measureText(msg).width + 10; g.fillRect(W / 2 - w / 2, 28, w, 14); g.fillStyle = "#fff"; g.fillText(msg, W / 2, 38); }
     if (!dove) { g.font = "10px sans-serif"; g.textAlign = "center"; g.fillStyle = "#fff"; g.fillText("↓ で潜ろう", W / 2, 54); }
     const br = $("dv55br"); if (br) { br.style.width = Math.max(0, breath) + "%"; br.style.background = breath < 30 ? "#ff6b6b" : breath < 60 ? "#ffd86a" : "#7fd8ff"; }
@@ -12409,7 +12420,7 @@ function openCosme62() {
         <div class="cos62r">
           <div class="cos62pal">${PAL62.map((p, i) => `<button type="button" class="cos62c${i === cos62.col ? " on" : ""}" data-c="${i}" title="${p ? p[1] : "消しゴム"}">${p ? `<i style="background:${p[0]}"></i>` : `<i class="er"></i>`}<span>${p ? p[1] : "消す"}</span></button>`).join("")}</div>
           <div class="salonprev26" id="cos62prev"></div>
-          <div class="cos62looks">${world.looks62.map((l, i) => `<div><img src="${l ? renderChar({ ...cfg, paint: l }, "down", 0).toDataURL() : charIcon13({ ...cfg, paint: undefined })}" alt="" class="${l ? "" : "empty"}"><button class="btn light" type="button" data-lsave="${i}">ほぞん</button><button class="btn light" type="button" data-lload="${i}" ${l ? "" : "disabled"}>よびだす</button></div>`).join("")}</div>
+          <div class="cos62looks">${world.looks62.map((l, i) => `<div><img src="${l ? charImg118({ ...cfg, paint: l }, "down", 0).toDataURL() : charIcon13({ ...cfg, paint: undefined })}" alt="" class="${l ? "" : "empty"}"><button class="btn light" type="button" data-lsave="${i}">ほぞん</button><button class="btn light" type="button" data-lload="${i}" ${l ? "" : "disabled"}>よびだす</button></div>`).join("")}</div>
         </div>
       </div>
       <p class="mtext small" id="cos62msg">マスをタップ（なぞる）すると、えらんだ色がのるよ。後ろ向きのときは見えなくて、横向きのときは顔の手前半分が見える</p>
@@ -12428,7 +12439,7 @@ function openCosme62() {
       for (let j = 1; j < PH62; j++) { g.beginPath(); g.moveTo(0, j * CELL + .5); g.lineTo(W, j * CELL + .5); g.stroke(); }
       if (cos62.mirror) { g.strokeStyle = "rgba(240,90,140,.5)"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); g.setLineDash([]); }
       const pc = { ...cfg, paint: validPaint62(str()) ? str() : undefined };
-      body.querySelector("#cos62prev").innerHTML = ["down", "left", "right"].map(d => `<img src="${renderChar(pc, d, 0).toDataURL()}" alt="">`).join("");
+      body.querySelector("#cos62prev").innerHTML = ["down", "left", "right"].map(d => `<img src="${charImg118(pc, d, 0).toDataURL()}" alt="">`).join("");
       const same = (validPaint62(str()) ? str() : null) === (cfg.paint || null);
       const go = body.querySelector("#cos62go"); go.disabled = same || !validPaint62(str()) || world.money < MAKE_PRICE62;
       go.textContent = same && cfg.paint ? "いまのメイクです" : `このメイクにする（${fmt(MAKE_PRICE62)}）`;
@@ -13675,7 +13686,7 @@ function openFriends76() {
       if (!body.isConnected) return;
       const L = [...remotes.values()].filter(e => e && e.name);
       body.innerHTML = !F8.connected ? `<p class="mtext">オンラインにつなぐと、いまいる人が見られるよ。</p>` : `<p class="mtext">いまオンラインの人：${L.length}人</p>
-        <div class="list">${L.length ? L.map(e => `<div class="li"><img src="${renderChar({ ...DEFAULT, ...(e.cfg || {}) }, "down", 0).toDataURL()}" alt=""><span class="nm">${e.cfg && e.cfg.tt ? `「${esc(e.cfg.tt)}」` : ""}${esc(e.name)}<span class="sub2">${esc(placeName76(e.rmap))}</span></span><span class="acts">${F76.friendActs ? F76.friendActs(e) : ""}</span></div>`).join("") : `<p class="note">いまはだれもいないみたい</p>`}</div>`;
+        <div class="list">${L.length ? L.map(e => `<div class="li"><img src="${charImg118({ ...DEFAULT, ...(e.cfg || {}) }, "down", 0).toDataURL()}" alt=""><span class="nm">${e.cfg && e.cfg.tt ? `「${esc(e.cfg.tt)}」` : ""}${esc(e.name)}<span class="sub2">${esc(placeName76(e.rmap))}</span></span><span class="acts">${F76.friendActs ? F76.friendActs(e) : ""}</span></div>`).join("") : `<p class="note">いまはだれもいないみたい</p>`}</div>`;
       if (F76.wireFriend) F76.wireFriend(body);
     };
     draw();
@@ -15527,13 +15538,13 @@ function openStage85() {
       const later = (fn, ms) => { const t = setTimeout(() => { if (alive) fn(); }, ms); timers.push(t); return t; };
       body.innerHTML = `<div class="stg85"><div class="stg85top"><span id="s85r">ラウンド 1</span><span id="s85l"></span></div>
         <div class="stg85gauge"><i id="s85g"></i></div>
-        <div class="stg85stage"><canvas id="s85cv" width="16" height="16"></canvas></div>
+        <div class="stg85stage"><canvas id="s85cv" width="32" height="32"></canvas></div>
         <div class="stg85seq" id="s85seq"></div>
         <p class="mtext stg85msg" id="s85msg">よく見てね</p>
         <div class="stg85pad">${STG_DIRS85.map(([, a], i) => `<button class="btn light stg85b" type="button" data-d="${i}" aria-label="${a}">${a}</button>`).join("")}</div></div>`;
       const cv = body.querySelector("#s85cv"), cx = cv.getContext("2d"), msg = body.querySelector("#s85msg"), seqEl = body.querySelector("#s85seq");
       const pads = [...body.querySelectorAll("[data-d]")];
-      const pose = (dir, f = 0) => { cx.clearRect(0, 0, 16, 16); cx.drawImage(renderChar(cfg, dir, f), 0, 0); };
+      const pose = (dir, f = 0) => { cx.clearRect(0, 0, 32, 32); cx.drawImage(charImg118(cfg, dir, f), 0, 0, 32, 32); };
       const hud = () => { body.querySelector("#s85r").textContent = `ラウンド ${Math.max(1, round)}／${STG_MAXR85}`; body.querySelector("#s85l").textContent = "♥".repeat(lives) + "♡".repeat(STG_LIVES85 - lives); body.querySelector("#s85g").style.width = Math.round(cleared / STG_MAXR85 * 100) + "%"; };
       const boxes = lit => { seqEl.innerHTML = seq.map((d, k) => `<b class="${lit === k ? "on" : ""}">${phase === "input" && k < pos ? STG_DIRS85[d][1] : phase === "show" && lit === k ? STG_DIRS85[d][1] : "？"}</b>`).join(""); };
       const flash = (i, ms = 220) => { pads[i].classList.add("on"); later(() => pads[i].classList.remove("on"), ms); };
@@ -18991,7 +19002,7 @@ function playWalk97() {
     const px = 190 + nd * 50, img = IMG[P.sprite];
     g.strokeStyle = "#d83a3a"; g.lineWidth = 2; g.beginPath(); g.moveTo(110, 122); g.quadraticCurveTo((110 + px) / 2, 128 + (1 - Math.abs(nd)) * 10, px, 130); g.stroke();
     if (img) g.drawImage(img, px - img.width, 118 - img.height * 2 + 26, img.width * 2, img.height * 2);
-    g.drawImage(renderChar(cfg, "right", Math.floor(t * 5) % 2), 84, 104, 32, 32);
+    g.drawImage(charImg118(cfg, "right", Math.floor(t * 5) % 2), 84, 104, 32, 32);
     // ゲージ
     g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(40, 10, 240, 16); g.fillStyle = "#6ad06a"; g.fillRect(40 + 120 - 87, 12, 174, 12); g.fillStyle = "#e86a5a"; g.fillRect(40, 12, 16, 12); g.fillRect(264, 12, 16, 12);
     g.fillStyle = "#ffd86a"; g.fillRect(40 + 120 + nd * 116 - 2, 8, 4, 20);
@@ -20416,7 +20427,7 @@ function openIdol102(note) {
       body.querySelectorAll("[data-sg102]").forEach(b => b.onclick = () => { idol102().song = +b.dataset.sg102; saveWorld(); draw(); });
       body.querySelectorAll("[data-of102]").forEach(b => b.onclick = () => { idol102().outfit = +b.dataset.of102; saveWorld(); draw(); });
       const sk = body.querySelector("#id102skip"); if (sk) sk.onclick = () => { sk.disabled = true; spend98(5, "idolwait", ok => { if (ok) { idol102().wait = 0; saveWorld(); draw("レッスン待ちが終わった！"); } else draw(); }); };
-      const cv = body.querySelector("#id102cv"); if (cv) { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#3a2450"; g.fillRect(0, 0, 64, 64); g.drawImage(renderChar(idolCfg102(), "down", 0), 0, 0, 64, 64); }
+      const cv = body.querySelector("#id102cv"); if (cv) { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#3a2450"; g.fillRect(0, 0, 64, 64); g.drawImage(charImg118(idolCfg102(), "down", 0), 0, 0, 64, 64); }
     };
     draw();
   });
@@ -20448,7 +20459,7 @@ function lesson102(k) {
     const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt; if (msgT > 0) msgT -= dt;
     g.fillStyle = "#2a1838"; g.fillRect(0, 0, 240, 120); g.fillStyle = "#4a2a5a"; g.fillRect(0, 86, 240, 34);
     const dir = ["down", "left", "right", "down"][Math.floor(tt * (k === "da" ? 4 : 1.5)) % 4];
-    g.drawImage(renderChar(idolCfg102(), dir, Math.floor(tt * 6) % 3), 96, 34, 48, 48);
+    g.drawImage(charImg118(idolCfg102(), dir, Math.floor(tt * 6) % 3), 96, 34, 48, 48);
     if (k === "vo") { g.fillStyle = "#ffe27a"; for (let q = 0; q < 3; q++) g.fillRect(150 + q * 14, 40 - ((tt * 30 + q * 10) % 26), 3, 6); }
     g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(20, 8, 200, 12); g.fillStyle = "#6ad06a"; g.fillRect(20 + (zc - Wd() / 2) * 200, 8, Wd() * 200, 12); g.fillStyle = "#ffd86a"; g.fillRect(20 + cur() * 200 - 1, 4, 3, 20);
     if (msgT > 0) { g.fillStyle = "#fff"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText(msg, 120, 34); }
@@ -20500,7 +20511,7 @@ function live102(body) {
     for (let k = 0; k < 4; k++) { g.fillStyle = `hsla(${(tt * 60 + k * 90) % 360},90%,70%,.18)`; g.beginPath(); g.moveTo(60 + k * 70, 0); g.lineTo(30 + k * 70 + Math.sin(tt + k) * 30, 130); g.lineTo(90 + k * 70 + Math.sin(tt + k) * 30, 130); g.fill(); }
     g.fillStyle = "#5a3a2a"; g.fillRect(0, 120, W, 60); g.fillStyle = "#8a5a3a"; g.fillRect(0, 120, W, 4);
     const dir = ["down", "left", "down", "right"][Math.floor(tt * 2) % 4];
-    g.drawImage(renderChar(idolCfg102(), dir, Math.floor(tt * 6) % 3), 136, 62, 56, 56);
+    g.drawImage(charImg118(idolCfg102(), dir, Math.floor(tt * 6) % 3), 136, 62, 56, 56);
     for (let k = 0; k < 7; k++) { const x = 20 + k * 44, j = Math.max(0, Math.sin(tt * 5 + k)) * 3; g.fillStyle = "#3a2a4a"; g.fillRect(x, 150 - j, 14, 16); g.fillRect(x + 3, 142 - j, 8, 8); if (Math.floor(tt * 2 + k) % 3 === 0) { g.fillStyle = ["#ff7aa8", "#7ad8ff", "#ffd84a"][k % 3]; g.fillRect(x + 12, 132 - j, 3, 10); } }
     // 音符とわっか
     g.strokeStyle = "#ffe27a"; g.lineWidth = 3; g.beginPath(); g.arc(HX, 30, 14, 0, 7); g.stroke();
@@ -23754,6 +23765,126 @@ GUIDE54.push(["闘鶏の賭けとポイント", "coin", `<p>果たし状が受�
 <p>果たし状のレースで勝つと闘鶏ポイントが増え、負けると少しへります。果たし状の画面で、この1週間と全期間のランキングが見られます。</p>`]);
 F117.ready = true;
 
+// =================== v118: キャラを32ドットで描く（服と顔は32用の絵・髪や帽子は16を分ける） ===================
+// 16ドットのキャラ（renderChar）はそのまま。charImg118 がそれを 1ドット＝2×2 に分けて、
+// 上の服・下の服・目・口・ほっぺだけを 32 用の絵（char32.js の CHAR32）で描きなおす。
+// どのドットがどの部品かは、土台の renderChar が残す地図（own16）で知る。メイク・小物など上にのった物は分けたまま残す。
+// 32 用の絵がない服は、分けた絵のまま出る。設定で「細かいドット」を切ると、今までの 16 にもどる。
+var F118 = {};
+F118.on = () => store.get("komorebi-fine118") !== false;
+const cache118 = new Map();
+const mix118 = (a, b, t) => [0, 1, 2].map(i => Math.round(a[i] + (b[i] - a[i]) * t));
+function sc2x118(s) {
+  const o = new Uint8ClampedArray(32 * 32 * 4);
+  const at = (x, y) => (Math.min(15, Math.max(0, y)) * 16 + Math.min(15, Math.max(0, x))) * 4;
+  const eq = (a, b) => s[a] === s[b] && s[a + 1] === s[b + 1] && s[a + 2] === s[b + 2] && s[a + 3] === s[b + 3];
+  const cp = (X, Y, i) => { const k = (Y * 32 + X) * 4; o[k] = s[i]; o[k + 1] = s[i + 1]; o[k + 2] = s[i + 2]; o[k + 3] = s[i + 3]; };
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+    const P = at(x, y), A = at(x, y - 1), B = at(x + 1, y), C = at(x - 1, y), D = at(x, y + 1);
+    cp(2 * x, 2 * y, eq(C, A) && !eq(C, D) && !eq(A, B) ? A : P);
+    cp(2 * x + 1, 2 * y, eq(A, B) && !eq(A, C) && !eq(B, D) ? B : P);
+    cp(2 * x, 2 * y + 1, eq(D, C) && !eq(D, B) && !eq(C, A) ? C : P);
+    cp(2 * x + 1, 2 * y + 1, eq(B, D) && !eq(B, A) && !eq(D, C) ? D : P);
+  }
+  return o;
+}
+// 服の色（土台の clothPal と同じ。ゲーミングなど文字の色は場所で色が変わる）
+function cloth118(name, x, y) {
+  const v = CHAR.CLOTH[name] || CHAR.CLOTH["青"]; if (typeof v !== "string") return v;
+  const sh = v === "gaming" ? gamingShift : 0;
+  return [0, 1, 2, 3].map(i => hsl((x * 24 + y * 34 + sh * 30) % 360, i === 3 ? 55 : 85, [80, 64, 50, 30][i]));
+}
+const XC118 = { y: [232, 188, 84], k: [40, 36, 48], w: [252, 252, 255] };
+// 服の絵の字 → 色。上の服は u t v T（服の色の明るい順）と CHAR.WHITE の字、下の服は o p q P（明るい順）。h＝いちばん明るい色をさらに明るく、d＝影と線のあいだ
+function clothCol118(ch, pal, top) {
+  const idx = top ? { u: 0, t: 1, v: 2, T: 3 } : { o: 0, p: 1, q: 2, P: 3 };
+  if (ch in idx) return pal[idx[ch]];
+  if (ch === "h") return mix118(pal[0], [255, 255, 255], .45);
+  if (ch === "d") return mix118(pal[2], pal[3], .5);
+  if (XC118[ch]) return XC118[ch];
+  if (top || ch !== "P") return CHAR.WHITE[ch] || null;
+  return null;
+}
+function charImg118(c, dir, frame) {
+  c = c || {};
+  // 起動のとちゅう（このモジュールより前）に呼ばれたときと、設定で切ったときは 16 のまま
+  if (!F118 || !F118.ready || !F118.on() || typeof CHAR32 === "undefined") return renderChar(c, dir, frame);
+  const key = JSON.stringify(c) + dir + frame + gamingShift;
+  const hit = cache118.get(key); if (hit) return hit;
+  const full = renderChar(c, dir, frame);
+  const fd = full.getContext("2d").getImageData(0, 0, 16, 16).data;
+  // 小物やメイクがのったドット（のせないときと色がちがう所）は、そのまま分けて残す
+  let nd = fd;
+  if ((c.acc && c.acc !== "なし") || c.paint) nd = renderChar({ ...c, acc: "なし", paint: undefined }, dir, frame).getContext("2d").getImageData(0, 0, 16, 16).data;
+  const over = i => nd !== fd && (fd[i * 4] !== nd[i * 4] || fd[i * 4 + 1] !== nd[i * 4 + 1] || fd[i * 4 + 2] !== nd[i * 4 + 2] || fd[i * 4 + 3] !== nd[i * 4 + 3]);
+  let own = null; const prev = rc34cfg; rc34cfg = c;
+  try { own = own16.get(_renderChar26({ ...c, acc: "なし", hair: hairKey34(c.hair, c.bangs) }, dir, frame)); } catch (e) { own = null; } finally { rc34cfg = prev; }
+  const R = dir === "right", S = CHAR.SKIN[c.skin] || CHAR.SKIN["やや明るめ"];
+  const src = new Uint8ClampedArray(fd);
+  const head = [];   // 顔の肌（描きなおしてよいドット）
+  if (own) for (let y = 3; y <= 9; y++) for (let x = 0; x < 16; x++) {
+    const i = y * 16 + x; if (own[i] !== 1 || over(i)) continue;
+    const ch = CHAR.BODY[y][R ? 15 - x : x]; if (ch === ".") continue;
+    const col = ch === "2" ? S[1] : ch === "o" ? S[2] : S[0];
+    src[i * 4] = col[0]; src[i * 4 + 1] = col[1]; src[i * 4 + 2] = col[2]; src[i * 4 + 3] = 255; head[i] = 1;
+  }
+  const o = sc2x118(src);
+  const set = (X, Y, col) => { const k = (Y * 32 + X) * 4; if (!col) { o[k + 3] = 0; return; } o[k] = col[0]; o[k + 1] = col[1]; o[k + 2] = col[2]; o[k + 3] = 255; };
+  if (own) {
+    const topDef = CHAR.TOPS[c.top] || {}, T32 = (dir === "up" && CHAR32.TOPS_UP[c.top]) || CHAR32.TOPS[c.top], B32 = topDef.covers ? null : CHAR32.BOTTOMS[c.bottom];
+    // 服：その服のドットは32の絵で描きなおす。まわりの空いた所と、首から下の肌には、絵がはみ出してもよい
+    const paint = (art, y0, layer, name, top) => {
+      for (let Y = y0; Y < y0 + art.length && Y < 32; Y++) for (let X = 0; X < 32; X++) {
+        const px = X >> 1, py = Y >> 1, i = py * 16 + px, ow = own[i];
+        if (over(i)) continue;
+        const ch = art[Y - y0][R ? 31 - X : X] || ".";
+        if (ow === layer) set(X, Y, ch === "." ? null : clothCol118(ch, cloth118(name, R ? 15 - px : px, py), top));
+        else if (ch !== "." && (ow === 0 || (ow === 1 && py >= 10))) set(X, Y, clothCol118(ch, cloth118(name, R ? 15 - px : px, py), top));
+      }
+    };
+    if (B32) paint(B32, 26, 2, c.bottomc, false);
+    if (T32) paint(T32, 20, 4, c.topc, true);
+    if (dir !== "up") face118(set, head, c, dir, S);
+  }
+  const cv = document.createElement("canvas"); cv.width = cv.height = 32;
+  cv.getContext("2d").putImageData(new ImageData(o, 32, 32), 0, 0);
+  if (cache118.size > 1500) cache118.clear();
+  cache118.set(key, cv); return cv;
+}
+// 顔：目・ほっぺ・口を32の絵で押す（肌のドットの上だけ）
+function face118(set, head, c, dir, S) {
+  const E = EYEC34[c.eyec] || DEF_EYE34;
+  const COL = { E, e: mix118(E, [10, 6, 14], .45), L: mix118(E, [255, 255, 255], .42), H: [255, 255, 255], K: [40, 30, 44], W: [250, 250, 252],
+    S: S[2], s: mix118(S[0], S[2], .5), P: [240, 80, 140], p: [255, 170, 200], Y: [250, 210, 60], y: [255, 244, 170],
+    M: [170, 70, 80], m: mix118(S[0], [170, 70, 80], .45), D: [90, 30, 40], T: [240, 120, 150], t: [255, 180, 196],
+    B: [246, 150, 140], b: mix118(S[0], [246, 150, 140], .5), F: [170, 110, 80], R: [240, 110, 120] };
+  const ok = (X, Y) => X >= 0 && X < 32 && Y >= 0 && Y < 32 && head[(Y >> 1) * 16 + (X >> 1)];
+  const stamp = (rows, X0, Y0, flip) => rows.forEach((row, j) => { for (let k = 0; k < row.length; k++) { const ch = row[flip ? row.length - 1 - k : k]; if (ch !== "." && COL[ch] && ok(X0 + k, Y0 + j)) set(X0 + k, Y0 + j, COL[ch]); } });
+  // ほっぺ（体の絵の r の場所）
+  const ck = CHAR32.CHEEK[c.cheek || "ふつう"];
+  if (ck) for (const px of [5, 10]) if (head[8 * 16 + px]) stamp(ck, px * 2 - 1, 16, px > 8);
+  // 目（体の絵の e の場所。横向きは見えている片方だけ）
+  for (const ex of [5, 10]) {
+    if (!head[6 * 16 + ex] || !head[7 * 16 + ex]) continue;
+    const name = c.eyes === "ウインク" ? (ex < 8 || dir !== "down" ? "ふつう" : "にっこり") : c.eyes;
+    const st = CHAR32.EYES[name] || CHAR32.EYES["ふつう"];
+    stamp(st, ex * 2 - 2, 10, ex > 8);
+  }
+  if (dir === "down") { const m = CHAR32.MOUTH[c.mouth || "なし"]; if (m) stamp(m, 12, 16, false); }
+}
+const charUrl118 = (c, dir, frame) => charImg118(c, dir, frame).toDataURL();
+F118.img = charImg118; F118.url = charUrl118; F118.ready = true;
+// 設定：細かいドット（スマホが重いときは切れる）
+const _renderSettings118 = F7.renderSettings;
+F7.renderSettings = () => {
+  _renderSettings118();
+  const B = $("settingsBody"); if (!B) return;
+  B.insertAdjacentHTML("beforeend", `<div class="opt"><h3>キャラの細かいドット</h3>
+    <div class="row"><button class="chip" type="button" data-fine118="1" aria-pressed="${F118.on()}">ON</button><button class="chip" type="button" data-fine118="0" aria-pressed="${!F118.on()}">OFF</button></div>
+    <p class="note">ONだと、服の柄や顔をこまかく描きます。スマホが重いときはOFFにしてね（見た目が少しあらくなるだけ）。</p></div>`);
+  B.querySelectorAll("[data-fine118]").forEach(b => b.onclick = () => { store.set("komorebi-fine118", b.dataset.fine118 === "1"); cache118.clear(); F7.renderSettings(); if (typeof syncUI === "function") syncUI(); });
+};
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -24193,8 +24324,8 @@ F45.ready = true;
 // =================== start ===================
 function animPreview(now) {
   const fr = [0, 1, 0, 2][Math.floor(now / 220) % 4];
-  const p = $("pv").getContext("2d"); p.clearRect(0, 0, 16, 16); p.drawImage(renderChar(cfg, "down", 0), 0, 0);
-  for (const [d, c] of dirCanvases) { const x = c.getContext("2d"); x.clearRect(0, 0, 16, 16); x.drawImage(renderChar(cfg, d, fr), 0, 0); }
+  const pim = charImg118(cfg, "down", 0), pc = $("pv"); if (pc.width !== pim.width) pc.width = pc.height = pim.width; const p = pc.getContext("2d"); p.clearRect(0, 0, pc.width, pc.height); p.drawImage(pim, 0, 0);
+  for (const [d, c] of dirCanvases) { const im = charImg118(cfg, d, fr); if (c.width !== im.width) c.width = c.height = im.width; const x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0); }
   requestAnimationFrame(animPreview);
 }
 window.claude?.hot?.snapshot?.(() => ({ cfg, name: nameEl.value, world, pos: (map.isDungeon || map.isPort) ? { map: "village", x: 7, y: 9, dir: "down" } : { map: map === room ? "room" : map === labor ? "labor" : map.isInterior ? "int:" + map.kind : "village", back: map.back, roomKey, lastBack, x: player.x, y: player.y, dir: player.dir } }));
@@ -24214,5 +24345,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

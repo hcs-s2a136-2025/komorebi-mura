@@ -3944,7 +3944,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.66.0";
+const CLIENT_VERSION = "0.67.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6022,6 +6022,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.67.0", date: "2026/11/05", title: "服のマイデザイン", items: [
+    "「服のマイデザイン」：着せ替えの下のボタンから、上の服に自分で描いた柄（よこ20×たて10マス・15色）をのせられるようにした。左右対称・太いペン・3つまで保存。ほかの人にも見える",
+    "スマホを開いているあいだは、頭の横にスマホのふきだしが出て、ほかの人にも「スマホを見ている」ことがわかるようにした",
+    "VIPルームの高レートスロット：目押しのときのリールをゆっくりにして、絵柄ごとにマスの色を変えて見分けやすくした（当たりやすさは同じ）",
+    "みなと町の桟橋で「島ゆきの船」を向いてⒶを押すと、素潜りが開いてしまい南の島に行けなかったのを直した",
+    "南の島で釣りができなかったのを直した（島のまわりの海で、島だけの魚が釣れる）",
+  ] },
   { v: "0.66.0", date: "2026/11/05", title: "メイクも細かいドットで", items: [
     "表参道のCOSME COUNTERのメイクを、キャラと同じ細かいドット（20×18マス）で描けるようにした",
     "「細いペン」と「太いペン」（2×2）をえらべるよ。前に描いたメイクや保存したメイクは、そのまま細かいマスによびだせる",
@@ -17860,6 +17867,8 @@ var F95 = {};
 //           目押しの大きい役だけ当たりを1.05倍にしてあるので、取りこぼしなしで還元率は約97%（おまかせは約95%）。上手な人ほど勝ちすぎる、にはならない。
 // 勝ち負けは settle91（v91）を通す：番付・負け上限・メダル・会員ランクは、本物のお札で賭けた分だけ数える。払い戻しは最大 5,000 枚。
 const BETS95 = [5, 10, 20, 50], MAXPAY95 = 5000, SLIDE95 = 4, N95 = 21, SPEED95 = 19, KK95 = 8;
+// 目押しのときのリールの速さ（v120：19→11。ゆっくりにして、絵柄を見て押せるように）と、絵柄ごとのマスの色（v120：金色の絵柄が見分けやすいように）
+const SPEED_ME95 = 11, BG95 = { A: "#ffe27a", "7": "#ffb3c0", B: "#ffc98a", L: "#c8f08a", F: "#a8d8ff", N: "#dcc4ff", M: "#fff8e8" };
 const SYM95 = { A: "s95_acorn", "7": "seven", B: "goldbar", L: "coin", F: "fish_タイ", N: "s95_bell", M: "cabbage" };
 const SN95 = { A: "金のどんぐり", "7": "7", B: "金塊", L: "コイン", F: "タイ", N: "ベル", M: "キャベツ" };
 const PAY95 = { A: 100, "7": 40, B: 15, L: 5, F: 3, N: 2 };
@@ -18177,7 +18186,7 @@ function openSlot95(arg) {
     payCash78("vip", bet, (ok, d) => {
       if (!ok) return;
       const S = newSpin95(bet, V.mode, d), cashPre = cash78().n; F95.lastLines = [];
-      F95.live = { S, pos: vs95().pos.slice(), spinning: [true, true, true], remain: [-1, -1, -1], speed: [SPEED95, SPEED95, SPEED95], dir: [1, 1, 1], tgt: [null, null, null], frozen: false, settled: false, res: null, cashPre, t0: performance.now(), timers: [] };
+      F95.live = { S, pos: vs95().pos.slice(), spinning: [true, true, true], remain: [-1, -1, -1], speed: [0, 1, 2].map(() => S.mode === "auto" ? SPEED95 : SPEED_ME95), dir: [1, 1, 1], tgt: [null, null, null], frozen: false, settled: false, res: null, cashPre, t0: performance.now(), timers: [] };
       if (V.mode === "auto") { S.autoOrd = (S.flag === "N" && S.nav ? S.oshi : ORD95[0]).slice(); S.autoOrd.forEach(i => oshi95(S, i)); S.tops = randOf95(S.want); F95.live.settled = true; holdHud95(true); settle95(S, r => { if (F95.live && F95.live.S === S) F95.live.res = r; }); }
       else { vs95().spin = S; saveWorld(); }
       openSlot95({ S });
@@ -18246,7 +18255,7 @@ function openSlot95(arg) {
     if (n === 2) {
       const left = [0, 1, 2].find(k => Lv.spinning[k]), fixed = [0, 1, 2].filter(k => k !== left);
       const reach = LN95.some(l => { const a = cell95(fixed[0], Lv.pos[fixed[0]], l[fixed[0]]), b = cell95(fixed[1], Lv.pos[fixed[1]], l[fixed[1]]); return a === b && BIG95.includes(a); });
-      if (reach && !Lv.S.zen) { Lv.reach = true; Lv.reachT = performance.now(); evText("リーチ！"); luna95("reach"); try { SFX.reach(); SFX.heart(); if (Lv.S.mode !== "auto") Lv.speed[left] = 12; SFX.spinSlow(); } catch (e) { } }
+      if (reach && !Lv.S.zen) { Lv.reach = true; Lv.reachT = performance.now(); evText("リーチ！"); luna95("reach"); try { SFX.reach(); SFX.heart(); if (Lv.S.mode !== "auto") Lv.speed[left] = 7; SFX.spinSlow(); } catch (e) { } }
     }
     if (n === 3) { finish(); return; }
     if (Lv.S.mode === "auto" && Lv.S.autoOrd) { const nx = Lv.S.autoOrd[n]; later95(Lv, () => autoStop(nx), Lv.reach ? 1400 : 430); }
@@ -18345,6 +18354,7 @@ function openSlot95(arg) {
       g.save(); g.beginPath(); g.rect(x, 8, 18, 54); g.clip();
       for (let row = -1; row < 4; row++) {
         const s = zen || STR95[r][((base + row) % N95 + N95) % N95], y = 9 + Math.round((row - frac) * 18);
+        g.fillStyle = BG95[s] || "#fff8e8"; g.fillRect(x, y - 1, 18, 17); g.fillStyle = "rgba(60,20,30,.18)"; g.fillRect(x, y + 16, 18, 1);
         const im = IMG[SYM95[s]]; if (im) g.drawImage(im, x + 1, y);
       }
       g.restore();
@@ -18373,7 +18383,7 @@ function openSlot95(arg) {
 F95.open = openSlot95;
 function payHtml95() {
   const P = FLAGP95.auto, M = FLAGP95.meoshi, pct = p => (p * 100 >= 1 ? (p * 100).toFixed(1) : (p * 100).toFixed(2)) + "%";
-  return `<div class="pay">${Object.entries(PAY95).map(([s, m]) => `<span><img src="${ASSETS[SYM95[s]]}" alt="">${esc(SN95[s])}×3　${m}倍</span>`).join("")}</div>
+  return `<div class="pay">${Object.entries(PAY95).map(([s, m]) => `<span><img src="${ASSETS[SYM95[s]]}" alt="" style="background:${BG95[s]};border-radius:3px">${esc(SN95[s])}×3　${m}倍</span>`).join("")}</div>
     <table class="vs95tb"><tr><th>役</th><th>おまかせ</th><th>目押し</th></tr>${P.map(([s, p], i) => `<tr><td>${esc(SN95[s])}</td><td>${pct(p)}</td><td>${pct(M[i][1])}</td></tr>`).join("")}</table>
     <p class="mtext small">5ライン固定。1回に賭けた枚数×倍率が払い戻し（最大${MAXPAY95.toLocaleString("ja-JP")}枚）。当たりはスピンした瞬間に決まり、リールはそれに合わせて止まる。<b>おまかせ</b>は当たりを必ずそろえる（還元率 約95%）。<b>目押し</b>は、大きい役（金のどんぐり・7・金塊）が当たっていると、ランプとルナが「狙え」と教えてくれる。大きい役は押した位置から4コマまでしかすべらないので、その絵柄が見えているうちに押さないとそろわない（取りこぼし）。小さい役は台が引きこんでそろえる。目押しの大きい役は当たりが1.05倍なので、取りこぼしなしで約97%。はずれのときは、どう押してもそろわない。</p>
     <p class="mtext small"><b>押し順ベル</b>：ベルは、3つのリールを決まった順番（6とおり）で止めたときだけそろう（賭け金の2倍）。押し順はナビが①②③で教えてくれる（目押しはそのとおりに押す・おまかせは台がその順に止める）。<b>AT</b>（ベルラッシュ）のあいだは、ベルが約4割の回で当たる。</p>
@@ -24024,6 +24034,211 @@ GUIDE54.forEach(gd => { if (gd[0] === "着せ替え") gd[2] = gd[2].replace("顔
 F119.open = openCosme119; F119.up = up119; F119.down = down119; F119.valid = validPt119;
 F119.ready = true;
 
+// =================== v120: 服のマイデザイン・スマホを見ている人がわかる・南の島の船と釣り ===================
+var F120 = {};
+// ---- 南の島（v109）の不具合 ----
+// みなと町の桟橋で「島ゆきの船」を向いてⒶ：前は素潜り（v55）が先に開いてしまい、釣り竿を持っているときしか船に乗れなかった
+// 南の島：島のマップは interact を持つ「家の外」なので、act が水辺まで行かずに止まり、釣りができなかった
+const _act120 = act;
+act = function () {
+  if (!modalOpen && !placing && !fish && !busy && !player.moving) {
+    const [tx, ty] = front();
+    if (map && map.isPort && ty === 14 && (tx === 16 || tx === 17) && map.interact && map.interact[tx + "," + ty]) { map.interact[tx + "," + ty](); return; }
+    if (map && map.kind === "isle109") {
+      const sel = world.inv[world.sel], it = sel && ITEMS[sel.id], g = map.ground[ty]?.[tx] || "";
+      if (it && it.use === "rod" && !map.interact[tx + "," + ty] && !entsOf(map).some(e => e.x === tx && e.y === ty)) {
+        if (/^(sea|water)/.test(g)) { fish = { phase: "cast", t: 0, tx, ty, wait: 1.2 + Math.random() * 2.6 }; return; }
+        toast("rod", "島のまわりの海に向かって使おう"); return;
+      }
+    }
+  }
+  return _act120.apply(this, arguments);
+};
+
+// ---- スマホを見ている人がわかる（cfg.ph） ----
+// スマホ（とスマホのアプリ）を開いているあいだ、見た目の設定に ph:"1" をのせて送る。ほかの人の画面では、頭の横にスマホのふきだしが出る。
+F120.phT = 0;
+const _openPhone120 = openPhone76;
+openPhone76 = function () { F120.phT = performance.now(); return _openPhone120.apply(this, arguments); };
+F76.open = () => openPhone76();
+const phoneNow120 = () => {
+  if (!modalOpen) return false;
+  if ($("mbox").classList.contains("ph76m") || F76.fromPhone || $("mtitle").textContent === "スマホ") return true;
+  return false;
+};
+F120.idle = 0;
+setInterval(() => {
+  let on = phoneNow120();
+  // アプリを切りかえる一瞬だけ閉じていても、すぐには消さない
+  if (on) F120.idle = 0; else if (cfg.ph && (F120.idle += 1) < 3) on = true;
+  if (!!cfg.ph === on) return;
+  if (on) cfg.ph = "1"; else delete cfg.ph;
+  player.cfg = cfg;
+  if (!WATCH88 && typeof sendCfgSoon === "function") sendCfgSoon();
+}, 400);
+// スマホのふきだし（頭の右よこ）
+function phoneBubble120(e) {
+  const x = Math.round(e.px) + 12, y = Math.round(e.py) - 1, t = performance.now();
+  const R = (a, b, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + a, y + b, w, h); };
+  R(1, 0, 9, 1, "#5a4636"); R(1, 10, 9, 1, "#5a4636"); R(0, 1, 1, 9, "#5a4636"); R(10, 1, 1, 9, "#5a4636");
+  R(1, 1, 9, 9, "#fffaf0"); R(-1, 7, 1, 2, "#5a4636"); R(-2, 8, 1, 1, "#5a4636");
+  R(3, 2, 5, 7, "#2a2a36"); R(4, 3, 3, 4, ["#8fd0ff", "#ffd4e8", "#c8f08a"][Math.floor(t / 900) % 3]);
+  R(5, 7, 1, 1, "#9a9ab0");
+  if (Math.floor(t / 300) % 2) R(4, 4, 1, 1, "#fffaf0");
+}
+{
+  const _de = drawEnt;
+  drawEnt = function (e) {
+    const r = _de.apply(this, arguments);
+    try {
+      if (e && !e.sprite) {
+        const ph = e === player ? cfg.ph : e.kind === "remote" && e.cfg ? e.cfg.ph : null;
+        if (ph === "1" && !(e.emo60 && e.emo60.k === "sleep")) phoneBubble120(e);
+      }
+    } catch (x) { }
+    return r;
+  };
+}
+
+// ---- 服のマイデザイン（cfg.md） ----
+// 上の服の上に、自分で描いた柄をのせる。マスは 32 ドットの服のあたり（よこ20×たて10・x 6〜25・y 20〜29）。
+// cfg.md は 200 文字（1マス 16 色を 16 進数1文字。0 は「もとの服の色のまま」）。のるのは服の色のついたドットだけ（白い襟や小物はそのまま）。
+// 16 ドットで描くとき（「細かいドット」OFF）は、2×2 をまとめて 10×5 でのせる。
+const MDW120 = 20, MDH120 = 10, MDX120 = 6, MDY120 = 20, MDLEN120 = MDW120 * MDH120;
+const PALMD120 = [null, ["#fbfaf6", "しろ"], ["#2a2830", "くろ"], ["#9a98a4", "グレー"], ["#e84a4a", "あか"], ["#ff9a3a", "オレンジ"], ["#f8d84a", "きいろ"], ["#9ad85a", "きみどり"],
+  ["#3aa86a", "みどり"], ["#4ac8c8", "みずいろ"], ["#4a8ae8", "あお"], ["#2a3a8a", "こん"], ["#9a6ad8", "むらさき"], ["#ff8ab8", "ピンク"], ["#a86a3a", "ちゃいろ"], ["#f4c8a0", "ベージュ"]];
+const PALRGB120 = PALMD120.map(p => p ? [1, 3, 5].map(i => parseInt(p[0].slice(i, i + 2), 16)) : null);
+const validMd120 = s => typeof s === "string" && s.length === MDLEN120 && /^[0-9a-f]+$/.test(s) && /[1-9a-f]/.test(s);
+const EMPTYMD120 = "0".repeat(MDLEN120);
+// みんなの見た目にも通す（スマホの ph もここで）
+{
+  const _cl = cleanCfg;
+  cleanCfg = function (c) { const o = _cl(c); if (c && c.ph === "1") o.ph = "1"; if (c && validMd120(c.md)) o.md = c.md; return o; };
+}
+const md120 = () => { const w = world.md120 = world.md120 && typeof world.md120 === "object" ? world.md120 : {}; if (!Array.isArray(w.looks)) w.looks = [null, null, null]; while (w.looks.length < 3) w.looks.push(null); return w; };
+const cache120 = new Map(), _ci120 = charImg118;
+charImg118 = function (c, dir, frame) {
+  if (!c || !validMd120(c.md)) return _ci120(c, dir, frame);
+  const key = JSON.stringify(c) + dir + frame + gamingShift;
+  const hit = cache120.get(key); if (hit) return hit;
+  const plain = { ...c, md: undefined }, base = _ci120(plain, dir, frame);
+  const S = base.width, alt = _ci120({ ...plain, topc: c.topc === "赤" ? "青" : "赤" }, dir, frame);
+  const cv = document.createElement("canvas"); cv.width = cv.height = S; const x = cv.getContext("2d"); x.drawImage(base, 0, 0);
+  const img = x.getImageData(0, 0, S, S), d = img.data, a = alt.getContext("2d").getImageData(0, 0, S, S).data;
+  const flip = dir === "right" || dir === "up";
+  for (let Y = 0; Y < S; Y++) for (let X = 0; X < S; X++) {
+    const k = (Y * S + X) * 4; if (!d[k + 3] || (d[k] === a[k] && d[k + 1] === a[k + 1] && d[k + 2] === a[k + 2])) continue;
+    let v = 0;
+    if (S === 32) { const i = (flip ? 31 - X : X) - MDX120, j = Y - MDY120; if (i < 0 || j < 0 || i >= MDW120 || j >= MDH120) continue; v = parseInt(c.md[j * MDW120 + i], 16); }
+    else {
+      const i0 = ((flip ? 15 - X : X) - MDX120 / 2) * 2, j0 = (Y - MDY120 / 2) * 2; if (i0 < 0 || j0 < 0 || i0 >= MDW120 || j0 >= MDH120) continue;
+      const n = {}; let bn = 0;
+      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const w = parseInt(c.md[(j0 + dy) * MDW120 + i0 + dx], 16); if (!w) continue; n[w] = (n[w] || 0) + 1; if (n[w] > bn) { bn = n[w]; v = w; } }
+    }
+    if (!v) continue;
+    // 服のもとの明るさ（影と光）を少しだけ残す
+    const col = PALRGB120[v], lum = (d[k] + d[k + 1] + d[k + 2]) / 3, al = (a[k] + a[k + 1] + a[k + 2]) / 3, sh = Math.max(-.28, Math.min(.12, ((lum + al) / 2 - 150) / 400));
+    for (let q = 0; q < 3; q++) d[k + q] = Math.max(0, Math.min(255, Math.round(col[q] * (1 + sh))));
+  }
+  x.putImageData(img, 0, 0);
+  if (cache120.size > 600) cache120.clear();
+  cache120.set(key, cv); return cv;
+};
+F118.img = charImg118;
+// セーブと「おまかせ」で消えないように
+{
+  const W = md120();
+  W.cur = validMd120(W.cur) ? W.cur : null;
+  if (W.on && W.cur && cfg.md !== W.cur) { cfg.md = W.cur; player.cfg = cfg; }
+  if (cfg.md && !validMd120(cfg.md)) delete cfg.md;
+  $("randBtn")?.addEventListener("click", () => { const w = md120(); if (w.on && w.cur) { cfg.md = w.cur; changed(); } });
+}
+let md120s = null;
+function openMyDesign120() {
+  const W = md120(), cur = validMd120(cfg.md) ? cfg.md : W.cur && validMd120(W.cur) ? W.cur : EMPTYMD120;
+  md120s = { p: cur.split(""), col: md120s ? md120s.col : 4, mirror: md120s ? md120s.mirror : true, size: md120s ? md120s.size : 1, undo: [] };
+  const CELL = 14, CW = MDW120 * CELL, CH = MDH120 * CELL;
+  const wear = p => validMd120(p) ? { ...cfg, md: p } : { ...cfg, md: undefined };
+  openModal("服のマイデザイン", "salon26", body => {
+    body.innerHTML = `<p class="mtext">上の服に、自分で描いた柄をのせられるよ。マスをタップ（なぞる）して色をのせてね。服の色のついたところにだけのって、白い襟などはそのまま。ほかの人にも見える</p>
+      <div class="cos62">
+        <div class="cos62l"><canvas id="md120cv" class="fine119" width="${CW}" height="${CH}" style="width:${CW}px;max-width:100%;touch-action:none;image-rendering:pixelated"></canvas>
+          <div class="cos62t"><button class="chip" type="button" id="md120mir" aria-pressed="${md120s.mirror}">左右対称</button><button class="chip" type="button" data-sz120="1" aria-pressed="${md120s.size === 1}">細いペン</button><button class="chip" type="button" data-sz120="2" aria-pressed="${md120s.size === 2}">太いペン</button><button class="chip" type="button" id="md120fill">ぜんぶぬる</button><button class="chip" type="button" id="md120undo">ひとつ戻す</button><button class="chip" type="button" id="md120clr">ぜんぶ消す</button></div></div>
+        <div class="cos62r">
+          <div class="cos62pal">${PALMD120.map((p, i) => `<button type="button" class="cos62c${i === md120s.col ? " on" : ""}" data-mc120="${i}" title="${p ? p[1] : "消しゴム"}">${p ? `<i style="background:${p[0]}"></i>` : `<i class="er"></i>`}<span>${p ? p[1] : "消す"}</span></button>`).join("")}</div>
+          <div class="salonprev26" id="md120prev"></div>
+          <div class="cos62looks">${W.looks.map((l, i) => `<div><img src="${charImg118(wear(validMd120(l) ? l : null), "down", 0).toDataURL()}" alt="" class="${validMd120(l) ? "" : "empty"}"><button class="btn light" type="button" data-ms120="${i}">ほぞん</button><button class="btn light" type="button" data-ml120="${i}" ${validMd120(l) ? "" : "disabled"}>よびだす</button></div>`).join("")}</div>
+        </div>
+      </div>
+      <p class="mtext small" id="md120msg">いまの服：${esc(cfg.top)}。柄がいちばん広くのるのは、Tシャツやワンピースのような無地の服だよ。うしろ姿は左右が逆になる</p>
+      <div class="row2"><button class="btn light" type="button" id="md120off" ${cfg.md ? "" : "disabled"}>マイデザインをぬぐ</button><button class="btn" type="button" id="md120go">このデザインを着る</button></div>`;
+    const cv = body.querySelector("#md120cv"), g = cv.getContext("2d"), msg = body.querySelector("#md120msg");
+    const str = () => md120s.p.join("");
+    // 下じき：いまの服（柄なし）を32で。服の色がのるところは明るく、のらないところは暗く
+    const bc = document.createElement("canvas"); bc.width = bc.height = 32; const bx = bc.getContext("2d"); bx.imageSmoothingEnabled = false;
+    const plain = { ...cfg, md: undefined }, bim = charImg118(plain, "down", 0), aim = charImg118({ ...plain, topc: cfg.topc === "赤" ? "青" : "赤" }, "down", 0);
+    bx.drawImage(bim, 0, 0, bim.width, bim.height, 0, 0, 32, 32); const bd = bx.getImageData(0, 0, 32, 32).data;
+    bx.clearRect(0, 0, 32, 32); bx.drawImage(aim, 0, 0, aim.width, aim.height, 0, 0, 32, 32); const ad = bx.getImageData(0, 0, 32, 32).data;
+    const draw = () => {
+      for (let j = 0; j < MDH120; j++) for (let i = 0; i < MDW120; i++) {
+        const v = parseInt(md120s.p[j * MDW120 + i], 16), k = ((MDY120 + j) * 32 + MDX120 + i) * 4;
+        const cloth = bd[k + 3] && (bd[k] !== ad[k] || bd[k + 1] !== ad[k + 1] || bd[k + 2] !== ad[k + 2]);
+        g.fillStyle = v ? PALMD120[v][0] : bd[k + 3] ? `rgb(${bd[k]},${bd[k + 1]},${bd[k + 2]})` : ((i + j) % 2 ? "#f4eef0" : "#ebe2e6");
+        g.fillRect(i * CELL, j * CELL, CELL, CELL);
+        if (!cloth) { g.fillStyle = "rgba(40,30,40,.38)"; g.fillRect(i * CELL, j * CELL, CELL, CELL); }
+      }
+      for (let i = 1; i < MDW120; i++) { g.strokeStyle = "rgba(0,0,0,.1)"; g.beginPath(); g.moveTo(i * CELL + .5, 0); g.lineTo(i * CELL + .5, CH); g.stroke(); }
+      for (let j = 1; j < MDH120; j++) { g.strokeStyle = "rgba(0,0,0,.1)"; g.beginPath(); g.moveTo(0, j * CELL + .5); g.lineTo(CW, j * CELL + .5); g.stroke(); }
+      if (md120s.mirror) { g.strokeStyle = "rgba(240,90,140,.5)"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(CW / 2, 0); g.lineTo(CW / 2, CH); g.stroke(); g.setLineDash([]); }
+      const p = validMd120(str()) ? str() : null;
+      body.querySelector("#md120prev").innerHTML = ["down", "left", "up"].map(d => `<img src="${charImg118(wear(p), d, 0).toDataURL()}" alt="">`).join("");
+      const go = body.querySelector("#md120go"), same = p && p === cfg.md;
+      go.disabled = !p || same; go.textContent = same ? "いま着ています" : "このデザインを着る";
+    };
+    let painting = false, last = "";
+    const cellAt = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * MDW120), Math.floor((e.clientY - r.top) / r.height * MDH120)]; };
+    const dot = (i, j, ch) => { if (i < 0 || j < 0 || i >= MDW120 || j >= MDH120) return; md120s.p[j * MDW120 + i] = ch; if (md120s.mirror) md120s.p[j * MDW120 + (MDW120 - 1 - i)] = ch; };
+    const put = (i, j) => {
+      if (i < 0 || j < 0 || i >= MDW120 || j >= MDH120) return;
+      if (md120s.size === 2) { i &= ~1; j &= ~1; }
+      const k = i + "," + j; if (k === last) return; last = k;
+      const ch = md120s.col.toString(16);
+      if (md120s.size === 2) { dot(i, j, ch); dot(i + 1, j, ch); dot(i, j + 1, ch); dot(i + 1, j + 1, ch); } else dot(i, j, ch);
+      draw();
+    };
+    const push = () => { md120s.undo.push(str()); if (md120s.undo.length > 60) md120s.undo.shift(); };
+    cv.addEventListener("pointerdown", e => { e.preventDefault(); cv.setPointerCapture?.(e.pointerId); push(); painting = true; last = ""; put(...cellAt(e)); });
+    cv.addEventListener("pointermove", e => { if (painting) put(...cellAt(e)); });
+    const up = () => { painting = false; last = ""; };
+    cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up); cv.addEventListener("pointerleave", up);
+    body.querySelectorAll("[data-mc120]").forEach(b => b.onclick = () => { md120s.col = +b.dataset.mc120; body.querySelectorAll("[data-mc120]").forEach(o => o.classList.toggle("on", o === b)); });
+    body.querySelectorAll("[data-sz120]").forEach(b => b.onclick = () => { md120s.size = +b.dataset.sz120; body.querySelectorAll("[data-sz120]").forEach(o => o.setAttribute("aria-pressed", String(o === b))); });
+    body.querySelector("#md120mir").onclick = e => { md120s.mirror = !md120s.mirror; e.currentTarget.setAttribute("aria-pressed", String(md120s.mirror)); draw(); };
+    body.querySelector("#md120fill").onclick = () => { push(); md120s.p = md120s.col.toString(16).repeat(MDLEN120).split(""); draw(); };
+    body.querySelector("#md120undo").onclick = () => { const p = md120s.undo.pop(); if (p) { md120s.p = p.split(""); draw(); } };
+    body.querySelector("#md120clr").onclick = () => { push(); md120s.p = EMPTYMD120.split(""); draw(); };
+    body.querySelectorAll("[data-ms120]").forEach(b => b.onclick = () => { if (!validMd120(str())) { msg.textContent = "まだなにも描いていないよ"; return; } md120().looks[+b.dataset.ms120] = str(); saveWorld(); closeModal(); openMyDesign120(); });
+    body.querySelectorAll("[data-ml120]").forEach(b => b.onclick = () => { const l = md120().looks[+b.dataset.ml120]; if (!validMd120(l)) return; push(); md120s.p = l.split(""); draw(); msg.textContent = "保存したデザインをよびだしたよ（「このデザインを着る」で着がえ）"; });
+    body.querySelector("#md120go").onclick = () => {
+      const p = str(); if (!validMd120(p)) return;
+      const w = md120(); w.cur = p; w.on = true; cfg.md = p; world.stats.mydesign120 = (world.stats.mydesign120 || 0) + 1;
+      changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); saveWorld();
+      closeModal(); toast(null, "マイデザインの服に着がえた"); try { se13("small"); } catch (e) { }
+    };
+    body.querySelector("#md120off").onclick = () => { const w = md120(); w.on = false; delete cfg.md; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); saveWorld(); closeModal(); toast(null, "マイデザインをぬいだ（デザインは残っているよ）"); };
+    draw();
+  });
+}
+F120.open = openMyDesign120;
+// 入口：着せ替えの下・スマホの「ゲーム」の仕立て屋のとなり
+$("randBtn")?.insertAdjacentHTML("afterend", `<button class="btn ghost" id="mdBtn120" type="button">服のマイデザイン</button>`);
+$("mdBtn120")?.addEventListener("click", () => { if (!modalOpen) openMyDesign120(); });
+GTITLES42.push(["デザイナー", "服のマイデザインを着る", () => (world.stats.mydesign120 || 0) >= 1]);
+TITLES.push(["デザイナー", "服のマイデザインを着る", () => gotT42().includes("デザイナー") || (world.stats.mydesign120 || 0) >= 1]);
+GUIDE54.forEach(gd => { if (gd[0] === "着せ替え") gd[2] = gd[2].replace("</ul>", "<li>「服のマイデザイン」（着せ替えの下のボタン）で、上の服に自分で描いた柄（よこ20×たて10マス・15色）をのせられる。ほかの人にも見える</li></ul>"); });
+F120.valid = validMd120; F120.phone = phoneNow120;
+F120.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -24484,5 +24699,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

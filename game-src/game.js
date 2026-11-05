@@ -3939,7 +3939,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.60.3";
+const CLIENT_VERSION = "0.61.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6017,6 +6017,14 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.61.0", date: "2026/11/05", title: "VIPのスロットがアツくなった・リサイクル品をみんなで", items: [
+    "VIPの高レートスロットに「押し順ベル」。ベルは、リールを決まった順番で止めたときだけそろう。目押しなら自分で押し順を当てよう",
+    "新しく「AT（押し順ナビ）」。入ると15回のあいだ、ルナと台が押し順を①②③で教えてくれる。AT中に7か金のどんぐりで上乗せも",
+    "スピンのときの予告（青・赤・虹。虹は確定）・リーチの心臓の音・確変やATの前のビカビカ・外れたと思ったら逆回転で7がそろう「復活」",
+    "よろず屋のリサイクル品が、村のみんなで1つの棚になった。ほかの人が売った道具も買えるよ（オンラインのとき）",
+    "家畜小屋のえさ箱に、サイロから毎朝自動で飼料を補充できるようになった（えさ箱の画面で ON・OFF）",
+    "スマホで建物の画面を開いたとき、「キットに戻す」に指が当たって戻してしまうことがあったので、2回押しにした",
+  ] },
   { v: "0.60.1", date: "2026/11/04", title: "家に入れなくなったのを直した", items: [
     "家の入口のまわりを飾りや建物がふさいで、家に入れなくなっていたのを直した。入口まで行けないときは、ふさいでいる物の上を通れるようにしたよ",
     "前の版で、飾りや建物を自動でずらすようにしていたのをやめた（ずらした先で、ほかの家の入口をふさいでしまうことがあった）。置き場所は、持ち主が片付けて置きなおせるよ",
@@ -17814,23 +17822,26 @@ var F95 = {};
 //           目押しの大きい役だけ当たりを1.05倍にしてあるので、取りこぼしなしで還元率は約97%（おまかせは約95%）。上手な人ほど勝ちすぎる、にはならない。
 // 勝ち負けは settle91（v91）を通す：番付・負け上限・メダル・会員ランクは、本物のお札で賭けた分だけ数える。払い戻しは最大 5,000 枚。
 const BETS95 = [5, 10, 20, 50], MAXPAY95 = 5000, SLIDE95 = 4, N95 = 21, SPEED95 = 19, KK95 = 8;
-const SYM95 = { A: "s95_acorn", "7": "seven", B: "goldbar", L: "coin", F: "fish_タイ", C: "tomato", M: "cabbage" };
-const SN95 = { A: "金のどんぐり", "7": "7", B: "金塊", L: "コイン", F: "タイ", C: "トマト", M: "キャベツ" };
-const PAY95 = { A: 100, "7": 40, B: 15, L: 5, F: 3, C: 1 };
+const SYM95 = { A: "s95_acorn", "7": "seven", B: "goldbar", L: "coin", F: "fish_タイ", N: "s95_bell", M: "cabbage" };
+const SN95 = { A: "金のどんぐり", "7": "7", B: "金塊", L: "コイン", F: "タイ", N: "ベル", M: "キャベツ" };
+const PAY95 = { A: 100, "7": 40, B: 15, L: 5, F: 3, N: 4 };
 const BIG95 = ["A", "7", "B"];
-// 当たり（フラグ）の確率。目押しは大きい役だけ 1.05 倍（還元率：おまかせ 約95.1%・目押しで取りこぼしなし 約96.8%）
+// 当たり（フラグ）の確率。目押しは大きい役だけ 1.05 倍（v114 から：還元率 おまかせ 約95.0%・目押しで取りこぼしなし 約96.8%。AT もふくむ）
+// ベル（N）は「押し順ベル」：3つのリールを、決まった順番（6とおり）で止めたときだけそろう。ふだんは当てずっぽう（1/6）、AT のあいだはナビが教えてくれる
 const FLAGP95 = {
-  auto: [["A", 1 / 1600], ["7", 1 / 320], ["B", 1 / 100], ["L", 1 / 20], ["F", 1 / 16], ["C", 1 / 8.5]],
+  auto: [["A", 1 / 1600], ["7", 1 / 320], ["B", 1 / 100], ["L", 1 / 21.5], ["F", 1 / 16], ["N", 1 / 6]],
 };
 FLAGP95.meoshi = FLAGP95.auto.map(([s, p]) => [s, BIG95.includes(s) ? p * 1.05 : p]);
 // 割り込み（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の8回、そろった配当が2倍／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）
-const EV95 = { zen: 1 / 2500, freeze: 1 / 600, kaku: 1 / 500 };
+// AT（v114）＝押し順ナビ：次の AT_LEN95 回、押し順ベルの押し順を教えてくれる（そろえば賭け金の4倍）。AT のあいだに 7 か金のどんぐりが当たると +AT_ADD95 回（上乗せ）
+const EV95 = { zen: 1 / 2500, freeze: 1 / 600, kaku: 1 / 500, at: 1 / 300 };
+const AT_LEN95 = 15, AT_ADD95 = 10, ORD95 = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]];
 const FREEZE95 = [[10, .6], [20, .3], [50, .1]];
 const ZEN95 = [["L", .5], ["F", .3], ["B", .15], ["7", .045], ["A", .005]];
 const pickW95 = list => { let r = Math.random(); for (const [v, w] of list) if ((r -= w) < 0) return v; return list[0][0]; };
 // ---- リールの帯（21コマ・3本）と、止まり方の表 ----
 function strip95(seed) {
-  const cnt = { A: 1, "7": 1, B: 2, L: 4, F: 4, C: 4, M: 5 }, a = [];
+  const cnt = { A: 1, "7": 1, B: 2, L: 4, F: 4, N: 4, M: 5 }, a = [];
   for (const [s, n] of Object.entries(cnt)) for (let i = 0; i < n; i++) a.push(s);
   let x = seed >>> 0; const r = () => ((x = (x * 1664525 + 1013904223) >>> 0) / 4294967296);
   for (let tries = 0; tries < 400; tries++) {
@@ -17864,7 +17875,24 @@ function stopAt95(S, i, p) {
 }
 const randOf95 = g => { const L = G95[g] && G95[g].length ? G95[g] : G95.none; return dec95(L[rnd(L.length)]); };
 function lot95(mode) { let u = Math.random(); for (const [s, p] of FLAGP95[mode === "meoshi" ? "meoshi" : "auto"]) if ((u -= p) < 0) return s; return null; }
-function ev95(kk) { const u = Math.random(); if (u < EV95.zen) return "zen"; if (u < EV95.zen + EV95.freeze) return "freeze"; if (!kk && u < EV95.zen + EV95.freeze + EV95.kaku) return "kaku"; return null; }
+function ev95(kk, at) { const u = Math.random(), z = EV95.zen, f = z + EV95.freeze, k = f + EV95.kaku; if (u < z) return "zen"; if (u < f) return "freeze"; if (!kk && u < k) return "kaku"; if (!at && u < k + EV95.at) return "at"; return null; }
+// 予告（v114）：0なし・1チャンス（青）・2激アツ（赤）・3虹（確定）。はずれでも、たまに青や赤が出る（ガセ）
+function yk95(S) {
+  const u = Math.random();
+  if (S.ev === "zen" || S.ev === "at" || S.ev === "kaku") return u < .55 ? 3 : 2;
+  if (S.flag === "A") return u < .5 ? 3 : 2;
+  if (S.flag === "7") return u < .45 ? 2 : u < .8 ? 1 : 0;
+  if (S.flag === "B") return u < .1 ? 2 : u < .45 ? 1 : 0;
+  if (S.ev === "freeze") return 0;
+  return u < .025 ? 1 : u < .03 ? 2 : 0;
+}
+/** 押し順ベルの押し順をたしかめる（i を押したとき）。ちがう順番なら、その回ははずれ（取りこぼし）にする */
+function oshi95(S, i) {
+  if (!Array.isArray(S.ord)) S.ord = [];
+  if (S.ord.includes(i)) return;
+  const k = S.ord.length; S.ord.push(i);
+  if (S.flag === "N" && S.want === "N" && S.oshi && S.oshi[k] !== i) { S.want = "none"; S.lost = "N"; S.oshiMiss = true; }
+}
 F95.STR = STR95; F95.G = G95; F95.PAY = PAY95; F95.FLAGP = FLAGP95; F95.EV = EV95; F95.stopAt = stopAt95; F95.lines = lines95; F95.BETS = BETS95;
 
 const vs95 = () => {
@@ -17872,6 +17900,7 @@ const vs95 = () => {
   v.mode = v.mode === "meoshi" || v.mode === "auto" ? v.mode : "";
   if (!BETS95.includes(v.bet)) v.bet = BETS95[0];
   v.kk = Number.isFinite(+v.kk) ? Math.max(0, Math.min(KK95, Math.floor(+v.kk))) : 0;
+  v.at = Number.isFinite(+v.at) ? Math.max(0, Math.min(999, Math.floor(+v.at))) : 0; v.atGot = Math.max(0, Math.floor(+v.atGot) || 0);
   v.pos = Array.isArray(v.pos) && v.pos.length === 3 ? v.pos.map(n => ((Math.floor(+n) || 0) % N95 + N95) % N95) : [0, 7, 14];
   if (v.voice !== false) v.voice = true;
   if (v.spin != null && !(v.spin && typeof v.spin === "object" && v.spin.bet > 0)) v.spin = null;
@@ -17884,6 +17913,10 @@ const SPR95 = {
   acorn: [16, 16, (s, r) => {
     r(4, 3, 8, 4, C13["#7a5410"]); r(3, 4, 10, 3, C13["#b8841c"]); for (const [x, y] of [[4, 5], [7, 4], [10, 5], [6, 6], [9, 6]]) s(x, y, C13["#7a5410"]); r(7, 1, 2, 3, C13["#7a5410"]);
     ell13(s, 8, 10, 4.6, 4.6, C13["#f0b030"]); ell13(s, 7, 9, 2.4, 3, C13["#ffe27a"]); s(6, 8, C13["#fffaf0"]); ell13(s, 10, 12, 1.4, 1.6, C13["#c88a18"]);
+  }],
+  bell: [16, 16, (s, r) => {
+    r(7, 1, 2, 2, C13["#7a5410"]); ell13(s, 8, 7, 4.2, 4.6, C13["#f0c040"]); r(3, 9, 10, 3, C13["#f0c040"]); r(2, 11, 12, 2, C13["#c89020"]); r(2, 13, 12, 1, C13["#7a5410"]);
+    ell13(s, 6.5, 6, 1.4, 2.4, C13["#fff3b0"]); s(5, 10, C13["#fffaf0"]); r(7, 13, 2, 2, C13["#7a5410"]); s(7, 14, C13["#3a1e10"]);
   }],
   slot: [16, 30, (s, r) => {
     r(1, 0, 14, 5, C13["#8a1a3a"]); r(1, 0, 14, 1, C13["#e0506e"]); for (let x = 2; x < 14; x += 3) s(x, 2, C13["#ffe27a"]);
@@ -17915,6 +17948,9 @@ const TTL95 = [
   ["金のどんぐり", "VIPの高レートスロットで、金のどんぐりを3つそろえる", () => (world.stats.vipSlotA95 || 0) >= 1],
   ["目押しの名人", "目押しで、大きい役（金のどんぐり・7・金塊）を10回そろえる", () => (world.stats.vipMeo95 || 0) >= 10],
   ["黄金の全回転", "VIPの高レートスロットで、全回転を見る", () => (world.stats.vipZen95 || 0) >= 1],
+  ["押し順の勘", "VIPの高レートスロットで、ナビなしで押し順ベルを10回当てる", () => (world.stats.vipOshi95 || 0) >= 10],
+  ["ATの夜", "VIPの高レートスロットで、ATに5回入る", () => (world.stats.vipAt95 || 0) >= 5],
+  ["逆回転の奇跡", "VIPの高レートスロットで、逆回転の復活を見る", () => (world.stats.vipRev95 || 0) >= 1],
 ];
 for (const t of TTL95) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 
@@ -17931,6 +17967,10 @@ const LUNA95 = {
   lost: ["……いま、何か光った気がいたしましたわ", "惜しゅうございました。手もとが、ほんの少し"],
   meo: ["見事な目押しでございます", "その指先、只者ではございませんわね"],
   lose: ["運は巡るものでございます", "次こそは……", ""],
+  at: ["AT でございます。押し順は、わたくしがお教えいたしますわ", "ナビの時間でございます。どうぞ、わたくしの声のとおりに"],
+  uwa: ["上乗せでございます……！ 夜は、まだ続きますわ"],
+  atEnd: ["AT はここまで。楽しい夜でございました", "ナビはおしまい。また、光らせてくださいませ"],
+  oshi: ["押し順、お見事……！ 勘のよろしいこと", "あら、当てられてしまいましたわ"],
 };
 const AIM95 = { A: "金のどんぐり", "7": "赤い7", B: "金塊" };
 F95.say = "";
@@ -17980,14 +18020,34 @@ function banner95(text, sub, ms = 1700, cls = "") {
 }
 F95.banner = banner95;
 
+// ---- v114：演出の道具（予告の長さ・画面のビカビカ・逆回転のずらし先） ----
+const YKMS114 = [0, 900, 1300, 1700];
+const later95 = (Lv, fn, ms) => Lv.timers.push(setTimeout(() => { if (F95.live === Lv) fn(); }, ms));
+/** 画面全体を光らせる（1青・2赤・3虹）。光の点めつは1秒に3回より少なく（目にきつくならないように）。「視差効果を減らす」の端末では、やわらかく光るだけ */
+function flash114(level, ms = 1200) {
+  const d = document.createElement("div"); d.className = "flash114 l" + level; d.setAttribute("aria-hidden", "true"); document.body.appendChild(d);
+  setTimeout(() => d.classList.add("out"), Math.max(200, ms - 300)); setTimeout(() => d.remove(), ms + 200);
+}
+F95.flash = flash114;
+/** 逆回転の前に見せる「はずれの位置」：本当の止まる位置から1〜2コマずらして、どのラインもそろわない位置 */
+function fakeTop114(S, i) {
+  for (const off of [1, N95 - 1, 2, N95 - 2]) { const t = S.tops.slice(); t[i] = (t[i] + off) % N95; if (!lines95(t).length) return t[i]; }
+  return null;
+}
 // ---- 1回の勝負 ----
 // S = { bet, mode, flag, ev, fm, zen, kk, paid:{fu,fk}, want, tops:[..], lost, meo }
 function newSpin95(bet, mode, paid) {
-  const V = vs95(), kk = V.kk > 0, ev = F95.force || ev95(kk); F95.force = null;
+  const V = vs95(), kk = V.kk > 0, atOn = V.at > 0, ev = F95.force || ev95(kk, atOn); F95.force = null;
   const flag = F95.forceFlag !== undefined ? F95.forceFlag : lot95(mode); F95.forceFlag = undefined;
-  const S = { bet, mode, flag, ev, fm: ev === "freeze" ? pickW95(FREEZE95) : 0, zen: ev === "zen" ? pickW95(ZEN95) : null, kk, paid: { fu: paid ? paid.fu || 0 : 0, fk: paid ? paid.fk || 0 : 0 }, want: flag || "none", tops: [null, null, null], lost: null, at: Date.now() };
+  const S = { bet, mode, flag, ev, fm: ev === "freeze" ? pickW95(FREEZE95) : 0, zen: ev === "zen" ? pickW95(ZEN95) : null, kk, paid: { fu: paid ? paid.fu || 0 : 0, fk: paid ? paid.fk || 0 : 0 }, want: flag || "none", tops: [null, null, null], lost: null, at: Date.now(),
+    nav: atOn, oshi: flag === "N" ? ORD95[rnd(6)].slice() : null, ord: [], uwa: 0, rev: false };
   if (kk) V.kk--;
   if (ev === "kaku") V.kk = KK95;
+  if (atOn) { V.at--; if (flag === "7" || flag === "A") { V.at += AT_ADD95; S.uwa = AT_ADD95; } }
+  if (ev === "at") { V.at = AT_LEN95; V.atGot = 0; }
+  S.yk = F95.forceYk != null ? F95.forceYk : yk95(S); F95.forceYk = null;
+  // おまかせで 7・金のどんぐり：ときどき、いちど外れたように見せて、逆回転でそろう
+  S.rev = mode !== "meoshi" && !S.zen && (flag === "7" || flag === "A") && (F95.forceRev != null ? F95.forceRev : Math.random() < .45); F95.forceRev = null;
   return S;
 }
 /** 止まった位置から払い戻しを決める */
@@ -18009,6 +18069,8 @@ function settle95(S, done) {
   if (R.sym === "A" && !S.zen) st.vipSlotA95 = (st.vipSlotA95 || 0) + 1;
   if (S.zen) st.vipZen95 = (st.vipZen95 || 0) + 1;
   if (S.mode === "meoshi" && R.sym && BIG95.includes(R.sym) && !S.zen) st.vipMeo95 = (st.vipMeo95 || 0) + 1;
+  if (S.flag === "N" && R.sym === "N" && !S.nav) st.vipOshi95 = (st.vipOshi95 || 0) + 1;
+  if (S.nav || S.ev === "at") V.atGot = (V.atGot || 0) + R.pay;
   const fin = k => {
     const out = R.pay > S.bet ? "win" : R.pay > 0 ? "push" : "lose";
     const s = settle91({ game: "slot", bet: S.bet, pay: R.pay, k, paid: S.paid, out });
@@ -18022,7 +18084,7 @@ function settle95(S, done) {
 // 目押しの途中で読み込み直した・画面がこわれたとき：その回は「押さなかった」ことにする（大きい役は取りこぼし・小さい役はそろう）
 function autoResolve95() {
   const V = vs95(), S = V.spin; if (!S || F95.live) return;
-  S.want = S.flag && !BIG95.includes(S.flag) ? S.flag : "none"; if (S.flag && BIG95.includes(S.flag)) S.lost = S.flag;
+  S.want = S.flag && !BIG95.includes(S.flag) && (S.flag !== "N" || S.nav) ? S.flag : "none"; if (S.flag && S.want === "none") S.lost = S.flag;
   S.tops = randOf95(S.want);
   settle95(S, r => F7.notify(`VIPスロット（目押しの途中）：${r.pay ? `${billTxt78(r.pay)}の払い戻し` : "はずれ"}${S.lost ? "（止めずに終わったので、取りこぼし）" : ""}`, "s95_acorn"));
 }
@@ -18039,7 +18101,7 @@ function openSlot95(arg) {
   openModal(TITLE, "dark vip90 vs95", body => paint(body), () => {
     // 途中で閉じたとき：目押しなら、のこりのリールをいまの位置で止めたことにして決着
     const live = F95.live; F95.live = null;
-    if (live && live.S && !live.settled) { live.closing = true; for (let i = 0; i < 3; i++) if (live.S.tops[i] == null) live.S.tops[i] = stopAt95(live.S, i, live.pos[i]); live.settled = true; settle95(live.S, r => F7.notify(`VIPスロット：${r.pay ? `${billTxt78(r.pay)}の払い戻し` : "はずれ"}`, "s95_acorn")); }
+    if (live && live.S && !live.settled) { live.closing = true; for (let i = 0; i < 3; i++) if (live.S.tops[i] == null) { oshi95(live.S, i); live.S.tops[i] = stopAt95(live.S, i, live.pos[i]); } live.settled = true; settle95(live.S, r => F7.notify(`VIPスロット：${r.pay ? `${billTxt78(r.pay)}の払い戻し` : "はずれ"}`, "s95_acorn")); }
     if (live && live.res) F7.notify(`VIPスロット：${live.res.pay ? `${billTxt78(live.res.pay)}の払い戻し` : "はずれ"}`, "s95_acorn");
     if (live) holdHud95(false);
     onClose91();
@@ -18050,8 +18112,9 @@ function openSlot95(arg) {
     body.innerHTML = `<div class="vs95w"><div class="vs95l">
       <div class="vs95top">${staffSay13(charIcon13(NPC90.manager.cfg), `<span id="vs95say">${esc(F95.say || LUNA95.hello[0])}</span>`)}</div>
       <div class="vs95m"><canvas id="vs95cv" width="76" height="70" aria-label="スロットのリール"></canvas><div class="vs95ev" id="vs95ev" hidden></div><div class="vs95aim" id="vs95aim" ${busy && F95.live.lamp && F95.live.S.mode === "meoshi" && F95.live.spinning.some(Boolean) ? "" : "hidden"}>${busy && F95.live.lamp ? `★ ${esc(AIM95[F95.live.lamp])}を狙え` : ""}</div></div>
-      <div class="vs95stops" ${V.mode === "meoshi" ? "" : "hidden"}>${[0, 1, 2].map(i => `<button class="btn" type="button" data-st95="${i}" disabled>STOP ${i + 1}</button>`).join("")}</div>
+      <div class="vs95stops" ${V.mode === "meoshi" ? "" : "hidden"}>${[0, 1, 2].map(i => { const S0 = busy ? F95.live.S : null, nv = S0 && S0.flag === "N" ? (S0.nav ? "①②③"[S0.oshi.indexOf(i)] : "？") : ""; return `<button class="btn" type="button" data-st95="${i}" disabled>${nv ? `<b class="nv114${S0.nav ? " on" : ""}">${nv}</b>` : ""}STOP ${i + 1}</button>`; }).join("")}</div>
       ${V.kk > 0 ? `<p class="vs95kk">確変中！ あと${V.kk}回、そろった配当が2倍</p>` : ""}
+      ${V.at > 0 || (busy && F95.live.S.nav) ? `<p class="vs95kk vs95at">AT（押し順ナビ）中！ あと${V.at}回・このATの払い戻し ${V.atGot}枚</p>` : ""}
       <p class="mtext vp90-res ${res ? (res.out === "win" ? "win" : "lose") : ""}" id="vs95res">${res ? esc(res.text) : busy ? "……" : V.mode === "meoshi" ? "スピンしてから、STOP（1・2・3キー）で1つずつ止めよう" : "賭ける枚数を選んで、スピン"}</p></div><div class="vs95r">
       <p class="mtext">現金 <b id="vs95cash">${billTxt78(cashN)}</b>（${fmt(cashN * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
       ${duHtml91(res || null)}
@@ -18077,8 +18140,8 @@ function openSlot95(arg) {
     payCash78("vip", bet, (ok, d) => {
       if (!ok) return;
       const S = newSpin95(bet, V.mode, d), cashPre = cash78().n; F95.lastLines = [];
-      F95.live = { S, pos: vs95().pos.slice(), spinning: [true, true, true], remain: [-1, -1, -1], speed: [SPEED95, SPEED95, SPEED95], frozen: false, settled: false, res: null, cashPre, t0: performance.now(), timers: [] };
-      if (V.mode === "auto") { S.tops = randOf95(S.want); F95.live.settled = true; holdHud95(true); settle95(S, r => { if (F95.live && F95.live.S === S) F95.live.res = r; }); }
+      F95.live = { S, pos: vs95().pos.slice(), spinning: [true, true, true], remain: [-1, -1, -1], speed: [SPEED95, SPEED95, SPEED95], dir: [1, 1, 1], tgt: [null, null, null], frozen: false, settled: false, res: null, cashPre, t0: performance.now(), timers: [] };
+      if (V.mode === "auto") { S.autoOrd = (S.flag === "N" && S.nav ? S.oshi : ORD95[0]).slice(); S.autoOrd.forEach(i => oshi95(S, i)); S.tops = randOf95(S.want); F95.live.settled = true; holdHud95(true); settle95(S, r => { if (F95.live && F95.live.S === S) F95.live.res = r; }); }
       else { vs95().spin = S; saveWorld(); }
       openSlot95({ S });
       saveWorld();
@@ -18089,20 +18152,35 @@ function openSlot95(arg) {
     const Lv = F95.live; if (!Lv || Lv.bound) { if (Lv) loop(body); return; } Lv.bound = true;
     const S = Lv.S, auto = S.mode === "auto";
     try { SFX.lever(); SFX.spinStart(); } catch (e) { }
-    if (S.flag && BIG95.includes(S.flag)) {
-      Lv.lamp = S.flag;
-      if (S.mode === "meoshi") { aim(`★ ${AIM95[S.flag]}を狙え`); lunaSay95(`……光りましたわ。${AIM95[S.flag]}を、狙ってくださいませ`); }
-    }
-    const later = (fn, ms) => Lv.timers.push(setTimeout(() => { if (F95.live === Lv) fn(); }, ms));
-    if (S.ev === "freeze") later(() => freeze(Lv), 700);
-    else startStops(Lv);
+    const later = (fn, ms) => later95(Lv, fn, ms);
+    const yk = S.yk | 0, wait = YKMS114[yk];
+    if (yk) yokoku(yk);
+    later(() => {
+      if (S.flag && BIG95.includes(S.flag)) {
+        Lv.lamp = S.flag;
+        if (S.mode === "meoshi") { aim(`★ ${AIM95[S.flag]}を狙え`); lunaSay95(`……光りましたわ。${AIM95[S.flag]}を、狙ってくださいませ`); }
+      }
+      if (S.flag === "N" && S.mode === "meoshi") {
+        if (S.nav) { aim(`ナビ：${S.oshi.map(i => "左中右"[i]).join("→")} の順に止めて`); try { SFX.navi(); } catch (e) { } }
+        else aim("押し順ベル！？ 押し順を当てろ");
+      }
+      if (S.ev === "freeze") later(() => freeze(Lv), 700);
+      else startStops(Lv);
+    }, wait);
     loop(body);
+    function yokoku(k) {
+      evText(["", "チャンス！", "激アツ！！", "★確定★"][k]); Lv.yk = k; Lv.ykT = performance.now();
+      flash114(k, YKMS114[k]);
+      try { if (k === 1) SFX.yokoku(); else SFX.kyuin(k === 3 ? 2 : 1); } catch (e) { }
+      if (k >= 2) lunaSay95(k === 3 ? "……虹色！？ これは、まちがいございませんわ" : "……空気が、変わりましたわ");
+      later(() => evText(""), YKMS114[k] - 80);
+    }
     function startStops(Lv) {
-      if (auto) [700, 1150, 1600].forEach((t, i) => later(() => autoStop(i), t));
+      if (auto) later(() => autoStop(S.autoOrd[0]), 700);
       else { enableStops(true); later(() => { [0, 1, 2].forEach(i => { if (Lv.spinning[i] && Lv.remain[i] < 0) press(i); }); }, 9000); }
     }
     function freeze(Lv) {
-      Lv.frozen = true; enableStops(false); evText("……"); luna95("freeze"); try { SFX.reach(); } catch (e) { }
+      Lv.frozen = true; enableStops(false); evText("……"); luna95("freeze"); try { SFX.reach(); SFX.heart(); } catch (e) { }
       later(() => evText("フリーズ！？"), 1100);
       later(() => { evText("FREEZE!!"); banner95("FREEZE!!", `ボーナス ×${S.fm}`, 1800, "fz"); acornRain95(1800, 60); try { SFX.big(); } catch (e) { } }, 2300);
       later(() => { Lv.frozen = false; evText(""); startStops(Lv); }, 3500);
@@ -18111,12 +18189,17 @@ function openSlot95(arg) {
   }
   function autoStop(i) {
     const Lv = F95.live; if (!Lv || !Lv.spinning[i] || Lv.remain[i] >= 0) return;
-    const t = Lv.S.tops[i]; let d = ((t - Lv.pos[i]) % N95 + N95) % N95; if (d < 1.5) d += N95; Lv.remain[i] = d;
+    let t = Lv.S.tops[i];
+    // 逆回転（v114）：最後のリールを、いちど少しずれた位置（そろわない位置）で止めて見せる
+    if (Lv.S.rev && !Lv.fake && Lv.spinning.filter(x => !x).length === 2) { const tf = fakeTop114(Lv.S, i); if (tf != null) { Lv.fake = { i, tf }; t = tf; } }
+    Lv.tgt[i] = t;
+    let d = ((t - Lv.pos[i]) % N95 + N95) % N95; if (d < 1.5) d += N95; Lv.remain[i] = d;
   }
   function press(i) {
     const Lv = F95.live; if (!Lv || Lv.frozen || !Lv.spinning[i] || Lv.remain[i] >= 0) return;
     if (Lv.S.mode === "auto") { autoStop(i); return; }
-    const t = stopAt95(Lv.S, i, Lv.pos[i]); Lv.S.tops[i] = t;
+    oshi95(Lv.S, i);
+    const t = stopAt95(Lv.S, i, Lv.pos[i]); Lv.S.tops[i] = t; Lv.tgt[i] = t;
     Lv.remain[i] = ((t - Lv.pos[i]) % N95 + N95) % N95;
     const b = document.querySelector(`[data-st95="${i}"]`); if (b) b.disabled = true;
   }
@@ -18129,20 +18212,46 @@ function openSlot95(arg) {
     if (n === 2) {
       const left = [0, 1, 2].find(k => Lv.spinning[k]), fixed = [0, 1, 2].filter(k => k !== left);
       const reach = LN95.some(l => { const a = cell95(fixed[0], Lv.pos[fixed[0]], l[fixed[0]]), b = cell95(fixed[1], Lv.pos[fixed[1]], l[fixed[1]]); return a === b && BIG95.includes(a); });
-      if (reach && !Lv.S.zen) { Lv.reach = true; evText("リーチ！"); luna95("reach"); try { SFX.reach(); if (Lv.S.mode === "auto") { Lv.speed[left] = 7; SFX.spinSlow(); } } catch (e) { } }
+      if (reach && !Lv.S.zen) { Lv.reach = true; Lv.reachT = performance.now(); evText("リーチ！"); luna95("reach"); try { SFX.reach(); SFX.heart(); if (Lv.S.mode !== "auto") Lv.speed[left] = 12; SFX.spinSlow(); } catch (e) { } }
     }
-    if (n === 3) finish();
+    if (n === 3) { finish(); return; }
+    if (Lv.S.mode === "auto" && Lv.S.autoOrd) { const nx = Lv.S.autoOrd[n]; later95(Lv, () => autoStop(nx), Lv.reach ? 1400 : 430); }
+  }
+  // 逆回転（v114）：はずれたように止まったあと、少しまって、逆向きにぐるっと回ってそろう
+  function fakeStop(i) {
+    const Lv = F95.live; try { SFX.reelStop(2); SFX.spinStop(); } catch (e) { }
+    evText(""); Lv.reach = false; Lv.dim = true;
+    const r = document.getElementById("vs95res"); if (r) r.textContent = "……";
+    later95(Lv, () => {
+      Lv.dim = false; Lv.revT = performance.now(); evText("逆回転！？"); flash114(3, 1500);
+      try { SFX.rewind(); SFX.kyuin(2); } catch (e) { }
+      lunaSay95("……いいえ、まだ終わっておりませんわ！");
+      Lv.dir[i] = -1; Lv.speed[i] = 26; Lv.spinning[i] = true; Lv.tgt[i] = Lv.S.tops[i];
+      Lv.remain[i] = ((Lv.fake.tf - Lv.S.tops[i]) % N95 + N95) % N95 + N95;
+    }, 1200);
   }
   function finish() {
-    const Lv = F95.live, S = Lv.S; Lv.timers.forEach(clearTimeout); evText(""); aim(""); try { SFX.spinStop(); } catch (e) { }
+    const Lv = F95.live, S = Lv.S; Lv.timers.forEach(clearTimeout); Lv.timers = []; evText(""); aim(""); try { SFX.spinStop(); } catch (e) { }
+    // 確変・AT に入るときは、結果の前に台がビカビカ光る（v114）
+    if ((S.ev === "kaku" || S.ev === "at") && !Lv.pre) {
+      Lv.pre = true; Lv.ykT = performance.now(); Lv.yk = 3; evText("！？"); flash114(3, 1700);
+      try { SFX.kyuin(2); } catch (e) { } lunaSay95("……台が、光っておりますわ！");
+      later95(Lv, finish, 1800); return;
+    }
     const show = r => {
       if (F95.live !== Lv) return;
       F95.live = null; holdHud95(false); F95.lastLines = r.lines;
-      const head = S.zen ? `全回転！！ ${SN95[S.zen]}が5ラインぜんぶにそろった` : r.sym ? `${LNN95[r.line]}に${SN95[r.sym]}がそろった${S.kk ? "（確変2倍）" : ""}` : S.lost ? "……取りこぼし。何かがそろいそうだった" : "はずれ…";
+      const ordT = S.oshi ? S.oshi.map(i => "左中右"[i]).join("→") : "";
+      const head = S.zen ? `全回転！！ ${SN95[S.zen]}が5ラインぜんぶにそろった` : r.sym === "N" ? `${S.nav ? "ナビどおり！" : "押し順的中！"} ${LNN95[r.line]}にベルがそろった${S.kk ? "（確変2倍）" : ""}` : r.sym ? `${LNN95[r.line]}に${SN95[r.sym]}がそろった${S.kk ? "（確変2倍）" : ""}` : S.oshiMiss ? `押し順ベル……押し順がちがった（正解は ${ordT}）` : S.lost ? "……取りこぼし。何かがそろいそうだった" : "はずれ…";
       const fz = r.bonus ? `　フリーズのボーナス ×${S.fm}` : "";
       const text = r.pay ? `${head}${fz}　${billTxt78(r.pay)}（${fmt(r.pay * BILL78)}）${r.capped ? "（上限5,000枚）" : ""}${r.credit ? "。" + payText91(r.pay, r.credit) : ""}` : `${head}${fz}　${billTxt78(S.bet)} を失った`;
       Lv.win = r.lines; Lv.flash = r.pay > S.bet ? 1 : 0;
       if (S.ev === "kaku") { banner95("確変突入！", `次の${KK95}回、そろった配当が2倍`, 2000, "kk"); luna95("kaku"); try { SFX.big(); } catch (e) { } }
+      if (S.ev === "at") { world.stats.vipAt95 = (world.stats.vipAt95 || 0) + 1; banner95("AT突入！！", `押し順ナビ ${AT_LEN95}回`, 2200, "kk"); luna95("at"); try { SFX.big(); } catch (e) { } acornRain95(2400, 70); }
+      if (S.uwa) setTimeout(() => { banner95(`上乗せ +${S.uwa}回！`, `AT あと${vs95().at}回`, 1800, "kk"); luna95("uwa"); try { SFX.kyuin(1); } catch (e) { } }, 1400);
+      if (Lv.fake) { world.stats.vipRev95 = (world.stats.vipRev95 || 0) + 1; banner95("復活！！", "逆回転で、そろった", 1600, "zen"); }
+      if (S.nav && S.ev !== "at" && vs95().at === 0) { const got = vs95().atGot; setTimeout(() => { banner95("AT終了", `このATの払い戻し ${got}枚`, 2200); luna95("atEnd"); }, 1500); vs95().atGot = 0; saveWorld(); }
+      if (r.sym === "N" && !S.nav) luna95("oshi");
       if (S.zen) { banner95("全回転！！", `${SN95[S.zen]}が9マスぜんぶ`, 2200, "zen"); luna95("zen"); }
       else if (r.sym === "A") luna95("acorn");
       else if (r.tier >= 3) luna95("big");
@@ -18157,7 +18266,7 @@ function openSlot95(arg) {
         shine90(Math.max(1, r.tier));
         if (r.tier >= 3 || r.sym === "A" || S.zen) acornRain95(r.tier >= 4 ? 5200 : 3800, r.tier >= 4 ? 220 : 150);
         const fx = () => winFx90({ tier: Math.max(1, r.tier), pay: r.pay, label: S.zen ? "全回転" : r.sym ? `${SN95[r.sym]}がそろった` : `フリーズ ×${S.fm}` });
-        if (S.zen || S.ev === "kaku") setTimeout(fx, 2000); else fx();
+        if (S.zen || S.ev === "kaku" || S.ev === "at" || Lv.fake) setTimeout(fx, Lv.fake ? 1500 : 2000); else fx();
       } else if (r.out === "push") se13("small"); else se13("miss");
     };
     if (S.mode === "auto") { if (Lv.res) show(Lv.res); else { const iv = setInterval(() => { if (Lv.res || F95.live !== Lv) { clearInterval(iv); if (Lv.res) show(Lv.res); } }, 80); } }
@@ -18171,9 +18280,16 @@ function openSlot95(arg) {
       const Lv = F95.live, dt = Math.min(.05, (now - last) / 1000); last = now;
       if (Lv && Lv.bound) {
         for (let i = 0; i < 3; i++) if (Lv.spinning[i] && !Lv.frozen) {
-          let mv = Lv.speed[i] * dt; if (Lv.remain[i] >= 0) { mv = Math.min(mv, Lv.remain[i]); Lv.remain[i] -= mv; }
-          Lv.pos[i] = (Lv.pos[i] + mv) % N95;
-          if (Lv.remain[i] === 0 || (Lv.remain[i] >= 0 && Lv.remain[i] < 1e-9)) { Lv.spinning[i] = false; Lv.pos[i] = Lv.S.tops[i]; Lv.remain[i] = -1; onReelStop(i); if (!F95.live) break; }
+          // リーチのときは、止まる直前の3コマだけゆっくり（じらし）
+          const sp = Lv.reach && Lv.S.mode === "auto" && Lv.remain[i] >= 0 && Lv.remain[i] < 3.2 ? 4.5 : Lv.speed[i];
+          let mv = sp * dt; if (Lv.remain[i] >= 0) { mv = Math.min(mv, Lv.remain[i]); Lv.remain[i] -= mv; }
+          Lv.pos[i] = ((Lv.pos[i] + (Lv.dir ? Lv.dir[i] : 1) * mv) % N95 + N95) % N95;
+          if (Lv.remain[i] === 0 || (Lv.remain[i] >= 0 && Lv.remain[i] < 1e-9)) {
+            const tg = Lv.tgt && Lv.tgt[i] != null ? Lv.tgt[i] : Lv.S.tops[i];
+            Lv.spinning[i] = false; Lv.pos[i] = tg; Lv.remain[i] = -1; if (Lv.dir) Lv.dir[i] = 1;
+            if (Lv.fake && Lv.fake.i === i && !Lv.fake.shown) { Lv.fake.shown = true; fakeStop(i); } else onReelStop(i);
+            if (!F95.live) break;
+          }
         }
       }
       draw(body, now);
@@ -18187,8 +18303,8 @@ function openSlot95(arg) {
     const Lv = F95.live, P = Lv ? Lv.pos : vs95().pos, spin = Lv ? Lv.spinning : [false, false, false], zen = Lv && Lv.S.zen && !Lv.spinning.some(Boolean) ? Lv.S.zen : null;
     // 外わく（金）と、まわりのランプ
     g.fillStyle = "#3a0f22"; g.fillRect(0, 0, 76, 70); g.fillStyle = "#b8841c"; g.fillRect(2, 2, 72, 66); g.fillStyle = "#f0c040"; g.fillRect(3, 3, 70, 64); g.fillStyle = "#2a0a18"; g.fillRect(6, 6, 64, 58);
-    const lit = Math.floor(now / (Lv ? 70 : 260));
-    for (let k = 0; k < 18; k++) { const per = k < 9 ? [4 + k * 8, 1] : [4 + (k - 9) * 8, 66]; g.fillStyle = (k + lit) % 3 === 0 ? "#fffaf0" : (k + lit) % 3 === 1 ? "#ff5f8a" : "#ffd84a"; g.fillRect(per[0], per[1], 3, 2); }
+    const lit = Math.floor(now / (Lv ? 70 : 260)), rainbow = vs95().at > 0 || vs95().kk > 0 || (Lv && Lv.yk === 3 && now - Lv.ykT < 1800);
+    for (let k = 0; k < 18; k++) { const per = k < 9 ? [4 + k * 8, 1] : [4 + (k - 9) * 8, 66]; g.fillStyle = rainbow ? `hsl(${(k * 40 + now / 4) % 360},95%,62%)` : (k + lit) % 3 === 0 ? "#fffaf0" : (k + lit) % 3 === 1 ? "#ff5f8a" : "#ffd84a"; g.fillRect(per[0], per[1], 3, 2); }
     for (let r = 0; r < 3; r++) {
       const x = 8 + r * 20;
       g.fillStyle = "#fff8e8"; g.fillRect(x, 8, 18, 54);
@@ -18209,7 +18325,13 @@ function openSlot95(arg) {
       g.beginPath(); LN95[w].forEach((row, i) => { const xx = 8 + i * 20 + 9, yy = 8 + row * 18 + 9; i ? g.lineTo(xx, yy) : g.moveTo(xx - 9, yy); }); g.lineTo(68, 8 + LN95[w][2] * 18 + 9); g.stroke(); g.globalAlpha = 1;
     }
     if (Lv && Lv.frozen) { g.fillStyle = `rgba(10,0,20,${.45 + .1 * Math.sin(now / 120)})`; g.fillRect(6, 6, 64, 58); }
-    if (Lv && Lv.reach && Lv.spinning.some(Boolean)) { g.strokeStyle = `rgba(255,95,138,${.6 + .4 * Math.sin(now / 70)})`; g.lineWidth = 2; g.strokeRect(5, 5, 66, 60); }
+    // 予告・ビカビカ（v114）：青→赤→虹
+    if (Lv && Lv.yk && now - Lv.ykT < (YKMS114[Lv.yk] || 1700)) { const a = .22 + .18 * Math.sin(now / 55); g.fillStyle = Lv.yk === 1 ? `rgba(60,140,255,${a})` : Lv.yk === 2 ? `rgba(255,40,70,${a})` : `hsla(${(now / 3) % 360},100%,60%,${a + .08})`; g.fillRect(6, 6, 64, 58); }
+    if (Lv && Lv.dim) { g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(6, 6, 64, 58); }
+    if (Lv && Lv.revT && now - Lv.revT < 1600) { g.fillStyle = `hsla(${(now / 2) % 360},100%,65%,${.25 + .15 * Math.sin(now / 40)})`; g.fillRect(6, 6, 64, 58); }
+    // 押し順ナビ（AT のとき・押し順ベル）：次に止めるリールを赤く光らせる（番号は STOP ボタンの上）
+    if (Lv && Lv.S.flag === "N" && Lv.S.nav && Lv.spinning.some(Boolean) && !Lv.frozen) { const nx = Lv.S.oshi[(Lv.S.ord || []).length]; if (nx != null && Lv.spinning[nx]) { g.strokeStyle = `rgba(255,58,90,${.65 + .35 * Math.sin(now / 80)})`; g.lineWidth = 2; g.strokeRect(7 + nx * 20, 7, 20, 56); } }
+    if (Lv && Lv.reach && Lv.spinning.some(Boolean)) { const b = Math.sin(now / 70); g.strokeStyle = `rgba(255,95,138,${.6 + .4 * b})`; g.lineWidth = 2; g.strokeRect(5, 5, 66, 60); g.fillStyle = `rgba(255,40,90,${.08 + .06 * b})`; g.fillRect(6, 6, 64, 58); }
     // 大きい役のランプ（上のまんなか）
     if (Lv && Lv.lamp && (Lv.S.mode === "meoshi" || !Lv.spinning.some(Boolean))) { const on = Math.floor(now / 110) % 2; g.fillStyle = on ? "#fffaf0" : (Lv.lamp === "A" ? "#ffd84a" : Lv.lamp === "7" ? "#ff4a5a" : "#f0c040"); g.fillRect(34, 0, 8, 4); g.fillStyle = "#7a5410"; g.fillRect(34, 4, 8, 1); }
   }
@@ -18221,13 +18343,14 @@ function payHtml95() {
   return `<div class="pay">${Object.entries(PAY95).map(([s, m]) => `<span><img src="${ASSETS[SYM95[s]]}" alt="">${esc(SN95[s])}×3　${m}倍</span>`).join("")}</div>
     <table class="vs95tb"><tr><th>役</th><th>おまかせ</th><th>目押し</th></tr>${P.map(([s, p], i) => `<tr><td>${esc(SN95[s])}</td><td>${pct(p)}</td><td>${pct(M[i][1])}</td></tr>`).join("")}</table>
     <p class="mtext small">5ライン固定。1回に賭けた枚数×倍率が払い戻し（最大${MAXPAY95.toLocaleString("ja-JP")}枚）。当たりはスピンした瞬間に決まり、リールはそれに合わせて止まる。<b>おまかせ</b>は当たりを必ずそろえる（還元率 約95%）。<b>目押し</b>は、大きい役（金のどんぐり・7・金塊）が当たっていると、ランプとルナが「狙え」と教えてくれる。大きい役は押した位置から4コマまでしかすべらないので、その絵柄が見えているうちに押さないとそろわない（取りこぼし）。小さい役は台が引きこんでそろえる。目押しの大きい役は当たりが1.05倍なので、取りこぼしなしで約97%。はずれのときは、どう押してもそろわない。</p>
-    <p class="mtext small"><b>特別な割り込み</b>（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の${KK95}回、そろった配当が2倍／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）</p>`;
+    <p class="mtext small"><b>押し順ベル</b>：ベルは、3つのリールを決まった順番（6とおり）で止めたときだけそろう（賭け金の4倍）。目押しでは自分で順番を当てる（「？」が出る）。おまかせは台が左から止める。<b>AT</b>（押し順ナビ）のあいだは、正しい順番を①②③で教えてくれる。</p>
+    <p class="mtext small"><b>特別な割り込み</b>（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の${KK95}回、そろった配当が2倍／AT＝次の${AT_LEN95}回、押し順ナビ（AT中に7か金のどんぐりで +${AT_ADD95}回の上乗せ）／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）。スピンのときに青・赤・虹に光ったら予告（虹は確定）。おまかせの7と金のどんぐりは、いちど外れたように見えて、逆回転でそろうことも。</p>`;
 }
 function chooseMode95() {
   openModal("VIPルーム　高レートスロット", "dark vip90 vs95", body => {
     body.innerHTML = `${staffSay13(charIcon13(NPC90.manager.cfg), "ようこそ、VIPの台へ。まずは、リールの止め方をお選びくださいませ。あとからでも変えられますわ")}
       <div class="vs95pick"><button class="gm92c" type="button" data-pm95="auto"><b>おまかせ</b><span>リールは台が止める。当たっていれば必ずそろう。のんびり楽しみたい方に</span></button>
-      <button class="gm92c" type="button" data-pm95="meoshi"><b>目押し</b><span>STOP で1つずつ、自分のタイミングで止める。大きい役が当たるとルナが「狙え」と教えてくれるので、その絵柄をねらって止める（はずすと取りこぼし）。腕の見せどころ</span></button></div>
+      <button class="gm92c" type="button" data-pm95="meoshi"><b>目押し</b><span>STOP で1つずつ、自分のタイミングと順番で止める。大きい役が当たるとルナが「狙え」と教えてくれるので、その絵柄をねらって止める（はずすと取りこぼし）。ベルは押し順を当てるとそろう。腕と勘の見せどころ</span></button></div>
       <p class="mtext small">現金（1,000G札）だけ。1回に5・10・20・50枚。どちらでも、勝ちすぎることはない作りです（還元率は おまかせ 約95%・目押し 最大で約97%）。</p>`;
     body.querySelectorAll("[data-pm95]").forEach(b => b.onclick = () => { vs95().mode = b.dataset.pm95; saveWorld(); closeModal(); luna95("hello"); openSlot95(); });
   }, onClose91);
@@ -18243,7 +18366,9 @@ GUIDE54.push(["VIPのスロット", "s95_acorn", `
     <p>VIPルームの左の<b>高レートスロット</b>（ルナのとなりの金の台）。現金（1,000G札）だけで、1回に5・10・20・50枚。払い戻しは最大5,000枚。</p><ul>
     <li>はじめに<b>おまかせ</b>か<b>目押し</b>を選ぶ（あとから変えられる）。おまかせは当たりが必ずそろう。目押しは STOP（1・2・3キー）で自分で止める。大きい役（金のどんぐり・7・金塊）が当たると、ランプとルナが「狙え」と教えてくれるので、その絵柄が見えているうちに押す（小さい役は台が引きこむ）</li>
     <li>当たりはスピンした瞬間に決まっていて、はずれのときはどう押してもそろわない。目押しが上手でも、還元率は約97%まで（勝ちすぎない作り）</li>
-    <li>フリーズ・確変・全回転は、VIPだと画面いっぱいの演出つき。大当たりでは金のどんぐりが降ってくる。ルナの声は台の「ルナの声」でON・OFF</li>
+    <li>ベルは<b>押し順ベル</b>。決まった順番で止めないとそろわない。ふだんは当てずっぽう、<b>AT</b>（押し順ナビ）のあいだは①②③で順番を教えてくれる。AT中に7か金のどんぐりが当たると上乗せ</li>
+    <li>スピンのときに光るのは予告（青→赤→虹。虹は確定）。確変やATに入る前は、台がビカビカ光る。おまかせの7と金のどんぐりは、外れたと思ったら逆回転でそろうことも</li>
+    <li>フリーズ・確変・AT・全回転は、VIPだと画面いっぱいの演出つき。大当たりでは金のどんぐりが降ってくる。ルナの声は台の「ルナの声」でON・OFF</li>
     <li>勝ち負けは、ほかのカジノと同じく番付・今日の負け上限・会員ランクにつながる。勝ったあとはダブルアップもできる</li></ul>`]);
 F95.ready = true;
 
@@ -22658,6 +22783,149 @@ rebuildSolid = function () {
 rebuildSolid();
 F113.ready = true;
 
+// =================== v114: リサイクル品を村のみんなで・小屋のえさ箱をサイロから自動で・建物の「キットに戻す」の押しまちがい ===================
+var F114 = {};
+// ---------- リサイクル品（オンラインのとき、村のみんなで1つの棚） ----------
+// これまでは自分で売った道具だけが、自分のセーブ（world.recycle）に並んでいた。オンラインでは、売った道具をサーバー（RecycleHandler・共有の村の "_recycle"）の棚に出して、
+// 同じ村のだれでも買えるようにする。買うときはサーバーが棚から外して OK を返してから、お金を引いて持ち物に入れる（同じ物を2人が買わない）。
+// オフラインのあいだに売った分は world.recycle にたまり、つないだときに棚へ出す（届いたと返事が来てから消す）。
+F114.list = null; F114.fly = null; F114.buying = null;
+const rcOn114 = () => !!F8.connected && !WATCH88;
+const rcOpen114 = () => modalOpen && !!document.getElementById("rc114");
+setInterval(() => {
+  try {
+    if (!rcOn114() || F11.synced !== true) return;
+    const now = Date.now();
+    if (F114.fly && now - F114.fly.at > 10000) { world.recycle.unshift(...F114.fly.items); F114.fly = null; }
+    if (!F114.fly && Array.isArray(world.recycle) && world.recycle.length) {
+      const items = world.recycle.splice(0, 30).filter(r => r && ITEMS[r.id]).map(r => ({ id: r.id, p: Math.max(1, Math.floor(+r.price || 0)) }));
+      if (!items.length) return;
+      F114.fly = { k: String(now), items: items.map(x => ({ id: x.id, price: x.p })), at: now };
+      send8({ type: "recycle", a: "put", k: F114.fly.k, items });
+    }
+  } catch (e) { }
+}, 1500);
+function openRecycle114(note) {
+  if (!F114.asked || Date.now() - F114.asked > 2500) { F114.asked = Date.now(); send8({ type: "recycle", a: "list" }); }
+  openModal("よろず屋", "shop", body => {
+    const L = (F114.list || []).filter(r => r && ITEMS[r.id]), me = F8.myId();
+    let html = shopTabs13("recycle") + `<p class="mtext" id="rc114">所持金 <b>${fmt(world.money)}</b></p>${note ? `<p class="mtext small"><b>${esc(note)}</b></p>` : ""}`;
+    if (!F114.list) html += `<p class="mtext">棚を見ています…</p>`;
+    else if (!L.length) html += `<p class="mtext">いまはリサイクル品がないよ。村のだれかが道具を売ると、ここに並びます。</p>`;
+    else html += `<p class="mtext">村のみんなが手放した道具。新品より安いよ。早いもの勝ち。</p><div class="list">${L.map(r => itemLi(r.id, `${fmt(r.p)}（新品 ${fmt(ITEMS[r.id].price)}）・${r.o === me ? "自分" : esc(String(r.n || "だれか").slice(0, 16)) + "さん"}が売った`,
+      `<button class="btn" type="button" data-rb114="${+r.u}" ${world.money < r.p || F114.buying ? "disabled" : ""}>買う</button>`)).join("")}</div>`;
+    body.innerHTML = html;
+    body.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { closeModal(); openShop(b.dataset.t); });
+    body.querySelectorAll("[data-rb114]").forEach(b => b.onclick = () => {
+      const u = +b.dataset.rb114, r = (F114.list || []).find(x => +x.u === u); if (!r || world.money < r.p || F114.buying) return;
+      F114.buying = { u, at: Date.now() }; b.disabled = true; b.textContent = "…";
+      send8({ type: "recycle", a: "buy", u });
+      setTimeout(() => { if (F114.buying && F114.buying.u === u) { F114.buying = null; if (rcOpen114()) openRecycle114("お店が混んでいるみたい。もう一度ためしてね"); } }, 8000);
+    });
+  });
+}
+F114.open = openRecycle114;
+const _openShop114 = openShop;
+openShop = function (tab) {
+  if (tab === "recycle" && rcOn114()) { openRecycle114(); return; }
+  return _openShop114.apply(this, arguments);
+};
+const _handle114 = handle8;
+handle8 = m => {
+  if (m && m.type === "recycle") {
+    try {
+      if (Array.isArray(m.items)) F114.list = m.items.slice(0, 80);
+      if (m.ok === "put" && F114.fly && m.k === F114.fly.k) { F114.fly = null; saveWorld(); }
+      if (rcOpen114() && !F114.buying) openRecycle114();
+    } catch (e) { }
+    return;
+  }
+  if (m && m.type === "recycleOk") {
+    try {
+      const id = String(m.id || ""), p = Math.max(0, Math.floor(+m.p || 0)); F114.buying = null;
+      if (ITEMS[id]) {
+        addMoney(-p);
+        const inBag = addItem(id, 1, true); if (!inBag) homeStore18(id, 1);
+        saveWorld(); SFX.small && SFX.small();
+        const note = `${ITEMS[id].name}を${fmt(p)}で買った${inBag ? "" : "（持ち物がいっぱいなので、家の収納箱に入れたよ）"}`;
+        toast(ITEMS[id].icon, note); if (rcOpen114()) openRecycle114(note);
+      }
+    } catch (e) { }
+    return;
+  }
+  if (m && m.type === "recycleNg") { F114.buying = null; const t = String(m.text || "買えなかった").slice(0, 60); toast(null, t); if (rcOpen114()) openRecycle114(t); return; }
+  _handle114(m);
+  if (m && m.type === "welcome") { F114.list = null; F114.fly = null; F114.buying = null; }
+};
+
+// ---------- 家畜小屋のえさ箱：サイロから自動で補充 ----------
+// 小屋ごとに「サイロから補充」を ON・OFF（world.barn114.off[小屋の鍵] = 1 のとき OFF。はじめは ON）。
+// 毎朝、その小屋の自分の家畜の7日分（えさ箱の上限 999 まで）になるように、サイロ（world.silo32）からえさ箱へ移す。えさ箱の画面からも、いますぐ移せる。
+const b114 = () => { const v = world.barn114 = world.barn114 && typeof world.barn114 === "object" ? world.barn114 : {}; v.off = v.off && typeof v.off === "object" ? v.off : {}; return v; };
+const siloHave114 = () => mine32("silo32").length > 0;
+/** サイロから小屋 key のえさ箱へ。want を省くと7日分まで。移した数を返す */
+function siloToTrough114(key, want) {
+  const T = trough112(), n = T[key] | 0, c = myBarnAnimals105(key).length;
+  const goal = want != null ? n + want : Math.min(TROUGH_MAX112, c * 7);
+  const k = Math.max(0, Math.min(goal - n, TROUGH_MAX112 - n, world.silo32 | 0)); if (!k) return 0;
+  world.silo32 = (world.silo32 | 0) - k; T[key] = n + k; return k;
+}
+F114.siloToTrough = siloToTrough114;
+const _newday114 = F6.onNewDay;
+F6.onNewDay = () => {
+  _newday114();
+  try {
+    if (!siloHave114()) return;
+    const keys = [...new Set((world.animals || []).map(a => a.barn).filter(Boolean))]; let moved = 0;
+    for (const k of keys) if (!b114().off[k] && barnOk105(k)) moved += siloToTrough114(k);
+    if (moved) F7.notify(`サイロから、小屋のえさ箱に飼料を${moved}個入れたよ（サイロのこり${world.silo32 | 0}個）`, "feed");
+  } catch (e) { }
+};
+const _trough114 = openTrough112;
+openTrough112 = function (key) {
+  const r = _trough114.apply(this, arguments);
+  try {
+    const b = $("mbody"); if (!b || b.querySelector("#sl114")) return r;
+    const d = document.createElement("div"); d.id = "sl114";
+    const on = !b114().off[key], has = siloHave114();
+    d.innerHTML = `<h3 class="lbl">サイロから補充</h3>${has ? `<p class="mtext small">サイロの飼料 ${world.silo32 | 0}個。ON にしておくと、毎朝、この小屋の家畜の7日分になるまで、サイロから自動でえさ箱に入れるよ。</p>
+      <div class="row2"><button class="chip" type="button" id="slt114" aria-pressed="${on}">自動で補充 ${on ? "ON" : "OFF"}</button><button class="btn light" type="button" id="sln114" ${world.silo32 ? "" : "disabled"}>いまサイロから7日分入れる</button></div>`
+      : `<p class="mtext small">サイロを建てて飼料をためておくと、ここに毎朝、自動で補充できるよ（工務店の建物キット）。</p>`}`;
+    b.appendChild(d);
+    d.querySelector("#slt114")?.addEventListener("click", () => { const o = b114().off; if (o[key]) delete o[key]; else o[key] = 1; saveWorld(); openTrough112(key, `サイロからの自動補充を${o[key] ? "OFF" : "ON"}にした`); });
+    d.querySelector("#sln114")?.addEventListener("click", () => { const k = siloToTrough114(key); saveWorld(); openTrough112(key, k ? `サイロから${k}個入れた` : "えさ箱はもう7日分あるよ"); });
+  } catch (e) { }
+  return r;
+};
+F112.trough = openTrough112;
+
+// ---------- 建物の画面：「キットに戻す」は2回押しで（スマホでAボタンを押したままの指が当たらないように） ----------
+// スマホでは、Aボタンで建物の画面を開いたとき、同じ場所に「キットに戻す」が来て、指がそのまま当たってしまうことがあった。
+// 開いてすぐ（0.8秒）は押せないようにして、押しても1回目は「もう一度押すと戻す」に変わるだけにする。
+const KIT_IDS114 = ["b32back"];
+const _build114 = openBuild32;
+openBuild32 = function (k) {
+  const r = _build114.apply(this, arguments);
+  try {
+    const body = $("mbody");
+    for (const id of KIT_IDS114) {
+      const b = body && body.querySelector("#" + id); if (!b || b.dataset.g114) continue;
+      b.dataset.g114 = "1"; const label = b.textContent; b.disabled = true; setTimeout(() => { if (b.isConnected) b.disabled = false; }, 800);
+      let armed = 0;
+      body.addEventListener("click", e => {
+        if (!e.target.closest || e.target.closest("#" + id) !== b) return;
+        if (armed && Date.now() - armed < 4000) return;
+        e.stopImmediatePropagation(); e.preventDefault();
+        armed = Date.now(); b.textContent = "もう一度押すと、キットに戻すよ"; b.classList.add("warn114");
+        setTimeout(() => { if (b.isConnected && Date.now() - armed >= 3900) { armed = 0; b.textContent = label; b.classList.remove("warn114"); } }, 4000);
+      }, true);
+    }
+  } catch (e) { }
+  return r;
+};
+F32.open = openBuild32;
+F114.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -23118,5 +23386,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

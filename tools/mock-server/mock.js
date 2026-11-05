@@ -40,6 +40,7 @@ if (fs.existsSync(BJ_CP)) {
 // みんなの麻雀：本物と同じ casino/mj/*.java を bj/MjBridge.java で動かす。留守の人の精算は mjPending に取っておいて、次の welcome で渡す
 let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPending = new Map(), crank = new Map();
 const dmPend = new Map(); // 留守の人へのひそひそ
+const recycleBy = new Map(); // 村ごとのリサイクル品の棚
 const rankHidden = new Set(); // ランキングに出さない人（本物は GameRankService の _gamerankHidden。本人には出る）
 const grank = {}, cashLed = new Map(), cashPend = new Map(); let cashPool = 0;
 function cashDeliver(to, ev) { const on = [...sessions].filter(o => o.pl && o.pl.id === to); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "cash77", ev }))); else { const l = cashPend.get(to) || []; l.push(ev); cashPend.set(to, l); } }
@@ -465,6 +466,15 @@ wss.on("connection", s => {
       if (!bridges.length) { s.send(JSON.stringify({ type: "tchatNg" })); return; }
       tReq.set(rid, { from: s.pl.id, s, left: bridges.length, msg: { type: "tchat", id: s.pl.id, name: s.pl.name, text: t, at: Date.now() } });
       for (const br of bridges) br.stdin.write(["M", s.pl.id, rid].join("\t") + "\n"); return; }
+    // リサイクル品の棚（本物は recycle/RecycleHandler.java）。共有の村の _recycle（村ごと）
+    if (m.type === "recycle") { if (s.watch || !(s.pl.id > 0)) return; const d = recycleBy.get(vOf(s.pl)) || (recycleBy.set(vOf(s.pl), { seq: 0, items: [] }), recycleBy.get(vOf(s.pl))); const view = () => ({ type: "recycle", items: JSON.parse(JSON.stringify(d.items)) });
+      if (m.a === "list") { s.send(JSON.stringify(view())); return; }
+      const now = Date.now(); if (s.rc114 && now - s.rc114 < 250) { if (m.a === "buy") s.send(JSON.stringify({ type: "recycleNg", text: "少し待ってから買ってね" })); return; } s.rc114 = now;
+      if (m.a === "put") { let n = 0; for (const it of (Array.isArray(m.items) ? m.items : []).slice(0, 30)) { const id = String(it.id || ""), p = Math.floor(+it.p || 0); if (!/^[a-z0-9_]{1,40}$/.test(id) || p < 1 || p > 1e7) continue; d.items.push({ u: ++d.seq, id, p, o: s.pl.id, n: s.pl.name }); n++; }
+        while (d.items.length > 80) d.items.shift(); s.send(JSON.stringify({ ...view(), ok: "put", k: String(m.k || "").slice(0, 20) })); if (n) bc(view(), s); return; }
+      if (m.a === "buy") { const i = d.items.findIndex(x => x.u === Math.floor(+m.u || 0)); if (i < 0) { s.send(JSON.stringify({ type: "recycleNg", text: "その道具は、もうだれかが買ったみたい" })); s.send(JSON.stringify(view())); return; }
+        const [it] = d.items.splice(i, 1); s.send(JSON.stringify({ type: "recycleOk", u: it.u, id: it.id, p: it.p })); const t = JSON.stringify(view()); for (const o of sessions) if (o.pl && vOf(o.pl) === vOf(s.pl)) o.send(t); return; }
+      return; }
     // ひとりあてのチャット（本物は ws/DmHandler.java）
     if (m.type === "dm") { const t = String(m.text || "").replace(/[\u0000-\u001f]/g, "").slice(0, 60).trim(), to = Math.floor(+m.to || 0); if (!t || !to || to === s.pl.id || s.pl.id <= 0) return;
       const a = accounts.find(x => x.id === to && !x.deleted); if (!a || vOf(a) !== vOf(s.pl)) { s.send(JSON.stringify({ type: "dmNg", text: "その人には、ひそひそを送れないみたい" })); return; }

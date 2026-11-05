@@ -164,6 +164,16 @@ const SFX = (() => {
     },
     bills(n = 6) { if (!ctx()) return; const t = ac.currentTime; const k = Math.max(2, Math.min(14, n)); for (let i = 0; i < k; i++) { noise(t + i * .055, .04, { vol: .14, hp: 2400, lp: 8000 }); tone(t + i * .055, 900, .02, { type: "triangle", vol: .05 }); } },
     register() { if (!ctx()) return; const t = ac.currentTime; noise(t, .06, { vol: .2, lp: 1800 }); tone(t + .05, 180, .08, { type: "square", vol: .1, filt: 900 }); bell(t + .14, 93, .6, .2); bell(t + .14, 88, .5, .1); },
+    // ---- VIPスロットの演出（v0.61.0）：予告の「ピロリン」・上がっていく「キュイン」・逆回転の「ギュルル」・リーチの心臓の音・ナビの「ピピッ」 ----
+    yokoku() { if (!ctx()) return; const t = ac.currentTime; [88, 91, 96].forEach((m, i) => bell(t + i * .07, m, .35, .16)); },
+    kyuin(k = 1) {
+      if (!ctx()) return; const t = ac.currentTime, n = k > 1 ? 3 : 1;
+      for (let i = 0; i < n; i++) { const d = t + i * .32; tone(d, 700, .3, { type: "square", vol: .16, f2: 2600 }); tone(d, 1400, .3, { type: "sawtooth", vol: .08, f2: 5200, filt: 6000 }); }
+      if (k > 1) for (let i = 0; i < 8; i++) bell(t + n * .32 + i * .05, 84 + (i % 4) * 3, .25, .1);
+    },
+    rewind() { if (!ctx()) return; const t = ac.currentTime; tone(t, 2400, .9, { type: "sawtooth", vol: .14, f2: 160, filt: 3000 }); for (let i = 0; i < 14; i++) noise(t + i * .06, .04, { vol: .12, lp: 2200 }); tone(t + .9, 1200, .5, { type: "square", vol: .14, f2: 2400 }); },
+    heart() { if (!ctx()) return; const t = ac.currentTime; for (let i = 0; i < 4; i++) { tone(t + i * .62, 70, .16, { type: "sine", vol: .7, f2: 45 }); tone(t + i * .62 + .2, 62, .14, { type: "sine", vol: .5, f2: 40 }); } },
+    navi() { if (!ctx()) return; const t = ac.currentTime; tone(t, 1760, .07, { type: "square", vol: .12 }); tone(t + .1, 2350, .1, { type: "square", vol: .12 }); },
     // チャットの「ぽこん」
     chat() { if (!ctx()) return; const t = ac.currentTime; tone(t, 880, .08, { type: "sine", vol: .16, f2: 1320 }); },
     jackpot() {

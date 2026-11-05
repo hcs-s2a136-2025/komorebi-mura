@@ -1064,3 +1064,18 @@ button.jn106.lock { opacity: .45; }
 .dmto112 { flex: none; max-width: 40%; font: inherit; font-size: .82rem; padding: 4px; border: 2px solid var(--wood); border-radius: 6px; background: #fffaf0; color: var(--ink); }
 .chat11 div.dm b, .mclog44 div.dm b { color: #f6a8d8; }
 .chat11 div.dm { background: rgba(70, 30, 60, .78); }
+
+/* v114：VIPスロットの予告・ビカビカ（点めつは1秒に3回より少なく）・押し順ナビ */
+.flash114 { position: fixed; inset: 0; z-index: 9050; pointer-events: none; mix-blend-mode: screen; transition: opacity .3s; }
+.flash114.out { opacity: 0; }
+.flash114.l1 { background: radial-gradient(circle, rgba(70, 150, 255, .0) 30%, rgba(70, 150, 255, .45)); animation: fl114 .4s ease-in-out infinite alternate; }
+.flash114.l2 { background: radial-gradient(circle, rgba(255, 40, 70, .05) 25%, rgba(255, 40, 70, .55)); animation: fl114 .36s ease-in-out infinite alternate; }
+.flash114.l3 { background: conic-gradient(from 0deg, rgba(255, 60, 60, .5), rgba(255, 210, 60, .5), rgba(80, 230, 120, .5), rgba(70, 150, 255, .5), rgba(200, 90, 255, .5), rgba(255, 60, 60, .5)); animation: fl114 .36s ease-in-out infinite alternate, hue114 1.2s linear infinite; }
+@keyframes fl114 { from { opacity: .35; } to { opacity: 1; } }
+@keyframes hue114 { to { filter: hue-rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .flash114 { animation: none !important; opacity: .45; } }
+.vs95stops .btn { position: relative; }
+.nv114 { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); min-width: 20px; padding: 0 4px; border-radius: 10px; background: #5a3a60; color: #fff; font-size: .85rem; line-height: 20px; box-shadow: 0 0 0 2px #2a0a18; }
+.nv114.on { background: #ff3a5a; animation: ev95b .45s ease-in-out infinite alternate; }
+.vs95at { background: linear-gradient(90deg, #ff3a5a, #ffb03a, #ff3a5a); color: #fff !important; }
+.btn.warn114 { background: #ffe6df; color: #7a2a20; border-color: #e9a597; }

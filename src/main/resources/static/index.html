@@ -1563,6 +1563,9 @@ button.jn106.lock { opacity: .45; }
 /* v117: 果たし状の賭け */
 .bt117 { display: grid; gap: 4px; padding: 8px; border-radius: 10px; background: rgba(255, 216, 106, .1); border: 1px solid rgba(255, 216, 106, .35); }
 .bt117 .vs117 { text-align: center; margin: 0; }
+
+/* v119：メイクの細かいマス（20×18） */
+#cos62cv.fine119 { width: min(74vw, 340px); }
 </style>
 
 <header>
@@ -1689,7 +1692,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.65.0";
+  const VER = "0.66.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6193,7 +6196,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.65.0";
+const CLIENT_VERSION = "0.66.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8271,6 +8274,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.66.0", date: "2026/11/05", title: "メイクも細かいドットで", items: [
+    "表参道のCOSME COUNTERのメイクを、キャラと同じ細かいドット（20×18マス）で描けるようにした",
+    "「細いペン」と「太いペン」（2×2）をえらべるよ。前に描いたメイクや保存したメイクは、そのまま細かいマスによびだせる",
+    "細かいメイクは、ほかの人の画面にも見える。前の版の人や「細かいドット」をOFFにしている人には、いままでのあらさで見える",
+  ] },
   { v: "0.65.0", date: "2026/11/05", title: "キャラのドットを細かく", items: [
     "キャラを、いままでの4倍の細かさ（1ドットを4つ）で描くようにした。形と大きさはそのままで、顔と服がくっきり見えるよ",
     "服は1着ずつ細かい絵にした。ボーダーのしま・チェック・セーラー服の襟・着物の帯・ボタンやフリルなど、服の柄がわかるように",
@@ -26134,6 +26142,140 @@ F7.renderSettings = () => {
   B.querySelectorAll("[data-fine118]").forEach(b => b.onclick = () => { store.set("komorebi-fine118", b.dataset.fine118 === "1"); cache118.clear(); F7.renderSettings(); if (typeof syncUI === "function") syncUI(); });
 };
 
+// =================== v119: メイクも32ドットで描ける（COSME COUNTER） ===================
+var F119 = {};
+// 顔のまわりを、32ドットのマス（よこ20×たて18）で持つ cfg.pt2（360文字・16色）。
+// 前の版や「細かいドット」を切っているときのために、2×2 をまとめた 10×9 の cfg.paint もいっしょに持つ（v62 のまま描かれる）。
+const PW119 = PW62 * 2, PH119 = PH62 * 2, PLEN119 = PW119 * PH119, PX119 = PX62 * 2, PY119 = PY62 * 2;
+const validPt119 = s => typeof s === "string" && s.length === PLEN119 && /^[0-9a-f]+$/.test(s) && /[1-9a-f]/.test(s);
+const EMPTY119 = "0".repeat(PLEN119);
+// 10×9 → 20×18（1マスを2×2に）
+const up119 = p => { if (!validPaint62(p)) return EMPTY119; let o = ""; for (let j = 0; j < PH119; j++) for (let i = 0; i < PW119; i++) o += p[(j >> 1) * PW62 + (i >> 1)]; return o; };
+// 20×18 → 10×9（2×2 のうち、色のついたドットでいちばん多い色。細い線も消えないように、1つでも色があれば残す）
+const down119 = q => {
+  let o = "";
+  for (let j = 0; j < PH62; j++) for (let i = 0; i < PW62; i++) {
+    const n = {}; let best = "0", bn = 0;
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const v = q[(j * 2 + dy) * PW119 + i * 2 + dx]; if (v === "0") continue; n[v] = (n[v] || 0) + 1; if (n[v] > bn) { bn = n[v]; best = v; } }
+    o += best;
+  }
+  return o;
+};
+// みんなの見た目にも通す
+const _clean119 = cleanCfg;
+cleanCfg = function (c) { const o = _clean119(c); if (c && validPt119(c.pt2)) o.pt2 = c.pt2; return o; };
+// 32で描くときは、pt2 を32のマスにそのままのせる（正面はぜんぶ・横向きは顔の手前半分・後ろ向きは描かない）
+const cache119 = new Map(), _ci119 = charImg118;
+charImg118 = function (c, dir, frame) {
+  if (!c || !validPt119(c.pt2) || !F118 || !F118.ready || !F118.on()) return _ci119(c, dir, frame);
+  // paint とずれている pt2（前の版でメイクを描きなおしたなど）は使わない
+  if (down119(c.pt2) !== c.paint) return _ci119({ ...c, pt2: undefined }, dir, frame);
+  const base = _ci119({ ...c, paint: undefined, pt2: undefined }, dir, frame);
+  if (dir === "up" || base.width !== 32) return base;
+  const key = JSON.stringify(c) + dir + frame + gamingShift;
+  const hit = cache119.get(key); if (hit) return hit;
+  const cv = document.createElement("canvas"); cv.width = cv.height = 32; const x = cv.getContext("2d"); x.drawImage(base, 0, 0);
+  const img = x.getImageData(0, 0, 32, 32), d = img.data;
+  for (let j = 0; j < PH119; j++) for (let i = 0; i < PW119; i++) {
+    const v = parseInt(c.pt2[j * PW119 + i], 16); if (!v) continue;
+    let X = PX119 + i; const Y = PY119 + j;
+    if (dir !== "down") { if (X > 17) continue; if (dir === "right") X = 31 - X; }
+    const k = (Y * 32 + X) * 4, col = PALRGB62[v]; d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  if (cache119.size > 600) cache119.clear();
+  cache119.set(key, cv); return cv;
+};
+F118.img = charImg118;
+// セーブと着せ替えの「おまかせ」で消えないように
+world.paint119 = validPt119(world.paint119) ? world.paint119 : null;
+if (world.paint119 && cfg.paint && down119(world.paint119) === cfg.paint && !cfg.pt2) { cfg.pt2 = world.paint119; player.cfg = cfg; }
+if (cfg.pt2 && (!validPt119(cfg.pt2) || !cfg.paint)) delete cfg.pt2;
+$("randBtn")?.addEventListener("click", () => { if (world.paint119) { cfg.pt2 = world.paint119; changed(); } });
+
+// ---- メイクの画面（20×18 のマス。太さ1か2） ----
+let cos119 = null;
+function openCosme119() {
+  const cur = validPt119(cfg.pt2) ? cfg.pt2 : up119(cfg.paint);
+  cos119 = { paint: cur.split(""), col: cos119 ? cos119.col : 1, mirror: cos119 ? cos119.mirror : true, size: cos119 ? cos119.size : 1, undo: [] };
+  world.looks62 = Array.isArray(world.looks62) ? world.looks62.slice(0, 3) : [null, null, null];
+  while (world.looks62.length < 3) world.looks62.push(null);
+  const look = l => validPt119(l) ? l : validPaint62(l) ? up119(l) : null;   // 前の版で保存した 10×9 も、2×2 にしてよびだせる
+  const withPt = (c, p) => validPt119(p) ? { ...c, pt2: p, paint: down119(p) } : { ...c, pt2: undefined, paint: undefined };
+  const CELL = 12, W = PW119 * CELL, H = PH119 * CELL;
+  openModal("COSME COUNTER　─ OMOTESANDO ─", "salon26", body => {
+    body.innerHTML = `<div class="salonhead26"><img src="${charIcon13({ ...DEFAULT, hair: "ロング", hairc: "黒", top: "ジャケット", topc: "生成り", bottom: "スカート", bottomc: "紫", paint: "0000000000000000000000000000000000000000000000000000000000004000000400000001100000000000000" })}" alt=""><div><p class="salonname26">Beauty Advisor  REIKA</p><p>「いらっしゃいませ。細かいドットで、お顔に自由にメイクを描いていけますよ。左右対称にすると、きれいに仕上がります」</p></div></div>
+      <div class="cos62">
+        <div class="cos62l"><canvas id="cos62cv" class="fine119" width="${W}" height="${H}"></canvas>
+          <div class="cos62t"><button class="chip" type="button" id="cos62mir" aria-pressed="${cos119.mirror}">左右対称</button><button class="chip" type="button" data-sz119="1" aria-pressed="${cos119.size === 1}">細いペン</button><button class="chip" type="button" data-sz119="2" aria-pressed="${cos119.size === 2}">太いペン</button><button class="chip" type="button" id="cos62undo">ひとつ戻す</button><button class="chip" type="button" id="cos62clr">ぜんぶ消す</button></div></div>
+        <div class="cos62r">
+          <div class="cos62pal">${PAL62.map((p, i) => `<button type="button" class="cos62c${i === cos119.col ? " on" : ""}" data-c="${i}" title="${p ? p[1] : "消しゴム"}">${p ? `<i style="background:${p[0]}"></i>` : `<i class="er"></i>`}<span>${p ? p[1] : "消す"}</span></button>`).join("")}</div>
+          <div class="salonprev26" id="cos62prev"></div>
+          <div class="cos62looks">${world.looks62.map((l, i) => `<div><img src="${look(l) ? charImg118(withPt(cfg, look(l)), "down", 0).toDataURL() : charIcon13({ ...cfg, paint: undefined, pt2: undefined })}" alt="" class="${look(l) ? "" : "empty"}"><button class="btn light" type="button" data-lsave="${i}">ほぞん</button><button class="btn light" type="button" data-lload="${i}" ${look(l) ? "" : "disabled"}>よびだす</button></div>`).join("")}</div>
+        </div>
+      </div>
+      <p class="mtext small" id="cos62msg">マスをタップ（なぞる）すると、えらんだ色がのるよ。太いペンは2×2でぬれる。後ろ向きのときは見えなくて、横向きのときは顔の手前半分が見える</p>
+      <div class="row2"><button class="btn light" type="button" id="cos62off" ${cfg.paint || cfg.pt2 ? "" : "disabled"}>メイクを落とす</button><button class="btn" type="button" id="cos62go">このメイクにする（${fmt(MAKE_PRICE62)}）</button></div>`;
+    const cv = body.querySelector("#cos62cv"), g = cv.getContext("2d"), msg = body.querySelector("#cos62msg");
+    const str = () => cos119.paint.join("");
+    // 下じきは、メイクなしの32ドットの顔（「細かいドット」を切っていても32にのばして見せる）
+    const bc = document.createElement("canvas"); bc.width = bc.height = 32; const bx = bc.getContext("2d"); bx.imageSmoothingEnabled = false;
+    const bim = charImg118({ ...cfg, paint: undefined, pt2: undefined }, "down", 0); bx.drawImage(bim, 0, 0, bim.width, bim.height, 0, 0, 32, 32);
+    const bd = bx.getImageData(0, 0, 32, 32).data;
+    const draw = () => {
+      for (let j = 0; j < PH119; j++) for (let i = 0; i < PW119; i++) {
+        const v = parseInt(cos119.paint[j * PW119 + i], 16), k = ((PY119 + j) * 32 + PX119 + i) * 4;
+        g.fillStyle = v ? PAL62[v][0] : bd[k + 3] ? `rgb(${bd[k]},${bd[k + 1]},${bd[k + 2]})` : ((i + j) % 2 ? "#f4eef0" : "#ebe2e6");
+        g.fillRect(i * CELL, j * CELL, CELL, CELL);
+      }
+      for (let i = 1; i < PW119; i++) { g.strokeStyle = i % 2 ? "rgba(0,0,0,.07)" : "rgba(0,0,0,.16)"; g.beginPath(); g.moveTo(i * CELL + .5, 0); g.lineTo(i * CELL + .5, H); g.stroke(); }
+      for (let j = 1; j < PH119; j++) { g.strokeStyle = j % 2 ? "rgba(0,0,0,.07)" : "rgba(0,0,0,.16)"; g.beginPath(); g.moveTo(0, j * CELL + .5); g.lineTo(W, j * CELL + .5); g.stroke(); }
+      if (cos119.mirror) { g.strokeStyle = "rgba(240,90,140,.5)"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); g.setLineDash([]); }
+      const p = validPt119(str()) ? str() : null;
+      body.querySelector("#cos62prev").innerHTML = ["down", "left", "right"].map(d => `<img src="${charImg118(withPt(cfg, p), d, 0).toDataURL()}" alt="">`).join("");
+      const mine = validPt119(cfg.pt2) ? cfg.pt2 : validPaint62(cfg.paint) ? up119(cfg.paint) : null;
+      const same = p === mine;
+      const go = body.querySelector("#cos62go"); go.disabled = same || !p || world.money < MAKE_PRICE62;
+      go.textContent = same && mine ? "いまのメイクです" : `このメイクにする（${fmt(MAKE_PRICE62)}）`;
+    };
+    let painting = false, last = "";
+    const cellAt = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * PW119), Math.floor((e.clientY - r.top) / r.height * PH119)]; };
+    const dot = (i, j, ch) => { if (i < 0 || j < 0 || i >= PW119 || j >= PH119) return; cos119.paint[j * PW119 + i] = ch; if (cos119.mirror) cos119.paint[j * PW119 + (PW119 - 1 - i)] = ch; };
+    const put = (i, j) => {
+      if (i < 0 || j < 0 || i >= PW119 || j >= PH119) return;
+      if (cos119.size === 2) { i &= ~1; j &= ~1; }
+      const k = i + "," + j; if (k === last) return; last = k;
+      const ch = cos119.col.toString(16);
+      if (cos119.size === 2) { dot(i, j, ch); dot(i + 1, j, ch); dot(i, j + 1, ch); dot(i + 1, j + 1, ch); } else dot(i, j, ch);
+      draw();
+    };
+    cv.addEventListener("pointerdown", e => { e.preventDefault(); cv.setPointerCapture?.(e.pointerId); cos119.undo.push(str()); if (cos119.undo.length > 60) cos119.undo.shift(); painting = true; last = ""; put(...cellAt(e)); });
+    cv.addEventListener("pointermove", e => { if (painting) put(...cellAt(e)); });
+    const up = () => { painting = false; last = ""; };
+    cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up); cv.addEventListener("pointerleave", up);
+    body.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { cos119.col = +b.dataset.c; body.querySelectorAll("[data-c]").forEach(o => o.classList.toggle("on", o === b)); });
+    body.querySelectorAll("[data-sz119]").forEach(b => b.onclick = () => { cos119.size = +b.dataset.sz119; body.querySelectorAll("[data-sz119]").forEach(o => o.setAttribute("aria-pressed", String(o === b))); });
+    body.querySelector("#cos62mir").onclick = e => { cos119.mirror = !cos119.mirror; e.currentTarget.setAttribute("aria-pressed", String(cos119.mirror)); draw(); };
+    body.querySelector("#cos62undo").onclick = () => { const p = cos119.undo.pop(); if (p) { cos119.paint = p.split(""); draw(); } };
+    body.querySelector("#cos62clr").onclick = () => { cos119.undo.push(str()); cos119.paint = EMPTY119.split(""); draw(); };
+    body.querySelectorAll("[data-lsave]").forEach(b => b.onclick = () => { if (!validPt119(str())) { msg.textContent = "まだなにも描いていないよ"; return; } world.looks62[+b.dataset.lsave] = str(); saveWorld(); closeModal(); openCosme119(); });
+    body.querySelectorAll("[data-lload]").forEach(b => b.onclick = () => { const l = look(world.looks62[+b.dataset.lload]); if (!l) return; cos119.undo.push(str()); cos119.paint = l.split(""); draw(); msg.textContent = "保存したメイクをよびだしたよ（「このメイクにする」で仕上げ）"; });
+    body.querySelector("#cos62go").onclick = () => {
+      const p = str(); if (!validPt119(p) || world.money < MAKE_PRICE62) return;
+      addMoney(-MAKE_PRICE62); cfg.pt2 = p; cfg.paint = down119(p); world.paint119 = p; world.paint62 = cfg.paint;
+      world.stats.makeup62 = (world.stats.makeup62 || 0) + 1; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); saveWorld();
+      closeModal(); toast(null, "メイク完了！ 「とってもお似合いです」"); try { se13("small"); } catch (e) { }
+    };
+    body.querySelector("#cos62off").onclick = () => { delete cfg.paint; delete cfg.pt2; world.paint62 = null; world.paint119 = null; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); saveWorld(); closeModal(); toast(null, "メイクを落として、すっぴんにもどった"); };
+    draw();
+  });
+}
+openCosme62 = openCosme119;
+F62.open = openCosme119;
+GUIDE54.forEach(gd => { if (gd[0] === "着せ替え") gd[2] = gd[2].replace("顔のまわり（10×9マス）にドットで自由にメイクを描ける", "顔のまわり（20×18マス・細いペンと太いペン）にドットで自由にメイクを描ける"); });
+F119.open = openCosme119; F119.up = up119; F119.down = down119; F119.valid = validPt119;
+F119.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -26594,7 +26736,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

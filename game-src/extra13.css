@@ -1101,3 +1101,6 @@ button.jn106.lock { opacity: .45; }
 /* v117: 果たし状の賭け */
 .bt117 { display: grid; gap: 4px; padding: 8px; border-radius: 10px; background: rgba(255, 216, 106, .1); border: 1px solid rgba(255, 216, 106, .35); }
 .bt117 .vs117 { text-align: center; margin: 0; }
+
+/* v119：メイクの細かいマス（20×18） */
+#cos62cv.fine119 { width: min(74vw, 340px); }

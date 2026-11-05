@@ -1,5 +1,8 @@
 package jp.komorebi.duel;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -7,14 +10,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import jp.komorebi.player.Player;
 import jp.komorebi.player.PlayerService;
+import jp.komorebi.village.VillageService;
 import jp.komorebi.village.Villages;
 import jp.komorebi.ws.GameSocketHandler;
 import jp.komorebi.ws.MessageHandler;
@@ -32,6 +39,14 @@ import jp.komorebi.world.SharedWorldService;
  *   <li>{"a":"yes","id","me":{k,n,ab,sk},"st"} … 受ける。サーバーがレース（{@link DuelRace}）を決めて、ふたりに {"ev":"race","r"}。送った人がいなければ "res" に取っておいて次の welcome で渡す</li>
  * </ul>
  * 果たし状は1人5通まで送れて、1人10通まで受けとれる。3日（本物の時間）たつと消える。同じ相手には1通ずつ。
+ * <p><b>賭け（v0.64.0）</b>：受けたとき、村にふたりのほかにつないでいる人がいれば、すぐ走らずに {@link #BET_MS} の「賭けの時間」（"live"）。
+ * 村のみんなに {"ev":"open","m"}。{"a":"bet","id","side":0|1,"n":100〜5000} … 戦うふたりは賭けられない・1勝負に1回。本人に {"ok":"bet","id","side","n"}
+ * （お金は画面がこの返事のあとで引く）、村のみんなに {"ev":"pool","id","pool":[A,B],"k"}。時間になったら 1秒ごとの {@link #tick()} がレースを決めて、
+ * 村のみんなに {"ev":"race","r"}（r.pool・r.pt つき）。賞金は賭けられた合計の3割を勝った子の持ち主に、7割を当てた人で賭けた額に応じて分ける
+ * （当てた人がいなければ7割はだれにも行かない・だれも賭けなければ賞金なし）。賭けた人には外れても {"ev":"pay","id","why":"bet","stake","n"}（n=0）を送る
+ * （画面は gambleResult(stake, n) を通す）。持ち主には {"why":"owner"}。いない人の分は "pay" に取っておいて次の welcome で渡す。
+ * <p><b>闘鶏ポイント</b>："pt" = {ID:{n, p:全期間, wk:週の月曜, wp:その週}}。勝つと +10＋（相手の総合力−自分）/20（0〜10）、負けると −4（0より下がらない）。
+ * 同じふたりでポイントが動くのは日本時間の1日3回まで（"pd"）。{"a":"rank"} → {"a":"rank","all":[...],"week":[...],"me":{p,wp}}（この村）
  */
 @Component
 public class DuelHandler implements MessageHandler, WelcomeContributor {
@@ -44,13 +59,23 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
     static final Set<String> STRATS = Set.of(DuelRace.STRATS);
     static final String[] AB = { "spd", "sta", "pow", "gut", "wis" };
 
+    static final long BET_MS = 90_000L;
+    static final int BET_MIN = 100, BET_MAX = 5000, MAX_LIVE = 6, MAX_PAY = 30, PAIR_DAY = 3;
+    static final ZoneId JST = ZoneId.of("Asia/Tokyo");
+
     private final PlayerService players;
     private final SharedWorldService world;
+    private final ObjectMapper om;
+    private final ObjectProvider<GameSocketHandler> hubs;
+    private final ObjectProvider<VillageService> villages;
     private final Map<Long, Long> last = new ConcurrentHashMap<>();
 
-    public DuelHandler(PlayerService players, SharedWorldService world) {
+    public DuelHandler(PlayerService players, SharedWorldService world, ObjectMapper om, ObjectProvider<GameSocketHandler> hubs, ObjectProvider<VillageService> villages) {
         this.players = players;
         this.world = world;
+        this.om = om;
+        this.hubs = hubs;
+        this.villages = villages;
     }
 
     @Override
@@ -63,7 +88,7 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
         if (from.playerId() == null || from.playerId() <= 0 || from.watcher()) return;
         long me = from.playerId();
         String a = msg.path("a").asText("");
-        if (!"list".equals(a) && !"put".equals(a)) {
+        if (!"list".equals(a) && !"put".equals(a) && !"rank".equals(a)) {
             long now = System.currentTimeMillis();
             Long prev = last.put(me, now);
             if (prev != null && now - prev < 400) { ng(from, hub, "少し待ってからもう一度ためしてね"); return; }
@@ -75,6 +100,8 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
                 case "send" -> send(from, msg, hub);
                 case "cancel", "no" -> drop(from, msg.path("id").asLong(0), "cancel".equals(a), hub);
                 case "yes" -> yes(from, msg, hub);
+                case "bet" -> bet(from, msg, hub);
+                case "rank" -> rank(from, hub);
                 default -> { }
             }
         }
@@ -83,9 +110,7 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
     // ---- しまってある値 ----
     private ObjectNode load(GameSocketHandler hub) {
         JsonNode cur = world.getSystem(KEY);
-        ObjectNode d = loadFrom(cur instanceof ObjectNode ? cur : hub.json().createObjectNode());
-        if (!(d.path("ros") instanceof ObjectNode)) d.putObject("ros");
-        return d;
+        return loadFrom(cur instanceof ObjectNode ? cur : om.createObjectNode());
     }
 
     private void save(ObjectNode d) {
@@ -223,18 +248,176 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
             return;
         }
         mine.put("st", st);
-        ObjectNode r = race(c, mine, id, hub);
+        ObjectNode live = ((ObjectNode) c).deepCopy();
+        live.set("b2", mine);
+        live.putArray("bets");
         long f = c.path("f").asLong();
-        if (!hub.onlineHere(f)) {
+        boolean others = hub.onlinePlayers().stream().anyMatch(o -> o.id() != null && o.id() > 0 && o.id() != me && o.id() != f);
+        if (others && d.withArray("live").size() < MAX_LIVE) {
+            live.put("until", System.currentTimeMillis() + BET_MS);
+            d.withArray("live").add(live);
+            save(d);
+            hub.broadcastTo(Villages.current(), (ObjectNode) out(hub).put("ev", "open").set("m", view(live, 0)), null);
+            return;
+        }
+        settle(d, live, hub);
+        save(d);
+    }
+
+    /** 賭けの時間の勝負を見せる形（賭けた人の名前は出さない。me の賭けがあれば my） */
+    static ObjectNode view(JsonNode L, long me) {
+        ObjectNode v = new ObjectMapper().createObjectNode().put("id", L.path("id").asLong()).put("until", L.path("until").asLong());
+        ObjectNode a = v.putObject("a").put("id", L.path("f").asLong()).put("o", L.path("fn").asText()).put("n", L.path("a").path("n").asText()).put("st", L.path("a").path("st").asText()).put("s", total(L.path("a")));
+        a.set("sk", L.path("a").path("sk").deepCopy());
+        ObjectNode b = v.putObject("b").put("id", L.path("t").asLong()).put("o", L.path("tn").asText()).put("n", L.path("b2").path("n").asText()).put("st", L.path("b2").path("st").asText()).put("s", total(L.path("b2")));
+        b.set("sk", L.path("b2").path("sk").deepCopy());
+        long sa = 0, sb = 0; int k = 0;
+        for (JsonNode bt : L.path("bets")) { if (bt.path("side").asInt() == 0) sa += bt.path("n").asLong(); else sb += bt.path("n").asLong(); k++; if (bt.path("u").asLong() == me) v.putObject("my").put("side", bt.path("side").asInt()).put("n", bt.path("n").asLong()); }
+        v.putArray("pool").add(sa).add(sb);
+        v.put("k", k);
+        return v;
+    }
+
+    private void bet(PlayerSession from, JsonNode msg, GameSocketHandler hub) {
+        long me = from.playerId(), id = msg.path("id").asLong(0);
+        int side = msg.path("side").asInt(-1);
+        long n = msg.path("n").asLong(0);
+        if ((side != 0 && side != 1) || n < BET_MIN || n > BET_MAX) { ng(from, hub, "賭けられなかった"); return; }
+        ObjectNode d = load(hub);
+        for (JsonNode L : d.withArray("live")) {
+            if (L.path("id").asLong() != id) continue;
+            if (System.currentTimeMillis() >= L.path("until").asLong()) { ng(from, hub, "もうレースが始まるよ。賭けの時間はおしまい"); return; }
+            if (L.path("f").asLong() == me || L.path("t").asLong() == me) { ng(from, hub, "自分の勝負には賭けられないよ"); return; }
+            for (JsonNode bt : L.path("bets")) if (bt.path("u").asLong() == me) { ng(from, hub, "この勝負には、もう賭けてあるよ"); return; }
+            ((ArrayNode) L.get("bets")).addObject().put("u", me).put("side", side).put("n", n);
+            save(d);
+            hub.send(from, out(hub).put("ok", "bet").put("id", id).put("side", side).put("n", n));
+            ObjectNode v = view(L, 0);
+            hub.broadcastTo(Villages.current(), (ObjectNode) out(hub).put("ev", "pool").put("id", id).put("k", v.path("k").asInt()).set("pool", v.get("pool")), null);
+            return;
+        }
+        ng(from, hub, "その勝負は、もう終わったみたい");
+    }
+
+    /** 1秒ごと：賭けの時間が終わった勝負を走らせる（村ごと） */
+    @Scheduled(fixedDelay = 1000)
+    public void tick() {
+        GameSocketHandler hub = hubs.getIfAvailable();
+        if (hub == null) return;
+        VillageService vs = villages.getIfAvailable();
+        for (long v : vs == null ? java.util.List.of(Villages.MAIN) : vs.ids()) Villages.run(v, () -> tickHere(hub));
+    }
+
+    synchronized void tickHere(GameSocketHandler hub) {
+        JsonNode cur = world.getSystem(KEY);
+        if (!(cur instanceof ObjectNode) || !cur.path("live").isArray() || cur.path("live").isEmpty()) return;
+        ObjectNode d = loadFrom(cur);
+        long now = System.currentTimeMillis();
+        boolean changed = false;
+        for (Iterator<JsonNode> it = d.withArray("live").elements(); it.hasNext(); ) {
+            JsonNode L = it.next();
+            if (now < L.path("until").asLong()) continue;
+            it.remove();
+            settle(d, L, hub);
+            changed = true;
+        }
+        if (changed) save(d);
+    }
+
+    /** レースを決めて、村のみんなに見せ、賞金とポイントを動かす（d は呼んだ側が保存する） */
+    private void settle(ObjectNode d, JsonNode L, GameSocketHandler hub) {
+        long id = L.path("id").asLong(), f = L.path("f").asLong(), t = L.path("t").asLong();
+        ObjectNode r = race(L, L.path("b2"), id);
+        int w = r.path("w").asInt();
+        long[] pool = new long[2];
+        for (JsonNode bt : L.path("bets")) pool[bt.path("side").asInt() == 0 ? 0 : 1] += bt.path("n").asLong();
+        long all = pool[0] + pool[1];
+        r.putArray("pool").add(pool[0]).add(pool[1]);
+        long owner = all * 3 / 10;   // 勝った子の持ち主に3割
+        r.put("own", owner);
+        // 闘鶏ポイント
+        int[] pt = points(d, f, L.path("fn").asText(), t, L.path("tn").asText(), w, total(L.path("a")), total(L.path("b2")));
+        r.putArray("pt").add(pt[0]).add(pt[1]);
+        for (long who : new long[] { f, t }) {
+            if (hub.onlineHere(who)) continue;
             ObjectNode res = (ObjectNode) d.get("res");
-            ArrayNode arr = res.path(String.valueOf(f)) instanceof ArrayNode x ? x : res.putArray(String.valueOf(f));
+            ArrayNode arr = res.path(String.valueOf(who)) instanceof ArrayNode x ? x : res.putArray(String.valueOf(who));
             arr.add(r);
             while (arr.size() > MAX_RES) arr.remove(0);
         }
-        save(d);
-        ObjectNode m = (ObjectNode) out(hub).put("ev", "race").set("r", r);
-        hub.send(from, m);
-        if (hub.onlineHere(f)) hub.sendToPlayer(f, m);
+        // レースを先に見せて、そのあとで賞金（画面は、賭けた勝負のレースを見るために、賭けの記録をレースが来るまで持っている）
+        hub.broadcastTo(Villages.current(), (ObjectNode) out(hub).put("ev", "race").set("r", r), null);
+        if (owner > 0) pay(d, w == 0 ? f : t, out(hub).put("ev", "pay").put("id", id).put("why", "owner").put("n", owner), hub);
+        for (JsonNode bt : L.path("bets")) {
+            long n = bt.path("n").asLong(), back = 0;
+            if (bt.path("side").asInt() == w && pool[w] > 0) back = (all * 7 / 10) * n / pool[w];   // 当てた人で7割を、賭けた額に応じて
+            pay(d, bt.path("u").asLong(), out(hub).put("ev", "pay").put("id", id).put("why", "bet").put("stake", n).put("n", back).put("side", bt.path("side").asInt()), hub);
+        }
+    }
+
+    private void pay(ObjectNode d, long to, ObjectNode m, GameSocketHandler hub) {
+        if (hub.onlineHere(to)) { hub.sendToPlayer(to, m); return; }
+        ObjectNode pays = d.path("pay") instanceof ObjectNode o ? o : d.putObject("pay");
+        ArrayNode arr = pays.path(String.valueOf(to)) instanceof ArrayNode x ? x : pays.putArray(String.valueOf(to));
+        m.remove("type");
+        arr.add(m);
+        while (arr.size() > MAX_PAY) arr.remove(0);
+    }
+
+    static String week() {
+        return LocalDate.now(JST).with(DayOfWeek.MONDAY).toString();
+    }
+
+    /** 闘鶏ポイントを動かす。返すのは [A の増減, B の増減] */
+    private int[] points(ObjectNode d, long f, String fn, long t, String tn, int w, int sa, int sb) {
+        ObjectNode pd = d.path("pd") instanceof ObjectNode o ? o : d.putObject("pd");
+        String day = LocalDate.now(JST).toString(), pair = Math.min(f, t) + "-" + Math.max(f, t);
+        if (!day.equals(pd.path("day").asText())) { pd.removeAll(); pd.put("day", day); }
+        ObjectNode pairs = pd.path("pairs") instanceof ObjectNode o ? o : pd.putObject("pairs");
+        int n = pairs.path(pair).asInt(0);
+        if (n >= PAIR_DAY) return new int[] { 0, 0 };
+        pairs.put(pair, n + 1);
+        int gain = 10 + Math.max(0, Math.min(10, ((w == 0 ? sb - sa : sa - sb)) / 20));
+        ObjectNode pt = d.path("pt") instanceof ObjectNode o ? o : d.putObject("pt");
+        String wk = week();
+        int[] out = new int[2];
+        long[] ids = { f, t };
+        String[] names = { fn, tn };
+        for (int i = 0; i < 2; i++) {
+            ObjectNode e = pt.path(String.valueOf(ids[i])) instanceof ObjectNode o ? o : pt.putObject(String.valueOf(ids[i]));
+            if (!wk.equals(e.path("wk").asText())) { e.put("wk", wk); e.put("wp", 0); }
+            int p = e.path("p").asInt(0), wp = e.path("wp").asInt(0), dlt = i == w ? gain : -Math.min(4, p);
+            e.put("n", name(names[i])).put("p", p + dlt).put("wp", Math.max(0, wp + (i == w ? gain : -4)));
+            out[i] = dlt;
+        }
+        return out;
+    }
+
+    private void rank(PlayerSession from, GameSocketHandler hub) {
+        ObjectNode d = load(hub);
+        String wk = week();
+        long here = Villages.current(), me = from.playerId();
+        java.util.List<long[]> all = new java.util.ArrayList<>();
+        java.util.Map<Long, String> nm = new java.util.HashMap<>();
+        for (Iterator<Map.Entry<String, JsonNode>> it = d.path("pt").fields(); it.hasNext(); ) {
+            Map.Entry<String, JsonNode> en = it.next();
+            long id;
+            try { id = Long.parseLong(en.getKey()); } catch (NumberFormatException e) { continue; }
+            Player p = players.find(id).orElse(null);
+            if (p == null || p.getVillageId() != here) continue;
+            nm.put(id, p.getName());
+            all.add(new long[] { id, en.getValue().path("p").asLong(), wk.equals(en.getValue().path("wk").asText()) ? en.getValue().path("wp").asLong() : 0 });
+        }
+        ObjectNode o = out(hub).put("a", "rank");
+        for (int col = 1; col <= 2; col++) {
+            final int c = col;
+            ArrayNode arr = o.putArray(c == 1 ? "all" : "week");
+            all.stream().filter(x -> x[c] > 0).sorted((x, y) -> Long.compare(y[c], x[c])).limit(20)
+                .forEach(x -> { ObjectNode row = arr.addObject().put("name", nm.get(x[0])).put("v", x[c]); if (x[0] == me) row.put("me", true); });
+        }
+        JsonNode mine = d.path("pt").path(String.valueOf(me));
+        o.putObject("me").put("p", mine.path("p").asLong(0)).put("wp", wk.equals(mine.path("wk").asText()) ? mine.path("wp").asLong(0) : 0);
+        hub.send(from, o);
     }
 
     static DuelRace.Runner runner(JsonNode c) {
@@ -244,10 +427,10 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
         return new DuelRace.Runner(ab.path("spd").asInt(0), ab.path("sta").asInt(0), ab.path("pow").asInt(0), ab.path("gut").asInt(0), ab.path("wis").asInt(0), sk, c.path("st").asText("saki"));
     }
 
-    private ObjectNode race(JsonNode c, ObjectNode mine, long id, GameSocketHandler hub) {
+    private ObjectNode race(JsonNode c, JsonNode mine, long id) {
         JsonNode a = c.path("a");
         long seed = id * 1_000_003L ^ System.nanoTime();
-        ObjectNode r = DuelRace.run(seed, runner(a), runner(mine), hub.json());
+        ObjectNode r = DuelRace.run(seed, runner(a), runner(mine), om);
         r.put("id", id).put("at", System.currentTimeMillis());
         ObjectNode ra = r.putObject("a").put("id", c.path("f").asLong()).put("o", c.path("fn").asText()).put("k", a.path("k").asText()).put("n", a.path("n").asText()).put("st", a.path("st").asText()).put("s", total(a));
         ra.set("sk", a.path("sk").deepCopy());
@@ -269,20 +452,33 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
             if (c.path("t").asLong() == me) in.add(c.deepCopy());
             if (c.path("f").asLong() == me) outs.add(c.deepCopy());
         }
+        ArrayNode live = w.putArray("live");
+        for (JsonNode L : d.withArray("live")) live.add(view(L, me));
+        boolean changed = false;
         JsonNode res = d.path("res").path(String.valueOf(me));
         if (res.isArray() && !res.isEmpty()) {
             w.set("res", res.deepCopy());
             ((ObjectNode) d.get("res")).remove(String.valueOf(me));
-            save(d);
+            changed = true;
         }
-        if (!in.isEmpty() || !outs.isEmpty() || w.has("res")) welcome.set("duel", w);
+        JsonNode pays = d.path("pay").path(String.valueOf(me));
+        if (pays.isArray() && !pays.isEmpty()) {
+            w.set("pay", pays.deepCopy());
+            ((ObjectNode) d.get("pay")).remove(String.valueOf(me));
+            changed = true;
+        }
+        if (changed) save(d);
+        if (!in.isEmpty() || !outs.isEmpty() || !live.isEmpty() || w.has("res") || w.has("pay")) welcome.set("duel", w);
     }
 
     /** welcome のとき用（hub がないので、しまってある値から作る） */
     private static ObjectNode loadFrom(JsonNode cur) {
         ObjectNode d = ((ObjectNode) cur).deepCopy();
+        if (!(d.path("ros") instanceof ObjectNode)) d.putObject("ros");
         if (!(d.path("box") instanceof ArrayNode)) d.putArray("box");
+        if (!(d.path("live") instanceof ArrayNode)) d.putArray("live");
         if (!(d.path("res") instanceof ObjectNode)) d.putObject("res");
+        if (!(d.path("pay") instanceof ObjectNode)) d.putObject("pay");
         long now = System.currentTimeMillis();
         for (Iterator<JsonNode> it = d.withArray("box").elements(); it.hasNext(); ) if (now - it.next().path("at").asLong(0) > LIFE) it.remove();
         return d;

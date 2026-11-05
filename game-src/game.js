@@ -3939,7 +3939,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.63.0";
+const CLIENT_VERSION = "0.64.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6017,6 +6017,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.64.0", date: "2026/11/05", title: "闘鶏の賭けとポイント", items: [
+    "果たし状が受けられたとき、村にほかの人がいれば90秒の「賭けの時間」。戦うふたりのほかの人は、どっちが勝つか賭けられるよ（1勝負に1回・100〜5,000G）",
+    "勝った子の持ち主には賭けられた合計の3割。残りの7割は、当てた人で賭けた額に応じて分ける（だれも当てなければ7割はなし）。賭けの勝ち負けはカジノの番付と負け上限にも数える",
+    "果たし状のレースで勝つと闘鶏ポイントが増えて、負けると少しへる。果たし状の画面で、この1週間と全期間のランキングが見られるよ",
+  ] },
   { v: "0.63.0", date: "2026/11/05", title: "闘鶏の果たし状", items: [
     "こもれび闘鶏に「果たし状」。村の人のにわとりをえらんで果たし状を送れるよ（オンラインのとき・5通まで）。留守の人には、次につないだときに届く",
     "自分の子と作戦（にげ・先行・差し・追いこみ）を決めておくと、送るときも受けるときもその作戦で走る。受けるか断るかは相手しだい",
@@ -23484,6 +23489,7 @@ function openDuel116(note) {
         b.disabled = true; send8({ type: "duel", a: "send", to: +to, tk, me: { k: me.k, n: me.n, ab: me.ab, sk: me.sk }, st: stOf116(me.id) });
       });
       body.querySelectorAll("[data-pl116]").forEach(b => b.onclick = () => { const r = tori116().res[+b.dataset.pl116]; if (r) { closeModal(); play116(r); } });
+      if (F116.decorate) try { F116.decorate(body); } catch (e) { }   // v117：賭けとポイント
     };
     F116.redraw = draw; draw();
     if (F8.connected && !WATCH88) { sendRoster116(); askList116(); }
@@ -23596,6 +23602,157 @@ GUIDE54.push(["果たし状", "tfeed_wis", `<p>こもれび闘鶏の「果たし
 <p>相手は受けるか断るかを選べます。留守の人には、次につないだときに届きます。受けると、サーバーが能力・作戦・スキル・その日の調子・少しの運でレースを決めて、ふたりに同じレースが届きます。断られたときは、果たし状が消えるだけです。</p>
 <p>レースは序盤・中盤・最後の直線と場面が変わり、育成でおぼえたスキルが出ると名前が出ます。きわどいときは写真判定。</p>`]);
 F116.ready = true;
+
+// =================== v117: 果たし状の賭けと賞金・闘鶏ポイントのランキング ===================
+// 方針は docs/方針_闘鶏の育成.md の「作る順番」3段目。サーバーは DuelHandler（賭けの時間 live・bet・tick・pay・rank）。mock.js も同じ。
+// 受けたとき村にほかの人がいれば90秒の賭けの時間。戦うふたりのほかの人が、どっちが勝つか賭けられる（1勝負に1回・100〜5,000G）。
+// お金は、サーバーの OK（ok:"bet"）が来てから引く。決着の "pay" で gambleResult(賭けた額, 払い戻し) を通す（番付・負け上限・称号）。外れも n=0 で届く。
+// 勝った子の持ち主には賭けられた合計の3割（"why":"owner"・賭けではないので addMoney）。
+// 状態：world.tori116.bets = {勝負のID:{side,n,a,b,at}}（払い戻しが来るまで）・world.tori116.won / owner（数）。F116.live は表示用（welcome でまるごと置きかえ）
+var F117 = { rank: null, tab: "week", msg: {} };
+F116.live = [];
+const BETS117 = [100, 500, 1000, 5000];
+const bets117 = () => { const t = tori116(); if (!t.bets || typeof t.bets !== "object" || Array.isArray(t.bets)) t.bets = {}; for (const [k, b] of Object.entries(t.bets)) if (!b || Date.now() - (b.at || 0) > 7 * 864e5) delete t.bets[k]; return t.bets; };
+F117.bets = bets117;
+const mineIn117 = r => r && r.a && r.b && (r.a.id === myId116() || r.b.id === myId116());
+// その勝負のレースを見ているあいだは、お金のお知らせを結果の画面に出す（先に勝ち負けがわからないように）
+const say117 = (id, text) => { if (F116.R && F116.R.r && F116.R.r.id === id && $("mtitle").textContent === "果たし状のレース") F117.msg[id] = (F117.msg[id] ? F117.msg[id] + "／" : "") + text; else toast("coin", text); };
+function pay117(p) {
+  if (!p || !p.id) return;
+  const t = tori116(), B = bets117();
+  if (p.why === "owner") {
+    const n = Math.max(0, Math.floor(+p.n || 0)); if (!n) return;
+    addMoney(n); t.owner = (t.owner || 0) + 1; world.stats.duelPrize117 = (world.stats.duelPrize117 || 0) + n;
+    saveWorld(); say117(p.id, `果たし状の賞金 ${fmt(n)}（賭けられた合計の3割）`); try { checkTitles42(); } catch (e) { }
+    return;
+  }
+  if (p.why !== "bet") return;
+  const stake = Math.max(0, Math.floor(+p.stake || 0)), n = Math.max(0, Math.floor(+p.n || 0));
+  if (!B[p.id]) return;   // 同じ払い戻しを2回受けとらない
+  delete B[p.id];
+  gambleResult(stake, n);
+  if (n > stake) t.won = (t.won || 0) + 1;
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+  say117(p.id, n ? `闘鶏の賭けが当たった！ ${fmt(n)}（賭けたのは ${fmt(stake)}）` : `闘鶏の賭けははずれ…（${fmt(stake)}）`);
+}
+F117.pay = pay117;
+function bet117(id, side, n) {
+  if (!F8.connected || WATCH88) return;
+  if (world.money < n) { toast(null, "お金が足りないよ"); return; }
+  if (!K.betAllowed(n)) { toast(null, K.betMsg()); return; }
+  F117.sending = id; send8({ type: "duel", a: "bet", id, side, n });
+}
+F117.bet = bet117;
+const notice117 = (title, text, btn, go) => notice116(title, text, btn, go);
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "duel") {
+      if (m.ev === "open" && m.m) {
+        const L = m.m; F116.live = F116.live.filter(x => x.id !== L.id).concat([L]);
+        const mine = L.a.id === myId116() || L.b.id === myId116();
+        if (F116.waiting === L.id) { F116.waiting = 0; toast(null, "村のみんなが賭けているよ。90秒後にレース！"); }
+        else if (!mine && !WATCH88) { toast(null, `果たし状の勝負！「${L.a.n}」対「${L.b.n}」に賭けられるよ`); if (!F116.redraw) notice117("果たし状の勝負", `${esc(L.a.o)}さんの「${esc(L.a.n)}」対 ${esc(L.b.o)}さんの「${esc(L.b.n)}」。どっちが勝つか賭けられるよ（90秒まで）。`, "見る", () => openDuel116()); }
+        if (F116.redraw) F116.redraw(); return;
+      }
+      if (m.ev === "pool" && m.id) { const L = F116.live.find(x => x.id === m.id); if (L) { L.pool = m.pool; L.k = m.k; } if (F116.redraw) F116.redraw(); return; }
+      if (m.ok === "bet" && m.id) {
+        const n = Math.max(0, Math.floor(+m.n || 0)), L = F116.live.find(x => x.id === m.id);
+        addMoney(-n); bets117()[m.id] = { side: m.side, n, a: L ? L.a.n : "", b: L ? L.b.n : "", at: Date.now() }; if (L) L.my = { side: m.side, n };
+        world.stats.duelBets117 = (world.stats.duelBets117 || 0) + 1; F117.sending = 0;
+        saveWorld(); toast("coin", `${fmt(n)} 賭けた`); if (F116.redraw) F116.redraw(); return;
+      }
+      if (m.ng && F117.sending) F117.sending = 0;
+      if (m.ev === "pay") { pay117(m); if (F116.redraw) F116.redraw(); return; }
+      if (m.a === "rank") { F117.rank = m; if (F116.redraw) F116.redraw(); return; }
+      if (m.ev === "race" && m.r) {
+        F116.live = F116.live.filter(x => x.id !== m.r.id);
+        const bet = bets117()[m.r.id];
+        if (!mineIn117(m.r) && !bet) { if (F116.redraw) F116.redraw(); return; }   // 自分に関係ない勝負は、一覧から消すだけ
+        if (bet && !mineIn117(m.r)) {
+          if (addRes116(m.r)) { if (F116.redraw) { closeModal(); play116(m.r); } else notice117("賭けた勝負のレース", `「${esc(m.r.a.n)}」対「${esc(m.r.b.n)}」のレースが始まった！`, "レースを見る", () => play116(m.r)); }
+          return;
+        }
+        if (mineIn117(m.r) && F116.waiting !== m.r.id) {
+          if (addRes116(m.r)) { if (F116.redraw) { closeModal(); play116(m.r); } else notice117("果たし状のレース", `「${esc(m.r.a.n)}」対「${esc(m.r.b.n)}」のレースが始まった！`, "レースを見る", () => play116(m.r)); }
+          return;
+        }
+      }
+    }
+    _h(m);
+    if (m && m.type === "welcome" && !WATCH88) {
+      const d = m.duel || {};
+      F116.live = Array.isArray(d.live) ? d.live : [];
+      // 払い戻しは、クラウドのセーブを読みおわってから（賭けた記録 bets はセーブの中にある）
+      const pays = Array.isArray(d.pay) ? d.pay : [];
+      if (pays.length) setTimeout(() => { for (const p of pays) try { pay117(p); } catch (e) { } }, 4000);
+    }
+  };
+}
+// レースの結果の画面に、賭けと闘鶏ポイントを足す
+{
+  const _pl = play116;
+  play116 = function (r) {
+    const out = _pl.apply(this, arguments);
+    const tm = setInterval(() => {
+      const b = $("mbody"); if (!b || $("mtitle").textContent !== "果たし状のレース") { clearInterval(tm); return; }
+      const box = b.querySelector(".dk75r"); if (!box || box.querySelector(".pt117")) return;
+      clearInterval(tm);
+      const s = sideOf116(r), pool = Array.isArray(r.pool) ? r.pool : [0, 0], all = (pool[0] | 0) + (pool[1] | 0), lines = [];
+      if (all) lines.push(`賭けられた合計 ${fmt(all)}（「${esc(r.a.n)}」${fmt(pool[0] | 0)}・「${esc(r.b.n)}」${fmt(pool[1] | 0)}）→ 勝った子の持ち主に ${fmt(r.own | 0)}`);
+      if (s >= 0 && Array.isArray(r.pt)) { const v = r.pt[s] | 0, none = !(r.pt[0] | 0) && !(r.pt[1] | 0); lines.push(v > 0 ? `闘鶏ポイント +${v}` : v < 0 ? `闘鶏ポイント ${v}` : none ? "闘鶏ポイントは動かなかった（同じ相手とは1日3回まで）" : "闘鶏ポイント ±0"); }
+      const bt = (tori116().bets || {})[r.id]; if (bt) lines.push(`あなたは「${esc(bt.side ? r.b.n : r.a.n)}」に ${fmt(bt.n)} 賭けている`);
+      if (F117.msg[r.id]) { lines.push(`<b>${esc(F117.msg[r.id])}</b>`); delete F117.msg[r.id]; }
+      box.insertAdjacentHTML("beforeend", lines.map(l => `<span class="small pt117">${l}</span>`).join("") || `<span class="pt117"></span>`);
+    }, 300);
+    return out;
+  };
+  F116.play = play116;
+}
+// 果たし状の画面に「賭けられる勝負」と「闘鶏ポイント」を足す（v116 の draw のあとに呼ばれる）
+F116.decorate = body => {
+  const box = body.querySelector(".ik115"); if (!box || box.querySelector(".bt117")) return;
+  const on = F8.connected && !WATCH88, me = myId116(), now = Date.now();
+  const live = F116.live.filter(L => L.until > now - 3000).map(L => {
+    const mine = L.a.id === me || L.b.id === me, left = Math.max(0, Math.ceil((L.until - now) / 1000)), pool = L.pool || [0, 0], my = L.my || (bets117()[L.id] ? { side: bets117()[L.id].side, n: bets117()[L.id].n } : null);
+    const side = i => { const c = i ? L.b : L.a; return `${esc(c.o)}さんの「${esc(c.n)}」<span class="sub2">総合力 ${c.s | 0}・${esc(ST116[c.st]?.[0] || "")}${c.sk && c.sk.length ? `・スキル${c.sk.length}つ` : ""}・賭け ${fmt(pool[i] | 0)}</span>`; };
+    const acts = mine ? `<p class="mtext small">あなたの勝負。賭けの時間のあとにレース。</p>` : my ? `<p class="mtext small">「${esc(my.side ? L.b.n : L.a.n)}」に ${fmt(my.n)} 賭けた</p>` : !on || !left ? "" : `<div class="row2">${BETS117.map(v => `<button class="chip" type="button" data-amt117="${L.id}:${v}" aria-pressed="${(F117.amt || 100) === v}" ${world.money < v ? "disabled" : ""}>${fmt(v)}</button>`).join("")}</div>
+      <div class="row2"><button class="btn" type="button" data-bt117="${L.id}:0" ${F117.sending ? "disabled" : ""}>「${esc(L.a.n)}」に賭ける</button><button class="btn" type="button" data-bt117="${L.id}:1" ${F117.sending ? "disabled" : ""}>「${esc(L.b.n)}」に賭ける</button></div>`;
+    return `<div class="bt117"><div class="li"><span class="nm">${side(0)}</span></div><p class="mtext small vs117">対　${left ? `（レースまで あと${left}秒・${L.k | 0}人が賭けた）` : "（まもなくレース）"}</p><div class="li"><span class="nm">${side(1)}</span></div>${acts}</div>`;
+  }).join("");
+  const R = F117.rank, tab = F117.tab, rows = R ? R[tab] || [] : [];
+  const pt = !on ? "" : `<h4>闘鶏ポイントのランキング${R && R.me ? `（あなた ${R.me.p | 0}・この1週間 ${R.me.wp | 0}）` : ""}</h4>
+    <div class="cr74tabs"><button class="chip" type="button" data-rk117="week" aria-pressed="${tab === "week"}">この1週間</button><button class="chip" type="button" data-rk117="all" aria-pressed="${tab === "all"}">全期間</button></div>
+    ${!R ? `<p class="mtext small">読みこんでいるよ…</p>` : rows.length ? `<ol class="cr74l">${rows.map((x, i) => `<li class="${x.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(x.name)}</span><b class="wi74">${x.v | 0}</b></li>`).join("")}</ol>` : `<p class="mtext small">まだだれもいないよ</p>`}
+    <p class="mtext small">果たし状のレースで勝つと +10（総合力が上の子に勝つと最大 +10 上乗せ）、負けると −4。同じ相手とは1日3回までポイントが動く。</p>`;
+  const html = `${live ? `<h4 class="bt117h">賭けられる勝負</h4>${live}<p class="mtext small">賭けは1勝負に1回・100〜5,000G。勝った子の持ち主に賭けられた合計の3割、残りの7割を当てた人で賭けた額に応じて分ける（だれも当てなければ7割はなし）。カジノの番付と今日の負け上限にも数えるよ。</p>` : ""}`;
+  const h4 = [...box.querySelectorAll("h4")].find(x => /とどいた果たし状/.test(x.textContent));
+  if (html) { if (h4) h4.insertAdjacentHTML("beforebegin", html); else box.insertAdjacentHTML("afterbegin", html); }
+  const last = [...box.querySelectorAll("h4")].find(x => /これまでのレース/.test(x.textContent));
+  if (pt) { if (last) last.insertAdjacentHTML("beforebegin", pt); else box.insertAdjacentHTML("beforeend", pt); }
+  box.querySelectorAll("[data-amt117]").forEach(b => b.onclick = () => { F117.amt = +b.dataset.amt117.split(":")[1]; if (F116.redraw) F116.redraw(); });
+  box.querySelectorAll("[data-bt117]").forEach(b => b.onclick = () => { const [id, side] = b.dataset.bt117.split(":").map(Number); b.disabled = true; bet117(id, side, F117.amt || 100); });
+  box.querySelectorAll("[data-rk117]").forEach(b => b.onclick = () => { F117.tab = b.dataset.rk117; if (F116.redraw) F116.redraw(); });
+};
+{
+  // 果たし状の画面を開いたら、ランキングを読みにいく・賭けの時間を1秒ごとに数える
+  const _od = openDuel116;
+  openDuel116 = function () {
+    const r = _od.apply(this, arguments);
+    if (F8.connected && !WATCH88) { F117.rank = null; send8({ type: "duel", a: "rank" }); }
+    const tm = setInterval(() => { if (!F116.redraw) { clearInterval(tm); return; } if (F116.live.some(L => L.until > Date.now() - 3000)) F116.redraw(); }, 1000);
+    return r;
+  };
+  F116.open = openDuel116;
+}
+const TTL117 = [["目利き", "果たし状の賭けを5回当てる", () => (world.tori116?.won || 0) >= 5],
+  ["看板にわとり", "賭けられた果たし状のレースに勝って、賞金をもらう", () => (world.tori116?.owner || 0) >= 1],
+  ["闘鶏番長", "果たし状の賭けに10回参加する", () => (world.stats.duelBets117 || 0) >= 10]];
+for (const t of TTL117) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["闘鶏の賭けとポイント", "coin", `<p>果たし状が受けられたとき、村にほかの人がいれば90秒の「賭けの時間」になります。戦うふたりのほかの人は、果たし状の画面で、どっちが勝つか賭けられます（1勝負に1回・100〜5,000G）。</p>
+<p>勝った子の持ち主には、賭けられた合計の3割。残りの7割は、当てた人で賭けた額に応じて分けます。だれも賭けなければ賞金はなし、だれも当てなければ7割はだれにも行きません。賭けの勝ち負けは、カジノの番付と今日の負け上限に数えます。</p>
+<p>果たし状のレースで勝つと闘鶏ポイントが増え、負けると少しへります。果たし状の画面で、この1週間と全期間のランキングが見られます。</p>`]);
+F117.ready = true;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -24057,5 +24214,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

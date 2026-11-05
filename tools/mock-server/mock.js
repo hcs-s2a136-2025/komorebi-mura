@@ -68,7 +68,7 @@ function coinState(m) { const pool = coinPool(), tot = pool.reduce((a, p) => a +
 function coinFcFill() { while (coinFc.length < 7) { const d = clock.day + 1 + coinFc.length, se = Math.floor((d - 1) / 7) % 4, r = Math.random(); coinFc.push(se === 3 ? (r < .5 ? "snow" : "sun") : se === 1 ? (r < .6 ? "sun" : r < .85 ? "rain" : "storm") : (r < .62 ? "sun" : r < .9 ? "rain" : "storm")); } }
 // こもれび闘鶏の果たし状（本物は jp.komorebi.duel の DuelHandler と DuelRace。村ごと・同じ約束）。/mock/duel?v=村 で中身が見られる
 const duelBy = new Map();
-const duelOf = v => { if (!duelBy.has(v)) duelBy.set(v, { seq: 0, ros: {}, box: [], res: {} }); const d = duelBy.get(v); d.box = d.box.filter(c => Date.now() - c.at <= 3 * 864e5); return d; };
+const duelOf = v => { if (!duelBy.has(v)) duelBy.set(v, { seq: 0, ros: {}, box: [], live: [], res: {}, pay: {}, pt: {}, pd: {} }); const d = duelBy.get(v); d.box = d.box.filter(c => Date.now() - c.at <= 3 * 864e5); return d; };
 const DUEL_SK = ["senko", "nobi", "saku", "nebari", "ochi", "kaze", "oikomi", "kokoro"], DUEL_ST = ["nige", "saki", "sashi", "oi"], DUEL_AB = ["spd", "sta", "pow", "gut", "wis"];
 const duelName = s => String(s || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 12);
 function duelChicken(c) {
@@ -110,7 +110,7 @@ const duelLast = new Map();
 function duelHandle(s, m) {
   if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), d = duelOf(V), a = String(m.a || ""), send = o => s.send(JSON.stringify({ type: "duel", ...o }));
   const toP = (id, o) => { for (const x of sessions) if (x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V) x.send(JSON.stringify({ type: "duel", ...o })); }, on = id => [...sessions].some(x => x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V);
-  if (a !== "list" && a !== "put") { const n = Date.now(), pv = duelLast.get(me); duelLast.set(me, n); if (pv && n - pv < 400) return send({ ng: "少し待ってからもう一度ためしてね" }); }
+  if (a !== "list" && a !== "put" && a !== "rank") { const n = Date.now(), pv = duelLast.get(me); duelLast.set(me, n); if (pv && n - pv < 400) return send({ ng: "少し待ってからもう一度ためしてね" }); }
   if (a === "put") { const L = [], ks = new Set(); for (const c of (Array.isArray(m.list) ? m.list : [])) { if (L.length >= 20) break; const o = duelChicken(c); if (o && !ks.has(o.k)) { ks.add(o.k); L.push(o); } } if (L.length) d.ros[me] = { n: duelName(s.pl.name), list: L }; else delete d.ros[me]; return; }
   if (a === "list") { const list = Object.entries(d.ros).map(([id, r]) => [+id, r]).filter(([id]) => id !== me && accounts.some(x => x.id === id && !x.deleted && vOf(x) === V)).slice(0, 40).map(([id, r]) => ({ id, owner: (accounts.find(x => x.id === id) || {}).name || r.n, chs: r.list.map(c => ({ k: c.k, n: c.n, s: duelTotal(c), sk: c.sk })) })); return send({ a: "list", list }); }
   if (a === "send") { const to = Math.floor(+m.to || 0), tk = String(m.tk || ""), st = String(m.st || ""), mine = duelChicken(m.me);
@@ -127,11 +127,49 @@ function duelHandle(s, m) {
   if (a === "yes") { const id = Math.floor(+m.id || 0), st = String(m.st || ""), mine = duelChicken(m.me), i = d.box.findIndex(c => c.id === id && c.t === me);
     if (i < 0) return send({ ev: "gone", id }); const c = d.box.splice(i, 1)[0];
     if (!mine || !DUEL_ST.includes(st) || mine.k !== c.b.k) return send({ ng: "そのにわとりでは受けられないみたい" });
-    const B = { ...mine, st }, r = { ...duelRace(c.a, B), id, at: Date.now(), a: { id: c.f, o: c.fn, k: c.a.k, n: c.a.n, st: c.a.st, s: duelTotal(c.a), sk: c.a.sk }, b: { id: me, o: c.tn, k: B.k, n: B.n, st, s: duelTotal(B), sk: B.sk } };
-    if (!on(c.f)) { const L = d.res[c.f] = d.res[c.f] || []; L.push(r); while (L.length > 5) L.shift(); }
-    send({ ev: "race", r }); toP(c.f, { ev: "race", r }); return; }
+    const L = { ...c, b2: { ...mine, st }, bets: [] }, others = [...sessions].some(x => x.pl && !x.watch && x.pl.id > 0 && vOf(x.pl) === V && x.pl.id !== me && x.pl.id !== c.f);
+    if (others && d.live.length < 6) { L.until = Date.now() + DUEL_BET_MS; d.live.push(L); return duelBc(V, { ev: "open", m: duelView(L, 0) }); }
+    return duelSettle(V, L); }
+  if (a === "bet") { const id = Math.floor(+m.id || 0), side = +m.side, n = Math.floor(+m.n || 0);
+    if ((side !== 0 && side !== 1) || n < 100 || n > 5000) return send({ ng: "賭けられなかった" });
+    const L = d.live.find(x => x.id === id); if (!L) return send({ ng: "その勝負は、もう終わったみたい" });
+    if (Date.now() >= L.until) return send({ ng: "もうレースが始まるよ。賭けの時間はおしまい" });
+    if (L.f === me || L.t === me) return send({ ng: "自分の勝負には賭けられないよ" });
+    if (L.bets.some(b => b.u === me)) return send({ ng: "この勝負には、もう賭けてあるよ" });
+    L.bets.push({ u: me, side, n }); send({ ok: "bet", id, side, n }); const v = duelView(L, 0); return duelBc(V, { ev: "pool", id, pool: v.pool, k: v.k }); }
+  if (a === "rank") { const wk = duelWeek(), rows = Object.entries(d.pt).map(([id, e]) => [+id, e]).filter(([id]) => accounts.some(x => x.id === id && !x.deleted && vOf(x) === V)).map(([id, e]) => ({ id, name: (accounts.find(x => x.id === id) || {}).name || e.n, p: e.p, wp: e.wk === wk ? e.wp : 0 }));
+    const col = k => rows.filter(x => x[k] > 0).sort((x, y) => y[k] - x[k]).slice(0, 20).map(x => ({ name: x.name, v: x[k], ...(x.id === me ? { me: true } : {}) })), mine = d.pt[me] || {};
+    return send({ a: "rank", all: col("p"), week: col("wp"), me: { p: mine.p || 0, wp: mine.wk === wk ? mine.wp || 0 : 0 } }); }
 }
-function duelWelcome(pl) { const d = duelOf(vOf(pl)), id = pl.id, w = { in: d.box.filter(c => c.t === id), out: d.box.filter(c => c.f === id) }; if (d.res[id] && d.res[id].length) { w.res = d.res[id]; delete d.res[id]; } return w.in.length || w.out.length || w.res ? { duel: w } : {}; }
+// 賭けの時間（本物は DuelHandler.BET_MS。テストでは DUEL_BET_MS=ミリ秒で短くできる）
+const DUEL_BET_MS = +process.env.DUEL_BET_MS || 90000;
+const duelBc = (V, o) => { const t = JSON.stringify({ type: "duel", ...o }); for (const x of sessions) if (x.pl && !x.watch && vOf(x.pl) === V) x.send(t); };
+const duelOnline = (V, id) => [...sessions].some(x => x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V);
+function duelView(L, me) { const pool = [0, 0]; let my = null; for (const b of L.bets) { pool[b.side ? 1 : 0] += b.n; if (b.u === me) my = { side: b.side, n: b.n }; }
+  return { id: L.id, until: L.until, a: { id: L.f, o: L.fn, n: L.a.n, st: L.a.st, s: duelTotal(L.a), sk: L.a.sk }, b: { id: L.t, o: L.tn, n: L.b2.n, st: L.b2.st, s: duelTotal(L.b2), sk: L.b2.sk }, pool, k: L.bets.length, ...(my ? { my } : {}) }; }
+const duelJst = () => new Date(Date.now() + 9 * 3600e3), duelDay = () => duelJst().toISOString().slice(0, 10);
+const duelWeek = () => { const t = duelJst(); t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7)); return t.toISOString().slice(0, 10); };
+function duelPay(V, to, o) { if (duelOnline(V, to)) { for (const x of sessions) if (x.pl && x.pl.id === to && !x.watch && vOf(x.pl) === V) x.send(JSON.stringify({ type: "duel", ...o })); return; } const d = duelOf(V), L = d.pay[to] = d.pay[to] || []; L.push(o); while (L.length > 30) L.shift(); }
+function duelPoints(d, L, w) {
+  const day = duelDay(), pair = Math.min(L.f, L.t) + "-" + Math.max(L.f, L.t); if (d.pd.day !== day) d.pd = { day, pairs: {} };
+  const n = d.pd.pairs[pair] || 0; if (n >= 3) return [0, 0]; d.pd.pairs[pair] = n + 1;
+  const sa = duelTotal(L.a), sb = duelTotal(L.b2), gain = 10 + Math.max(0, Math.min(10, Math.trunc((w === 0 ? sb - sa : sa - sb) / 20))), wk = duelWeek();
+  return [[L.f, L.fn], [L.t, L.tn]].map(([id, nm], i) => { const e = d.pt[id] = d.pt[id] || { n: nm, p: 0, wk, wp: 0 }; if (e.wk !== wk) { e.wk = wk; e.wp = 0; } const dl = i === w ? gain : -Math.min(4, e.p); e.n = nm; e.p += dl; e.wp = Math.max(0, e.wp + (i === w ? gain : -4)); return dl; });
+}
+function duelSettle(V, L) {
+  const d = duelOf(V), r = { ...duelRace(L.a, L.b2), id: L.id, at: Date.now(), a: { id: L.f, o: L.fn, k: L.a.k, n: L.a.n, st: L.a.st, s: duelTotal(L.a), sk: L.a.sk }, b: { id: L.t, o: L.tn, k: L.b2.k, n: L.b2.n, st: L.b2.st, s: duelTotal(L.b2), sk: L.b2.sk } };
+  const pool = [0, 0]; for (const b of L.bets) pool[b.side ? 1 : 0] += b.n; const all = pool[0] + pool[1], w = r.w; r.pool = pool;
+  const own = Math.floor(all * 3 / 10); r.own = own;
+  r.pt = duelPoints(d, L, w);
+  for (const who of [L.f, L.t]) if (!duelOnline(V, who)) { const R2 = d.res[who] = d.res[who] || []; R2.push(r); while (R2.length > 5) R2.shift(); }
+  duelBc(V, { ev: "race", r });   // レースが先、賞金があと（本物と同じ順）
+  if (own > 0) duelPay(V, w === 0 ? L.f : L.t, { ev: "pay", id: L.id, why: "owner", n: own });
+  for (const b of L.bets) duelPay(V, b.u, { ev: "pay", id: L.id, why: "bet", stake: b.n, n: b.side === w && pool[w] > 0 ? Math.floor(Math.floor(all * 7 / 10) * b.n / pool[w]) : 0, side: b.side });
+}
+setInterval(() => { for (const [V, d] of duelBy) { const due = d.live.filter(L => Date.now() >= L.until); if (!due.length) continue; d.live = d.live.filter(L => Date.now() < L.until); due.forEach(L => duelSettle(V, L)); } }, 1000);
+function duelWelcome(pl) { const d = duelOf(vOf(pl)), id = pl.id, w = { in: d.box.filter(c => c.t === id), out: d.box.filter(c => c.f === id), live: d.live.map(L => duelView(L, id)) };
+  if (d.res[id] && d.res[id].length) { w.res = d.res[id]; delete d.res[id]; } if (d.pay[id] && d.pay[id].length) { w.pay = d.pay[id]; delete d.pay[id]; }
+  return w.in.length || w.out.length || w.live.length || w.res || w.pay ? { duel: w } : {}; }
 function coinHandle(s, m) {
   if (!s.pl || s.watch) return; const a = String(m.a || ""), me = coinMe(s), out = { type: "coin", a, rid: String(m.rid || "") }, send = o => s.send(JSON.stringify(o));
   if (a === "tori") { const t = m.t || {}; toriDB.set(vOf(s.pl) + ":" + s.pl.id, { name: String(t.name || "にわとり").slice(0, 12), sp: Math.max(0, Math.min(999, t.sp | 0)), jp: Math.max(0, Math.min(999, t.jp | 0)), st: Math.max(0, Math.min(999, t.st | 0)) }); return; }

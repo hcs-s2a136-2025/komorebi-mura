@@ -1098,3 +1098,6 @@ button.jn106.lock { opacity: .45; }
 .rc116h { font-size: .8rem; line-height: 1.6; }
 .rc116 canvas { width: min(100%, 520px); justify-self: center; image-rendering: pixelated; border-radius: 8px; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .rc116 { grid-template-columns: minmax(0, 62%) 1fr; align-items: start; } .rc116 canvas { grid-column: 1; grid-row: 1 / span 3; width: 100%; } .rc116 > :not(canvas) { grid-column: 2; } }
+/* v117: 果たし状の賭け */
+.bt117 { display: grid; gap: 4px; padding: 8px; border-radius: 10px; background: rgba(255, 216, 106, .1); border: 1px solid rgba(255, 216, 106, .35); }
+.bt117 .vs117 { text-align: center; margin: 0; }

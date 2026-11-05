@@ -3939,7 +3939,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.61.1";
+const CLIENT_VERSION = "0.62.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6017,6 +6017,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.62.0", date: "2026/11/05", title: "こもれび闘鶏の育成", items: [
+    "こもれび闘鶏が「育成」になった。1回12ターンで、走りこみ・羽ばたき・つつき・おさんぽ・休む・ごはん からえらんで育てるよ（1日3回まで無料・そのあとはスマホコイン5枚で1日あと3回）",
+    "能力は はやさ・持久力・脚力・根性・かしこさ の5つ。調子と体力があって、むりをすると練習が失敗することも。とちゅうの出来事でスキルをおぼえる",
+    "いままできたえていた子は、その強さを5つの能力に分けて引きついだよ（総合力は同じか少し上・なかよし度とランキングの記録はそのまま）",
+    "闘鶏の餌が5種類。作業台で「飼料1こ＋作物1こ → 3こ」。ごはんで食べさせると、その能力の練習が3ターン1.5倍。子ごとに好きな餌がある",
+    "こもれび牧場で「たまごをかえす」と、ひよこが生まれる。まっさらから育てられて、はじめは伸びやすい。牧場でじゃがいもも買えるようになった",
+  ] },
   { v: "0.61.1", date: "2026/11/05", title: "押し順ベルにナビ", items: [
     "VIPの高レートスロットの押し順ベルは、いつでも押し順をナビ（①②③と光るリール）で教えてくれるようにした。目押しはナビどおりに押せばそろうよ",
     "そのかわりベルの配当は賭け金の2倍に。AT は「ベルラッシュ」（ベルが約4割の回で当たる）になった",
@@ -22925,6 +22932,421 @@ openBuild32 = function (k) {
 F32.open = openBuild32;
 F114.ready = true;
 
+// =================== v115: こもれび闘鶏の育成（12ターン・5つの能力・調子と体力・イベントとスキル・餌とクラフト・たまごをかえす・いまの子の引きつぎ） ===================
+// 方針は docs/方針_闘鶏の育成.md の「作る順番」1段目。サーバーの変更なし（ランキングと友だちとの勝負は、前と同じ形 sp/jp/st で送る）。
+// 状態は world.tori115 = { mig, oldie, ch:{にわとりのID:{a:{spd,sta,pow,gut,wis}, sk:[スキル], n:育成の回数, born?, old?, fav?}}, d:日本時間の日, free, paid, total, run }
+// 育成のとちゅう（run）はセーブに残るので、閉じても読み込み直しても続きからできる。どのにわとりを選んでいるかは v101 の world.tori101.pick をそのまま使う。
+var F115 = {};
+const AB115 = [["spd", "はやさ"], ["sta", "持久力"], ["pow", "脚力"], ["gut", "根性"], ["wis", "かしこさ"]];
+const ABN115 = Object.fromEntries(AB115);
+const CAP115 = 400, TURNS115 = 12, FREE115 = 3, PAID115 = 3, COIN115 = 5, POTATO115 = 60;
+const COND115 = [["絶不調", .8, "#9aa0ff"], ["不調", .9, "#b8c8ff"], ["ふつう", 1, "#ffffff"], ["好調", 1.1, "#ffd86a"], ["絶好調", 1.2, "#ff9a6a"]];
+// 練習：[名前, 伸びる能力と量, 体力, ミニゲームの説明]
+const ACT115 = {
+  run: ["走りこみ", { spd: 7, sta: 3 }, -18, "ゲージが緑のときに押して、ダッシュ！"],
+  flap: ["羽ばたき", { pow: 7, gut: 3 }, -18, "羽を大きく広げて、ふんばれ！"],
+  peck: ["つつき", { wis: 6, gut: 3 }, -14, "的をよく見て、つつけ！"],
+  walk: ["おさんぽ", { sta: 5, wis: 2 }, -6, "のんびり歩いて、道をおぼえよう"],
+};
+// 餌：[名前, 伸びやすい能力, 使える作物, 色]。作り方はどれも「飼料1こ＋作物1こ → 3こ」
+const FEED115 = {
+  tfeed_spd: ["青菜ペレット", "spd", ["cabbage", "spinach"], "#5ab84a"],
+  tfeed_sta: ["雑穀ミックス", "sta", ["corn", "pumpkin"], "#e8c050"],
+  tfeed_pow: ["プロテイン飼料", "pow", ["potato"], "#b07a4a"],
+  tfeed_gut: ["にんじんスティック", "gut", ["carrot", "turnip"], "#f08a3a"],
+  tfeed_wis: ["赤い実ブレンド", "wis", ["tomato", "strawberry", "eggplant"], "#e2404e"],
+};
+for (const [id, [name, ab, crops, col]] of Object.entries(FEED115)) {
+  addSpr17(id, (s, r, e) => { r(3, 5, 10, 10, C17("#d8c49a")); r(3, 5, 10, 1, C17("#b89a6a")); r(4, 3, 8, 3, C17("#e8d8b0")); r(6, 2, 4, 1, C17("#a07a4a")); e(8, 10, 3.2, 2.8, C17(col)); s(7, 9, C17("#ffffff")); r(3, 14, 10, 1, C17("#9a7a4a")); });
+  ITEMS[id] = { name, icon: id, price: 30, tfeed: ab };
+  for (const c of crops) if (ITEMS[c]) RECIPES.push({ out: id, n: 3, need: { feed: 1, [c]: 1 } });
+}
+// スキル（レースで発動。果たし状のレース〈作る順番の2段目〉で使う）
+const SK115 = { senko: ["先手必勝", "序盤に前へ出やすい"], nobi: ["最後のひと伸び", "最後の直線でぐんと伸びる"], saku: ["柵ひとっとび", "柵で速さが落ちない"], nebari: ["ねばり腰", "並ばれると力が出る"], ochi: ["落ちつき", "調子が悪くても力が出る"], kaze: ["風よみ", "中盤で位置を上げる"], oikomi: ["追いこみの鬼", "うしろから一気に来る"], kokoro: ["こころの支え", "作戦をまちがえにくい"] };
+const SKMAX115 = 6;
+// イベント：[文, [[答え, スキル, おまけ {能力:数, cond, hp}], ...]]
+const EV115 = [
+  ["道ばたで、まるまるとしたミミズを見つけた。", [["すぐ食べさせる", "senko", { cond: 1 }], ["がまんさせて、走りこみへ", "nebari", { gut: 4 }]]],
+  ["夕立が来た。にわとりは空を見上げている。", [["雨の中を走らせる", "oikomi", { sta: 4, hp: -8 }], ["小屋で雨音を聞かせる", "ochi", { wis: 3, hp: 8 }]]],
+  ["となりの家のネコが、柵の上からこっちを見ている。", [["にらみ返す", "kaze", { gut: 3 }], ["柵をとびこえて逃げる練習", "saku", { pow: 4 }]]],
+  ["村の子どもたちが、応援しに来てくれた。", [["いっしょに走る", "nobi", { spd: 3 }], ["お話を聞かせてもらう", "kokoro", { wis: 4 }]]],
+  ["朝から、なんだか元気がないみたい。", [["やさしくなでる", "ochi", { cond: 1 }], ["いつもどおり練習", "nebari", { gut: 4, cond: -1 }]]],
+  ["風の強い日。羽が大きくふくらんでいる。", [["風に向かって羽ばたく", "kaze", { pow: 3 }], ["風を背に走る", "senko", { spd: 3 }]]],
+  ["ライバルのにわとりが、となりで走りこみを始めた。", [["負けずに追いかける", "oikomi", { spd: 2, sta: 2 }], ["じっと走り方を見る", "kokoro", { wis: 3 }]]],
+  ["水たまりの向こうに、好物の実が落ちている。", [["ひとっとびで取りに行く", "saku", { pow: 3 }], ["まわり道して取りに行く", "nobi", { sta: 3 }]]],
+];
+const hash115 = s => { let h = 7; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) | 0; return Math.abs(h); };
+const favOf115 = id => Object.keys(FEED115)[hash115("fav" + id) % 5];
+const blank115 = v => ({ spd: v, sta: v, pow: v, gut: v, wis: v });
+const sum115 = a => AB115.reduce((p, [k]) => p + (a[k] | 0), 0);
+// 引きつぎのあとに来たにわとり：前の総合力（3×（10＋なかよし度×4））を5つに分ける
+const init115 = c => ({ a: blank115(Math.round((10 + Math.min(10, c.hearts | 0) * 4) * 3 / 5)), sk: [], n: 0 });
+function fixCh115(x) {
+  if (!x.a || typeof x.a !== "object") x.a = blank115(6);
+  for (const [k] of AB115) x.a[k] = Number.isFinite(+x.a[k]) ? Math.max(0, Math.min(CAP115, Math.floor(+x.a[k]))) : 6;
+  x.sk = Array.isArray(x.sk) ? [...new Set(x.sk.filter(s => SK115[s]))].slice(0, SKMAX115) : [];
+  x.n = Number.isFinite(+x.n) ? Math.max(0, Math.floor(+x.n)) : 0;
+  if (x.fav && !FEED115[x.fav]) delete x.fav;
+  return x;
+}
+// いまの子の引きつぎ（1回だけ）：前の強さ（もともとの力 10＋なかよし度×4 を3つ・きたえた分 tr）を5つの能力に分ける。総合力は同じか少し上
+function migrate115(t) {
+  const o = world.tori101 && typeof world.tori101 === "object" ? world.tori101 : null, tr = o && o.tr && typeof o.tr === "object" ? o.tr : {};
+  const L = coop101().slice(), rt = tr.rent;
+  if (rt && typeof rt === "object" && (rt.sp | 0) + (rt.jp | 0) + (rt.st | 0) > 0) L.push({ id: "rent", name: "レンタルのコケ吉", hearts: 0 });
+  let best = null, bestV = 0;
+  for (const c of L) {
+    const x = tr[c.id] && typeof tr[c.id] === "object" ? tr[c.id] : {}, v = k => Math.max(0, Math.min(300, Math.floor(+x[k] || 0)));
+    const base = (10 + Math.min(10, c.hearts | 0) * 4) * 3, sp = v("sp"), jp = v("jp"), st = v("st"), old = base + sp + jp + st;
+    const a = blank115(base / 5); a.spd += sp; a.pow += jp; a.sta += st;   // 走り→はやさ・ジャンプ→脚力・体力→持久力
+    const mul = Math.ceil(old * 1.05) / Math.max(1, sum115(a));
+    for (const [k] of AB115) a[k] = Math.min(CAP115, Math.round(a[k] * mul));
+    if (sum115(a) < old) a.spd = Math.min(CAP115, a.spd + old - sum115(a));
+    t.ch[c.id] = { a, sk: [], n: 0, was: old };
+    if (sp + jp + st > bestV) { bestV = sp + jp + st; best = c.id; }
+  }
+  if (best) { t.ch[best].old = 1; t.oldie = 1; }
+  t.mig = 1;
+}
+function tori115() {
+  const t = world.tori115 = world.tori115 && typeof world.tori115 === "object" && !Array.isArray(world.tori115) ? world.tori115 : {};
+  if (!t.ch || typeof t.ch !== "object" || Array.isArray(t.ch)) t.ch = {};
+  if (!t.mig) migrate115(t);
+  for (const k of ["free", "paid", "total"]) t[k] = Number.isFinite(+t[k]) ? Math.max(0, Math.floor(+t[k])) : 0;
+  const d = jstDay98(); if (t.d !== d) { t.d = d; t.free = 0; t.paid = 0; }
+  const L = coop101(), ids = new Set(L.map(c => c.id));
+  for (const id of Object.keys(t.ch)) if (id !== "rent" && !ids.has(id)) delete t.ch[id];   // 引き取ってもらった子
+  for (const c of L) if (!t.ch[c.id] || typeof t.ch[c.id] !== "object") t.ch[c.id] = init115(c);
+  if (!L.length && !t.ch.rent) t.ch.rent = init115({ hearts: 0 });
+  for (const x of Object.values(t.ch)) fixCh115(x);
+  if (t.run && (typeof t.run !== "object" || !t.ch[t.run.id])) t.run = null;
+  return t;
+}
+F115.state = tori115;
+const list115 = () => { const L = coop101(); return L.length ? L : [{ id: "rent", name: "レンタルのコケ吉", hearts: 0 }]; };
+const chOf115 = id => { const T = tori115(); return T.ch[id] || (T.ch[id] = init115({ hearts: 0 })); };
+const col115 = (id, x) => x && x.born && x.n < 3 ? "#ffe27a" : TCOLS101[Math.abs(hash101(id)) % TCOLS101.length];
+
+// ---- いままでの闘鶏（レース・ランキング・友だちとの勝負）にも、新しい能力を使う ----
+// 送る形は前と同じ：走り＝はやさ＋かしこさの半分・ジャンプ＝脚力＋根性の半分・体力＝持久力＋のこり。合計は5つの能力の合計（総合力）
+cur101 = function () {
+  const t = tori101(), L = list115();
+  const c = L.find(x => x.id === t.pick) || L[0]; t.pick = c.id;
+  const x = chOf115(c.id), A = x.a, w = Math.round(A.wis / 2), g = Math.round(A.gut / 2);
+  const tr = t.tr[c.id] = t.tr[c.id] && typeof t.tr[c.id] === "object" ? t.tr[c.id] : { sp: 0, jp: 0, st: 0 };
+  return { ...c, tr, sp: A.spd + w, jp: A.pow + g, st: A.sta + (A.gut - g) + (A.wis - w), base: 0, ab: A, x };
+};
+F101.cur = cur101;
+F103.toriList = () => {
+  const T = tori115(), L = coop101(), rent = T.ch.rent;
+  const list = (L.length ? L : rent && (rent.n > 0 || rent.was) ? [{ id: "rent", name: "レンタルのコケ吉" }] : []).slice(0, 20);
+  return list.map(c => ({ k: String(c.id).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16) || "rent", n: String(c.name).slice(0, 12), s: sum115(chOf115(c.id).a) }));
+};
+
+// ---- 育成のしくみ ----
+const runLeft115 = () => { const T = tori115(); return { free: Math.max(0, FREE115 - T.free), paid: Math.max(0, PAID115 - T.paid) }; };
+function startRun115(id, how) {
+  const T = tori115(); if (T.run || !T.ch[id]) return false;
+  if (how === "free") { if (T.free >= FREE115) return false; T.free++; } else { if (T.paid >= PAID115) return false; T.paid++; }
+  const n = 2 + (Math.random() < .5 ? 1 : 0), ev = [];
+  while (ev.length < n) { const k = 2 + rnd(9); if (!ev.includes(k)) ev.push(k); }   // 2〜10ターン目のあと
+  const pool = EV115.map((_, i) => i).sort(() => Math.random() - .5).slice(0, n);
+  const c = list115().find(x => x.id === id), hearts = c ? c.hearts | 0 : 0;
+  T.run = { id, turn: 0, hp: 100, cond: hearts >= 6 ? 3 : 2, g: blank115(0), buf: null, last: "", st: 0, ev: ev.sort((a, b) => a - b), evi: pool, pe: -1, sk: [], how };
+  world.stats.ikusei115 = (world.stats.ikusei115 || 0) + 1;
+  saveWorld();
+  return true;
+}
+const failP115 = R => R.hp < 45 ? Math.min(.8, (45 - R.hp) * .02) : 0;
+function addG115(R, x, k, v) { const room = CAP115 - x.a[k] - R.g[k]; v = Math.max(0, Math.min(room, v)); R.g[k] += v; return v; }
+function gain115(R, x, k, base, hits) {
+  const cur = x.a[k] + R.g[k], room = Math.max(.15, 1 - cur / CAP115), buf = R.buf && R.buf.k === k ? R.buf.m : 1, chick = x.born && x.n < 5 ? 1.2 : 1;
+  return Math.round(base * (.55 + .25 * hits) * COND115[R.cond][1] * buf * room * chick);
+}
+function endTurn115(R) {
+  R.turn++;
+  if (R.buf && --R.buf.left <= 0) R.buf = null;
+  const r = Math.random(); if (r < .07 && R.cond > 0) R.cond--; else if (r > .93 && R.cond < 4) R.cond++;
+  const j = R.ev.indexOf(R.turn); if (j >= 0 && R.turn < TURNS115) R.pe = j;
+}
+/** 練習・休む（hits は ミニゲームで決まった数 0〜3） */
+function doAct115(key, hits) {
+  const T = tori115(), R = T.run; if (!R || R.pe >= 0 || R.turn >= TURNS115) return null;
+  const x = T.ch[R.id], out = { key, g: {}, fail: false, msg: "" };
+  if (key === "rest") {
+    R.hp = Math.min(100, R.hp + 45);
+    if (Math.random() < .35 && R.cond < 4) { R.cond++; out.msg = "ぐっすり休んで、調子が上がった"; } else out.msg = "ぐっすり休んで、体力がもどった";
+  } else {
+    const A = ACT115[key]; if (!A) return null;
+    if (Math.random() < failP115(R)) { out.fail = true; R.cond = Math.max(0, R.cond - 1); R.hp = Math.max(0, R.hp + Math.round(A[2] / 2)); out.msg = "むりをして、練習がうまくいかなかった…（調子が下がった）"; }
+    else {
+      const low = R.hp < 45;
+      for (const [k, b] of Object.entries(A[1])) out.g[k] = addG115(R, x, k, gain115(R, x, k, b, hits));
+      if (low) { out.g.gut = (out.g.gut || 0) + addG115(R, x, "gut", 2); out.msg = "根性で乗りこえた！"; }
+      R.hp = Math.max(0, R.hp + A[2]);
+      if (key === "walk" && Math.random() < .5 && R.cond < 4) { R.cond++; out.msg = "気分がよくなって、調子が上がった"; }
+    }
+  }
+  endTurn115(R); saveWorld(); return out;
+}
+/** ごはん：id は 餌（tfeed_*）か 飼料（feed）か ""（ありあわせ） */
+function feed115(id) {
+  const T = tori115(), R = T.run; if (!R || R.pe >= 0 || R.turn >= TURNS115) return null;
+  if (id && count(id) < 1) return null;
+  const x = T.ch[R.id]; let msg;
+  if (id) removeItem(id, 1);
+  if (FEED115[id]) {
+    const k = FEED115[id][1]; R.st = R.last === id ? R.st + 1 : 0; R.last = id;
+    const m = Math.round(Math.max(1.1, 1.5 - .15 * R.st) * 100) / 100;
+    R.buf = { k, m, left: 4 };   // このターンのおわりに1へるので、次の3ターン
+    R.hp = Math.min(100, R.hp + 20);
+    msg = `${FEED115[id][0]}を食べた。これから3ターン、${ABN115[k]}の練習が${m}倍`;
+    if (R.st) msg += "（同じ餌が続いて、少し効きが落ちた）";
+    if (favOf115(R.id) === id) { x.fav = id; if (R.cond < 4) R.cond++; msg += "。大好物みたい！調子が上がった"; }
+  } else if (id === "feed") { R.hp = Math.min(100, R.hp + 25); R.last = ""; R.st = 0; msg = "飼料を食べて、体力がもどった"; }
+  else { R.hp = Math.min(100, R.hp + 10); msg = "ありあわせのごはんで、少しだけ体力がもどった"; }
+  endTurn115(R); saveWorld(); return msg;
+}
+/** イベントの答え（0 か 1） */
+function answer115(i) {
+  const T = tori115(), R = T.run; if (!R || R.pe < 0) return null;
+  const x = T.ch[R.id], ev = EV115[R.evi[R.pe]], [lab, sk, bonus] = ev[1][i ? 1 : 0], parts = [];
+  for (const [k] of AB115) if (bonus[k]) { const v = addG115(R, x, k, bonus[k]); if (v) parts.push(`${ABN115[k]}+${v}`); }
+  if (bonus.cond) { R.cond = Math.max(0, Math.min(4, R.cond + bonus.cond)); parts.push(bonus.cond > 0 ? "調子が上がった" : "調子が下がった"); }
+  if (bonus.hp) { R.hp = Math.max(0, Math.min(100, R.hp + bonus.hp)); parts.push(`体力${bonus.hp > 0 ? "+" : ""}${bonus.hp}`); }
+  let got = "";
+  if (!x.sk.includes(sk) && !R.sk.includes(sk) && x.sk.length + R.sk.length < SKMAX115) { R.sk.push(sk); got = sk; }
+  else { const v = addG115(R, x, "gut", 3); if (v) parts.push(`（スキルのかわりに）根性+${v}`); }
+  R.pe = -1; saveWorld();
+  return { lab, sk: got, parts };
+}
+/** 12ターン終わったら、伸びた分を本物の能力に足す */
+function finish115() {
+  const T = tori115(), R = T.run; if (!R || R.turn < TURNS115 || R.pe >= 0) return null;
+  const x = T.ch[R.id], before = sum115(x.a);
+  for (const [k] of AB115) x.a[k] = Math.min(CAP115, x.a[k] + (R.g[k] | 0));
+  x.sk = [...x.sk, ...R.sk].slice(0, SKMAX115); x.n++; T.total++; T.run = null;
+  saveWorld();
+  try { sendTori101(); } catch (e) { }
+  try { checkTitles42(); } catch (e) { }
+  return { id: R.id, g: R.g, sk: R.sk, before, after: sum115(x.a) };
+}
+Object.assign(F115, { start: startRun115, act: doAct115, feed: feed115, answer: answer115, finish: finish115, migrate: migrate115, fav: favOf115, SK: SK115, FEED: FEED115 });
+
+// ---- 画面 ----
+const bar115 = (label, v, max, txt, grad) => `<div class="fx99bar"><span>${label}</span><i><b style="width:${Math.max(0, Math.min(100, v / max * 100))}%${grad ? `;background:${grad}` : ""}"></b></i><em>${txt}</em></div>`;
+function openIkusei115(note, view) {
+  let raf = 0, mg = null, closed = false;
+  openModal("こもれび闘鶏", "dark", body => {
+    const T0 = tori115(); view = view || (T0.run ? "run" : "home");
+    let msg = note || "";
+    const draw = () => {
+      if (closed || !body.isConnected) return;
+      cancelAnimationFrame(raf); mg = null;
+      const T = tori115(), R = T.run;
+      if (view !== "home" && view !== "done" && !R) view = "home";
+      let html = "";
+      if (view === "home") html = homeHtml();
+      else if (view === "food") html = foodHtml(R);
+      else if (view === "mg") html = `<div class="ik115"><p class="mtext small">${esc(ACT115[F115.mgKey][3])}（3回・うまく押せるほど伸びる）</p><canvas id="ik115mg" width="240" height="120"></canvas><div class="row2"><button type="button" class="btn" id="ik115hit">いま！</button><button type="button" class="btn light" id="ik115auto">おまかせ（ひかえめに伸びる）</button></div></div>`;
+      else if (view === "done") html = doneHtml();
+      else if (R && R.pe >= 0) html = evHtml(R);
+      else if (R && R.turn >= TURNS115) { F115.last = finish115(); view = "done"; return draw(); }
+      else html = runHtml(R);
+      body.innerHTML = `${msg ? `<p class="mtext"><b>${esc(msg)}</b></p>` : ""}${html}`; msg = "";
+      bind();
+    };
+    const tabs = () => `<div class="mtabs">${[["home", "にわとり"], ["race", "レース"], ["rank", "ランキング"]].map(([k, l]) => `<button class="chip" type="button" data-tt115="${k}" aria-pressed="${k === "home"}">${l}</button>`).join("")}</div>`;
+    const homeHtml = () => {
+      const T = tori115(), c = cur101(), x = c.x, L = coop101(), R = T.run, left = runLeft115(), runC = R && list115().find(y => y.id === R.id);
+      const fav = x.fav ? `${FEED115[x.fav][0]}` : "？？？（ごはんをあげるとわかる）";
+      return `${tabs()}<div class="ik115"><canvas id="ik115cv" width="160" height="80"></canvas>
+        <div class="ik115hd"><b>${esc(c.name)}</b>${x.born && x.n < 3 ? `<span class="ik115badge">ひよこ</span>` : ""}${x.old ? `<span class="ik115badge">古株の名鶏</span>` : ""}<span>総合力 <b>${sum115(x.a)}</b></span><span>育成 ${x.n}回</span>${c.id !== "rent" ? `<span>♥${c.hearts}</span>` : ""}</div>
+        ${L.length > 1 ? `<div class="row2">${L.map(y => `<button class="chip" type="button" data-pk115="${esc(y.id)}" aria-pressed="${y.id === c.id}">${esc(y.name)}</button>`).join("")}</div>` : ""}
+        <div class="ik115ab">${AB115.map(([k, l]) => bar115(l, x.a[k], CAP115, `${x.a[k]}/${CAP115}`)).join("")}</div>
+        <div class="ik115sk">${x.sk.length ? x.sk.map(s => `<span title="${esc(SK115[s][1])}">${esc(SK115[s][0])}</span>`).join("") : `<em class="mtext small">スキルはまだない（育成のとちゅうの出来事でもらえる）</em>`}</div>
+        <p class="mtext small">好きな餌：${esc(fav)}</p>
+        ${R ? `<div class="row2"><button class="btn" type="button" id="ik115cont">育成の続き（${esc(runC ? runC.name : "")}・${R.turn + 1}/${TURNS115}ターン目）</button></div>`
+          : left.free ? `<div class="row2"><button class="btn" type="button" id="ik115go" data-how="free">育成をはじめる（きょうは無料であと${left.free}回）</button></div>`
+          : left.paid ? `<div class="row2"><button class="btn" type="button" id="ik115go" data-how="paid">${COIN115}コインで育成する（きょうはあと${left.paid}回）</button></div>`
+          : `<p class="mtext small">きょうの育成はおしまい。日本時間の0時に、また3回できるよ。</p>`}
+        <p class="mtext small">1回12ターン（5分くらい）。走りこみ・羽ばたき・つつき・おさんぽで能力が伸びて、体力が少ないと失敗しやすい。育成するたびに少しずつ強くなる（能力は${CAP115}まで）。${L.length ? "" : "牧場ににわとりがいないので、レンタルのにわとり。こもれび牧場で迎えたり、タマゴをかえしたりできるよ。"}</p>
+        <p class="mtext small">餌は作業台で「飼料1こ＋作物1こ → 3こ」。ごはんで食べさせると、その能力の練習が3ターン1.5倍。</p></div>`;
+    };
+    const runHtml = R => {
+      const x = chOf115(R.id), c = list115().find(y => y.id === R.id) || { name: "" }, f = failP115(R), cd = COND115[R.cond];
+      const gains = AB115.filter(([k]) => R.g[k]).map(([k, l]) => `${l}+${R.g[k]}`).join("・") || "まだなし";
+      const actBtn = (k, sub) => `<button class="btn" type="button" data-ac115="${k}">${k === "rest" ? "休む" : k === "food" ? "ごはん" : ACT115[k][0]}<small>${sub}</small></button>`;
+      const subOf = k => { const A = ACT115[k]; return `${Object.keys(A[1]).map(a => ABN115[a]).join("・")}　体力${A[2]}`; };
+      return `<div class="ik115"><div class="ik115hd"><b>${esc(c.name)}の育成</b><span>${R.turn + 1}/${TURNS115}ターン目</span><span>調子 <b style="color:${cd[2]}">${cd[0]}</b></span></div>
+        <canvas id="ik115cv" width="160" height="80"></canvas>
+        ${bar115("体力", R.hp, 100, `${R.hp}/100`, R.hp < 45 ? "linear-gradient(90deg,#ff7a7a,#ffb07a)" : "linear-gradient(90deg,#7ad8a0,#c8f07a)")}
+        ${R.buf ? `<p class="mtext small">ごはんの効き目：${ABN115[R.buf.k]}の練習が${R.buf.m}倍（あと${R.buf.left}ターン）</p>` : ""}
+        <p class="mtext small">今回の伸び：${gains}${R.sk.length ? `／スキル：${R.sk.map(s => SK115[s][0]).join("・")}` : ""}</p>
+        <div class="ik115acts">${actBtn("run", subOf("run"))}${actBtn("flap", subOf("flap"))}${actBtn("peck", subOf("peck"))}${actBtn("walk", subOf("walk") + "・調子")}${actBtn("rest", "体力+45・調子")}${actBtn("food", "体力・餌の効き目")}</div>
+        <p class="mtext small">${f ? `体力が少ないので、練習の失敗しやすさ ${Math.round(f * 100)}%。休むかごはんがおすすめ。` : "体力が45より少なくなると、練習が失敗しやすくなる。"}${x.born && x.n < 5 ? "（ひよこは伸びやすい）" : ""}</p></div>`;
+    };
+    const foodHtml = () => {
+      const own = Object.keys(FEED115).filter(id => count(id) > 0);
+      return `<div class="ik115"><p class="mtext">どれを食べさせる？（体力ももどる）</p><div class="list">
+        ${own.map(id => `<div class="li"><img src="${ASSETS[id]}" alt=""><span class="nm">${esc(FEED115[id][0])}<span class="sub2">${ABN115[FEED115[id][1]]}の練習が3ターン1.5倍・体力+20（${count(id)}個）</span></span><span class="acts"><button class="btn" type="button" data-fd115="${id}">あげる</button></span></div>`).join("")}
+        ${count("feed") ? `<div class="li"><img src="${ASSETS.feed}" alt=""><span class="nm">飼料<span class="sub2">体力+25（${count("feed")}個）</span></span><span class="acts"><button class="btn" type="button" data-fd115="feed">あげる</button></span></div>` : ""}
+        <div class="li"><span class="nm">ありあわせのごはん<span class="sub2">体力+10（なにも使わない）</span></span><span class="acts"><button class="btn light" type="button" data-fd115="">あげる</button></span></div></div>
+        ${own.length ? "" : `<p class="mtext small">餌は作業台で作れるよ（飼料1こ＋作物1こ → 3こ）。</p>`}
+        <div class="row2"><button class="btn light" type="button" id="ik115back">もどる</button></div></div>`;
+    };
+    const evHtml = R => {
+      const ev = EV115[R.evi[R.pe]];
+      return `<div class="ik115"><div class="ik115ev"><p class="mtext"><b>できごと</b></p><p class="mtext">${esc(ev[0])}</p></div>
+        <div class="row2">${ev[1].map((o, i) => `<button class="btn" type="button" data-ev115="${i}">${esc(o[0])}</button>`).join("")}</div></div>`;
+    };
+    const doneHtml = () => {
+      const D = F115.last; if (!D) return `<div class="ik115"><div class="row2"><button class="btn" type="button" id="ik115home">もどる</button></div></div>`;
+      const c = list115().find(y => y.id === D.id) || { name: "" };
+      return `<div class="dk75r"><b>育成おしまい！</b><span>${esc(c.name)}の総合力 ${D.before} → <em>${D.after}</em></span>${AB115.map(([k, l]) => D.g[k] ? `<span>${l} +${D.g[k]}</span>` : "").join("")}${D.sk.length ? `<span>新しいスキル：${D.sk.map(s => esc(SK115[s][0])).join("・")}</span>` : ""}<span class="small">スキルは、果たし状のレース（これから作る）で発動するよ</span></div>
+        <div class="row2"><button class="btn" type="button" id="ik115home">にわとりの画面へ</button></div>`;
+    };
+    const bind = () => {
+      body.querySelectorAll("[data-tt115]").forEach(b => b.onclick = () => { const k = b.dataset.tt115; if (k === "home") return; closeModal(); F115.openOld(null, k); });
+      body.querySelectorAll("[data-pk115]").forEach(b => b.onclick = () => { tori101().pick = b.dataset.pk115; saveWorld(); draw(); });
+      const go = body.querySelector("#ik115go");
+      if (go) go.onclick = () => {
+        const c = cur101(), how = go.dataset.how; go.disabled = true;
+        if (how === "free") { if (startRun115(c.id, "free")) { view = "run"; } draw(); return; }
+        spend98(COIN115, "toriikusei", ok => { if (closed) return; if (ok && startRun115(c.id, "paid")) view = "run"; draw(); });
+      };
+      const cont = body.querySelector("#ik115cont"); if (cont) cont.onclick = () => { view = "run"; draw(); };
+      body.querySelectorAll("[data-ac115]").forEach(b => b.onclick = () => {
+        const k = b.dataset.ac115;
+        if (k === "food") { view = "food"; draw(); return; }
+        if (k === "rest") { const o = doAct115("rest"); msg = o ? o.msg : ""; draw(); return; }
+        F115.mgKey = k; view = "mg"; draw(); startMg(k);
+      });
+      body.querySelectorAll("[data-fd115]").forEach(b => b.onclick = () => { const m = feed115(b.dataset.fd115); msg = m || ""; view = "run"; draw(); });
+      const back = body.querySelector("#ik115back"); if (back) back.onclick = () => { view = "run"; draw(); };
+      body.querySelectorAll("[data-ev115]").forEach(b => b.onclick = () => {
+        const r = answer115(+b.dataset.ev115); if (!r) return draw();
+        msg = `${r.lab}。${r.sk ? `スキル「${SK115[r.sk][0]}」をおぼえた！` : ""}${r.parts.join("・")}`;
+        se13(r.sk ? "big" : "small"); draw();
+      });
+      const home = body.querySelector("#ik115home"); if (home) home.onclick = () => { view = "home"; draw(); };
+      if (view === "done" && F115.last && !F115.last.se) { F115.last.se = 1; se13("big"); }
+      const cv = body.querySelector("#ik115cv");
+      if (cv) {
+        const T = tori115(), id = T.run && view !== "home" ? T.run.id : cur101().id, x = chOf115(id), col = col115(id, x), small = x.born && x.n < 3;
+        const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+        const frame = now => { if (!cv.isConnected) return; const t2 = now / 1000; g.fillStyle = "#7ac050"; g.fillRect(0, 0, 160, 80); g.fillStyle = "#c8b890"; g.fillRect(0, 60, 160, 20); drawTori101(g, small ? 66 : 60, small ? 34 : 18, small ? 1.3 : 2, col, t2, false, Math.max(0, Math.sin(t2 * 3)) * 2); raf = requestAnimationFrame(frame); };
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    // 練習のミニゲーム（タイミングよく3回）。閉じたら、そこまでの数で決める
+    const startMg = k => {
+      const cv = $("ik115mg"); if (!cv) return;
+      const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+      const R = tori115().run, col = col115(R.id, chOf115(R.id)), N = 3;
+      let i = 0, hit = 0, done = false, last = performance.now(), tt = 0, zc = .5, said = "", saidT = 0;
+      const W = () => Math.max(.14, .28 - i * .04), cur = () => Math.sin(tt * (2.2 + i * .4)) * .5 + .5;
+      const end = () => {
+        if (done) return; done = true; mg = null; removeEventListener("keydown", kd, true);
+        const o = doAct115(k, hit); if (!o) { view = "run"; draw(); return; }
+        const gs = Object.entries(o.g).filter(([, v]) => v).map(([a, v]) => `${ABN115[a]}+${v}`).join("・");
+        msg = o.fail ? o.msg : `${ACT115[k][0]}：${hit}/${N}回 決まった。${gs || "伸びなかった"}${o.msg ? "。" + o.msg : ""}`;
+        se13(o.fail ? "miss" : hit === N ? "big" : "small");
+        if (!closed) { view = "run"; draw(); }
+      };
+      const press = () => { if (done || i >= N) return; const ok = Math.abs(cur() - zc) <= W() / 2; if (ok) { hit++; said = "ナイス！"; se13("harvest"); } else { said = "おしい…"; se13("miss"); } saidT = .5; i++; zc = .25 + Math.random() * .5; if (i >= N) setTimeout(end, 450); };
+      const kd = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) press(); } };
+      addEventListener("keydown", kd, true);
+      $("ik115hit").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+      $("ik115auto").onclick = () => { if (done) return; hit = Math.max(hit, 1); i = N; end(); };
+      mg = { end, press, setZ: () => { zc = cur(); }, state: () => ({ i, hit }) };
+      F115.mg = mg;
+      const loop = now => {
+        if (!cv.isConnected || done) return;
+        const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt; if (saidT > 0) saidT -= dt;
+        g.fillStyle = k === "walk" ? "#8ac868" : "#7ac050"; g.fillRect(0, 0, 240, 120); g.fillStyle = "#c8b890"; g.fillRect(0, 84, 240, 36);
+        if (k === "walk") { g.fillStyle = "#5a9a48"; for (let f = 0; f < 4; f++) { const fx = ((f * 70 - tt * 30) % 280 + 280) % 280 - 20; g.fillRect(fx, 60, 12, 24); g.fillRect(fx - 6, 52, 24, 10); } }
+        if (k === "peck") { g.fillStyle = "#f2e0a0"; for (let f = 0; f < 5; f++) g.fillRect(140 + f * 14, 88 + (f % 2) * 6, 4, 3); }
+        const jump = k === "flap" ? Math.max(0, Math.sin(tt * 6)) * 4 : 0;
+        drawTori101(g, 96, 46, 2, col, tt, k !== "peck", jump);
+        g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(20, 8, 200, 12); g.fillStyle = "#6ad06a"; g.fillRect(20 + (zc - W() / 2) * 200, 8, W() * 200, 12); g.fillStyle = "#ffd86a"; g.fillRect(20 + cur() * 200 - 1, 4, 3, 20);
+        g.fillStyle = "#fff"; g.font = "bold 11px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`${Math.min(N, i + 1)}/${N}・決まった ${hit}`, 6, 26);
+        if (saidT > 0) { g.textAlign = "center"; g.font = "bold 14px sans-serif"; g.fillText(said, 120, 34); }
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    };
+    F115.redraw = draw; draw();
+  }, () => { closed = true; cancelAnimationFrame(raf); if (mg) mg.end(); F115.redraw = null; });
+}
+F115.open = openIkusei115;
+{
+  // 闘鶏の「にわとり」の画面は、育成の画面にする（レース・ランキングは前のまま）
+  const _ot = openTori101;
+  F115.openOld = (n, tab) => _ot(n, tab);
+  openTori101 = function (note, tab) { if (!tab || tab === "home") return openIkusei115(note); return _ot.apply(this, arguments); };
+  F101.open = openTori101;
+  // 前の画面の「にわとり」のタブを押したら、育成の画面へ
+  document.addEventListener("click", e => {
+    const b = e.target && e.target.closest && e.target.closest('[data-tt101="home"]'); if (!b) return;
+    e.stopPropagation(); e.preventDefault(); closeModal(); openIkusei115();
+  }, true);
+  const _og = openGames92;
+  openGames92 = function () {
+    const r = _og.apply(this, arguments);
+    const s = document.querySelector("#mbody [data-g101] span"); if (s) s.textContent = "12ターンの育成でにわとりを育てる。レースや友だちとの勝負も";
+    return r;
+  };
+  F92.hub = openGames92;
+}
+
+// ---- こもれび牧場：たまごをかえす・じゃがいもを買う ----
+function hatch115() {
+  if (count("egg") < 1 || world.animals.length >= F32.cap()) return null;
+  removeItem("egg", 1);
+  const a = { id: Date.now(), type: "chicken", name: "ひよこ", hearts: 0, fed: false };
+  world.animals.push(a); syncAnimals();
+  const T = tori115(); T.ch[String(a.id)] = { a: blank115(6), sk: [], n: 0, born: 1 };
+  world.stats.hatch115 = (world.stats.hatch115 || 0) + 1;
+  saveWorld();
+  return a;
+}
+F115.hatch = hatch115;
+{
+  const _oas = openAnimalShop;
+  openAnimalShop = function () {
+    const r = _oas.apply(this, arguments);
+    try {
+      const body = $("mbody"); if (!body || $("mtitle").textContent !== "こもれび牧場") return r;
+      const cap = F32.cap(), n = world.animals.length, eggs = count("egg"), at = body.querySelector("#uchi103");
+      const html = `<h3 class="lbl" id="egg115">たまごをかえす</h3><div class="list"><div class="li"><img src="${ASSETS.egg}" alt=""><span class="nm">タマゴをあたためて、ひよこをかえす<span class="sub2">タマゴ1個（持っている ${eggs}個）・牧場 ${n}/${cap}頭。生まれた子は、こもれび闘鶏でまっさらから育てられる（はじめの5回は伸びやすい）</span></span><span class="acts"><button class="btn" type="button" id="eggb115" ${eggs && n < cap ? "" : "disabled"}>かえす</button></span></div>
+        <div class="li"><img src="${ASSETS.potato}" alt=""><span class="nm">じゃがいも<span class="sub2">1個 ${fmt(POTATO115)}・プロテイン飼料の材料（持っている ${count("potato")}個）</span></span><span class="acts"><button class="btn light" type="button" data-pt115="1" ${world.money < POTATO115 ? "disabled" : ""}>1個</button><button class="btn light" type="button" data-pt115="5" ${world.money < POTATO115 * 5 ? "disabled" : ""}>5個</button></span></div></div>`;
+      if (at) at.insertAdjacentHTML("beforebegin", html); else body.insertAdjacentHTML("beforeend", html);
+      body.querySelector("#eggb115").onclick = () => {
+        const a = hatch115(); if (!a) return;
+        se13("big"); toast("egg", "ぴよっ！ひよこが生まれた");
+        closeModal(); openName103("animal", a.id, () => openAnimalShop(), true);
+      };
+      body.querySelectorAll("[data-pt115]").forEach(b => b.onclick = () => {
+        const k = +b.dataset.pt115, cost = k * POTATO115; if (world.money < cost) return;
+        if (!addItem("potato", k, true)) { toast(null, "持ち物がいっぱい"); return; }
+        addMoney(-cost); saveWorld(); toast("potato", `じゃがいもを${k}個買った（${fmt(cost)}）`); closeModal(); openAnimalShop();
+      });
+    } catch (e) { }
+    return r;
+  };
+}
+
+const TTL115 = [["古株の名鶏", "前から闘鶏できたえていたにわとりを、新しい育成に引きつぐ", () => !!world.tori115?.oldie],
+  ["ひよこ育て", "タマゴからかえしたひよこを、育成で5回育てる", () => Object.values(world.tori115?.ch || {}).some(x => x && x.born && (x.n | 0) >= 5)],
+  ["育成の達人", "こもれび闘鶏の育成を30回やりとげる", () => (world.tori115?.total || 0) >= 30]];
+for (const t of TTL115) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["闘鶏の育成", "tfeed_spd", `<p>スマホの「ゲーム」→「こもれび闘鶏」で、にわとりを12ターンかけて育てます（1日3回まで無料・そのあとは${COIN115}コインで1日あと3回）。</p>
+<p>毎ターン、走りこみ（はやさ）・羽ばたき（脚力）・つつき（かしこさ）・おさんぽ（持久力）・休む・ごはん からえらびます。練習は短いタイミングのミニゲーム。体力が少ないと失敗しやすく、調子がいいほどよく伸びます。とちゅうの出来事でえらんだ答えによって、レースで働くスキルをおぼえます。</p>
+<p>餌は作業台で「飼料1こ＋作物1こ → 3こ」：青菜ペレット（キャベツ・ほうれん草）・雑穀ミックス（とうもろこし・かぼちゃ）・プロテイン飼料（じゃがいも。こもれび牧場でも買える）・にんじんスティック（にんじん・カブ）・赤い実ブレンド（トマト・いちご・なす）。ごはんで食べさせると、その能力の練習が3ターン1.5倍。子ごとに好きな餌があります。</p>
+<p>こもれび牧場の「たまごをかえす」で、タマゴからひよこが生まれます。まっさらから育てられて、はじめの5回は伸びやすい。</p>`]);
+F115.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -23385,5 +23807,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

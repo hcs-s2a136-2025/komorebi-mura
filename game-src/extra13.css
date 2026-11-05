@@ -1079,3 +1079,17 @@ button.jn106.lock { opacity: .45; }
 .nv114.on { background: #ff3a5a; animation: ev95b .45s ease-in-out infinite alternate; }
 .vs95at { background: linear-gradient(90deg, #ff3a5a, #ffb03a, #ff3a5a); color: #fff !important; }
 .btn.warn114 { background: #ffe6df; color: #7a2a20; border-color: #e9a597; }
+/* v115: こもれび闘鶏の育成 */
+.ik115 { display: grid; gap: 6px; }
+.ik115 canvas { width: min(100%, 320px); justify-self: center; image-rendering: pixelated; border-radius: 8px; }
+.ik115ab { display: grid; gap: 3px; }
+.ik115ab .fx99bar span { min-width: 4.6em; }
+.ik115acts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ik115acts .btn { display: flex; flex-direction: column; align-items: center; line-height: 1.25; padding: 6px 4px; }
+.ik115acts .btn small { font-size: .68rem; opacity: .85; font-weight: normal; }
+.ik115hd { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: .85rem; }
+.ik115sk { display: flex; flex-wrap: wrap; gap: 4px; }
+.ik115sk span { background: #4a3a5a; color: #ffe8a8; border-radius: 10px; padding: 1px 8px; font-size: .75rem; }
+.ik115badge { background: linear-gradient(90deg, #c89a3a, #ffe08a); color: #3a2a10; border-radius: 10px; padding: 0 8px; font-size: .72rem; font-weight: bold; }
+.ik115ev { background: rgba(255, 255, 255, .08); border-radius: 10px; padding: 10px; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .ik115 { grid-template-columns: minmax(0, 32%) 1fr; align-items: start; } .ik115 > * { grid-column: 2; } .ik115 > canvas { grid-column: 1; grid-row: 1 / span 12; width: 100%; height: auto; } .ik115acts { grid-template-columns: repeat(3, 1fr); } }

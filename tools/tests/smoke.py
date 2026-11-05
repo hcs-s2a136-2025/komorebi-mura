@@ -38,6 +38,8 @@ STEPS = [
     ("育成のミニゲーム", "document.querySelector('[data-ac115=run]').click()"),
     ("育成のごはん", f"window.KOMO.closeModal(); {G}.F115.open(null, 'food')"),
     ("こもれび牧場", f"window.KOMO.closeModal(); {G}.openShop('animal')"),
+    ("果たし状", f"window.KOMO.closeModal(); {G}.F116.open()"),
+    ("果たし状のレース", f"window.KOMO.closeModal(); {G}.F116.play({{id: 1, w: 1, ph: true, d: .2, c: [1, -1], e: [[0, 0, 'kokoro'], [3, 1, 'senko']], p: [[0, 300, 650, 1000], [0, 320, 640, 1000]], a: {{id: 1, o: 'りこ', k: 'a', n: 'コッコ', st: 'oi', s: 300, sk: []}}, b: {{id: 2, o: 'じてか', k: 'b', n: 'ピヨ', st: 'nige', s: 300, sk: []}}}}); new Promise(r => setTimeout(r, 2500))"),
     ("アイドル", f"window.KOMO.closeModal(); {G}.F102.state().pick = 1; {G}.F102.open()"),
     ("アイドルのレッスン", f"window.KOMO.closeModal(); {G}.F102.state().wait = 0; {G}.F102.lesson('da')"),
     ("求人の掲示板", f"window.KOMO.closeModal(); {G}.F93.jobs('village')"),

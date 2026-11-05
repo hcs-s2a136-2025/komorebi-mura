@@ -1555,6 +1555,11 @@ button.jn106.lock { opacity: .45; }
 .ik115badge { background: linear-gradient(90deg, #c89a3a, #ffe08a); color: #3a2a10; border-radius: 10px; padding: 0 8px; font-size: .72rem; font-weight: bold; }
 .ik115ev { background: rgba(255, 255, 255, .08); border-radius: 10px; padding: 10px; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .ik115 { grid-template-columns: minmax(0, 32%) 1fr; align-items: start; } .ik115 > * { grid-column: 2; } .ik115 > canvas { grid-column: 1; grid-row: 1 / span 12; width: 100%; height: auto; } .ik115acts { grid-template-columns: repeat(3, 1fr); } }
+/* v116: 果たし状のレース */
+.rc116 { display: grid; gap: 6px; }
+.rc116h { font-size: .8rem; line-height: 1.6; }
+.rc116 canvas { width: min(100%, 520px); justify-self: center; image-rendering: pixelated; border-radius: 8px; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .rc116 { grid-template-columns: minmax(0, 62%) 1fr; align-items: start; } .rc116 canvas { grid-column: 1; grid-row: 1 / span 3; width: 100%; } .rc116 > :not(canvas) { grid-column: 2; } }
 </style>
 
 <header>
@@ -1681,7 +1686,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.62.0";
+  const VER = "0.63.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6177,7 +6182,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.62.0";
+const CLIENT_VERSION = "0.63.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8255,6 +8260,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.63.0", date: "2026/11/05", title: "闘鶏の果たし状", items: [
+    "こもれび闘鶏に「果たし状」。村の人のにわとりをえらんで果たし状を送れるよ（オンラインのとき・5通まで）。留守の人には、次につないだときに届く",
+    "自分の子と作戦（にげ・先行・差し・追いこみ）を決めておくと、送るときも受けるときもその作戦で走る。受けるか断るかは相手しだい",
+    "勝ち負けは、能力・作戦・スキル・その日の調子・少しの運で決まって、ふたりに同じレースが届く",
+    "レースは横に流れるコースで、序盤・中盤・最後の直線。スキルが出ると名前がぱっと出て、追いぬき・並びかけ、きわどいときは写真判定も",
+  ] },
   { v: "0.62.0", date: "2026/11/05", title: "こもれび闘鶏の育成", items: [
     "こもれび闘鶏が「育成」になった。1回12ターンで、走りこみ・羽ばたき・つつき・おさんぽ・休む・ごはん からえらんで育てるよ（1日3回まで無料・そのあとはスマホコイン5枚で1日あと3回）",
     "能力は はやさ・持久力・脚力・根性・かしこさ の5つ。調子と体力があって、むりをすると練習が失敗することも。とちゅうの出来事でスキルをおぼえる",
@@ -25199,7 +25210,7 @@ for (const [id, [name, ab, crops, col]] of Object.entries(FEED115)) {
   ITEMS[id] = { name, icon: id, price: 30, tfeed: ab };
   for (const c of crops) if (ITEMS[c]) RECIPES.push({ out: id, n: 3, need: { feed: 1, [c]: 1 } });
 }
-// スキル（レースで発動。果たし状のレース〈作る順番の2段目〉で使う）
+// スキル（果たし状のレースで発動。効き目はサーバーの DuelRace と mock.js の duelRace）
 const SK115 = { senko: ["先手必勝", "序盤に前へ出やすい"], nobi: ["最後のひと伸び", "最後の直線でぐんと伸びる"], saku: ["柵ひとっとび", "柵で速さが落ちない"], nebari: ["ねばり腰", "並ばれると力が出る"], ochi: ["落ちつき", "調子が悪くても力が出る"], kaze: ["風よみ", "中盤で位置を上げる"], oikomi: ["追いこみの鬼", "うしろから一気に来る"], kokoro: ["こころの支え", "作戦をまちがえにくい"] };
 const SKMAX115 = 6;
 // イベント：[文, [[答え, スキル, おまけ {能力:数, cond, hp}], ...]]
@@ -25394,7 +25405,7 @@ function openIkusei115(note, view) {
       body.innerHTML = `${msg ? `<p class="mtext"><b>${esc(msg)}</b></p>` : ""}${html}`; msg = "";
       bind();
     };
-    const tabs = () => `<div class="mtabs">${[["home", "にわとり"], ["race", "レース"], ["rank", "ランキング"]].map(([k, l]) => `<button class="chip" type="button" data-tt115="${k}" aria-pressed="${k === "home"}">${l}</button>`).join("")}</div>`;
+    const tabs = () => `<div class="mtabs">${[["home", "にわとり"], ["duel", "果たし状"], ["race", "レース"], ["rank", "ランキング"]].map(([k, l]) => `<button class="chip" type="button" data-tt115="${k}" aria-pressed="${k === "home"}">${l}</button>`).join("")}</div>`;
     const homeHtml = () => {
       const T = tori115(), c = cur101(), x = c.x, L = coop101(), R = T.run, left = runLeft115(), runC = R && list115().find(y => y.id === R.id);
       const fav = x.fav ? `${FEED115[x.fav][0]}` : "？？？（ごはんをあげるとわかる）";
@@ -25441,11 +25452,11 @@ function openIkusei115(note, view) {
     const doneHtml = () => {
       const D = F115.last; if (!D) return `<div class="ik115"><div class="row2"><button class="btn" type="button" id="ik115home">もどる</button></div></div>`;
       const c = list115().find(y => y.id === D.id) || { name: "" };
-      return `<div class="dk75r"><b>育成おしまい！</b><span>${esc(c.name)}の総合力 ${D.before} → <em>${D.after}</em></span>${AB115.map(([k, l]) => D.g[k] ? `<span>${l} +${D.g[k]}</span>` : "").join("")}${D.sk.length ? `<span>新しいスキル：${D.sk.map(s => esc(SK115[s][0])).join("・")}</span>` : ""}<span class="small">スキルは、果たし状のレース（これから作る）で発動するよ</span></div>
+      return `<div class="dk75r"><b>育成おしまい！</b><span>${esc(c.name)}の総合力 ${D.before} → <em>${D.after}</em></span>${AB115.map(([k, l]) => D.g[k] ? `<span>${l} +${D.g[k]}</span>` : "").join("")}${D.sk.length ? `<span>新しいスキル：${D.sk.map(s => esc(SK115[s][0])).join("・")}</span>` : ""}<span class="small">スキルは、果たし状のレースで発動するよ</span></div>
         <div class="row2"><button class="btn" type="button" id="ik115home">にわとりの画面へ</button></div>`;
     };
     const bind = () => {
-      body.querySelectorAll("[data-tt115]").forEach(b => b.onclick = () => { const k = b.dataset.tt115; if (k === "home") return; closeModal(); F115.openOld(null, k); });
+      body.querySelectorAll("[data-tt115]").forEach(b => b.onclick = () => { const k = b.dataset.tt115; if (k === "home") return; closeModal(); if (k === "duel") F116.open(); else F115.openOld(null, k); });
       body.querySelectorAll("[data-pk115]").forEach(b => b.onclick = () => { tori101().pick = b.dataset.pk115; saveWorld(); draw(); });
       const go = body.querySelector("#ik115go");
       if (go) go.onclick = () => {
@@ -25580,10 +25591,254 @@ const TTL115 = [["古株の名鶏", "前から闘鶏できたえていたにわ�
   ["育成の達人", "こもれび闘鶏の育成を30回やりとげる", () => (world.tori115?.total || 0) >= 30]];
 for (const t of TTL115) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 GUIDE54.push(["闘鶏の育成", "tfeed_spd", `<p>スマホの「ゲーム」→「こもれび闘鶏」で、にわとりを12ターンかけて育てます（1日3回まで無料・そのあとは${COIN115}コインで1日あと3回）。</p>
-<p>毎ターン、走りこみ（はやさ）・羽ばたき（脚力）・つつき（かしこさ）・おさんぽ（持久力）・休む・ごはん からえらびます。練習は短いタイミングのミニゲーム。体力が少ないと失敗しやすく、調子がいいほどよく伸びます。とちゅうの出来事でえらんだ答えによって、レースで働くスキルをおぼえます。</p>
+<p>毎ターン、走りこみ（はやさ）・羽ばたき（脚力）・つつき（かしこさ）・おさんぽ（持久力）・休む・ごはん からえらびます。練習は短いタイミングのミニゲーム。体力が少ないと失敗しやすく、調子がいいほどよく伸びます。とちゅうの出来事でえらんだ答えによって、果たし状のレースで働くスキルをおぼえます。</p>
 <p>餌は作業台で「飼料1こ＋作物1こ → 3こ」：青菜ペレット（キャベツ・ほうれん草）・雑穀ミックス（とうもろこし・かぼちゃ）・プロテイン飼料（じゃがいも。こもれび牧場でも買える）・にんじんスティック（にんじん・カブ）・赤い実ブレンド（トマト・いちご・なす）。ごはんで食べさせると、その能力の練習が3ターン1.5倍。子ごとに好きな餌があります。</p>
 <p>こもれび牧場の「たまごをかえす」で、タマゴからひよこが生まれます。まっさらから育てられて、はじめの5回は伸びやすい。</p>`]);
 F115.ready = true;
+
+// =================== v116: こもれび闘鶏の果たし状（村の人のにわとりと1対1・受ける／断る・留守でも届く）と、レースの見せ方 ===================
+// 方針は docs/方針_闘鶏の育成.md の「作る順番」2段目。サーバーは jp.komorebi.duel（type "duel"）。mock.js も同じ約束（duelHandle）。
+// 勝ち負けとレースの中身（毎歩の位置 p・スキル e・勝ち w・写真判定 ph・調子 c）はサーバーが決めて、両方の画面に同じものが届く。画面はなぞって見せるだけ。
+// 断ったときは何も起こらない（送った人の手元から果たし状が消えるだけ。「にげた」などは出さない）。
+// 状態：world.tori116 = { res:[最近の結果10こ], w, l }。作戦はにわとりごとに world.tori115.ch[ID].st（はじめは先行）。届いた・送った果たし状はサーバーが持つ（F116.inb / F116.outb は表示用）
+var F116 = { inb: [], outb: [], list: null, waiting: 0 };
+const ST116 = { nige: ["にげ", "はじめから前へ。最後は少しばてる"], saki: ["先行", "前のほうで走って、そのまま押しきる"], sashi: ["差し", "中ほどで力をためて、直線で差す"], oi: ["追いこみ", "うしろから、最後に一気に"] };
+const COND116 = { "-2": "絶不調", "-1": "不調", 0: "ふつう", 1: "好調", 2: "絶好調" };
+const key116 = id => String(id).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16) || "rent";
+const tori116 = () => {
+  const t = world.tori116 = world.tori116 && typeof world.tori116 === "object" && !Array.isArray(world.tori116) ? world.tori116 : {};
+  if (!Array.isArray(t.res)) t.res = [];
+  t.res = t.res.filter(r => r && typeof r === "object" && Array.isArray(r.p)).slice(0, 10);
+  for (const k of ["w", "l"]) t[k] = Number.isFinite(+t[k]) ? Math.max(0, Math.floor(+t[k])) : 0;
+  return t;
+};
+F116.state = tori116;
+const stOf116 = id => { const x = chOf115(id); return ST116[x.st] ? x.st : "saki"; };
+/** 自分のにわとり（送る形）。牧場の子か、育てたレンタル */
+function mine116() {
+  const T = tori115(), L = coop101(), rent = T.ch.rent;
+  const list = (L.length ? L : rent && (rent.n > 0 || rent.was) ? [{ id: "rent", name: "レンタルのコケ吉" }] : []).slice(0, 20);
+  return list.map(c => { const x = chOf115(c.id); return { id: c.id, k: key116(c.id), n: String(c.name).slice(0, 12), ab: { ...x.a }, sk: x.sk.slice() }; });
+}
+function sendRoster116(force) {
+  if (!F8.connected || WATCH88) return;
+  const list = mine116().map(({ k, n, ab, sk }) => ({ k, n, ab, sk })), sig = JSON.stringify(list);
+  if (!force && sig === F116.sig) return;
+  F116.sig = sig; send8({ type: "duel", a: "put", list });
+}
+{
+  const _st = sendTori101;
+  sendTori101 = function () { const r = _st.apply(this, arguments); try { sendRoster116(); } catch (e) { } return r; };
+  F103.sendTori = () => sendTori101();
+}
+const askList116 = () => { if (F8.connected && !WATCH88) { send8({ type: "duel", a: "list" }); } };
+const myId116 = () => F8.myId ? F8.myId() : 0;
+const sideOf116 = r => r.a && r.a.id === myId116() ? 0 : r.b && r.b.id === myId116() ? 1 : -1;
+function addRes116(r) {
+  if (!r || !Array.isArray(r.p) || r.p.length !== 2) return false;
+  const t = tori116(); if (t.res.some(x => x.id === r.id)) return false;
+  const me = sideOf116(r);
+  if (me >= 0) { if (r.w === me) { t.w++; if (r.ph) world.stats.duelPhoto116 = (world.stats.duelPhoto116 || 0) + 1; } else t.l++; }
+  t.res.unshift(r); t.res.length = Math.min(t.res.length, 10);
+  F116.inb = F116.inb.filter(c => c.id !== r.id); F116.outb = F116.outb.filter(c => c.id !== r.id);
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+  return true;
+}
+F116.addRes = addRes116;
+const notice116 = (title, text, btn, go) => F7.pending.push({ kind: "custom", show: () => openModal(title, "dark", body => {
+  body.innerHTML = `<p class="mtext">${text}</p><div class="row2"><button class="btn" type="button" id="nt116go">${btn}</button><button class="btn light" type="button" id="nt116no">あとで</button></div>`;
+  body.querySelector("#nt116go").onclick = () => { closeModal(); go(); };
+  body.querySelector("#nt116no").onclick = () => closeModal();
+}) });
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "duel") {
+      if (m.a === "list") { F116.list = Array.isArray(m.list) ? m.list : []; }
+      else if (m.ok === "send" && m.c) { F116.outb = F116.outb.filter(c => c.id !== m.c.id).concat([m.c]); toast(null, `${m.c.tn}さんに果たし状を送った`); }
+      else if ((m.ok === "cancel" || m.ok === "no") && m.id) { F116.outb = F116.outb.filter(c => c.id !== m.id); F116.inb = F116.inb.filter(c => c.id !== m.id); }
+      else if (m.ng) { toast(null, String(m.ng)); if (F116.waiting) F116.waiting = 0; }
+      else if (m.ev === "in" && m.c) {
+        if (!F116.inb.some(c => c.id === m.c.id)) { F116.inb.push(m.c); toast(null, `${m.c.fn}さんから果たし状が届いた`); if (!F116.redraw) notice116("果たし状が届いた", `${esc(m.c.fn)}さんの「${esc(m.c.a.n)}」から、あなたの「${esc(m.c.b.n)}」へ。受ける？`, "見る", () => openDuel116()); }
+      }
+      else if (m.ev === "gone" && m.id) { F116.inb = F116.inb.filter(c => c.id !== m.id); F116.outb = F116.outb.filter(c => c.id !== m.id); if (F116.waiting === m.id) F116.waiting = 0; }
+      else if (m.ev === "race" && m.r) {
+        const r = m.r, fresh = addRes116(r);
+        if (F116.waiting === r.id) { F116.waiting = 0; closeModal(); play116(r); }
+        else if (fresh) notice116("果たし状のレース", `${esc(r.b.o)}さんが果たし状を受けた！「${esc(r.a.n)}」と「${esc(r.b.n)}」のレースを見る？`, "レースを見る", () => play116(r));
+      }
+      if (F116.redraw) F116.redraw();
+      return;
+    }
+    _h(m);
+    if (m && m.type === "welcome" && !WATCH88) {
+      const d = m.duel || {};
+      F116.inb = Array.isArray(d.in) ? d.in : []; F116.outb = Array.isArray(d.out) ? d.out : []; F116.sig = ""; F116.list = null;
+      const fresh = (Array.isArray(d.res) ? d.res : []).filter(r => addRes116(r));
+      if (fresh.length) notice116("果たし状のレース", `留守のあいだに、果たし状のレースが${fresh.length}回あったよ。`, "見る", () => play116(fresh[0]));
+      if (F116.inb.length) notice116("果たし状が届いている", `果たし状が${F116.inb.length}通とどいているよ。`, "見る", () => openDuel116());
+      setTimeout(() => { try { tori115(); sendRoster116(true); } catch (e) { } }, 8200);
+    }
+  };
+}
+
+// ---- 果たし状の画面 ----
+function openDuel116(note) {
+  let closed = false, msg = note || "";
+  openModal("こもれび闘鶏", "dark", body => {
+    const draw = () => {
+      if (closed) return;
+      const c = cur101(), L = coop101(), st = stOf116(c.id), T = tori116(), on = F8.connected && !WATCH88, mine = mine116();
+      const tabs = `<div class="mtabs">${[["home", "にわとり"], ["duel", "果たし状"], ["race", "レース"], ["rank", "ランキング"]].map(([k, l]) => `<button class="chip" type="button" data-tt116="${k}" aria-pressed="${k === "duel"}">${l}</button>`).join("")}</div>`;
+      const myKeys = new Set(mine.map(x => x.k));
+      const inb = F116.inb.map(x => {
+        const ok = myKeys.has(x.b.k);
+        return `<div class="li"><span class="nm">${esc(x.fn)}さんの「${esc(x.a.n)}」<span class="sub2">総合力 ${duelTot116(x.a)}・${esc(ST116[x.a.st]?.[0] || "")}${x.a.sk && x.a.sk.length ? `・スキル${x.a.sk.length}つ` : ""} → あなたの「${esc(x.b.n)}」${ok ? `（${esc(ST116[stOf116(mine.find(y => y.k === x.b.k).id)][0])}で受ける）` : "（もういない）"}</span></span><span class="acts">${ok ? `<button class="btn" type="button" data-yes116="${x.id}" ${on && !F116.waiting ? "" : "disabled"}>受ける</button>` : ""}<button class="btn light" type="button" data-no116="${x.id}" ${on ? "" : "disabled"}>断る</button></span></div>`;
+      }).join("");
+      const outb = F116.outb.map(x => `<div class="li"><span class="nm">${esc(x.tn)}さんの「${esc(x.b.n)}」へ<span class="sub2">あなたの「${esc(x.a.n)}」・${esc(ST116[x.a.st]?.[0] || "")}・返事を待っているよ</span></span><span class="acts"><button class="btn light" type="button" data-cc116="${x.id}" ${on ? "" : "disabled"}>取り下げる</button></span></div>`).join("");
+      const sentTo = new Set(F116.outb.map(x => x.t));
+      const vil = !on ? "" : F116.list === null ? `<p class="mtext small">さがしているよ…</p>` : F116.list.length ? F116.list.map(p => p.chs.map(ch => `<div class="li"><span class="nm">${esc(p.owner)}さんの「${esc(ch.n)}」<span class="sub2">総合力 ${ch.s | 0}${ch.sk && ch.sk.length ? `・スキル ${ch.sk.map(s => esc(SK115[s]?.[0] || "")).join("・")}` : ""}</span></span><span class="acts"><button class="btn light" type="button" data-sd116="${p.id}:${esc(ch.k)}" ${sentTo.has(p.id) || F116.outb.length >= 5 || !mine.length ? "disabled" : ""}>${sentTo.has(p.id) ? "送ってある" : "果たし状を送る"}</button></span></div>`).join("")).join("") : `<p class="mtext small">村に、ほかのにわとりはまだいないみたい（相手が闘鶏の画面を開くと出てくるよ）。</p>`;
+      const res = T.res.map((r, i) => { const s = sideOf116(r), win = s >= 0 && r.w === s; return `<div class="li"><span class="nm">${s < 0 ? "" : win ? "<b>勝ち</b>　" : "負け　"}「${esc(r.a.n)}」対「${esc(r.b.n)}」<span class="sub2">${esc(r.a.o)}さん・${esc(r.b.o)}さん${r.ph ? "・写真判定" : ""}</span></span><span class="acts"><button class="btn light" type="button" data-pl116="${i}">見る</button></span></div>`; }).join("");
+      body.innerHTML = `${msg ? `<p class="mtext"><b>${esc(msg)}</b></p>` : ""}${tabs}<div class="ik115">
+        ${!on ? `<p class="mtext">果たし状はオンラインのときに送ったり受けたりできるよ。留守のあいだに届いた果たし状は、次につないだときに見られる。</p>` : ""}
+        <h4>自分の子と作戦</h4>
+        ${L.length > 1 ? `<div class="row2">${L.map(y => `<button class="chip" type="button" data-pk116="${esc(y.id)}" aria-pressed="${y.id === c.id}">${esc(y.name)}</button>`).join("")}</div>` : ""}
+        <p class="mtext small">「${esc(c.name)}」の作戦（送るときも受けるときも、この作戦で走る）</p>
+        <div class="row2">${Object.entries(ST116).map(([k, [l]]) => `<button class="chip" type="button" data-st116="${k}" aria-pressed="${k === st}">${l}</button>`).join("")}</div>
+        <p class="mtext small">${esc(ST116[st][1])}</p>
+        <h4>とどいた果たし状</h4>${inb ? `<div class="list">${inb}</div>` : `<p class="mtext small">いまはないよ。</p>`}
+        ${outb ? `<h4>送った果たし状</h4><div class="list">${outb}</div>` : ""}
+        ${on ? `<h4>村のにわとりに果たし状を送る</h4><div class="list">${vil}</div><p class="mtext small">送れるのは5通まで・同じ人には1通ずつ。相手が受けると、サーバーがレースを決めて、ふたりに同じレースが届く。3日たつと果たし状は消えるよ。</p>` : ""}
+        <h4>これまでのレース（${T.w}勝${T.l}敗）</h4>${res ? `<div class="list">${res}</div>` : `<p class="mtext small">まだないよ。</p>`}
+        ${F116.waiting ? `<p class="mtext"><b>レースの準備をしているよ…</b></p>` : ""}</div>`;
+      msg = "";
+      body.querySelectorAll("[data-tt116]").forEach(b => b.onclick = () => { const k = b.dataset.tt116; if (k === "duel") return; closeModal(); if (k === "home") openIkusei115(); else F115.openOld(null, k); });
+      body.querySelectorAll("[data-pk116]").forEach(b => b.onclick = () => { tori101().pick = b.dataset.pk116; saveWorld(); draw(); });
+      body.querySelectorAll("[data-st116]").forEach(b => b.onclick = () => { chOf115(cur101().id).st = b.dataset.st116; saveWorld(); draw(); });
+      body.querySelectorAll("[data-yes116]").forEach(b => b.onclick = () => {
+        const x = F116.inb.find(y => y.id === +b.dataset.yes116), me = x && mine116().find(y => y.k === x.b.k); if (!x || !me) return;
+        F116.waiting = x.id; send8({ type: "duel", a: "yes", id: x.id, me: { k: me.k, n: me.n, ab: me.ab, sk: me.sk }, st: stOf116(me.id) }); draw();
+        setTimeout(() => { if (F116.waiting === x.id) { F116.waiting = 0; if (F116.redraw) F116.redraw(); } }, 8000);
+      });
+      body.querySelectorAll("[data-no116]").forEach(b => b.onclick = () => send8({ type: "duel", a: "no", id: +b.dataset.no116 }));
+      body.querySelectorAll("[data-cc116]").forEach(b => b.onclick = () => send8({ type: "duel", a: "cancel", id: +b.dataset.cc116 }));
+      body.querySelectorAll("[data-sd116]").forEach(b => b.onclick = () => {
+        const [to, tk] = b.dataset.sd116.split(":"), c2 = cur101(), me = mine116().find(y => y.id === c2.id); if (!me) { toast(null, "送るにわとりがいないよ"); return; }
+        b.disabled = true; send8({ type: "duel", a: "send", to: +to, tk, me: { k: me.k, n: me.n, ab: me.ab, sk: me.sk }, st: stOf116(me.id) });
+      });
+      body.querySelectorAll("[data-pl116]").forEach(b => b.onclick = () => { const r = tori116().res[+b.dataset.pl116]; if (r) { closeModal(); play116(r); } });
+    };
+    F116.redraw = draw; draw();
+    if (F8.connected && !WATCH88) { sendRoster116(); askList116(); }
+  }, () => { closed = true; F116.redraw = null; });
+}
+F116.open = openDuel116;
+const duelTot116 = c => ["spd", "sta", "pow", "gut", "wis"].reduce((p, k) => p + ((c && c.ab && c.ab[k]) | 0), 0);
+
+// ---- レースを見せる（サーバーが決めた位置をなぞる。序盤・中盤・最後の直線・スキル・追いぬき・並びかけ・写真判定） ----
+const STEP116 = 110;
+function margin116(r) { const d = +r.d || 0; return r.ph ? "写真判定・ハナの差" : d < 1 ? "クビの差" : d < 3 ? "1羽身の差" : d < 8 ? "数羽身の差" : "大差"; }
+function play116(r, onDone) {
+  if (!r || !Array.isArray(r.p) || r.p.length !== 2) return;
+  const P = r.p, N = Math.max(P[0].length, P[1].length) - 1, side = sideOf116(r), R2 = [r.a, r.b];
+  const col = i => { const c = R2[i]; if (side === i) { const L = coop101(), mine = L.find(x => key116(x.id) === c.k); if (mine) return col115(mine.id, chOf115(mine.id)); } return TCOLS101[Math.abs(hash101(c.o + c.k)) % TCOLS101.length]; };
+  const C = [col(0), col(1)], ev = (Array.isArray(r.e) ? r.e : []).slice().sort((a, b) => a[0] - b[0]);
+  let closed = false, raf = 0, t0 = 0, skip = false, endAt = 0, done = false;
+  const fx = { banner: "", bannerT: 0, who: -1, pop: [], phase: -1, lead: -1, side: 0, flash: 0, photo: false };
+  openModal("果たし状のレース", "dark", body => {
+    body.innerHTML = `<div class="rc116"><div class="rc116h"><span style="color:${C[0]}">■</span> ${esc(r.a.o)}さんの「${esc(r.a.n)}」（${esc(ST116[r.a.st]?.[0] || "")}）<br><span style="color:${C[1]}">■</span> ${esc(r.b.o)}さんの「${esc(r.b.n)}」（${esc(ST116[r.b.st]?.[0] || "")}）</div>
+      <canvas id="rc116cv" width="320" height="184"></canvas><div class="row2"><button class="btn light" type="button" id="rc116skip">とばす</button></div></div>`;
+    body.querySelector("#rc116skip").onclick = () => { skip = true; };
+  }, () => { closed = true; cancelAnimationFrame(raf); if (onDone) onDone(); });
+  const cv = $("rc116cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const W = 320, H = 184, VIEW = 250, SC = W / VIEW, LANE = [110, 156];
+  const pos = (i, t) => { const a = P[i], k = Math.min(a.length - 1, Math.floor(t)), k2 = Math.min(a.length - 1, k + 1), f = t - Math.floor(t); return a[k] + (a[k2] - a[k]) * Math.max(0, Math.min(1, f)); };
+  let evI = 0, nextNear = 0;
+  const say = (text, who) => { fx.banner = text; fx.bannerT = 1.5; fx.who = who; };
+  const result = () => {
+    if (done || closed) return; done = true;
+    const w = r.w, me = side, b = $("mbody"); if (!b) return;
+    se13(me < 0 ? "small" : w === me ? "big" : "miss");
+    const names = i => `${esc(R2[i].o)}さんの「${esc(R2[i].n)}」`;
+    const used = i => ev.filter(e => e[1] === i).map(e => esc(SK115[e[2]]?.[0] || "")).filter(Boolean).join("・");
+    b.innerHTML = `<div class="dk75r"><b>${me < 0 ? "" : w === me ? "あなたの勝ち！ " : "負けちゃった… "}${names(w)}の勝ち</b><span>${margin116(r)}</span>
+      ${[0, 1].map(i => `<span class="small">${names(i)}：${esc(ST116[R2[i].st]?.[0] || "")}・調子 ${COND116[(r.c || [])[i]] || "ふつう"}・総合力 ${R2[i].s | 0}${used(i) ? `・出たスキル ${used(i)}` : ""}</span>`).join("")}</div>
+      <div class="row2"><button class="btn" type="button" id="rc116back">果たし状の画面へ</button><button class="btn light" type="button" id="rc116again">もう一度見る</button></div>`;
+    b.querySelector("#rc116back").onclick = () => { closeModal(); openDuel116(); };
+    b.querySelector("#rc116again").onclick = () => { closeModal(); play116(r); };
+  };
+  const drawTrack = (cam, t) => {
+    // 空・遠くの丘（ゆっくり流れる）・芝・2本の走路
+    g.fillStyle = "#a8dcf0"; g.fillRect(0, 0, W, 60);
+    g.fillStyle = "#8cc070"; for (let k = -1; k < 6; k++) { const hx = ((k * 90 - cam * .25 * SC) % 450 + 450) % 450 - 60; g.beginPath(); g.ellipse(hx, 64, 60, 22, 0, Math.PI, 0); g.fill(); }
+    g.fillStyle = "#6aaa50"; g.fillRect(0, 60, W, H - 60);
+    for (const y of LANE) { g.fillStyle = "#d8c08a"; g.fillRect(0, y - 6, W, 22); g.fillStyle = "#c8ac76"; g.fillRect(0, y + 14, W, 2); }
+    // 柵の杭（20ごと）
+    g.fillStyle = "#fff8e8"; for (let u = Math.floor(cam / 20) * 20; u < cam + VIEW + 20; u += 20) { const sx = (u - cam) * SC; g.fillRect(sx, 68, 2, 10); }
+    g.fillStyle = "#fff8e8"; g.fillRect(0, 70, W, 2);
+    // 序盤・中盤の旗と、柵と、ゴール
+    for (const [u, lab] of [[300, "中盤"], [700, "直線"]]) { const sx = (u - cam) * SC; if (sx < -20 || sx > W + 20) continue; g.fillStyle = "#7a5a3a"; g.fillRect(sx, 62, 2, 26); g.fillStyle = "#ff8a5a"; g.fillRect(sx + 2, 62, 16, 8); g.fillStyle = "#fff"; g.font = "bold 8px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(lab, sx + 3, 62); }
+    for (const u of [250, 500, 750]) { const sx = (u - cam) * SC; if (sx < -10 || sx > W + 10) continue; for (const y of LANE) { g.fillStyle = "#b8864a"; g.fillRect(sx, y - 2, 3, 14); g.fillRect(sx + 6, y - 2, 3, 14); g.fillRect(sx - 1, y, 11, 3); } }
+    { const sx = (1000 - cam) * SC; if (sx > -10 && sx < W + 10) for (let y = 90; y < 176; y += 4) { g.fillStyle = (y / 4) % 2 ? "#222" : "#fff"; g.fillRect(sx, y, 4, 4); g.fillStyle = (y / 4) % 2 ? "#fff" : "#222"; g.fillRect(sx + 4, y, 4, 4); } }
+  };
+  const frame = now => {
+    if (closed || !cv.isConnected) return;
+    if (!t0) t0 = now;
+    let t = skip ? N : (now - t0) / STEP116;
+    if (t > N) t = N;
+    const dt = 1 / 60;
+    const x = [pos(0, t), pos(1, t)], lead = x[0] >= x[1] ? 0 : 1, front = Math.max(x[0], x[1]);
+    // 序盤・中盤・最後の直線
+    const ph = front < 300 ? 0 : front < 700 ? 1 : 2;
+    if (ph !== fx.phase && !skip) { fx.phase = ph; say(["スタート！", "中盤へ", "最後の直線！"][ph], -1); }
+    // スキル
+    while (evI < ev.length && ev[evI][0] <= t) { const e = ev[evI++]; if (!skip) { say(`${R2[e[1]].n}の「${SK115[e[2]]?.[0] || ""}」！`, e[1]); fx.pop.push({ i: e[1], t: 1.2 }); se13("harvest"); } }
+    // 追いぬき・並びかけ
+    if (Math.abs(x[0] - x[1]) > 3 && fx.lead !== lead) { if (fx.lead >= 0 && t > 4 && !skip) say(`${R2[lead].n}が前へ！`, lead); fx.lead = lead; }
+    if (ph === 2 && Math.abs(x[0] - x[1]) < 10 && t > nextNear && front < 990 && !skip) { say("並んだ！", -1); nextNear = t + 12; }
+    // カメラ：前の子が右から3割くらい
+    const cam = Math.max(-20, Math.min(1000 - VIEW + 40, front - VIEW * .68));
+    drawTrack(cam, t);
+    for (let i = 0; i < 2; i++) {
+      const sx = (x[i] - cam) * SC - 24, y = LANE[i] - 24, run = x[i] < 1000 && t < N;
+      if (sx < -24) { g.fillStyle = "rgba(0,0,0,.55)"; g.fillRect(2, y + 12, 96, 14); g.fillStyle = "#fff"; g.font = "bold 9px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`◀ ${R2[i].n.slice(0, 6)} あと${Math.round(front - x[i])}`, 4, y + 14); continue; }
+      drawTori101(g, sx, y, 1.8, C[i], now / 1000 + i * .37, run, 0);
+      const p = fx.pop.find(q => q.i === i); if (p) { g.strokeStyle = `rgba(255,230,120,${Math.max(0, p.t)})`; g.lineWidth = 2; g.beginPath(); g.arc(sx + 14, y + 16, 20 + (1.2 - p.t) * 14, 0, Math.PI * 2); g.stroke(); }
+      g.font = "bold 9px sans-serif"; g.textAlign = "left"; g.textBaseline = "top"; const nm = R2[i].n.slice(0, 8), nw = g.measureText(nm).width; g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(Math.max(2, sx) - 2, y - 12, nw + 4, 11); g.fillStyle = side === i ? "#ffe27a" : "#fff"; g.fillText(nm, Math.max(2, sx), y - 11);
+    }
+    fx.pop.forEach(p => p.t -= dt); fx.pop = fx.pop.filter(p => p.t > 0);
+    // のこり・場面
+    g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(4, 4, 112, 16); g.fillStyle = "#fff"; g.font = "bold 10px sans-serif"; g.textAlign = "left"; g.textBaseline = "top";
+    g.fillText(`${["序盤", "中盤", "最後の直線"][ph]}・のこり ${Math.max(0, Math.round(1000 - front))}`, 8, 7);
+    if (fx.bannerT > 0) {
+      fx.bannerT -= dt; const a = Math.min(1, fx.bannerT * 2);
+      g.globalAlpha = a; g.fillStyle = fx.who < 0 ? "rgba(40,30,60,.8)" : "rgba(160,60,40,.85)"; g.fillRect(0, 24, W, 22);
+      g.fillStyle = fx.who < 0 ? "#fff" : "#ffe27a"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.fillText(fx.banner, W / 2, 28); g.globalAlpha = 1;
+    }
+    // ゴール：写真判定
+    if (t >= N) {
+      if (!endAt) { endAt = now; if (r.ph && !skip) { fx.photo = true; fx.flash = 1; se13("small"); } }
+      if (fx.photo) {
+        if (fx.flash > 0) { g.fillStyle = `rgba(255,255,255,${fx.flash * .6})`; g.fillRect(0, 0, W, H); fx.flash -= dt * 1.5; }
+        g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(W / 2 - 64, 64, 128, 26); g.fillStyle = "#fff"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.textBaseline = "top"; g.fillText("写真判定…", W / 2, 70);
+      }
+      if (now - endAt > (fx.photo ? 1800 : 700)) { result(); return; }
+    }
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+  F116.R = { skip: () => { skip = true; }, r };
+}
+F116.play = play116;
+
+const TTL116 = [["果たし状デビュー", "果たし状のレースで、はじめて勝つ", () => (world.tori116?.w || 0) >= 1],
+  ["写真判定の勝者", "写真判定になった果たし状のレースで勝つ", () => (world.stats.duelPhoto116 || 0) >= 1],
+  ["村の挑戦者", "果たし状のレースに10回出る", () => ((world.tori116?.w || 0) + (world.tori116?.l || 0)) >= 10]];
+for (const t of TTL116) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["果たし状", "tfeed_wis", `<p>こもれび闘鶏の「果たし状」で、村の人のにわとりに果たし状を送れます（オンラインのとき）。自分の子と作戦（にげ・先行・差し・追いこみ）を決めておくと、送るときも受けるときもその作戦で走ります。</p>
+<p>相手は受けるか断るかを選べます。留守の人には、次につないだときに届きます。受けると、サーバーが能力・作戦・スキル・その日の調子・少しの運でレースを決めて、ふたりに同じレースが届きます。断られたときは、果たし状が消えるだけです。</p>
+<p>レースは序盤・中盤・最後の直線と場面が変わり、育成でおぼえたスキルが出ると名前が出ます。きわどいときは写真判定。</p>`]);
+F116.ready = true;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -26045,7 +26300,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

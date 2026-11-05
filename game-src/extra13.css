@@ -1093,3 +1093,8 @@ button.jn106.lock { opacity: .45; }
 .ik115badge { background: linear-gradient(90deg, #c89a3a, #ffe08a); color: #3a2a10; border-radius: 10px; padding: 0 8px; font-size: .72rem; font-weight: bold; }
 .ik115ev { background: rgba(255, 255, 255, .08); border-radius: 10px; padding: 10px; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .ik115 { grid-template-columns: minmax(0, 32%) 1fr; align-items: start; } .ik115 > * { grid-column: 2; } .ik115 > canvas { grid-column: 1; grid-row: 1 / span 12; width: 100%; height: auto; } .ik115acts { grid-template-columns: repeat(3, 1fr); } }
+/* v116: 果たし状のレース */
+.rc116 { display: grid; gap: 6px; }
+.rc116h { font-size: .8rem; line-height: 1.6; }
+.rc116 canvas { width: min(100%, 520px); justify-self: center; image-rendering: pixelated; border-radius: 8px; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .rc116 { grid-template-columns: minmax(0, 62%) 1fr; align-items: start; } .rc116 canvas { grid-column: 1; grid-row: 1 / span 3; width: 100%; } .rc116 > :not(canvas) { grid-column: 2; } }

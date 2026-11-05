@@ -66,6 +66,72 @@ function coinMe(s) {
 }
 function coinState(m) { const pool = coinPool(), tot = pool.reduce((a, p) => a + p[2], 0); return { type: "coin", a: "state", bal: m.b, today: { buy: m.buy, gacha: m.ga, spent: m.sp, date: m.d }, week: { spent: m.ws }, max: { buy: 100, gacha: 30, pity: 50 }, pity: m.pity, claimed: { login: m.lg === jstDay(), bingo: m.bg === jstDay(), rank: m.rk === jstWeek() }, season: coinSeason(), pool: pool.map(([id, star, w]) => ({ id, star, p: Math.round(w / tot * 10000) / 100 })) }; }
 function coinFcFill() { while (coinFc.length < 7) { const d = clock.day + 1 + coinFc.length, se = Math.floor((d - 1) / 7) % 4, r = Math.random(); coinFc.push(se === 3 ? (r < .5 ? "snow" : "sun") : se === 1 ? (r < .6 ? "sun" : r < .85 ? "rain" : "storm") : (r < .62 ? "sun" : r < .9 ? "rain" : "storm")); } }
+// こもれび闘鶏の果たし状（本物は jp.komorebi.duel の DuelHandler と DuelRace。村ごと・同じ約束）。/mock/duel?v=村 で中身が見られる
+const duelBy = new Map();
+const duelOf = v => { if (!duelBy.has(v)) duelBy.set(v, { seq: 0, ros: {}, box: [], res: {} }); const d = duelBy.get(v); d.box = d.box.filter(c => Date.now() - c.at <= 3 * 864e5); return d; };
+const DUEL_SK = ["senko", "nobi", "saku", "nebari", "ochi", "kaze", "oikomi", "kokoro"], DUEL_ST = ["nige", "saki", "sashi", "oi"], DUEL_AB = ["spd", "sta", "pow", "gut", "wis"];
+const duelName = s => String(s || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 12);
+function duelChicken(c) {
+  c = c || {}; const k = String(c.k || ""); if (!/^[a-z0-9]{1,16}$/.test(k)) return null;
+  const ab = {}; for (const a of DUEL_AB) ab[a] = Math.max(0, Math.min(400, Math.floor(+(c.ab || {})[a] || 0)));
+  const sk = [...new Set((Array.isArray(c.sk) ? c.sk : []).map(String).filter(x => DUEL_SK.includes(x)))].slice(0, 6);
+  return { k, n: duelName(c.n) || "にわとり", ab, sk };
+}
+const duelTotal = c => DUEL_AB.reduce((p, a) => p + ((c.ab || {})[a] | 0), 0);
+function duelRace(A, B) {
+  let sd = (Math.random() * 2 ** 31) | 0; const rnd = () => { sd = (sd + 0x6D2B79F5) | 0; let t = Math.imul(sd ^ sd >>> 15, 1 | sd); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const PACE = { nige: [1.10, 1.02, .96], saki: [1.05, 1.02, 1.00], sashi: [.97, 1.01, 1.065], oi: [.93, 1.00, 1.115] }, NM = ["senko", "kaze", "nobi", "oikomi", "nebari", "saku", "ochi", "kokoro"];
+  const R = [A, B].map(c => ({ ...c.ab, sk: new Set(c.sk), st: PACE[c.st] ? c.st : "saki" })), x = [0, 0], e = [0, 0], cm = [0, 0], fin = [-1, -1], cond = [0, 0], bl = [0, 0], bo = [1, 1], used = [[], []], ev = [], p = [[0], [0]];
+  const ph = v => v < 300 ? 0 : v < 700 ? 1 : 2;
+  for (let i = 0; i < 2; i++) { cond[i] = Math.floor(rnd() * 5) - 2; e[i] = 100 + R[i].sta * .6; cm[i] = 1 + cond[i] * .03; if (cond[i] < 0 && R[i].sk.has("ochi")) { cm[i] = 1; used[i][6] = 1; ev.push([0, i, "ochi"]); } if (R[i].sk.has("kokoro")) { used[i][7] = 1; ev.push([0, i, "kokoro"]); } }
+  let step = 0;
+  while ((fin[0] < 0 || fin[1] < 0) && step < 300) {
+    step++; const sx = x.slice(); // 判断は、この歩のはじめの位置で（先に動く側が有利にならないように）
+    for (let i = 0; i < 2; i++) {
+      if (fin[i] >= 0) continue; const r = R[i], o = 1 - i, P = ph(x[i]), ch = Math.min(.95, .55 + r.wis / 800); let k = -1;
+      if (step === 2 && !used[i][0] && r.sk.has("senko")) k = 0; else if (x[i] >= 400 && !used[i][1] && r.sk.has("kaze")) k = 1; else if (x[i] >= 750 && !used[i][2] && r.sk.has("nobi")) k = 2;
+      else if (x[i] >= 700 && x[i] < sx[o] && !used[i][3] && r.sk.has("oikomi")) k = 3; else if (P === 2 && Math.abs(x[i] - sx[o]) < 25 && !used[i][4] && r.sk.has("nebari")) k = 4;
+      if (k >= 0) { used[i][k] = 1; if (rnd() < ch) { bo[i] = [1.12, 1.10, 1.12, 1.15, 1.08][k]; bl[i] = [8, 8, 10, 10, 8][k]; ev.push([step, i, NM[k]]); } }
+      const pace = PACE[r.st][P]; let m = pace * cm[i]; const amp = (.05 - r.wis / 400 * .03) * (used[i][7] ? .5 : 1), noise = 1 + (rnd() * 2 - 1) * amp;
+      if ((r.st === "sashi" || r.st === "oi") && x[i] < sx[o] && sx[o] - x[i] < 60) m *= 1.01; // うしろにつけて風よけ
+      if (e[i] <= 0) m *= .80 + r.gut / 400 * .15;
+      let dx = (8 + r.spd * .02) * m * noise * (bl[i] > 0 ? bo[i] : 1);
+      for (const h of [250, 500, 750]) if (x[i] < h && x[i] + dx >= h) { if (r.sk.has("saku")) { if (!used[i][5]) { used[i][5] = 1; ev.push([step, i, "saku"]); } } else dx *= .72 + .28 * Math.min(1, r.pow / 260); }
+      e[i] -= pace * pace + (bl[i] > 0 ? .5 : 0); if (bl[i] > 0) bl[i]--;
+      let nx = x[i] + dx; if (nx >= 1000) { fin[i] = step - 1 + (1000 - x[i]) / dx; nx = 1000; } x[i] = nx;
+    }
+    for (let i = 0; i < 2; i++) p[i].push(Math.round(x[i]));
+  }
+  for (let i = 0; i < 2; i++) if (fin[i] < 0) fin[i] = 300 + (1000 - x[i]);
+  const w = fin[0] < fin[1] ? 0 : fin[1] < fin[0] ? 1 : (rnd() < .5 ? 0 : 1);
+  return { e: ev, w, ph: Math.abs(fin[0] - fin[1]) < .35, d: Math.round(Math.abs(fin[0] - fin[1]) * 100) / 100, p, c: cond };
+}
+const duelLast = new Map();
+function duelHandle(s, m) {
+  if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), d = duelOf(V), a = String(m.a || ""), send = o => s.send(JSON.stringify({ type: "duel", ...o }));
+  const toP = (id, o) => { for (const x of sessions) if (x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V) x.send(JSON.stringify({ type: "duel", ...o })); }, on = id => [...sessions].some(x => x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V);
+  if (a !== "list" && a !== "put") { const n = Date.now(), pv = duelLast.get(me); duelLast.set(me, n); if (pv && n - pv < 400) return send({ ng: "少し待ってからもう一度ためしてね" }); }
+  if (a === "put") { const L = [], ks = new Set(); for (const c of (Array.isArray(m.list) ? m.list : [])) { if (L.length >= 20) break; const o = duelChicken(c); if (o && !ks.has(o.k)) { ks.add(o.k); L.push(o); } } if (L.length) d.ros[me] = { n: duelName(s.pl.name), list: L }; else delete d.ros[me]; return; }
+  if (a === "list") { const list = Object.entries(d.ros).map(([id, r]) => [+id, r]).filter(([id]) => id !== me && accounts.some(x => x.id === id && !x.deleted && vOf(x) === V)).slice(0, 40).map(([id, r]) => ({ id, owner: (accounts.find(x => x.id === id) || {}).name || r.n, chs: r.list.map(c => ({ k: c.k, n: c.n, s: duelTotal(c), sk: c.sk })) })); return send({ a: "list", list }); }
+  if (a === "send") { const to = Math.floor(+m.to || 0), tk = String(m.tk || ""), st = String(m.st || ""), mine = duelChicken(m.me);
+    if (!to || to === me || !mine || !DUEL_ST.includes(st)) return send({ ng: "果たし状を書けなかった" });
+    const acc = accounts.find(x => x.id === to && !x.deleted); if (!acc || vOf(acc) !== V) return send({ ng: "その人には果たし状を送れないみたい" });
+    const tg = ((d.ros[to] || {}).list || []).find(c => c.k === tk); if (!tg) return send({ ng: "そのにわとりは、もう牧場にいないみたい" });
+    if (d.box.some(c => c.f === me && c.t === to)) return send({ ng: "その人には、もう果たし状を送ってあるよ" });
+    if (d.box.filter(c => c.f === me).length >= 5) return send({ ng: "送れる果たし状は5通まで。返事を待とう" });
+    if (d.box.filter(c => c.t === to).length >= 10) return send({ ng: "その人には果たし状がたまっているみたい。また今度" });
+    const c = { id: ++d.seq, f: me, fn: duelName(s.pl.name), t: to, tn: acc.name, at: Date.now(), a: { ...mine, st }, b: { k: tk, n: tg.n, s: duelTotal(tg) } }; d.box.push(c);
+    send({ ok: "send", c }); toP(to, { ev: "in", c }); return; }
+  if (a === "cancel" || a === "no") { const id = Math.floor(+m.id || 0), by = a === "cancel" ? "f" : "t", i = d.box.findIndex(c => c.id === id && c[by] === me);
+    if (i >= 0) { const c = d.box.splice(i, 1)[0]; toP(a === "cancel" ? c.t : c.f, { ev: "gone", id }); } return send({ ok: a, id }); }
+  if (a === "yes") { const id = Math.floor(+m.id || 0), st = String(m.st || ""), mine = duelChicken(m.me), i = d.box.findIndex(c => c.id === id && c.t === me);
+    if (i < 0) return send({ ev: "gone", id }); const c = d.box.splice(i, 1)[0];
+    if (!mine || !DUEL_ST.includes(st) || mine.k !== c.b.k) return send({ ng: "そのにわとりでは受けられないみたい" });
+    const B = { ...mine, st }, r = { ...duelRace(c.a, B), id, at: Date.now(), a: { id: c.f, o: c.fn, k: c.a.k, n: c.a.n, st: c.a.st, s: duelTotal(c.a), sk: c.a.sk }, b: { id: me, o: c.tn, k: B.k, n: B.n, st, s: duelTotal(B), sk: B.sk } };
+    if (!on(c.f)) { const L = d.res[c.f] = d.res[c.f] || []; L.push(r); while (L.length > 5) L.shift(); }
+    send({ ev: "race", r }); toP(c.f, { ev: "race", r }); return; }
+}
+function duelWelcome(pl) { const d = duelOf(vOf(pl)), id = pl.id, w = { in: d.box.filter(c => c.t === id), out: d.box.filter(c => c.f === id) }; if (d.res[id] && d.res[id].length) { w.res = d.res[id]; delete d.res[id]; } return w.in.length || w.out.length || w.res ? { duel: w } : {}; }
 function coinHandle(s, m) {
   if (!s.pl || s.watch) return; const a = String(m.a || ""), me = coinMe(s), out = { type: "coin", a, rid: String(m.rid || "") }, send = o => s.send(JSON.stringify(o));
   if (a === "tori") { const t = m.t || {}; toriDB.set(vOf(s.pl) + ":" + s.pl.id, { name: String(t.name || "にわとり").slice(0, 12), sp: Math.max(0, Math.min(999, t.sp | 0)), jp: Math.max(0, Math.min(999, t.jp | 0)), st: Math.max(0, Math.min(999, t.st | 0)) }); return; }
@@ -254,6 +320,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
   if (p === "/mock/world") { if (u.searchParams.has("v")) useV(+u.searchParams.get("v")); return json(res, 200, shared); }
   if (p === "/mock/villages") return json(res, 200, villages);
+  if (p === "/mock/duel") return json(res, 200, duelOf(+u.searchParams.get("v") || 1));
   if (p === "/mock/rankhide") { const id = +u.searchParams.get("id"); if (id) { if (u.searchParams.get("hide") === "0") rankHidden.delete(id); else rankHidden.add(id); } return json(res, 200, [...rankHidden]); }
   if (p === "/mock/raid") { const q = u.searchParams, v = +q.get("v") || 1, R = raidOf(v), act = q.get("act") || "";
     if (act === "plan") { const id = ++R.seq; R.plans.push({ id, kind: q.get("kind") || "boar", place: q.get("place") || "hill", start: Date.now() + (+q.get("in") || 0) * 1000, mins: +q.get("mins") || 10, hp: +q.get("hp") || 3000, reward: +q.get("reward") || 3000 }); bcVil(v, raidState(v)); return json(res, 200, { id }); }
@@ -333,7 +400,7 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -349,6 +416,7 @@ wss.on("connection", s => {
       if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const sh = Array.isArray(e.v.s) ? [...new Set(e.v.s.map(x => Math.floor(+x)).filter(x => x > 0 && x !== s.pl.id))].slice(0, 8) : []; e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name, ...(sh.length ? { s: sh } : {}) }; } } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
     if (m.type === "job") return jobHandle(s, m);
     if (m.type === "coin") return coinHandle(s, m);
+    if (m.type === "duel") return duelHandle(s, m);
     if (m.type === "raid") { const v = vOf(s.pl), R = raidOf(v), a = String(m.a || ""), now = Date.now(), id = String(s.pl.id);
       if (a === "look") { s.send(JSON.stringify(raidState(v))); return; }
       if (a === "hit" && R.cur && now < R.cur.end && R.cur.hp > 0 && s.pl.id > 0) { if (now - (R.hitAt[id] || 0) < 250) return; R.hitAt[id] = now;

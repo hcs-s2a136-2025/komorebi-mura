@@ -80,6 +80,7 @@ STEPS = [
     ("島ゆきの船", f"window.KOMO.closeModal(); {G}.enter({G}.makePort(), 18, 14, 'left'); {G}.act()"),
     ("南の島", f"window.KOMO.closeModal(); {G}.F109.go('isle', 'port', [18, 13])"),
     ("服のマイデザイン", f"window.KOMO.closeModal(); {G}.F120.open()"),
+    ("島のお店", f"window.KOMO.closeModal(); {G}.F109.go('isle', 'port', [18, 13]); {G}.F121.shop('trade')"),
     ("空に浮かぶ庭", f"{G}.F109.go('sky', 'village', [34, 48])"),
     ("地下の遺跡", f"{G}.F109.go('ruin', 'village', [39, 17])"),
     ("遺跡の考古学者", f"{G}.act ? (window.KOMO.closeModal(), {G}.placeAt({G}.player, 12, 4, 'up'), {G}.act()) : 0"),

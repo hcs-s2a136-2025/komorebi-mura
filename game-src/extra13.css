@@ -1104,3 +1104,7 @@ button.jn106.lock { opacity: .45; }
 
 /* v119：メイクの細かいマス（20×18） */
 #cos62cv.fine119 { width: min(74vw, 340px); }
+/* v121：スロットのスピン（目押しの STOP）ボタンを、画面の下にいつも出す */
+.vs95bar { position: sticky; bottom: -14px; z-index: 2; margin: 0 -14px -14px; padding: 8px 14px 12px; background: linear-gradient(rgba(42, 29, 51, 0), #2a1d33 30%); }
+.vs95bar .vp90-go { flex: 1; min-height: 52px; font-size: 1.1rem; }
+@media (max-width: 820px) { .vs95bar { bottom: -8px; margin: 0 -8px -8px; padding: 6px 8px 8px; } }

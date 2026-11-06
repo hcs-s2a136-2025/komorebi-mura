@@ -3944,7 +3944,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.67.0";
+const CLIENT_VERSION = "0.68.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6022,6 +6022,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.68.0", date: "2026/11/06", title: "南の島のくらし", items: [
+    "南の島で、浜の光っているところから貝がら（さくら貝・ほら貝・まれに真珠）をひろえるようにした",
+    "島のおばあナミの店で「宝の地図」（1日1枚）が買えるように。浜の×じるしを掘ると宝が出てくる",
+    "島でしか手に入らない物：トロピカルジュース・ヤシのパラソル、貝と交換で貝がらのランプ・真珠のかざり・宝の地図から南国の宝箱",
+    "VIPルームの高レートスロット：スピンのボタンが画面の下にいつも見えるように。目押しは同じボタンを押すたびに1つずつ止まる（スペースキーでも）",
+    "スマホで「服のマイデザイン」を押したら、すぐに描く画面が出るようにした",
+  ] },
   { v: "0.67.0", date: "2026/11/05", title: "服のマイデザイン", items: [
     "「服のマイデザイン」：着せ替えの下のボタンから、上の服に自分で描いた柄（よこ20×たて10マス・15色）をのせられるようにした。左右対称・太いペン・3つまで保存。ほかの人にも見える",
     "スマホを開いているあいだは、頭の横にスマホのふきだしが出て、ほかの人にも「スマホを見ている」ことがわかるようにした",
@@ -18161,12 +18168,12 @@ function openSlot95(arg) {
       <div class="vs95stops" ${V.mode === "meoshi" ? "" : "hidden"}>${[0, 1, 2].map(i => { const S0 = busy ? F95.live.S : null, nv = S0 && S0.flag === "N" && S0.oshi ? "①②③"[S0.oshi.indexOf(i)] : ""; return `<button class="btn" type="button" data-st95="${i}" disabled>${nv ? `<b class="nv114${S0.nav ? " on" : ""}">${nv}</b>` : ""}STOP ${i + 1}</button>`; }).join("")}</div>
       ${V.kk > 0 ? `<p class="vs95kk">確変中！ あと${V.kk}回、そろった配当が2倍</p>` : ""}
       ${V.at > 0 || (busy && F95.live.S.atOn) ? `<p class="vs95kk vs95at">AT（ベルラッシュ）中！ あと${V.at}回・このATの払い戻し ${V.atGot}枚</p>` : ""}
-      <p class="mtext vp90-res ${res ? (res.out === "win" ? "win" : "lose") : ""}" id="vs95res">${res ? esc(res.text) : busy ? "……" : V.mode === "meoshi" ? "スピンしてから、STOP（1・2・3キー）で1つずつ止めよう" : "賭ける枚数を選んで、スピン"}</p></div><div class="vs95r">
+      <p class="mtext vp90-res ${res ? (res.out === "win" ? "win" : "lose") : ""}" id="vs95res">${res ? esc(res.text) : busy ? "……" : V.mode === "meoshi" ? "スピンしたら、同じボタン（スペースキー）を押すたびに1つずつ止まるよ。STOP 1・2・3（1・2・3キー）でえらんで止めてもいい" : "賭ける枚数を選んで、スピン"}</p></div><div class="vs95r">
       <p class="mtext">現金 <b id="vs95cash">${billTxt78(cashN)}</b>（${fmt(cashN * BILL78)}）<span class="vp90-note">　電子マネーは使えません</span></p>
       ${duHtml91(res || null)}
       <div class="vp90-row"><span class="lbl">1回</span>${BETS95.map(b => `<button class="chip" type="button" data-b95="${b}" aria-pressed="${V.bet === b}" ${!busy && c.n >= b ? "" : "disabled"}>${b}枚</button>`).join("")}</div>
       <div class="vp90-row"><span class="lbl">止め方</span><button class="chip" type="button" data-m95="auto" aria-pressed="${V.mode === "auto"}" ${busy ? "disabled" : ""}>おまかせ</button><button class="chip" type="button" data-m95="meoshi" aria-pressed="${V.mode === "meoshi"}" ${busy ? "disabled" : ""}>目押し</button><button class="chip" type="button" id="vs95v" aria-pressed="${V.voice}">ルナの声 ${V.voice ? "ON" : "OFF"}</button></div>
-      <div class="row2"><button class="btn vp90-go" type="button" id="vs95go" ${!busy && c.n >= V.bet ? "" : "disabled"}>${busy ? "…" : `スピン（${V.bet}枚）`}</button></div>
+      <div class="row2 vs95bar"><button class="btn vp90-go" type="button" id="vs95go" ${!busy && c.n >= V.bet ? "" : "disabled"}>${busy ? (F95.live.S.mode === "meoshi" ? "STOP" : "…") : `スピン（${V.bet}枚）`}</button></div>
       ${c.n >= BETS95[0] ? "" : `<p class="mtext small">現金が足りないよ（最低${BETS95[0]}枚）。信用金庫の「現金の窓口」で引き出してから来てね</p>`}
       <details class="paytable vs95pt"><summary>配当表と確率</summary>${payHtml95()}</details></div></div>`;
     draw(body);
@@ -18175,7 +18182,7 @@ function openSlot95(arg) {
     body.querySelectorAll("[data-m95]").forEach(b => b.onclick = () => { vs95().mode = b.dataset.m95; saveWorld(); re(); });
     body.querySelector("#vs95v").onclick = () => { const v = vs95(); v.voice = !v.voice; saveWorld(); try { if (!v.voice) speechSynthesis.cancel(); } catch (e) { } re(); };
     duBind91(body, res || {}, () => re());
-    body.querySelector("#vs95go").onclick = () => spin(body);
+    body.querySelector("#vs95go").onclick = () => { if (F95.live) nextStop95(); else spin(body); };
     body.querySelectorAll("[data-st95]").forEach(b => b.onclick = () => press(+b.dataset.st95));
     if (F95.live) bindLive(body);
   }
@@ -18244,10 +18251,20 @@ function openSlot95(arg) {
     oshi95(Lv.S, i);
     const t = stopAt95(Lv.S, i, Lv.pos[i]); Lv.S.tops[i] = t; Lv.tgt[i] = t;
     Lv.remain[i] = ((t - Lv.pos[i]) % N95 + N95) % N95;
-    const b = document.querySelector(`[data-st95="${i}"]`); if (b) b.disabled = true;
+    const b = document.querySelector(`[data-st95="${i}"]`); if (b) b.disabled = true; goStop95();
   }
   F95.press = press;
-  function enableStops(on) { document.querySelectorAll("[data-st95]").forEach(b => { const Lv = F95.live; b.disabled = !on || !Lv || !Lv.spinning[+b.dataset.st95] || Lv.remain[+b.dataset.st95] >= 0; }); }
+  // 目押しを1つのボタンで（v121）：押すたびに、まだ回っているリールを左から（押し順ナビのときはその順に）止める
+  function nextStop95() {
+    const Lv = F95.live; if (!Lv || Lv.S.mode !== "meoshi" || Lv.frozen) return;
+    const ord = Lv.S.flag === "N" && Lv.S.oshi ? Lv.S.oshi : [0, 1, 2];
+    const i = ord.find(k => Lv.spinning[k] && Lv.remain[k] < 0);
+    const b = document.querySelector(`[data-st95="${i}"]`);
+    if (i != null && b && !b.disabled) press(i);
+  }
+  F95.next = nextStop95;
+  function enableStops(on) { document.querySelectorAll("[data-st95]").forEach(b => { const Lv = F95.live; b.disabled = !on || !Lv || !Lv.spinning[+b.dataset.st95] || Lv.remain[+b.dataset.st95] >= 0; }); goStop95(); }
+  function goStop95() { const g = document.getElementById("vs95go"), Lv = F95.live; if (!g || !Lv || Lv.S.mode !== "meoshi") return; g.disabled = ![...document.querySelectorAll("[data-st95]")].some(b => !b.disabled); }
   function aim(t) { const e = document.getElementById("vs95aim"); if (!e) return; e.textContent = t; e.hidden = !t; }
   function evText(t) { const e = document.getElementById("vs95ev"); if (!e) return; e.textContent = t; e.hidden = !t; }
   function onReelStop(i) {
@@ -18403,11 +18420,12 @@ addEventListener("keydown", e => {
   if (!modalOpen || !$("mbox").classList.contains("vs95") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
   const i = { "1": 0, "2": 1, "3": 2 }[e.key];
   if (i != null && F95.live) { e.preventDefault(); e.stopPropagation(); if (F95.press) F95.press(i); return; }
-  if ((e.key === " " || e.key === "Enter") && !F95.live && !e.repeat) { const b = $("vs95go"); if (b && !b.disabled) { e.preventDefault(); e.stopPropagation(); b.click(); } }
+  // Space・Enter：スピン。目押しで回っているあいだは、次のリールを止める（v121）
+  if ((e.key === " " || e.key === "Enter") && !e.repeat) { const b = $("vs95go"); if (b && !b.disabled) { e.preventDefault(); e.stopPropagation(); b.click(); } else if (F95.live) e.preventDefault(); }
 }, true);
 GUIDE54.push(["VIPのスロット", "s95_acorn", `
     <p>VIPルームの左の<b>高レートスロット</b>（ルナのとなりの金の台）。現金（1,000G札）だけで、1回に5・10・20・50枚。払い戻しは最大5,000枚。</p><ul>
-    <li>はじめに<b>おまかせ</b>か<b>目押し</b>を選ぶ（あとから変えられる）。おまかせは当たりが必ずそろう。目押しは STOP（1・2・3キー）で自分で止める。大きい役（金のどんぐり・7・金塊）が当たると、ランプとルナが「狙え」と教えてくれるので、その絵柄が見えているうちに押す（小さい役は台が引きこむ）</li>
+    <li>はじめに<b>おまかせ</b>か<b>目押し</b>を選ぶ（あとから変えられる）。おまかせは当たりが必ずそろう。目押しはスピンのボタン（スペースキー）を押すたびに1つずつ止まる。STOP（1・2・3キー）でえらんでもいい。自分で止める。大きい役（金のどんぐり・7・金塊）が当たると、ランプとルナが「狙え」と教えてくれるので、その絵柄が見えているうちに押す（小さい役は台が引きこむ）</li>
     <li>当たりはスピンした瞬間に決まっていて、はずれのときはどう押してもそろわない。目押しが上手でも、還元率は約97%まで（勝ちすぎない作り）</li>
     <li>ベルは<b>押し順ベル</b>。決まった順番で止めないとそろわない。押し順はナビが①②③で教えてくれる。<b>AT</b>（ベルラッシュ）のあいだはベルがたくさん当たる。AT中に7か金のどんぐりが当たると上乗せ</li>
     <li>スピンのときに光るのは予告（青→赤→虹。虹は確定）。確変やATに入る前は、台がビカビカ光る。おまかせの7と金のどんぐりは、外れたと思ったら逆回転でそろうことも</li>
@@ -24232,12 +24250,163 @@ function openMyDesign120() {
 F120.open = openMyDesign120;
 // 入口：着せ替えの下・スマホの「ゲーム」の仕立て屋のとなり
 $("randBtn")?.insertAdjacentHTML("afterend", `<button class="btn ghost" id="mdBtn120" type="button">服のマイデザイン</button>`);
-$("mdBtn120")?.addEventListener("click", () => { if (!modalOpen) openMyDesign120(); });
+$("mdBtn120")?.addEventListener("click", () => {
+  if (modalOpen) return;
+  // スマホ（メニューを開いているとき）は、ゲームの画面にもどしてから開く（v121：前は「村へ出かける」を押すまで見えなかった）
+  if (document.body.classList.contains("menu")) { document.body.classList.remove("menu"); resize(); }
+  openMyDesign120();
+});
 GTITLES42.push(["デザイナー", "服のマイデザインを着る", () => (world.stats.mydesign120 || 0) >= 1]);
 TITLES.push(["デザイナー", "服のマイデザインを着る", () => gotT42().includes("デザイナー") || (world.stats.mydesign120 || 0) >= 1]);
 GUIDE54.forEach(gd => { if (gd[0] === "着せ替え") gd[2] = gd[2].replace("</ul>", "<li>「服のマイデザイン」（着せ替えの下のボタン）で、上の服に自分で描いた柄（よこ20×たて10マス・15色）をのせられる。ほかの人にも見える</li></ul>"); });
 F120.valid = validMd120; F120.phone = phoneNow120;
 F120.ready = true;
+
+// =================== v121: 南の島のくらし（貝がらひろい・宝の地図・島だけの店） ===================
+var F121 = {};
+// 南の島（v109・行けるのは沖の魚3種かヌシを釣った人）でしかできないこと・買えない物。
+// ・貝がらひろい：浜の光るところ（日ごとに4か所）でⒶ。さくら貝・ほら貝・まれに真珠
+// ・宝の地図：島のおばあナミから1日1枚（3,000G）。島の浜に×じるしが出て、そこでⒶで掘る
+// ・島だけの店：トロピカルジュース・ヤシのパラソル（G）、貝がらのランプ・真珠のかざり（貝と交換）。島の家具は村の店に出ない
+const isle121 = () => { const h = hid109(); const s = h.i121 && typeof h.i121 === "object" ? h.i121 : (h.i121 = {}); s.shell = s.shell || 0; s.dig = s.dig || 0; return s; };
+addSpr17("sakura121", (s, r, e) => { e(8, 9, 5, 4, C17("#f4b8c8")); e(8, 8, 3.6, 3, C17("#ffd8e4")); for (const x of [5, 7, 9, 11]) r(x, 6, 1, 6, C17("#e898b0")); r(7, 12, 2, 2, C17("#e898b0")); });
+addSpr17("horagai121", (s, r, e) => { e(8, 9, 5.5, 4, C17("#f2d8b0")); e(10, 8, 3, 2.4, C17("#fff0d8")); for (const x of [4, 7, 10]) r(x, 7, 1, 5, C17("#c89a68")); e(3, 11, 1.6, 1.4, C17("#c89a68")); s(12, 8, C17("#e8a0a8")); });
+addSpr17("pearl121", (s, r, e) => { e(8, 9, 4.4, 4.4, C17("#e8e4f0")); e(8, 9, 3.4, 3.4, C17("#f8f6ff")); e(6.5, 7.5, 1.2, 1.2, C17("#ffffff")); s(10, 11, C17("#c8c0e0")); });
+addSpr17("juice121", (s, r, e) => { r(5, 4, 6, 10, C17("#f2a03a")); r(5, 4, 6, 2, C17("#ffd860")); r(5, 13, 6, 1, C17("#c87a2a")); r(9, 1, 1, 5, C17("#f27aa0")); e(4, 4, 2, 1.6, C17("#5aa04a")); r(6, 7, 1, 5, C17("#ffe8b0")); });
+addSpr17("tmap121", (s, r, e) => { r(2, 3, 12, 10, C17("#e8d0a0")); r(2, 3, 12, 1, C17("#c8a870")); r(2, 12, 12, 1, C17("#c8a870")); for (const [x, y] of [[4, 6], [6, 7], [8, 7]]) s(x, y, C17("#8a6a4a")); r(10, 6, 1, 1, C17("#d83a3a")); r(9, 5, 1, 1, C17("#d83a3a")); r(11, 7, 1, 1, C17("#d83a3a")); r(9, 7, 1, 1, C17("#d83a3a")); r(11, 5, 1, 1, C17("#d83a3a")); });
+Object.assign(ITEMS, {
+  sakura121: { name: "さくら貝", icon: "sakura121", price: 80 },
+  horagai121: { name: "ほら貝", icon: "horagai121", price: 220 },
+  pearl121: { name: "真珠", icon: "pearl121", price: 1500 },
+  juice121: { name: "トロピカルジュース", icon: "juice121", price: 200, food: 60 },
+});
+// 家具（島だけ）
+const FURN121 = {
+  parasol121: { name: "ヤシのパラソル", w: 1, h: 1, ih: 34, price: 18000, spr: (set, rect) => { rect(7, 8, 2, 26, C13["#8a6a4a"]); for (let y = 0; y < 10; y++) { const hw = 1 + y * .8; rect(Math.round(8 - hw), y, Math.round(hw * 2), 1, y % 3 === 2 ? C13["#4a8a3a"] : C13["#6ab84a"]); } rect(0, 9, 16, 1, C13["#3a7a2a"]); ell13(set, 8, 32, 7, 2, C13["#e8d8a8"]); } },
+  shelllamp121: { name: "貝がらのランプ", w: 1, h: 1, ih: 24, price: 0, spr: (set, rect) => { rect(6, 14, 4, 8, C13["#c8a070"]); rect(4, 21, 8, 3, C13["#a87a4a"]); ell13(set, 8, 9, 7, 6, C13["#f4c8d4"]); ell13(set, 8, 9, 5, 4, C13["#fff0b0"]); for (const x of [3, 6, 10, 13]) rect(x, 4, 1, 9, C13["#e8a0b4"]); ell13(set, 8, 9, 2, 2, C13["#ffffff"]); } },
+  pearldeco121: { name: "真珠のかざり", w: 1, h: 1, ih: 22, price: 0, spr: (set, rect) => { rect(2, 18, 12, 4, C13["#6a4a8a"]); rect(2, 18, 12, 1, C13["#8a6aaa"]); ell13(set, 8, 12, 6, 6, C13["#f2d8e0"]); ell13(set, 8, 12, 4.5, 4.5, C13["#f8f2ff"]); ell13(set, 6.5, 10.5, 1.4, 1.4, C13["#ffffff"]); for (const [x, y] of [[2, 15], [14, 15], [4, 6], [12, 6]]) set(x, y, C13["#e8e4f0"]); } },
+  tchest121: { name: "南国の宝箱", w: 1, h: 1, ih: 18, price: 0, spr: (set, rect) => { rect(1, 6, 14, 11, C13["#8a5a2a"]); rect(1, 6, 14, 4, C13["#3a9a8a"]); rect(1, 9, 14, 1, C13["#2a6a6a"]); rect(7, 9, 2, 4, C13["#f2d860"]); rect(1, 16, 14, 1, C13["#5a3a1a"]); for (const x of [3, 12]) rect(x, 6, 1, 11, C13["#c8a048"]); set(10, 3, C13["#fff4a8"]); set(4, 2, C13["#fff4a8"]); } },
+};
+for (const [k, f] of Object.entries(FURN121)) {
+  const img = "s121_" + k; IMG[img] = pix13(f.w * 16, f.ih, f.spr); ASSETS[img] = IMG[img].toDataURL();
+  FURN[k] = { name: f.name, img, w: f.w, h: f.h, oy: f.h * 16 - f.ih, price: f.price };
+  ITEMS["f_" + k] = { name: f.name, icon: img, furn: k, price: f.price };
+}
+{ const _h = F7.hideFurn; F7.hideFurn = k => k in FURN121 || _h(k); }
+// 浜の絵（光る貝・×じるし・掘ったあと）
+IMG.s121_spark = pix13(16, 16, (set, rect) => { rect(8, 2, 1, 13, C13["#fff4c8"]); rect(2, 8, 13, 1, C13["#fff4c8"]); rect(7, 6, 3, 5, C13["#ffffff"]); rect(6, 7, 5, 3, C13["#ffffff"]); for (const [x, y] of [[3, 3], [13, 3], [3, 13], [13, 13]]) set(x, y, C13["#ffffff"]); rect(4, 11, 3, 2, C13["#f4b8c8"]); rect(11, 12, 2, 2, C13["#f4b8c8"]); }, false);
+IMG.s121_x = pix13(16, 16, (set, rect) => { for (let i = 0; i < 9; i++) { rect(3 + i, 3 + i, 2, 2, C13["#c8302a"]); rect(11 - i, 3 + i, 2, 2, C13["#c8302a"]); } }, false);
+IMG.s121_hole = pix13(16, 16, (set, rect, P) => { ell13(set, 8, 9, 6, 4, C13["#a8885a"]); ell13(set, 8, 9, 4, 2.6, C13["#7a603a"]); }, false);
+for (const k of ["s121_spark", "s121_x", "s121_hole"]) ASSETS[k] = IMG[k].toDataURL();
+// 日ごとに決まる場所（だれの画面でも同じ）
+const sandSpots121 = m => { const out = []; for (let y = 2; y < m.ground.length - 2; y++) for (let x = 2; x < m.ground[0].length - 2; x++) if (/^sand/.test(m.ground[y][x] || "") && !m.base[y][x] && !m.interact[x + "," + y] && !(x === 11 && y >= 10) && [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => !m.base[y + dy]?.[x + dx])) out.push([x, y]); return out; };
+const pickDay121 = (list, n, salt) => { const a = list.slice(), out = []; let h = (Math.imul(world.day | 0, 0x9e3779b1) ^ Math.imul(salt, 0x85ebca6b)) >>> 0; while (out.length < n && a.length) { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0; h = (h ^ (h >>> 15)) >>> 0; out.push(a.splice(h % a.length, 1)[0]); } return out; };
+// 島のマップを作った時点で決めて持っておく（あとで調べると、貝の場所の interact が入っていて候補がずれる）
+F121.shells = m => m.shells121 && m.shells121.day === world.day ? m.shells121.at : pickDay121(sandSpots121(m), 4, 7);
+const _makeIsle121 = makeIsle109;
+makeIsle109 = function () {
+  const m = _makeIsle121.apply(this, arguments), S = isle121();
+  m.shells121 = { day: world.day, at: pickDay121(sandSpots121(m), 4, 7) };
+  m.shells121.at.forEach(([x, y], i) => {
+    if (daily109("shell121_" + i)) return;
+    m.objs.push({ img: "s121_spark", x: x * TS, y: y * TS, sortY: y * TS + 1, k121: "spark" });
+    m.interact[x + "," + y] = () => pickShell121(i);
+  });
+  if (S.map && S.map.day === world.day) {
+    const [x, y] = S.map.at;
+    m.objs.push({ img: S.map.dug ? "s121_hole" : "s121_x", x: x * TS, y: y * TS, sortY: y * TS + 1 });
+    if (!S.map.dug) m.interact[x + "," + y] = () => digTreasure121();
+  }
+  m.labels.push({ x: 12.5 * TS, y: 5 * TS - 26, text: "島のお店" });
+  return m;
+};
+function refreshIsle121() {
+  if (!map || map.kind !== "isle109") return;
+  const p = [player.x, player.y, player.dir], b = map.back109, m = makeIsle109(); m.back109 = b; interior = m; rebuildSolid(); map = m; placeAt(player, p[0], p[1], p[2]);
+}
+function pickShell121(i) {
+  if (daily109("shell121_" + i)) return;
+  markDaily109("shell121_" + i);
+  const r = Math.random(), [id, n] = r < .06 ? ["pearl121", 1] : r < .36 ? ["horagai121", 1] : ["sakura121", 1 + rnd(2)];
+  if (addItem(id, n, true)) { toast(ITEMS[id].icon, `${ITEMS[id].name}×${n}をひろった${id === "pearl121" ? "！ 貝の中に真珠が入ってた" : ""}`); try { se13(id === "pearl121" ? "win" : "small"); } catch (e) { } }
+  const S = isle121(); S.shell += 1; world.stats.shell121 = S.shell; saveWorld(); refreshIsle121();
+}
+const TREASURE121 = [["goldcoin109", 1, 34], ["pearl121", 1, 24], ["money", 6000, 16], ["starshard109", 1, 14], ["f_tchest121", 1, 7], ["money", 20000, 5]];
+function digTreasure121() {
+  const S = isle121(); if (!S.map || S.map.day !== world.day || S.map.dug) return;
+  if (busy) return;
+  busy = true; toast("tmap121", "ざくっ、ざくっ……");
+  try { se13("small"); } catch (e) { }
+  setTimeout(() => {
+    busy = false;
+    let t = Math.random() * TREASURE121.reduce((a, x) => a + x[2], 0), pick = TREASURE121[0];
+    for (const x of TREASURE121) { t -= x[2]; if (t < 0) { pick = x; break; } }
+    const [id, n] = pick;
+    if (id !== "money" && !addItem(id, n, true)) { toast(null, "持ち物がいっぱい。あけてからもう一度掘ろう"); return; }
+    if (id === "money") addMoney(n);
+    S.map.dug = true; S.dig += 1; world.stats.dig121 = S.dig; saveWorld(); refreshIsle121();
+    const name = id === "money" ? fmt(n) : `${ITEMS[id].name}×${n}`;
+    openModal("宝の地図", "shop", b => { b.innerHTML = `<p class="mtext">×じるしの下から、<b>${esc(name)}</b>が出てきた！</p><p class="mtext small">宝の地図は、島のおばあナミの店で1日1枚買えるよ</p><div class="row2"><button class="btn" type="button" id="ok121">やった</button></div>`; b.querySelector("#ok121").onclick = closeModal; });
+    try { se13("win"); } catch (e) { }
+  }, 1300);
+}
+// 島のおばあナミの店（v109 の画面を差しかえ）
+const SHOP121 = [
+  ["juice121", 500, "HP+60。島のくだものでつくる"],
+  ["tmap121", 3000, "1日1枚。島の浜のどこかに×じるしが出る"],
+  ["f_parasol121", 18000, "島でしか売っていない家具"],
+  ["f_hammock109", 30000, "島でしか売っていない家具"],
+];
+const TRADE121 = [
+  ["f_shelllamp121", [["sakura121", 6], ["horagai121", 2]]],
+  ["f_pearldeco121", [["pearl121", 3], ["horagai121", 1]]],
+];
+ITEMS.tmap121 = { name: "宝の地図", icon: "tmap121", price: 0 };
+openIsleShop109 = function (tab) {
+  tab = tab || "buy"; const S = isle121();
+  openModal("島のおばあ ナミ", "shop", b => {
+    const mapToday = S.map && S.map.day === world.day;
+    const sellIds = ["coconut109", "mango109", "sakura121", "horagai121"].filter(id => count(id));
+    b.innerHTML = `<p class="mtext">「よう来たねぇ。この島じゃ、時間がゆっくり流れるさ。島の物は、島でしか手に入らんよ」</p>
+      <div class="mtabs">${[["buy", "買う"], ["trade", "貝と交換"], ["sell", "売る"]].map(([k, t]) => `<button class="chip" type="button" data-t121="${k}" aria-pressed="${tab === k}">${t}</button>`).join("")}</div>
+      ${tab === "buy" ? `<div class="list">${SHOP121.map(([id, p, d]) => itemLi(id, `${fmt(p)}・${d}${id === "tmap121" && mapToday ? "（今日はもう買った）" : ""}`, `<button class="btn" type="button" data-b121="${id}" ${world.money < p || (id === "tmap121" && mapToday) ? "disabled" : ""}>買う</button>`)).join("")}</div>
+        <p class="mtext small">浜の光っているところでは、貝がらがひろえる（日ごとに4か所）。島のまわりの海では、ここでしか釣れない魚がいるよ。木の実は1日1回ずつとれる</p>`
+      : tab === "trade" ? `<div class="list">${TRADE121.map(([id, need]) => itemLi(id, need.map(([n, k]) => `<span class="need ${count(n) < k ? "lack" : ""}"><img src="${ASSETS[ITEMS[n].icon]}" alt="">${esc(ITEMS[n].name)}×${k}<span class="own9">（${count(n)}）</span></span>`).join(""), `<button class="btn" type="button" data-x121="${id}" ${need.every(([n, k]) => count(n) >= k) ? "" : "disabled"}>交換</button>`)).join("")}</div>
+        <p class="mtext small">貝がらは浜でひろえるよ。真珠は、貝の中にまれに入っている</p>`
+      : `<div class="list">${sellIds.length ? sellIds.map(id => itemLi(id, `1つ ${fmt(sellPrice(id))}（${count(id)}個）`, `<button class="btn light" type="button" data-s121="${id}">全部売る</button>`)).join("") : `<p class="mtext">売れる島の物を持っていないみたい</p>`}</div>`}`;
+    b.querySelectorAll("[data-t121]").forEach(x => x.onclick = () => { closeModal(); openIsleShop109(x.dataset.t121); });
+    b.querySelectorAll("[data-b121]").forEach(x => x.onclick = () => {
+      const id = x.dataset.b121, p = SHOP121.find(s => s[0] === id)[1]; if (world.money < p) return;
+      if (id === "tmap121") {
+        if (S.map && S.map.day === world.day) return;
+        const cand = sandSpots121(map && map.kind === "isle109" ? map : makeIsle109()).filter(([a, c]) => !F121.shells(map).some(([q, w]) => q === a && w === c));
+        const at = cand[rnd(cand.length)]; if (!at) return;
+        addMoney(-p); S.map = { day: world.day, at, dug: false }; world.stats.tmap121 = (world.stats.tmap121 || 0) + 1; saveWorld(); closeModal(); refreshIsle121();
+        toast("tmap121", "宝の地図を買った。浜に×じるしが出たよ"); return;
+      }
+      if (!addItem(id, 1, true)) { toast(null, "持ち物がいっぱい"); return; }
+      addMoney(-p); saveWorld(); toast(ITEMS[id].icon, `${ITEMS[id].name}を買った`); closeModal(); openIsleShop109("buy");
+    });
+    b.querySelectorAll("[data-x121]").forEach(x => x.onclick = () => {
+      const t = TRADE121.find(s => s[0] === x.dataset.x121); if (!t || !t[1].every(([n, k]) => count(n) >= k)) return;
+      if (!addItem(t[0], 1, true)) { toast(null, "持ち物がいっぱい"); return; }
+      t[1].forEach(([n, k]) => removeItem(n, k)); world.stats.trade121 = (world.stats.trade121 || 0) + 1; saveWorld(); toast(ITEMS[t[0]].icon, `${ITEMS[t[0]].name}と交換した`); closeModal(); openIsleShop109("trade");
+    });
+    b.querySelectorAll("[data-s121]").forEach(x => x.onclick = () => { const id = x.dataset.s121, n = count(id); if (!n) return; const v = sellPrice(id) * n; removeItem(id, n); addMoney(v); saveWorld(); toast("coin", `${ITEMS[id].name}×${n}を売った（+${fmt(v)}）`); closeModal(); openIsleShop109("sell"); });
+  });
+};
+F121.shop = t => openIsleShop109(t);
+GTITLES42.push(["貝がらひろい", "南の島で貝がらを30回ひろう", () => (world.stats.shell121 || 0) >= 30]);
+TITLES.push(["貝がらひろい", "南の島で貝がらを30回ひろう", () => gotT42().includes("貝がらひろい") || (world.stats.shell121 || 0) >= 30]);
+GTITLES42.push(["島の宝さがし", "南の島で宝の地図の宝を5回掘りあてる", () => (world.stats.dig121 || 0) >= 5]);
+TITLES.push(["島の宝さがし", "南の島で宝の地図の宝を5回掘りあてる", () => gotT42().includes("島の宝さがし") || (world.stats.dig121 || 0) >= 5]);
+GUIDE54.push(["南の島のくらし", "sakura121", `<ul>
+  <li>南の島は、みなと町の桟橋の「島ゆきの船」から行ける（沖の魚を3種類か、ヌシを釣ったことがある人・船賃2,000G）</li>
+  <li>浜の光っているところでⒶを押すと、貝がらがひろえる（日ごとに4か所）。さくら貝・ほら貝、まれに真珠</li>
+  <li>島のおばあナミの店で「宝の地図」（1日1枚・3,000G）を買うと、浜に×じるしが出る。そこでⒶで掘ると、古代の金貨・真珠・星のかけら・お金・「南国の宝箱」のどれか</li>
+  <li>ナミの店でしか買えない物：トロピカルジュース・ヤシのパラソル・島のハンモック。貝と交換：貝がらのランプ・真珠のかざり</li>
+  <li>島のまわりの海では、島だけの魚が3種類釣れる</li></ul>`]);
+F121.ready = true;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -24699,5 +24868,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

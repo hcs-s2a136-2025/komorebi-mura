@@ -1111,3 +1111,7 @@ button.jn106.lock { opacity: .45; }
 /* v122：つなぎのマスは作物ごとの色。なぞった所は枠で見せる */
 .ts92c.on { box-shadow: inset 0 0 0 3px #ffb81e; }
 .ts92c.head { box-shadow: inset 0 0 0 4px #ff7a1e, 0 0 8px rgba(255, 184, 30, .8); }
+/* v122: 腕前の Lv20 の先 */
+.st122 { margin-top: 4px; font-size: 12px; color: var(--ink); }
+.st122 .bar7 i { background: linear-gradient(90deg, #8a6ad8, #c8b0ff); }
+.st122 span { display: block; opacity: .8; font-size: 11px; }

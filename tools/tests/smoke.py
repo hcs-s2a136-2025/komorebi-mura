@@ -81,6 +81,8 @@ STEPS = [
     ("南の島", f"window.KOMO.closeModal(); {G}.F109.go('isle', 'port', [18, 13])"),
     ("服のマイデザイン", f"window.KOMO.closeModal(); {G}.F120.open()"),
     ("島のお店", f"window.KOMO.closeModal(); {G}.F109.go('isle', 'port', [18, 13]); {G}.F121.shop('trade')"),
+    ("遺跡の深層の番人", f"window.KOMO.closeModal(); {G}.world.hid109.ruinDone = 1; {G}.F109.go('ruin', 'village', [40, 17]); {G}.F122.enter(5)"),
+    ("鍛冶師", f"window.KOMO.closeModal(); {G}.addItem('sword_iron', 1); {G}.F122.back(); {G}.F122.forge()"),
     ("空に浮かぶ庭", f"{G}.F109.go('sky', 'village', [34, 48])"),
     ("地下の遺跡", f"{G}.F109.go('ruin', 'village', [39, 17])"),
     ("遺跡の考古学者", f"{G}.act ? (window.KOMO.closeModal(), {G}.placeAt({G}.player, 12, 4, 'up'), {G}.act()) : 0"),

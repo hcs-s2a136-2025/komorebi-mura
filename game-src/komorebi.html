@@ -1573,6 +1573,10 @@ button.jn106.lock { opacity: .45; }
 /* v122：つなぎのマスは作物ごとの色。なぞった所は枠で見せる */
 .ts92c.on { box-shadow: inset 0 0 0 3px #ffb81e; }
 .ts92c.head { box-shadow: inset 0 0 0 4px #ff7a1e, 0 0 8px rgba(255, 184, 30, .8); }
+/* v122: 腕前の Lv20 の先 */
+.st122 { margin-top: 4px; font-size: 12px; color: var(--ink); }
+.st122 .bar7 i { background: linear-gradient(90deg, #8a6ad8, #c8b0ff); }
+.st122 span { display: block; opacity: .8; font-size: 11px; }
 </style>
 
 <header>
@@ -1699,7 +1703,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.69.0";
+  const VER = "0.70.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -3936,7 +3940,7 @@ function draw(now) {
   }
   for (const e of ents) {
     if (e.kind === "mob") {
-      const boss = e.sprite === "golem"; const [sx, sy] = toS(e.px + 8, e.py - (boss ? 16 : 0)); const w = boss ? 64 : 28;
+      const boss = e.sprite === "golem" || e.big122; const [sx, sy] = toS(e.px + 8, e.py - (boss ? 16 : 0)); const w = boss ? 64 : 28;
       ctx.fillStyle = "rgba(0,0,0,.65)"; ctx.fillRect(sx - w / 2, sy - 9, w, 5); ctx.fillStyle = "#e85a5a"; ctx.fillRect(sx - w / 2, sy - 9, w * Math.max(0, e.hp) / e.maxhp, 5);
       if (boss) { ctx.font = '12px "DotGothic16", sans-serif'; ctx.fillStyle = "#ffe68a"; ctx.fillText(e.name, sx, sy - 18); }
       continue;
@@ -4515,6 +4519,7 @@ function updateDungeon(dt) {
       } else if (Math.random() < .5) stepTo(m, pick(DIRS));
     }
     updateEnt(m, dt);
+    if (!dg) return; // たおれて外に出たとき
   }
   const pk = player.x + "," + player.y;
   for (let i = dg.drops.length - 1; i >= 0; i--) { const d = dg.drops[i]; if (d.x === player.x && d.y === player.y && addItem(d.id, d.n || 1, true)) { toast(ITEMS[d.id].icon, `${ITEMS[d.id].name}を拾った`); dg.drops.splice(i, 1); } }
@@ -4529,7 +4534,7 @@ function swordHit(tx, ty) {
       dg.mobs.splice(dg.mobs.indexOf(m), 1); world.stats.kills++; world.kills[m.mtype] = (world.kills[m.mtype] || 0) + 1;
       for (const q of world.quests) if (q.kind === "kill" && !q.done && (q.mob === m.mtype || (q.mob === "slime" && m.mtype === "slime2"))) q.have++;
       dg.drops.push({ x: m.x, y: m.y, id: MOB[m.mtype].drop, n: 1 });
-      if (MOB[m.mtype].boss) {
+      if (MOB[m.mtype].boss && !m.deep122) {
         world.bossDown = true; addMoney(5000); addItem("gem", 3, true); unlock("王冠");
         toast("core", "洞窟の主をたおした！ 賞金5000G・アメジスト×3・王冠"); world.stats.boss = 1;
       }
@@ -6203,7 +6208,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.69.0";
+const CLIENT_VERSION = "0.70.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8281,6 +8286,15 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.70.0", date: "2026/11/06", title: "遺跡の深層と鍛冶師", items: [
+    "地下の遺跡の奥に「遺跡の深層」：柱のなぞをとくと、奥の階段から行ける。階はどこまでも続いて、下へ行くほど魔物が強くなる",
+    "5階ごとに「番人」の部屋。番人はゆっくり近づいてきて、床が赤くなったあとに攻撃してくる。たおすと「深淵の結晶」と、次からその先の階から始められる",
+    "深層でたおれても、お金や持ち物はなくならない（遺跡で目がさめる）",
+    "遺跡の鍛冶師テツ：深層のかけら・深淵の結晶・お金で、剣を +20 まで強くできる（+1ごとに攻撃+2）",
+    "腕前（農業・釣り・採集・クラフト）が Lv20 の先も「Lv20+1」「+2」…と上がるように。+1ごとに、その腕前の売値+0.5%と、剣の攻撃+1",
+    "こもれびブロック：回し方をスーパーローテーション（SRS）にした。壁やすきまに回しこめて、Tスピンにはボーナス。地面についてからも少し動かせる",
+    "称号が5つふえた（深層の探検家・深淵をのぞく者・番人たおし・名工の剣・限界の先へ）",
+  ] },
   { v: "0.69.0", date: "2026/11/06", title: "自由レートの麻雀", items: [
     "麻雀に「自由レート」：1000点あたりの金額を、10G〜20,000Gのあいだで自分で決められるようにした（ひとりで打つ卓も、みんなの卓も）",
     "こもれび闘鶏の育成：1日の回数（無料3回・コインで3回）を、にわとり1羽ずつにした。ほかの子も育てられるよ",
@@ -16011,6 +16025,19 @@ const blk77 = () => { const b = world.blk77 = world.blk77 && typeof world.blk77 
 const BLK_TITLE77 = ["落ちものの達人", "スマホの「こもれびブロック」で20,000点をとる", () => (world.blk77?.best || 0) >= 20000];
 GTITLES42.push(BLK_TITLE77);
 TITLES.push([BLK_TITLE77[0], BLK_TITLE77[1], () => gotT42().includes(BLK_TITLE77[0]) || BLK_TITLE77[2]()]);
+// SRS の壁蹴りの表（[x, y]、y は上が＋）。0=出てきた向き・1=右・2=逆さ・3=左
+const SRS77 = {
+  "0>1": [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], "1>0": [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  "1>2": [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], "2>1": [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  "2>3": [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], "3>2": [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  "3>0": [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]], "0>3": [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+};
+const SRS_I77 = {
+  "0>1": [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]], "1>0": [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  "1>2": [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]], "2>1": [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  "2>3": [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]], "3>2": [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  "3>0": [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]], "0>3": [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+};
 // ゲームのしくみ（絵とは分けておく）
 function newBlk77(rand) {
   const R = rand || Math.random;
@@ -16021,27 +16048,37 @@ function newBlk77(rand) {
   G.fits = (p, x, y, r) => G.cells(p, x, y, r).every(([a, b]) => a >= 0 && a < BW77 && b < BH77 && (b < 0 || !G.grid[b][a]));
   G.spawn = t => { const p = { t, x: 3, y: t === "I" ? -1 : 0, r: 0 }; G.cur = p; G.held = false; if (!G.fits(p, p.x, p.y, p.r)) G.over = true; };
   G.nextPiece = () => { while (G.next.length < 4) G.next.push(take()); G.spawn(G.next.shift()); G.next.push(take()); };
-  G.move = dx => { const p = G.cur; if (p && G.fits(p, p.x + dx, p.y, p.r)) { p.x += dx; return true; } return false; };
+  G.move = dx => { const p = G.cur; if (p && G.fits(p, p.x + dx, p.y, p.r)) { p.x += dx; p.spin = null; return true; } return false; };
+  // スーパーローテーションシステム（SRS）の壁蹴り。表は上が＋なので、y は向きを逆にして使う
   G.rotate = dir => {
     const p = G.cur; if (!p) return false; const n = BLK77[p.t].r.length; if (n === 1) return false;
-    const r = (p.r + dir + n) % n;
-    for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [-2, 0], [2, 0], [0, 1]]) if (G.fits(p, p.x + dx, p.y + dy, r)) { p.x += dx; p.y += dy; p.r = r; return true; }
+    const r = (p.r + dir + n) % n, T = (p.t === "I" ? SRS_I77 : SRS77)[p.r + ">" + r] || [[0, 0]];
+    for (let i = 0; i < T.length; i++) { const dx = T[i][0], dy = -T[i][1]; if (G.fits(p, p.x + dx, p.y + dy, r)) { p.x += dx; p.y += dy; p.r = r; p.spin = { kick: i }; return true; } }
     return false;
+  };
+  // Tスピン：最後の操作が回転で、T の 3×3 の四すみのうち3つ以上がうまっている
+  G.tspin = () => {
+    const p = G.cur; if (!p || p.t !== "T" || !p.spin) return 0;
+    const occ = (a, b) => a < 0 || a >= BW77 || b >= BH77 || (b >= 0 && !!G.grid[b][a]);
+    const C = [[0, 0], [2, 0], [2, 2], [0, 2]].map(([a, b]) => occ(p.x + a, p.y + b)), n = C.filter(Boolean).length; if (n < 3) return 0;
+    const front = { 0: [0, 1], 1: [1, 2], 2: [2, 3], 3: [3, 0] }[p.r].filter(i => C[i]).length;
+    return front === 2 || p.spin.kick === 4 ? 2 : 1;
   };
   G.ghostY = () => { const p = G.cur; let y = p.y; while (G.fits(p, p.x, y + 1, p.r)) y++; return y; };
   G.lock = () => {
-    const p = G.cur; let top = false;
+    const p = G.cur; let top = false; const ts = G.tspin();
     for (const [a, b] of G.cells(p)) { if (b < 0) top = true; else G.grid[b][a] = p.t; }
     const full = []; for (let y = 0; y < BH77; y++) if (G.grid[y].every(Boolean)) full.push(y);
     for (const y of full) { G.grid.splice(y, 1); G.grid.unshift(Array(BW77).fill(null)); }
     const n = full.length;
-    if (n) { G.combo++; G.score += [0, 100, 300, 500, 800][n] * G.level + Math.max(0, G.combo) * 50 * G.level; G.lines += n; G.level = 1 + Math.floor(G.lines / 10); } else G.combo = -1;
+    if (ts) { G.score += (ts === 2 ? [400, 800, 1200, 1600] : [100, 200, 400, 400])[n] * G.level; G.spinMsg = { t: 1.4, text: `Tスピン${ts === 1 ? "ミニ" : ""}${["", " シングル", " ダブル", " トリプル"][n]}` }; G.spins = (G.spins | 0) + 1; }
+    if (n) { G.combo++; G.score += (ts ? 0 : [0, 100, 300, 500, 800][n] * G.level) + Math.max(0, G.combo) * 50 * G.level; G.lines += n; G.level = 1 + Math.floor(G.lines / 10); } else G.combo = -1;
     G.lastClear = full; G.cur = null;
     if (top) { G.over = true; return n; }
     G.nextPiece(); return n;
   };
-  G.soft = () => { const p = G.cur; if (p && G.fits(p, p.x, p.y + 1, p.r)) { p.y++; G.score += 1; return true; } return false; };
-  G.hard = () => { const p = G.cur; if (!p) return 0; const y = G.ghostY(); G.score += (y - p.y) * 2; p.y = y; return G.lock(); };
+  G.soft = () => { const p = G.cur; if (p && G.fits(p, p.x, p.y + 1, p.r)) { p.y++; p.spin = null; G.score += 1; return true; } return false; };
+  G.hard = () => { const p = G.cur; if (!p) return 0; const y = G.ghostY(); G.score += (y - p.y) * 2; if (y !== p.y) p.spin = null; p.y = y; return G.lock(); };
   G.doHold = () => { if (G.held || !G.cur) return false; const t = G.cur.t; if (G.hold) { const h = G.hold; G.hold = t; G.spawn(h); } else { G.hold = t; G.nextPiece(); } G.held = true; return true; };
   G.speed = () => Math.max(.05, .8 * Math.pow(.85, G.level - 1));
   G.nextPiece();
@@ -16074,7 +16111,7 @@ function openBlkMenu77() {
         <h4>ランキング</h4>${F8.connected ? `<div class="cr74tabs sc88"><button class="chip" type="button" data-s77="village" aria-pressed="${F77.scope !== "everywhere"}">この村</button><button class="chip" type="button" data-s77="everywhere" aria-pressed="${F77.scope === "everywhere"}">全部の村</button></div>` : ""}<div class="cr74tabs"><button class="chip" type="button" data-t77="all" aria-pressed="${T === "all"}">全期間</button><button class="chip" type="button" data-t77="week" aria-pressed="${T === "week"}">この1週間</button></div>
         ${!F8.connected ? `<p class="mtext small">ランキングは、オンラインのときに見られるよ</p>` : !B ? `<p class="mtext small">読みこんでいるよ…</p>` :
           rows.length ? `<ol class="cr74l">${rows.map((r, i) => `<li class="${r.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(r.name)}</span><b class="wi74">${esc(String(r.v).replace(/\B(?=(\d{3})+(?!\d))/g, ","))}点</b></li>`).join("")}</ol>${me && me[T + "Rank"] ? `<p class="mtext small cr74me">あなたは <b>${me[T + "Rank"]}位</b></p>` : ""}` : `<p class="mtext small">まだだれもいないよ。いちばん乗りしよう</p>`}
-        <p class="mtext small">そうさ：← → 動かす・↓ ゆっくり落とす・↑ か X 回す（Z で逆回し）・Space で一気に落とす・C でキープ。スマホは下のボタン</p></div>`;
+        <p class="mtext small">そうさ：← → 動かす・↓ ゆっくり落とす・↑ か X 回す（Z で逆回し）・Space で一気に落とす・C でキープ。スマホは下のボタン。回し方はスーパーローテーション（壁やすきまに回しこめる・Tスピンでボーナス）</p></div>`;
       body.querySelector("#bk77go").onclick = () => { closeModal(); playBlk77(); };
       body.querySelectorAll("[data-t77]").forEach(x => x.onclick = () => { F77.tab = x.dataset.t77; F77.render(); });
       body.querySelectorAll("[data-s77]").forEach(x => x.onclick = () => { if (F77.scope === x.dataset.s77) return; F77.scope = x.dataset.s77; F77.board = null; F77.render(); F77.ask(); });
@@ -16086,7 +16123,7 @@ F77.open = openBlkMenu77;
 function playBlk77() {
   const wide = matchMedia("(max-height: 560px) and (min-aspect-ratio: 4/3)").matches;
   const C = 12, BX = 4, BY = 4, W = 200, H = 248;
-  const G = newBlk77(); let fall = 0, lockT = 0, stopped = false, ended = false, flash = [], last = performance.now();
+  const G = newBlk77(); let fall = 0, lockT = 0, stopped = false, ended = false, flash = [], last = performance.now(), resets = 0, curP = null;
   const b = blk77(); b.plays++; saveWorld();
   openModal("こもれびブロック", "ph76m", body => {
     body.innerHTML = `<div class="bk77 ${wide ? "w77" : ""}"><canvas id="bk77cv" width="${W}" height="${H}"></canvas>
@@ -16097,13 +16134,15 @@ function playBlk77() {
   const cv = $("bk77cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
   const act = k => {
     if (G.over || ended) return;
-    if (k === "left") G.move(-1); else if (k === "right") G.move(1);
-    else if (k === "down") { if (!G.soft()) lockT = Math.max(lockT, .4); fall = 0; }
-    else if (k === "rr") G.rotate(1); else if (k === "rl") G.rotate(-1);
+    if (G.cur !== curP) { curP = G.cur; resets = 0; }
+    // 地面についてからも、動かしたり回したりすると15回までは置かれるのを待つ（SRS の決まり）
+    const moved = k === "left" ? G.move(-1) : k === "right" ? G.move(1) : k === "rr" ? G.rotate(1) : k === "rl" ? G.rotate(-1) : false;
+    if (moved && lockT > 0 && resets < 15) { lockT = 0; resets++; }
+    if (k === "down") { if (!G.soft()) lockT = Math.max(lockT, .4); fall = 0; }
     else if (k === "hard") { const n = G.hard(); after(n); }
     else if (k === "hold") G.doHold();
   };
-  const after = n => { if (n) { flash = G.lastClear.map(y => ({ y, t: .25 })); se13(n >= 4 ? "big" : "harvest"); } else se13("small"); lockT = 0; fall = 0; if (G.over) setTimeout(() => finish(false), 500); };
+  const after = n => { if (n) { flash = G.lastClear.map(y => ({ y, t: .25 })); se13(n >= 4 || G.spinMsg && G.spinMsg.t > 1.3 ? "big" : "harvest"); } else se13(G.spinMsg && G.spinMsg.t > 1.3 ? "harvest" : "small"); lockT = 0; fall = 0; if (G.over) setTimeout(() => finish(false), 500); };
   // ボタンは押しっぱなしで連続
   const rep = new Map();
   cv.closest(".bk77").querySelectorAll("[data-k77]").forEach(el => {
@@ -16148,6 +16187,7 @@ function playBlk77() {
       for (const [a, b2] of G.cells(G.cur)) if (b2 >= 0) cell(BX + a * C, BY + b2 * C, G.cur.t);
     }
     for (const f of flash) { g.fillStyle = `rgba(255,240,170,${f.t * 3})`; g.fillRect(BX, BY + f.y * C, BW77 * C, C); }
+    if (G.spinMsg && (G.spinMsg.t -= dt) > 0) { g.save(); g.globalAlpha = Math.min(1, G.spinMsg.t * 2); g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#2a1a40"; g.fillText(G.spinMsg.text, BX + BW77 * C / 2 + 1, BY + 60 + 1); g.fillStyle = "#e8b8ff"; g.fillText(G.spinMsg.text, BX + BW77 * C / 2, BY + 60); g.restore(); }
     // 右の情報
     const SX = BX + BW77 * C + 8; g.fillStyle = "#c8d0e0"; g.font = "9px sans-serif"; g.textAlign = "left"; g.textBaseline = "top";
     g.fillText("つぎ", SX, 4); for (let i = 0; i < 3; i++) { g.fillStyle = "#151a26"; g.fillRect(SX, 16 + i * 24, 64, 22); if (G.next[i]) mini(G.next[i], SX + 16, 17 + i * 24); }
@@ -26680,6 +26720,326 @@ GUIDE54.push(["南の島のくらし", "sakura121", `<ul>
   <li>島のまわりの海では、島だけの魚が3種類釣れる</li></ul>`]);
 F121.ready = true;
 
+// =================== v122: 遺跡の深層（階が続くダンジョン・5階ごとの番人）・鍛冶師の剣の強化・腕前のLv20の先 ===================
+var F122 = {};
+// 地下の遺跡（v109）の柱のなぞをといた人だけ、奥の階段から「遺跡の深層」へ。階はどこまでも続き、下へ行くほど魔物が強い。
+// ・ふつうの階：洞窟と同じ動きのザコ（近づくと追ってくる）・岩（つるはし）・下への階段。たおすと「深層のかけら」が出やすい
+// ・5階ごと：番人の部屋。番人はゆっくり近づいてきて、赤いマスの予告のあとに攻撃してくる。たおすと「深淵の結晶」と下への階段
+// ・番人をたおした階からは、次から遺跡の階段で続きから始められる。たおれてもお金や持ち物は失わない（遺跡の入口でHP50で起きる）
+// ・遺跡の鍛冶師テツ：かけら・結晶・お金で剣を +1〜+20 に（1つにつき攻撃+2）
+// ・腕前（農業・釣り・採集・クラフト）は Lv20 の先も「Lv20+1」「+2」…と上がる。+1ごとに、その腕前の売値+0.5%（25%まで）と、剣の攻撃+1
+// マップは洞窟と同じ dg のしくみ（ひとりの画面だけ・サーバーの変更なし）。
+const f122 = () => { const o = world.f122 && typeof world.f122 === "object" ? world.f122 : (world.f122 = {}); o.best = o.best | 0; o.cp = o.cp | 0; o.boss = o.boss | 0; o.cleared = o.cleared && typeof o.cleared === "object" ? o.cleared : {}; o.forge = o.forge && typeof o.forge === "object" ? o.forge : {}; return o; };
+// ---- 物 ----
+addSpr17("shard122", (s, r, e) => { for (const [x, y, w, h] of [[7, 2, 2, 3], [6, 5, 4, 4], [5, 9, 6, 3], [6, 12, 4, 2]]) r(x, y, w, h, C17("#8a6ad8")); r(7, 5, 1, 6, C17("#c8b0ff")); s(8, 3, C17("#ffffff")); r(9, 7, 1, 4, C17("#5a3aa8")); });
+addSpr17("crystal122", (s, r, e) => { for (let y = 1; y < 15; y++) { const w = y < 8 ? y : 15 - y; r(8 - Math.floor(w / 2), y, Math.max(1, w), 1, C17(y < 8 ? "#5ad0f0" : "#3a8ad8")); } r(7, 3, 1, 9, C17("#d8f6ff")); s(6, 6, C17("#ffffff")); r(9, 8, 1, 4, C17("#2a5aa8")); });
+Object.assign(ITEMS, {
+  shard122: { name: "深層のかけら", icon: "shard122", price: 150 },
+  crystal122: { name: "深淵の結晶", icon: "crystal122", price: 2500 },
+});
+// ---- 魔物の絵 ----
+const SPR122 = {
+  dslime122: [16, 16, (set, rect) => { ell13(set, 8, 11, 6.5, 4.6, C13["#6a3a9a"]); ell13(set, 8, 10, 5.4, 3.6, C13["#8a5ac8"]); ell13(set, 6, 8, 1.6, 1, C13["#c8a8f0"]); rect(5, 10, 2, 2, C13["#f8e0ff"]); rect(9, 10, 2, 2, C13["#f8e0ff"]); set(6, 11, C13["#2a1040"]); set(10, 11, C13["#2a1040"]); }],
+  dbat122: [16, 16, (set, rect) => { for (let i = 0; i < 6; i++) { rect(1 + i, 5 + Math.floor(i / 2), 1, 5 - Math.floor(i / 2), C13["#8a2a3a"]); rect(14 - i, 5 + Math.floor(i / 2), 1, 5 - Math.floor(i / 2), C13["#8a2a3a"]); } ell13(set, 8, 8, 3, 3.4, C13["#5a1a2a"]); rect(6, 4, 1, 2, C13["#5a1a2a"]); rect(9, 4, 1, 2, C13["#5a1a2a"]); set(7, 7, C13["#ffd040"]); set(9, 7, C13["#ffd040"]); }],
+  dwisp122: [16, 16, (set, rect) => { for (let y = 2; y < 14; y++) { const w = Math.max(1, Math.round(Math.sin((y - 1) / 13 * Math.PI) * 5)); rect(8 - w, y, w * 2, 1, C13[y < 6 ? "#a8e8ff" : "#4a9ae8"]); } ell13(set, 8, 9, 2.4, 2.6, C13["#e8fbff"]); set(7, 9, C13["#1a3a6a"]); set(9, 9, C13["#1a3a6a"]); }],
+};
+for (const [k, [w, h, f]] of Object.entries(SPR122)) { IMG[k] = pix13(w, h, f); ASSETS[k] = IMG[k].toDataURL(); }
+// 番人（32×32）は4色を順に。深くなるほど強い
+const BOSS122 = [
+  { n: "遺跡の番人 ガルド", a: "#8a8478", b: "#5a5448", c: "#b8b0a0", e: "#f2a03a", g: "#5ad0f0" },
+  { n: "苔むした番人 モッサ", a: "#6a8a58", b: "#3a5a32", c: "#9ac080", e: "#f2e040", g: "#f27a84" },
+  { n: "紅の番人 カグラ", a: "#a84a4a", b: "#6a2a2a", c: "#d87a6a", e: "#fff0a0", g: "#f2c840" },
+  { n: "深淵の番人 ノクス", a: "#5a4a8a", b: "#2a2050", c: "#8a7ac8", e: "#a8f0ff", g: "#f2f0ff" },
+];
+BOSS122.forEach((B, i) => {
+  const k = "dboss122_" + i;
+  IMG[k] = pix13(32, 32, (set, rect) => {
+    const c = x => C13[x] || x;
+    rect(9, 13, 14, 13, c(B.a)); rect(9, 13, 14, 2, c(B.c)); rect(9, 24, 14, 2, c(B.b));
+    rect(10, 3, 12, 10, c(B.a)); rect(10, 3, 12, 2, c(B.c)); rect(12, 7, 3, 2, c(B.e)); rect(17, 7, 3, 2, c(B.e));
+    rect(3, 14, 6, 12, c(B.b)); rect(23, 14, 6, 12, c(B.b)); rect(3, 14, 6, 2, c(B.a)); rect(23, 14, 6, 2, c(B.a));
+    rect(10, 26, 5, 5, c(B.b)); rect(17, 26, 5, 5, c(B.b)); ell13(set, 16, 18, 2.4, 2.4, c(B.g));
+    for (const [x, y] of [[11, 17], [20, 21], [13, 22], [19, 15]]) rect(x, y, 3, 1, c(B.b));
+    rect(13, 1, 6, 2, c(B.g));
+  });
+  ASSETS[k] = IMG[k].toDataURL();
+});
+const S122 = {
+  stair: [16, 16, (set, rect) => { rect(0, 0, 16, 16, C13["#3a322c"]); rect(2, 2, 12, 3, C13["#2a2420"]); rect(3, 6, 10, 3, C13["#1a1612"]); rect(4, 10, 8, 3, C13["#0e0c0a"]); rect(0, 0, 16, 1, C13["#8a6ad8"]); rect(0, 0, 1, 16, C13["#8a6ad8"]); rect(15, 0, 1, 16, C13["#8a6ad8"]); set(8, 13, C13["#c8b0ff"]); }],
+  anvil: [16, 16, (set, rect) => { rect(2, 6, 12, 3, C13["#5a5a62"]); rect(2, 6, 12, 1, C13["#8a8a92"]); rect(0, 6, 3, 2, C13["#5a5a62"]); rect(5, 9, 6, 3, C13["#4a4a52"]); rect(3, 12, 10, 3, C13["#3a3a42"]); set(12, 4, C13["#f2a03a"]); set(13, 3, C13["#f2d860"]); }],
+};
+for (const [k, [w, h, f]] of Object.entries(S122)) { IMG["s109_" + k + "122"] = pix13(w, h, f); ASSETS["s109_" + k + "122"] = IMG["s109_" + k + "122"].toDataURL(); }
+Object.assign(MOB_NAME, { dslime122: "影スライム", dbat122: "遺跡コウモリ", dwisp122: "鬼火", dboss122: "遺跡の番人" });
+Object.assign(MOB, {
+  dslime122: { hp: 22, dmg: 9, speed: .7, drop: "jelly" },
+  dbat122: { hp: 15, dmg: 10, speed: 1.25, drop: "wing", erratic: true },
+  dwisp122: { hp: 30, dmg: 13, speed: .9, drop: "shard122" },
+  dboss122: { hp: 220, dmg: 16, speed: .4, drop: "crystal122", boss: true },
+});
+ASSETS.dboss122 = ASSETS.dboss122_0;
+// ---- 階をつくる ----
+const mul122 = n => ({ hp: 1 + (n - 1) * .2, dmg: 1 + (n - 1) * .08 });
+function deepMob122(type, x, y, n) {
+  const e = makeMob(type, x, y, 1), M = MOB[type], k = mul122(n);
+  e.hp = e.maxhp = Math.round(M.hp * k.hp); e.dmg = Math.round(M.dmg * k.dmg); e.deep122 = n; return e;
+}
+function genDeep122(n) {
+  const W = 24, H = 18;
+  for (let tries = 0; tries < 60; tries++) {
+    const m = blankMap(W, H, `遺跡の深層 地下${n}階`);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const wall = x === 0 || y === 0 || x === W - 1 || y === H - 1 || y === 1; m.ground[y][x] = wall ? "minewall" : "path" + ((x + y) % 2); m.base[y][x] = wall; }
+    const up = [2, H - 3];
+    for (let i = 0; i < 30; i++) { const x = 2 + rnd(W - 5), y = 3 + rnd(H - 6); if (Math.abs(x - up[0]) + Math.abs(y - up[1]) < 4) continue; for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) if (Math.random() < .8) { m.ground[y + b][x + a] = "minewall"; m.base[y + b][x + a] = true; } }
+    m.ground[up[1]][up[0]] = "ladder_up";
+    const dist = [], q = [up], seen = new Set([up.join()]);
+    while (q.length) { const [x, y] = q.shift(); dist.push([x, y]); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const k = (x + dx) + "," + (y + dy); if (!seen.has(k) && !m.base[y + dy][x + dx]) { seen.add(k); q.push([x + dx, y + dy]); } } }
+    const far = dist.filter(([x, y]) => Math.abs(x - up[0]) + Math.abs(y - up[1]) > 14);
+    if (!far.length || dist.length < 120) continue;
+    m.isDungeon = true; m.floor = n; m.up = up; m.music = "dark"; m.deep122 = n;
+    const d = far[rnd(far.length)]; m.ground[d[1]][d[0]] = "ladder_down"; m.down = d;
+    const free = dist.filter(([x, y]) => Math.abs(x - up[0]) + Math.abs(y - up[1]) > 4 && !m.ground[y][x].startsWith("ladder"));
+    const rocks = new Set(), ore = new Set();
+    for (let i = 0; i < 7; i++) { const [x, y] = free[rnd(free.length)]; const k = x + "," + y; rocks.add(k); if (Math.random() < .4) ore.add(k); }
+    const types = n < 4 ? ["dslime122", "dbat122"] : ["dslime122", "dbat122", "dwisp122"], mobs = [], used = new Set();
+    const cnt = Math.min(12, 4 + Math.floor(n / 2));
+    for (let i = 0; i < cnt * 3 && mobs.length < cnt; i++) { const [x, y] = free[rnd(free.length)]; const k = x + "," + y; if (rocks.has(k) || used.has(k)) continue; used.add(k); mobs.push(deepMob122(types[rnd(types.length)], x, y, n)); }
+    return { map: m, rocks, ore, mobs, drops: [] };
+  }
+  return null;
+}
+function genBoss122(n) {
+  const W = 18, H = 14, m = blankMap(W, H, `遺跡の深層 地下${n}階　番人の部屋`);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const wall = x === 0 || y === 0 || x === W - 1 || y === H - 1 || y === 1; m.ground[y][x] = wall ? "minewall" : "path" + ((x + y) % 2); m.base[y][x] = wall; }
+  for (const [x, y] of [[5, 4], [12, 4], [5, 9], [12, 9]]) { m.ground[y][x] = "minewall"; m.base[y][x] = true; }
+  const up = [2, H - 3]; m.ground[up[1]][up[0]] = "ladder_up";
+  m.isDungeon = true; m.floor = n; m.up = up; m.music = "dark"; m.deep122 = n; m.bossRoom122 = true; m.downAt122 = [W - 3, H - 3];
+  const k = n / 5, B = BOSS122[(k - 1) % BOSS122.length], round = Math.floor((k - 1) / BOSS122.length);
+  const e = makeMob("dboss122", 9, 5, 1);
+  e.hp = e.maxhp = Math.round(220 * (1 + (k - 1) * .9)); e.dmg = Math.round(16 * (1 + (k - 1) * .3)); e.speed = .4;
+  e.sprite = "dboss122_" + ((k - 1) % BOSS122.length); e.big122 = true; e.deep122 = n; e.name = B.n + (round ? ` ${"Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ Ⅶ Ⅷ Ⅸ Ⅹ".split(" ")[Math.min(8, round - 1)]}` : "");
+  const fl = { map: m, rocks: new Set(), ore: new Set(), mobs: [e], drops: [] };
+  fl.bs122 = { e, k, next: performance.now() + 2600, warn: null, boom: null, dead: false };
+  return fl;
+}
+// ---- 出入り ----
+const STAIR122 = [2, 11], SMITH122 = [15, 11], ANVIL122 = [16, 11];
+function backToRuin122() {
+  const [dx, dy] = F109.door(), m = makeRuin109(); m.back109 = { map: "village", at: [dx, dy + 1] };
+  dg = null; interior = m; rebuildSolid(); enter(m, STAIR122[0], STAIR122[1] + 1, "up"); updateHp();
+}
+function enterDeep122(n) {
+  n = Math.max(1, n | 0);
+  const fl = n % 5 === 0 ? genBoss122(n) : genDeep122(n); if (!fl) { toast(null, "階段の先がくずれていた…もう一度ためしてね"); return; }
+  dg = fl; dg.deep122 = n; dg.mobs.forEach(m => m.home = dg.map);
+  const F = f122(); F.best = Math.max(F.best, n); world.stats.deep122 = F.best;
+  rebuildSolid(); enter(dg.map, dg.map.up[0] + 1, dg.map.up[1], "right");
+  try { fixRocks43(); armGuard43(); } catch (e) { }
+  updateHp(); saveWorld();
+  if (fl.bs122) { toast(null, `地下${n}階　${fl.bs122.e.name}があらわれた！`); se13("jackpot"); }
+  else toast(null, `遺跡の深層 地下${n}階`);
+}
+F122.enter = enterDeep122; F122.back = backToRuin122;
+F122.hit = (x, y) => swordHit(x, y); F122.dg = () => dg;
+function openDeep122() {
+  const H = hid109();
+  if (!H.ruinDone) { toast("s109_stair122", "奥へ続く階段は、ふしぎな力で封じられている…（4本の柱のなぞをとくと開くらしい）"); return; }
+  const F = f122();
+  openModal("遺跡の深層", "dark", b => {
+    b.innerHTML = `<p class="mtext">ひんやりした風が、下からふいてくる。階段はどこまでも続いているらしい。</p>
+      <p class="mtext small">下へ行くほど魔物が強くなる。5階ごとに「番人」がいて、たおすとそこから続きを始められる。たおれても、お金や持ち物はなくならないよ（遺跡の入口で起きる）。</p>
+      <p class="mtext small">いちばん深く行った階：<b>地下${F.best}階</b>　・たおした番人：${F.boss}回　・いまのHP ${Math.round(world.hp)}</p>
+      <div class="row2"><button class="btn" type="button" data-d122="1">地下1階から</button>${F.cp ? `<button class="btn" type="button" data-d122="${F.cp + 1}">地下${F.cp + 1}階から（続き）</button>` : ""}</div>
+      ${world.inv.some(x => x && ITEMS[x.id]?.weapon) ? "" : `<p class="mtext small"><b>剣を持っていないみたい。</b>素手だととても弱いよ。</p>`}`;
+    b.querySelectorAll("[data-d122]").forEach(x => x.onclick = () => { closeModal(); enterDeep122(+x.dataset.d122); });
+  });
+}
+F122.open = openDeep122;
+const _makeRuin122 = makeRuin109;
+makeRuin109 = function () {
+  const m = _makeRuin122.apply(this, arguments);
+  try {
+    const open = !!hid109().ruinDone;
+    m.spr("stair122", STAIR122[0], STAIR122[1], [STAIR122], () => openDeep122(), open ? "深層へ" : null);
+    m.spr("anvil122", ANVIL122[0], ANVIL122[1], [ANVIL122], () => openForge122());
+    m.npc(NPC122.smith, SMITH122[0], SMITH122[1], "left", () => openForge122());
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v122 ruin"); }
+  return m;
+};
+const NPC122 = { smith: { name: "鍛冶師 テツ", cfg: { skin: "小麦色", hair: "ショート", hairc: "黒", top: "Tシャツ", topc: "茶", bottom: "パンツ", bottomc: "黒" } } };
+// 階段
+const _onStep122 = F6.onStep;
+F6.onStep = (nx, ny) => {
+  if (dg && dg.deep122 && map === dg.map) {
+    const g = dg.map.ground[ny]?.[nx];
+    if (g === "ladder_up") { backToRuin122(); toast(null, "遺跡にもどった"); return true; }
+    if (g === "ladder_down") { enterDeep122(dg.deep122 + 1); return true; }
+  }
+  return _onStep122(nx, ny);
+};
+// たおれても失わない
+const _faint122 = faint;
+faint = function () {
+  if (dg && dg.deep122) {
+    const n = dg.deep122; world.hp = 50; backToRuin122(); saveWorld();
+    toast(null, `地下${n}階でたおれた…遺跡で目がさめた（お金も持ち物もそのまま・HP 50）`); return;
+  }
+  return _faint122.apply(this, arguments);
+};
+// ---- 剣でたおしたとき ----
+const _swordHit122 = swordHit;
+swordHit = function (tx, ty) {
+  if (!dg || !dg.deep122) return _swordHit122.apply(this, arguments);
+  const n0 = dg.drops.length, fl = dg;
+  const r = _swordHit122.apply(this, arguments);
+  try {
+    for (let i = n0; i < fl.drops.length; i++) { const d = fl.drops[i]; if ((d.id === "jelly" || d.id === "wing") && Math.random() < .6) d.id = "shard122"; }
+    const B = fl.bs122;
+    if (B && !B.dead && !fl.mobs.includes(B.e)) bossDown122(fl);
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v122 hit"); }
+  return r;
+};
+function bossDown122(fl) {
+  const B = fl.bs122, n = fl.deep122, F = f122(); B.dead = true; B.warn = null;
+  const first = !F.cleared[n]; F.cleared[n] = 1; F.boss++; F.cp = Math.max(F.cp, n);
+  const cry = 1 + Math.floor(n / 10) + (first ? 1 : 0), g = first ? 3000 * n : 0;
+  addItem("crystal122", cry - 1, true); if (g) addMoney(g);
+  const [dx, dy] = fl.map.downAt122; fl.map.ground[dy][dx] = "ladder_down"; fl.map.down = [dx, dy];
+  world.stats.boss122 = F.boss; se13("win"); saveWorld();
+  F7.notify(`${B.e.name}をたおした！ 深淵の結晶×${cry}${g ? `・${fmt(g)}` : ""}　右下に下への階段があらわれた（次からは地下${n + 1}階から始められる）`, "crystal122");
+  try { checkTitles42(); } catch (e) { }
+}
+// ---- 番人の攻撃（赤いマスの予告のあとで） ----
+function pattern122(B) {
+  const e = B.e, k = B.k, T = new Set(), add = (x, y) => { if (x > 0 && y > 1 && x < dg.map.w - 1 && y < dg.map.h - 1 && !dg.map.base[y][x]) T.add(x + "," + y); };
+  const kinds = k >= 3 ? ["ring", "cross", "rain", "x"] : ["ring", "cross", "rain"], kind = kinds[rnd(kinds.length)];
+  if (kind === "ring") for (let y = e.y - 2; y <= e.y + 2; y++) for (let x = e.x - 2; x <= e.x + 2; x++) if (x !== e.x || y !== e.y) add(x, y);
+  if (kind === "cross") for (let i = 1; i <= 8; i++) { add(e.x + i, e.y); add(e.x - i, e.y); add(e.x, e.y + i); add(e.x, e.y - i); }
+  if (kind === "x") for (let i = 1; i <= 7; i++) { add(e.x + i, e.y + i); add(e.x - i, e.y + i); add(e.x + i, e.y - i); add(e.x - i, e.y - i); for (let j = -1; j <= 1; j++) for (let l = -1; l <= 1; l++) add(e.x + j, e.y + l); }
+  if (kind === "rain") { const c = [[player.x, player.y]]; for (let i = 0; i < 2 + Math.min(3, k); i++) c.push([player.x + rnd(9) - 4, player.y + rnd(7) - 3]); for (const [cx, cy] of c) for (let y = cy - 1; y <= cy + 1; y++) for (let x = cx - 1; x <= cx + 1; x++) add(x, y); }
+  return { kind, tiles: T, dmg: Math.round(14 * (1 + (k - 1) * .25)) };
+}
+const period122 = k => Math.max(2200, 3400 - (k - 1) * 150), warn122 = k => Math.max(900, 1300 - (k - 1) * 50);
+const _f7update122 = F7.update;
+F7.update = function (dt) {
+  const r = _f7update122.apply(this, arguments);
+  try {
+    const B = dg && dg.bs122; if (!B || B.dead || map !== dg.map) return r;
+    const now = performance.now();
+    if (modalOpen) { B.next += dt * 1000; if (B.warn) B.warn.at += dt * 1000; return r; }
+    if (B.warn) B.e.think = .3; // 予告のあいだは止まる
+    if (!B.warn && now >= B.next - warn122(B.k)) { B.warn = { ...pattern122(B), at: B.next }; B.e.say = { text: "ゴゴゴ…", until: now + 600 }; }
+    if (B.warn && now >= B.warn.at) {
+      const W = B.warn; B.warn = null; B.boom = { tiles: W.tiles, t: now }; B.next = now + period122(B.k);
+      if (W.tiles.has(player.x + "," + player.y)) hurtPlayer(W.dmg); else se13("small");
+    }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v122 update"); }
+  return r;
+};
+const _addToList122 = F7.addToList;
+F7.addToList = (list, now) => {
+  _addToList122(list, now);
+  try {
+    const B = dg && dg.bs122; if (!B || B.dead || map !== dg.map) return;
+    const tiles = (set, col) => () => { ctx.fillStyle = col; for (const k of set) { const [x, y] = k.split(",").map(Number); ctx.fillRect(x * TS, y * TS, TS, TS); } };
+    if (B.warn) { const left = Math.max(0, B.warn.at - performance.now()), a = .22 + .2 * Math.sin(now / (left < 400 ? 40 : 90)); list.push({ s: -1e9, d: tiles(B.warn.tiles, `rgba(230,50,50,${a})`) }); }
+    if (B.boom && now - B.boom.t < 260) list.push({ s: -1e9, d: tiles(B.boom.tiles, `rgba(255,200,90,${.5 * (1 - (now - B.boom.t) / 260)})`) });
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v122 draw"); }
+};
+
+// ---------- 腕前の Lv20 の先（Lv20+1, +2, …） ----------
+const TOP122 = () => SK_T[SK_T.length - 1];
+function stars122(k) {
+  let x = (world.skills && world.skills[k]) || 0, acc = TOP122(), need = 1500, s = 0;
+  if (x < acc) return { s: 0, have: 0, need: 0 };
+  while (x >= acc + need && s < 9999) { acc += need; s++; need += 100; }
+  return { s, have: x - acc, need };
+}
+F122.stars = stars122;
+const starAll122 = () => Object.keys(SKILL).reduce((a, k) => a + stars122(k).s, 0);
+F122.starAll = starAll122;
+const _addXp122 = addXp;
+addXp = function (k) {
+  const b = SKILL[k] ? stars122(k).s : 0;
+  const r = _addXp122.apply(this, arguments);
+  try { if (SKILL[k]) { const a = stars122(k).s; if (a > b) { F7.notify(`${SKILL[k][0]}が Lv20+${a} に！（${SKILL[k][0]}の売値+0.5%・剣の攻撃+1）`, SK_ICON[k]); F7.dirty = true; } } } catch (e) { }
+  return r;
+};
+F7.addXp = addXp;
+{
+  const _sm = F7.sellMul;
+  F7.sellMul = id => {
+    let m = _sm(id); const it = ITEMS[id]; if (!it || !world.skills) return m;
+    const k = CROPS7.includes(id) || ANIMAL_GOODS.includes(id) ? "farm" : it.fish ? "fish" : id.startsWith("dish_") ? "craft" : MATS7.includes(id) ? "gather" : "";
+    if (k) m += Math.min(.25, stars122(k).s * .005);
+    return m;
+  };
+}
+const _renderVillage122 = renderVillage;
+renderVillage = function () {
+  const r = _renderVillage122.apply(this, arguments);
+  try {
+    const els = $("villageBody").querySelectorAll(".sk7"), keys = Object.keys(SKILL);
+    els.forEach((el, i) => {
+      const k = keys[i]; if (!k || skLv(k) < 20) return; const S = stars122(k), b = el.querySelector("b");
+      if (b) b.textContent = b.textContent.replace(/Lv20$/, `Lv20+${S.s}`);
+      el.querySelector("div")?.insertAdjacentHTML("beforeend", `<div class="st122">Lv20の先 ${bar7(S.have / S.need * 100)}<span>つぎの +${S.s + 1} まで あと ${S.need - S.have}・いま 売値+${(Math.min(25, S.s * .5)).toFixed(1)}%</span></div>`);
+    });
+    const all = starAll122();
+    if (all) els[els.length - 1]?.insertAdjacentHTML("afterend", `<p class="note">Lv20の先の合計 +${all}：剣の攻撃 +${all}</p>`);
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v122 village"); }
+  return r;
+};
+
+// ---------- 鍛冶師テツ：剣の強化 ----------
+const SWORD122 = ["sword_wood", "sword_iron"], MAXF122 = 20;
+const flv122 = id => Math.max(0, Math.min(MAXF122, (f122().forge[id] | 0)));
+const cost122 = L => ({ g: 2000 * L * L, shard: 2 + 2 * L, cry: L >= 5 ? Math.ceil((L - 4) / 2) : 0 });
+F122.cost = cost122; F122.flv = flv122;
+for (const id of SWORD122) {
+  const it = ITEMS[id], base = it.weapon, nm = it.name;
+  Object.defineProperty(it, "weapon", { enumerable: true, configurable: true, get() { try { return base + flv122(id) * 2 + starAll122(); } catch (e) { return base; } } });
+  Object.defineProperty(it, "name", { enumerable: true, configurable: true, get() { try { const L = flv122(id); return L ? `${nm} +${L}` : nm; } catch (e) { return nm; } } });
+}
+function openForge122(note) {
+  openModal("鍛冶師 テツ", "shop", b => {
+    const rows = SWORD122.map(id => {
+      const L = flv122(id), have = count(id) > 0 || f122().forge[id] > 0;
+      if (!have) return "";
+      if (L >= MAXF122) return itemLi(id, `攻撃 ${ITEMS[id].weapon}・これ以上は鍛えられない`, "");
+      const c = cost122(L + 1), ok = count(id) > 0 && world.money >= c.g && count("shard122") >= c.shard && count("crystal122") >= c.cry;
+      return itemLi(id, `攻撃 ${ITEMS[id].weapon} → ${ITEMS[id].weapon + 2}<br>+${L + 1} にするには：${fmt(c.g)}・深層のかけら×${c.shard}${c.cry ? `・深淵の結晶×${c.cry}` : ""}`, `<button class="btn" type="button" data-f122="${id}" ${ok ? "" : "disabled"}>鍛える</button>`);
+    }).join("");
+    b.innerHTML = `${note ? `<p class="mtext small"><b>${esc(note)}</b></p>` : ""}<p class="mtext">「深層で拾ったかけらと結晶があれば、剣をもっと強くしてやれるぞ。失敗はしない。まかせとけ」</p>
+      <div class="list">${rows || `<p class="mtext">剣を持ってきたら、鍛えてやるよ（木の剣・鉄の剣）。</p>`}</div>
+      <p class="mtext small">持っている物：深層のかけら×${count("shard122")}・深淵の結晶×${count("crystal122")}<br>+1 ごとに攻撃+2（+20まで）。強くした分は、同じ種類の剣ならどれにも効く。腕前の Lv20 の先（+${starAll122()}）の分も、攻撃に入っているよ。</p>`;
+    b.querySelectorAll("[data-f122]").forEach(x => x.onclick = () => {
+      const id = x.dataset.f122, L = flv122(id); if (L >= MAXF122 || !count(id)) return; const c = cost122(L + 1);
+      if (world.money < c.g || count("shard122") < c.shard || count("crystal122") < c.cry) return;
+      addMoney(-c.g); removeItem("shard122", c.shard); if (c.cry) removeItem("crystal122", c.cry);
+      f122().forge[id] = L + 1; world.stats.forge122 = Math.max(world.stats.forge122 | 0, L + 1); se13("chip"); saveWorld();
+      try { checkTitles42(); } catch (e) { }
+      openForge122(`カン！カン！…${ITEMS[id].name} になった！`);
+    });
+  });
+}
+F122.forge = openForge122;
+const TTL122 = [
+  ["深層の探検家", "遺跡の深層で地下10階まで行く", () => (world.f122?.best | 0) >= 10],
+  ["深淵をのぞく者", "遺跡の深層で地下30階まで行く", () => (world.f122?.best | 0) >= 30],
+  ["番人たおし", "遺跡の深層の番人をたおす", () => (world.f122?.boss | 0) >= 1],
+  ["名工の剣", "剣を +10 まで鍛える", () => (world.stats.forge122 | 0) >= 10],
+  ["限界の先へ", "腕前のどれかを Lv20+1 にする", () => starAll122() >= 1],
+];
+for (const t of TTL122) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["遺跡の深層と鍛冶師", "crystal122", `<p>地下の遺跡の柱のなぞをとくと、奥の階段から「遺跡の深層」へ行けます。</p>
+  <ul><li>階はどこまでも続きます。下へ行くほど魔物が強くなり、「深層のかけら」がよく出ます</li>
+  <li>5階ごとに「番人」がいます。ゆっくり近づいてきて、床が赤くなったあとに攻撃してきます。赤いマスからはなれよう</li>
+  <li>番人をたおすと「深淵の結晶」が手に入り、次からはその先の階から始められます（はじめてたおすとお金も）</li>
+  <li>たおれても、お金や持ち物はなくなりません。遺跡で目がさめます</li>
+  <li>遺跡の鍛冶師テツに、かけら・結晶・お金をわたすと、剣を +20 まで強くできます（+1 ごとに攻撃+2）</li>
+  <li>腕前（農業・釣り・採集・クラフト）は Lv20 の先も「Lv20+1」「+2」…と上がります。+1 ごとに、その腕前の売値+0.5%（25%まで）と、剣の攻撃+1</li></ul>`]);
+F122.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -27140,7 +27500,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

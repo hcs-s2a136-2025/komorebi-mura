@@ -3944,7 +3944,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.68.0";
+const CLIENT_VERSION = "0.69.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6022,6 +6022,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.69.0", date: "2026/11/06", title: "自由レートの麻雀", items: [
+    "麻雀に「自由レート」：1000点あたりの金額を、10G〜20,000Gのあいだで自分で決められるようにした（ひとりで打つ卓も、みんなの卓も）",
+    "こもれび闘鶏の育成：1日の回数（無料3回・コインで3回）を、にわとり1羽ずつにした。ほかの子も育てられるよ",
+    "こもれびつなぎ：作物ごとにマスの色を変えて、トマトといちごを見分けやすくした",
+  ] },
   { v: "0.68.0", date: "2026/11/06", title: "南の島のくらし", items: [
     "南の島で、浜の光っているところから貝がら（さくら貝・ほら貝・まれに真珠）をひろえるようにした",
     "島のおばあナミの店で「宝の地図」（1日1枚）が買えるように。浜の×じるしを掘ると宝が出てくる",
@@ -17156,6 +17161,8 @@ setInterval(() => { try { if (!world || !world.stats) return; const I = bingoInf
 
 // =================== こもれびつなぎ ===================
 const TSK92 = ["tomato", "carrot", "cabbage", "strawberry", "eggplant"];
+// マスの色（v122：トマトといちごが見分けにくかったので、作物ごとに色をつけた）
+const TSBG92 = { tomato: "#ffbb78", carrot: "#fff09a", cabbage: "#c8eea0", strawberry: "#ffc2e2", eggplant: "#d6c8ff" };
 function playTsu92() {
   const COLS = 6, ROWS = 7, N = COLS * ROWS, o = g92().tsu; o.plays++; saveWorld();
   let grid = Array.from({ length: N }, () => rnd(TSK92.length)), score = 0, time = 60, chain = [], busy = false, ended = false, found = [], maxC = 0, tick = null;
@@ -17173,7 +17180,7 @@ function playTsu92() {
   }, () => { clearInterval(tick); if (!ended) { ended = true; finish92("tsu", true, score, []); } });
   const gEl = $("ts92g"), cells = [...gEl.children];
   const paint = () => {
-    cells.forEach((el, i) => { const im = el.firstChild, k = ASSETS[TSK92[grid[i]]]; if (im.getAttribute("src") !== k) im.src = k; el.classList.toggle("on", chain.includes(i)); el.classList.toggle("head", chain.length > 0 && chain[chain.length - 1] === i); });
+    cells.forEach((el, i) => { const im = el.firstChild, k = ASSETS[TSK92[grid[i]]]; if (im.getAttribute("src") !== k) im.src = k; el.style.background = TSBG92[TSK92[grid[i]]] || ""; el.classList.toggle("on", chain.includes(i)); el.classList.toggle("head", chain.length > 0 && chain[chain.length - 1] === i); });
     $("ts92s").textContent = fmt92(score); $("ts92c").textContent = chain.length >= 2 ? `${chain.length}つ` : "";
     $("ts92bar").style.width = Math.max(0, time / 90 * 100) + "%";
   };
@@ -23068,7 +23075,9 @@ function tori115() {
   if (!t.ch || typeof t.ch !== "object" || Array.isArray(t.ch)) t.ch = {};
   if (!t.mig) migrate115(t);
   for (const k of ["free", "paid", "total"]) t[k] = Number.isFinite(+t[k]) ? Math.max(0, Math.floor(+t[k])) : 0;
-  const d = jstDay98(); if (t.d !== d) { t.d = d; t.free = 0; t.paid = 0; }
+  const d = jstDay98(); if (t.d !== d) { t.d = d; t.free = 0; t.paid = 0; t.per = {}; }
+  // 育成の回数は、にわとり1羽ずつ（v122）。`per[ID]`＝{f 無料, p コイン}。free・paid は全部の合計（記録だけ）
+  if (!t.per || typeof t.per !== "object" || Array.isArray(t.per)) t.per = {};
   const L = coop101(), ids = new Set(L.map(c => c.id));
   for (const id of Object.keys(t.ch)) if (id !== "rent" && !ids.has(id)) delete t.ch[id];   // 引き取ってもらった子
   for (const c of L) if (!t.ch[c.id] || typeof t.ch[c.id] !== "object") t.ch[c.id] = init115(c);
@@ -23078,6 +23087,8 @@ function tori115() {
   return t;
 }
 F115.state = tori115;
+F115.start = (id, how) => startRun115(id, how);
+F115.left = id => runLeft115(id);
 const list115 = () => { const L = coop101(); return L.length ? L : [{ id: "rent", name: "レンタルのコケ吉", hearts: 0 }]; };
 const chOf115 = id => { const T = tori115(); return T.ch[id] || (T.ch[id] = init115({ hearts: 0 })); };
 const col115 = (id, x) => x && x.born && x.n < 3 ? "#ffe27a" : TCOLS101[Math.abs(hash101(id)) % TCOLS101.length];
@@ -23099,10 +23110,12 @@ F103.toriList = () => {
 };
 
 // ---- 育成のしくみ ----
-const runLeft115 = () => { const T = tori115(); return { free: Math.max(0, FREE115 - T.free), paid: Math.max(0, PAID115 - T.paid) }; };
+const per115 = (T, id) => { const o = T.per[id] = T.per[id] && typeof T.per[id] === "object" ? T.per[id] : {}; o.f = Math.max(0, o.f | 0); o.p = Math.max(0, o.p | 0); return o; };
+const runLeft115 = id => { const T = tori115(), o = per115(T, id != null ? id : cur101().id); return { free: Math.max(0, FREE115 - o.f), paid: Math.max(0, PAID115 - o.p) }; };
 function startRun115(id, how) {
   const T = tori115(); if (T.run || !T.ch[id]) return false;
-  if (how === "free") { if (T.free >= FREE115) return false; T.free++; } else { if (T.paid >= PAID115) return false; T.paid++; }
+  const o = per115(T, id);
+  if (how === "free") { if (o.f >= FREE115) return false; o.f++; T.free++; } else { if (o.p >= PAID115) return false; o.p++; T.paid++; }
   const n = 2 + (Math.random() < .5 ? 1 : 0), ev = [];
   while (ev.length < n) { const k = 2 + rnd(9); if (!ev.includes(k)) ev.push(k); }   // 2〜10ターン目のあと
   const pool = EV115.map((_, i) => i).sort(() => Math.random() - .5).slice(0, n);
@@ -23213,7 +23226,7 @@ function openIkusei115(note, view) {
     };
     const tabs = () => `<div class="mtabs">${[["home", "にわとり"], ["duel", "果たし状"], ["race", "レース"], ["rank", "ランキング"]].map(([k, l]) => `<button class="chip" type="button" data-tt115="${k}" aria-pressed="${k === "home"}">${l}</button>`).join("")}</div>`;
     const homeHtml = () => {
-      const T = tori115(), c = cur101(), x = c.x, L = coop101(), R = T.run, left = runLeft115(), runC = R && list115().find(y => y.id === R.id);
+      const T = tori115(), c = cur101(), x = c.x, L = coop101(), R = T.run, left = runLeft115(c.id), runC = R && list115().find(y => y.id === R.id);
       const fav = x.fav ? `${FEED115[x.fav][0]}` : "？？？（ごはんをあげるとわかる）";
       return `${tabs()}<div class="ik115"><canvas id="ik115cv" width="160" height="80"></canvas>
         <div class="ik115hd"><b>${esc(c.name)}</b>${x.born && x.n < 3 ? `<span class="ik115badge">ひよこ</span>` : ""}${x.old ? `<span class="ik115badge">古株の名鶏</span>` : ""}<span>総合力 <b>${sum115(x.a)}</b></span><span>育成 ${x.n}回</span>${c.id !== "rent" ? `<span>♥${c.hearts}</span>` : ""}</div>
@@ -23222,9 +23235,9 @@ function openIkusei115(note, view) {
         <div class="ik115sk">${x.sk.length ? x.sk.map(s => `<span title="${esc(SK115[s][1])}">${esc(SK115[s][0])}</span>`).join("") : `<em class="mtext small">スキルはまだない（育成のとちゅうの出来事でもらえる）</em>`}</div>
         <p class="mtext small">好きな餌：${esc(fav)}</p>
         ${R ? `<div class="row2"><button class="btn" type="button" id="ik115cont">育成の続き（${esc(runC ? runC.name : "")}・${R.turn + 1}/${TURNS115}ターン目）</button></div>`
-          : left.free ? `<div class="row2"><button class="btn" type="button" id="ik115go" data-how="free">育成をはじめる（きょうは無料であと${left.free}回）</button></div>`
-          : left.paid ? `<div class="row2"><button class="btn" type="button" id="ik115go" data-how="paid">${COIN115}コインで育成する（きょうはあと${left.paid}回）</button></div>`
-          : `<p class="mtext small">きょうの育成はおしまい。日本時間の0時に、また3回できるよ。</p>`}
+          : left.free ? `<div class="row2"><button class="btn" type="button" id="ik115go" data-how="free">育成をはじめる（${esc(c.name)}はきょう無料であと${left.free}回）</button></div>`
+          : left.paid ? `<div class="row2"><button class="btn" type="button" id="ik115go" data-how="paid">${COIN115}コインで育成する（${esc(c.name)}はきょうあと${left.paid}回）</button></div>`
+          : `<p class="mtext small">${esc(c.name)}のきょうの育成はおしまい。ほかの子はまだ育成できるよ。日本時間の0時に、また3回ずつできる。</p>`}
         <p class="mtext small">1回12ターン（5分くらい）。走りこみ・羽ばたき・つつき・おさんぽで能力が伸びて、体力が少ないと失敗しやすい。育成するたびに少しずつ強くなる（能力は${CAP115}まで）。${L.length ? "" : "牧場ににわとりがいないので、レンタルのにわとり。こもれび牧場で迎えたり、タマゴをかえしたりできるよ。"}</p>
         <p class="mtext small">餌は作業台で「飼料1こ＋作物1こ → 3こ」。ごはんで食べさせると、その能力の練習が3ターン1.5倍。</p></div>`;
     };
@@ -23396,7 +23409,7 @@ const TTL115 = [["古株の名鶏", "前から闘鶏できたえていたにわ�
   ["ひよこ育て", "タマゴからかえしたひよこを、育成で5回育てる", () => Object.values(world.tori115?.ch || {}).some(x => x && x.born && (x.n | 0) >= 5)],
   ["育成の達人", "こもれび闘鶏の育成を30回やりとげる", () => (world.tori115?.total || 0) >= 30]];
 for (const t of TTL115) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
-GUIDE54.push(["闘鶏の育成", "tfeed_spd", `<p>スマホの「ゲーム」→「こもれび闘鶏」で、にわとりを12ターンかけて育てます（1日3回まで無料・そのあとは${COIN115}コインで1日あと3回）。</p>
+GUIDE54.push(["闘鶏の育成", "tfeed_spd", `<p>スマホの「ゲーム」→「こもれび闘鶏」で、にわとりを12ターンかけて育てます（1羽ずつ、1日3回まで無料・そのあとは${COIN115}コインで1日あと3回）。</p>
 <p>毎ターン、走りこみ（はやさ）・羽ばたき（脚力）・つつき（かしこさ）・おさんぽ（持久力）・休む・ごはん からえらびます。練習は短いタイミングのミニゲーム。体力が少ないと失敗しやすく、調子がいいほどよく伸びます。とちゅうの出来事でえらんだ答えによって、果たし状のレースで働くスキルをおぼえます。</p>
 <p>餌は作業台で「飼料1こ＋作物1こ → 3こ」：青菜ペレット（キャベツ・ほうれん草）・雑穀ミックス（とうもろこし・かぼちゃ）・プロテイン飼料（じゃがいも。こもれび牧場でも買える）・にんじんスティック（にんじん・カブ）・赤い実ブレンド（トマト・いちご・なす）。ごはんで食べさせると、その能力の練習が3ターン1.5倍。子ごとに好きな餌があります。</p>
 <p>こもれび牧場の「たまごをかえす」で、タマゴからひよこが生まれます。まっさらから育てられて、はじめの5回は伸びやすい。</p>`]);

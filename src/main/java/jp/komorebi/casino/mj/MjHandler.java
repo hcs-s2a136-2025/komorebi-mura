@@ -10,7 +10,7 @@ import jp.komorebi.ws.PlayerSession;
 
 /**
  * {"type":"mj","act":"list|create|sit|start|leave|look|discard|tsumo|kan|kyuushu|ron|pon|minkan|chi|pass|next","a":0,"b":0} … みんなの麻雀。
- * create: a=1で半荘戦（0は東風戦）、b=レート（0ノーレート〜4デカピン）／sit: a=卓の番号／discard: a=牌、b=1で立直／kan: a=牌の種類／chi: a=候補の番号
+ * create: a=1で半荘戦（0は東風戦）・2で鳴きなし、b=レート（0ノーレート〜4デカピン。10以上は1000点あたりのGを自分で決めた自由レート・20,000まで）／sit: a=卓の番号／discard: a=牌、b=1で立直／kan: a=牌の種類／chi: a=候補の番号
  */
 @Component
 public class MjHandler implements MessageHandler {

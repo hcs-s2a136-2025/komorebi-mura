@@ -812,15 +812,23 @@ function setupMahjongLobby(cb, body) {
   if (K.net && K.net.connected() && S.mjMode !== "solo") { if (S.mjMode === "multi") setupMJMulti(cb, body); else mjChoice(cb, body); return; }
   S.mjRate = S.mjRate || 50;
   cb.innerHTML = `<p class="mtext">常連の3人（${CPU.join("・")}）と東風戦。門前限定（ポン・チー・カンなし）、立直・ツモ・ロンあり、ウマ10-20。最終の点数とウマに応じてお金をやり取りします。払いきれない負け分は、十日屋の貸せる上限までが借金になります。途中で卓を離れるとラス扱いで精算します。</p>
-    <div class="mtabs" id="rates">${RATES.map(([r, l]) => `<button class="chip" type="button" data-rate="${r}" aria-pressed="${S.mjRate === r}">${l}</button>`).join("")}</div>
+    <div class="mtabs" id="rates">${RATES.map(([r, l]) => `<button class="chip" type="button" data-rate="${r}" aria-pressed="${!S.mjFree && S.mjRate === r}">${l}</button>`).join("")}<button class="chip" type="button" id="mjFreeChip" aria-pressed="${!!S.mjFree}">自由レート</button></div>
+    <div id="mjFreeWrap" ${S.mjFree ? "" : "hidden"}>${mjFreeBox("mjFreeS", S.mjFree ? S.mjRate : 1000)}</div>
     <p class="mtext small" id="rateinfo"></p>
     <div class="row2"><button class="btn" type="button" id="sit">卓につく</button>${K.net && K.net.connected() ? `<button class="btn light" type="button" id="mjToMulti">みんなの卓に行く</button>` : ""}</div>
     <details class="paytable"><summary>役と点数（この卓のルール）</summary><p class="mtext small">役：立直、門前清自摸和、断么九、平和、一盃口、役牌、一気通貫、三色同順、三暗刻、対々和、七対子、混一色、清一色、ドラ・裏ドラ。役満：国士無双、四暗刻、大三元、字一色。符は簡略化して平和ツモ20符・平和ロン30符・七対子25符・それ以外はツモ30符／ロン40符。親は局ごとに交代（連荘なし）。流局はテンパイ料3000点。フリテンの人はロンできません。</p></details>`;
   const info = () => { const r = S.mjRate; cb.querySelector("#rateinfo").textContent = `目安：トップで+${fmt((15 + 20) * r)}前後、ラスで${fmt((-15 - 20) * r)}前後（素点±15000の場合）`; };
   info();
   const toMulti = cb.querySelector("#mjToMulti"); if (toMulti) toMulti.onclick = () => { S.mjMode = "multi"; setupMJMulti(cb, body); };
-  cb.querySelectorAll("[data-rate]").forEach(b => b.onclick = () => { S.mjRate = +b.dataset.rate; cb.querySelectorAll("[data-rate]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); info(); });
+  const fChip = cb.querySelector("#mjFreeChip"), fWrap = cb.querySelector("#mjFreeWrap"), fIn = cb.querySelector("#mjFreeS");
+  const press = on => { cb.querySelectorAll("[data-rate]").forEach(x => x.setAttribute("aria-pressed", String(x === on))); fChip.setAttribute("aria-pressed", String(!on)); fWrap.hidden = !!on; };
+  cb.querySelectorAll("[data-rate]").forEach(b => b.onclick = () => { S.mjFree = false; S.mjRate = +b.dataset.rate; press(b); info(); });
+  const setFree = v => { S.mjFree = true; S.mjRate = mjFreeVal(v); fIn.value = S.mjRate; press(null); info(); };
+  fChip.onclick = () => setFree(fIn.value);
+  fIn.onchange = () => setFree(fIn.value);
+  fWrap.querySelectorAll("[data-fq]").forEach(b => b.onclick = () => setFree(b.dataset.fq));
   cb.querySelector("#sit").onclick = () => {
+    if (S.mjFree) S.mjRate = mjFreeVal(fIn.value);
     const need = S.mjRate * 35, room = K.loanRoom ? K.loanRoom("yami") : 0;
     if (K.world.money + room < need) { cb.querySelector("#rateinfo").textContent = `このレートだと、ラスのとき ${fmt(need)} くらい払うことになるよ。所持金と十日屋の借入枠（あと ${fmt(room)}）を合わせても足りないので、レートを下げてね`; return; }
     if (K.betAllowed && !K.betAllowed(S.mjRate * 35)) { cb.querySelector("#rateinfo").textContent = K.betMsg() + "（このレートだと負けが大きくなるかも）"; return; } startGame(S.mjRate); };
@@ -831,7 +839,11 @@ function setupMahjongLobby(cb, body) {
 }
 // ---------- みんなの麻雀（オンライン。ルールと進行はサーバー） ----------
 const MJ_RATES = [[0, "ノーレート"], [10, "点1"], [50, "点5"], [100, "テンピン"], [500, "デカピン"]];
-const mjM = { cb: null, body: null, lobby: null, st: null, err: "", deadline: 0, timer: 0, sel: false, leaveArmed: false, len: 0, rate: 0 };
+// 自由レート（v122）：1000点あたりの G を自分で決める（10〜20,000・10G きざみ）。サーバーの MjGame.CUSTOM と同じ
+const MJ_FREE_MIN = 10, MJ_FREE_MAX = 20000, MJ_FREE = 5;
+const mjFreeVal = v => Math.max(MJ_FREE_MIN, Math.min(MJ_FREE_MAX, Math.round((+v || 0) / 10) * 10));
+const mjFreeBox = (id, v) => `<div class="betrow mjfree"><span class="lbl">1000点＝</span><input type="number" inputmode="numeric" id="${id}" min="${MJ_FREE_MIN}" max="${MJ_FREE_MAX}" step="10" value="${v}"><span class="lbl">G（${MJ_FREE_MIN}〜${MJ_FREE_MAX.toLocaleString()}）</span>${[1000, 3000, 5000, 10000, 20000].map(g => `<button class="chip" type="button" data-fq="${g}">${g.toLocaleString()}</button>`).join("")}</div>`;
+const mjM = { cb: null, body: null, lobby: null, st: null, err: "", deadline: 0, timer: 0, sel: false, leaveArmed: false, len: 0, rate: 0, free: 1000 };
 const REDS = new Set([16, 52, 88]);
 const tid = (id, cls = "", attrs = "") => tileHtml(id >> 2, cls + (REDS.has(id) ? " aka" : ""), attrs);
 const WIND = ["東", "南", "西", "北"];
@@ -1000,20 +1012,28 @@ function renderMJLobby(cb, err) {
   const L = mjM.lobby, tables = L ? L.tables : [];
   cb.innerHTML = `<div class="mjlobby">
     <h3 class="lbl">卓の一覧</h3>
-    <div class="list">${tables.length ? tables.map(t => { const free = t.seats.some(s => !s); return `<div class="li"><span class="nm">卓${t.id}　${t.south ? "半荘戦" : "東風戦"}・${esc(MJ_RATES[t.rate]?.[1] || "")}${t.noNaki ? "・鳴きなし" : ""}
+    <div class="list">${tables.length ? tables.map(t => { const free = t.seats.some(s => !s); return `<div class="li"><span class="nm">卓${t.id}　${t.south ? "半荘戦" : "東風戦"}・${esc(t.rateName || MJ_RATES[t.rate]?.[1] || "")}${t.noNaki ? "・鳴きなし" : ""}
         <span class="sub2">${t.seats.map(s => s ? esc(s) : "空席").join("・")}　${t.phase === "wait" ? "メンバー待ち" : "対局中"}</span></span>
-        <span class="acts">${t.phase === "wait" && free ? `<button class="btn" type="button" data-sit="${t.id}" data-rate="${t.rate}">座る</button>` : ""}</span></div>`; }).join("") : `<p class="mtext">いまは卓がありません。卓を立ててみよう。</p>`}</div>
+        <span class="acts">${t.phase === "wait" && free ? `<button class="btn" type="button" data-sit="${t.id}" data-perk="${t.perK != null ? t.perK : (MJ_RATES[t.rate] || [0])[0]}">座る</button>` : ""}</span></div>`; }).join("") : `<p class="mtext">いまは卓がありません。卓を立ててみよう。</p>`}</div>
     <h3 class="lbl">卓を立てる</h3>
     <div class="mtabs">${["東風戦", "半荘戦"].map((l, i) => `<button class="chip" type="button" data-len="${i}" aria-pressed="${mjM.len === i}">${l}</button>`).join("")}</div>
     <div class="mtabs">${["鳴きあり", "鳴きなし"].map((l, i) => `<button class="chip" type="button" data-nk="${i}" aria-pressed="${(mjM.noNaki ? 1 : 0) === i}">${l}</button>`).join("")}</div>
-    <div class="mtabs">${MJ_RATES.map(([g, l], i) => `<button class="chip" type="button" data-rt="${i}" aria-pressed="${mjM.rate === i}">${l}${g ? `（1000点=${g}G）` : ""}</button>`).join("")}</div>
+    <div class="mtabs">${MJ_RATES.map(([g, l], i) => `<button class="chip" type="button" data-rt="${i}" aria-pressed="${mjM.rate === i}">${l}${g ? `（1000点=${g}G）` : ""}</button>`).join("")}<button class="chip" type="button" data-rt="${MJ_FREE}" aria-pressed="${mjM.rate === MJ_FREE}">自由レート</button></div>
+    ${mjM.rate === MJ_FREE ? mjFreeBox("mjFreeM", mjM.free) + `<p class="mtext small">目安：ラスで ${fmt(mjM.free * 45)} くらい払うことがあるよ</p>` : ""}
     <p class="mtext small">「鳴きなし」の卓では、ポン・チー・明槓ができません（ロン・暗槓・リーチはできます）。門前でじっくり打ちたいときに。<br>麻雀がはじめてなら、ノーレートの卓がおすすめ。卓では「ヒント」（おすすめの牌やテンパイを教えてくれる）と「おまかせ打ち」（CPUが代わりに打つ）が使えます。</p>
     ${err}<div class="row2"><button class="btn" type="button" id="mjCreate">卓を立てる</button><button class="btn light" type="button" id="mjSoloGo">ひとりで打つ</button></div>${mjGuide}${mjRules}</div>`;
   cb.querySelectorAll("[data-len]").forEach(b => b.onclick = () => { mjM.len = +b.dataset.len; renderMJM(); });
   cb.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => { mjM.rate = +b.dataset.rt; renderMJM(); });
   cb.querySelectorAll("[data-nk]").forEach(b => b.onclick = () => { mjM.noNaki = b.dataset.nk === "1"; renderMJM(); });
-  cb.querySelectorAll("[data-sit]").forEach(b => b.onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[+b.dataset.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "sit", a: +b.dataset.sit }); });
-  cb.querySelector("#mjCreate").onclick = () => { mjM.err = ""; if (!mjCanAfford(MJ_RATES[mjM.rate][0])) { renderMJM(); return; } K.net.send({ type: "mj", act: "create", a: mjM.len | (mjM.noNaki ? 2 : 0), b: mjM.rate }); };
+  const fm = cb.querySelector("#mjFreeM");
+  if (fm) { fm.onchange = () => { mjM.free = mjFreeVal(fm.value); renderMJM(); }; cb.querySelectorAll("[data-fq]").forEach(b => b.onclick = () => { mjM.free = +b.dataset.fq; renderMJM(); }); }
+  cb.querySelectorAll("[data-sit]").forEach(b => b.onclick = () => { mjM.err = ""; if (!mjCanAfford(+b.dataset.perk || 0)) { renderMJM(); return; } K.net.send({ type: "mj", act: "sit", a: +b.dataset.sit }); });
+  cb.querySelector("#mjCreate").onclick = () => {
+    mjM.err = ""; if (fm) mjM.free = mjFreeVal(fm.value);
+    const free = mjM.rate === MJ_FREE, g = free ? mjM.free : MJ_RATES[mjM.rate][0];
+    if (!mjCanAfford(g)) { renderMJM(); return; }
+    K.net.send({ type: "mj", act: "create", a: mjM.len | (mjM.noNaki ? 2 : 0), b: free ? g : mjM.rate });
+  };
   cb.querySelector("#mjSoloGo").onclick = () => { S.mjMode = "solo"; clearInterval(mjM.timer); K.net.onMj = null; setupMahjongLobby(cb, mjM.body); };
 }
 function later(fn, ms) { const id = setTimeout(() => { if (mj && mj.alive) fn(); }, window.__mjFast ? 3 : ms); mj.timers.push(id); }

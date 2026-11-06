@@ -37,6 +37,18 @@ public final class MjGame {
     public static final long TURN_MS = 20_000, CLAIM_MS = 9_000, RESULT_MS = 15_000, END_MS = 40_000, CPU_MS = 650, RIICHI_AUTO_MS = 900, WAIT_OFFLINE_MS = 20_000, ASSIST_MS = 1_300;
     public static final long[] RATES = { 0, 10, 50, 100, 500 };
     public static final String[] RATE_NAMES = { "ノーレート", "点1（1000点=10G）", "点5（1000点=50G）", "テンピン（1000点=100G）", "デカピン（1000点=500G）" };
+    /** 自分で決めるレート（create の b に、1000点あたりの G をそのまま入れる。10〜20,000・10G きざみ。rate は CUSTOM） */
+    public static final int CUSTOM = 5;
+    public static final long CUSTOM_MIN = 10, CUSTOM_MAX = 20_000;
+
+    static long perKOf(int rate, long perK) {
+        if (rate == CUSTOM) return Math.max(CUSTOM_MIN, Math.min(CUSTOM_MAX, perK / 10 * 10));
+        return RATES[Math.max(0, Math.min(RATES.length - 1, rate))];
+    }
+
+    static String rateNameOf(int rate, long perK) {
+        return rate == CUSTOM ? "自由レート（1000点=" + String.format("%,d", perK) + "G）" : RATE_NAMES[Math.max(0, Math.min(RATE_NAMES.length - 1, rate))];
+    }
     private static final String[] CPU_NAMES = { "銀次", "タツ", "ミドリ", "ゲン", "ハル", "ミナミ" };
     private static final int[] UMA = { 20, 10, -10, -20 };
 
@@ -65,7 +77,8 @@ public final class MjGame {
                 if (t != null) { busyElsewhere(pid, t, now); return; }
                 if (tables.size() >= MAX_TABLES) { ng(pid, "いまは卓がいっぱい。空くまで少し待ってね"); return; }
                 // a：1のビット＝半荘戦、2のビット＝鳴きなし（ポン・チー・明槓なし。前の版は0か1だけを送る）
-                Table nt = new Table(nextId++, pid, (a & 1) == 1, Math.max(0, Math.min(RATES.length - 1, b)));
+                // b：0〜4 は決まったレート、10 以上は「1000点あたりの G」を自分で決めたレート
+                Table nt = b >= CUSTOM_MIN ? new Table(nextId++, pid, (a & 1) == 1, CUSTOM, b) : new Table(nextId++, pid, (a & 1) == 1, Math.max(0, Math.min(RATES.length - 1, b)), 0);
                 nt.noNaki = (a & 2) == 2;
                 tables.put(nt.id, nt);
                 nt.seats[0] = Seat.human(pid, name);
@@ -147,7 +160,8 @@ public final class MjGame {
             e.put("id", t.id);
             e.put("south", t.south);
             e.put("rate", t.rate);
-            e.put("rateName", RATE_NAMES[t.rate]);
+            e.put("perK", t.perK);
+            e.put("rateName", rateNameOf(t.rate, t.perK));
             e.put("noNaki", t.noNaki);
             e.put("phase", t.phase);
             List<Object> names = new ArrayList<>();
@@ -198,7 +212,7 @@ public final class MjGame {
 
     private Map<String, Object> saveTable(Table t) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", t.id); m.put("owner", t.owner); m.put("south", t.south); m.put("rate", t.rate); m.put("noNaki", t.noNaki);
+        m.put("id", t.id); m.put("owner", t.owner); m.put("south", t.south); m.put("rate", t.rate); m.put("perK", t.perK); m.put("noNaki", t.noNaki);
         m.put("phase", t.phase); m.put("deadline", t.deadline); m.put("msg", t.msg);
         List<Object> seats = new ArrayList<>(); for (Seat s : t.seats) seats.add(saveSeat(s)); m.put("seats", seats);
         m.put("kyoku", t.kyoku); m.put("honba", t.honba); m.put("sticks", t.sticks);
@@ -222,7 +236,7 @@ public final class MjGame {
 
     private Table loadTable(Map<?, ?> m, long shift) {
         if (m == null) return null;
-        Table t = new Table((int) num(m.get("id")), num(m.get("owner")), bool(m.get("south")), (int) num(m.get("rate")));
+        Table t = new Table((int) num(m.get("id")), num(m.get("owner")), bool(m.get("south")), (int) num(m.get("rate")), num(m.get("perK")));
         t.noNaki = bool(m.get("noNaki"));
         t.phase = str(m.get("phase"), "wait"); t.deadline = num(m.get("deadline")); if (t.deadline > 0) t.deadline += shift; t.msg = str(m.get("msg"), "");
         List<?> seats = list(m.get("seats"));
@@ -372,6 +386,8 @@ public final class MjGame {
         long owner;
         final boolean south;
         final int rate;
+        /** 1000点あたりの G */
+        final long perK;
         String phase = "wait";
         final Seat[] seats = new Seat[4];
         long deadline;
@@ -393,11 +409,12 @@ public final class MjGame {
         Map<String, Object> result;
         final List<Integer> kanBy = new ArrayList<>();
 
-        Table(int id, long owner, boolean south, int rate) {
+        Table(int id, long owner, boolean south, int rate, long perK) {
             this.id = id;
             this.owner = owner;
             this.south = south;
-            this.rate = rate;
+            this.rate = rate == CUSTOM ? CUSTOM : Math.max(0, Math.min(RATES.length - 1, rate));
+            this.perK = perKOf(this.rate, perK);
         }
 
         int humans() {
@@ -943,7 +960,7 @@ public final class MjGame {
                 Seat s = seats[order[r]];
                 double pt = (s.score - 30000) / 1000.0 + UMA[r] + (r == 0 ? 20 : 0);
                 pt = Math.round(pt * 10) / 10.0;
-                long money = Math.round(pt * RATES[rate]);
+                long money = Math.round(pt * perK);
                 Map<String, Object> e = new LinkedHashMap<>();
                 e.put("seat", order[r]);
                 e.put("name", s.name);
@@ -996,7 +1013,7 @@ public final class MjGame {
                 // 途中で抜けたら、ラス扱い（素点のプラスは無し）で精算して、CPU が代わりに打つ
                 double pt = Math.min(0, (s.score - 30000) / 1000.0) + UMA[3];
                 pt = Math.round(pt * 10) / 10.0;
-                out.pay(pid, Math.round(pt * RATES[rate]), "麻雀 途中で抜けた（ラス扱い " + pt + "）");
+                out.pay(pid, Math.round(pt * perK), "麻雀 途中で抜けた（ラス扱い " + pt + "）");
                 s.cpu = true;
                 s.id = 0;
                 s.auto = false;
@@ -1190,7 +1207,8 @@ public final class MjGame {
             m.put("phase", phase);
             m.put("south", south);
             m.put("rate", rate);
-            m.put("rateName", RATE_NAMES[rate]);
+            m.put("perK", perK);
+            m.put("rateName", rateNameOf(rate, perK));
             m.put("noNaki", noNaki);
             m.put("owner", owner == pid);
             m.put("me", me);

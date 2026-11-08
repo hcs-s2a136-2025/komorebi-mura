@@ -1703,7 +1703,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.70.0";
+  const VER = "0.70.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6208,7 +6208,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.70.0";
+const CLIENT_VERSION = "0.70.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -12991,10 +12991,14 @@ function farmSnap44() {
   const pets = (world.pets || []).slice(0, PET_MAX43).map(id => [basePet43(id), petVar43(id), String(petNameOf43(id)).slice(0, 12)]);
   return { crops, animals, pets };
 }
+// v0.70.1：転送量をへらすため、動きまわる家畜の位置だけでは送らない（作物・家畜の数と名前・ペットが変わったときだけ10秒に1回まで。何も変わらなくても60秒に1回は送る）。
+// farmLast44 を "" に戻すと、すぐ（2.5秒あとに）送る
 setInterval(() => {
   if (!F8.connected) { farmLast44 = ""; return; }
-  const s = farmSnap44(), j = JSON.stringify(s), now = Date.now();
-  if ((j !== farmLast44 && now - farmAt44 > 2500) || now - farmAt44 > 30000) { farmLast44 = j; farmAt44 = now; send8({ type: "farm", ...s }); }
+  const s = farmSnap44(), now = Date.now();
+  const j = JSON.stringify({ c: s.crops, a: (s.animals || []).map(a => [a[0], a[1]]), p: s.pets, g: s.gh });
+  const quick = farmLast44 === "";
+  if ((j !== farmLast44 && now - farmAt44 > (quick ? 2500 : 10000)) || now - farmAt44 > 60000) { farmLast44 = j; farmAt44 = now; send8({ type: "farm", ...s }); }
 }, 1000);
 // Ⓐで、ほかの人の作物・家畜・ペットを見る
 const _act44 = act;

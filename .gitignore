@@ -8,3 +8,6 @@ data/
 tools/mock-server/node_modules/
 tools/mock-server/package-lock.json
 tools/mock-server/bj/out/
+
+# Oracle の VM の秘密
+deploy/oracle/.env

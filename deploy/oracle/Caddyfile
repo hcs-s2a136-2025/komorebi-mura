@@ -1,0 +1,5 @@
+# HTTPS の証明書は Caddy が自動で取って、自動で更新する。WebSocket もそのまま通る
+{$SITE_ADDRESS} {
+	encode zstd gzip
+	reverse_proxy app:8080
+}

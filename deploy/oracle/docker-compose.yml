@@ -1,0 +1,41 @@
+# Oracle Cloud（Always Free）で動かすための設定。手順は docs/Oracleへの引っ越し.md
+# 秘密（DB の接続情報・パスワード・招待コード）は、このフォルダの .env に書く（.env は Git に入れない）
+services:
+  app:
+    build:
+      context: ../..
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Caddy を通ると、遊ぶ人の住所が X-Forwarded-For で届く（村を作る回数の制限などに使う）
+      FORWARD_HEADERS: native
+      THYMELEAF_CACHE: "true"
+      # 6GB の VM。メモリを2割より多く使っていないと「使っていない VM」として止められることがあるので、はじめから確保しておく
+      JAVA_OPTS: "-Xms1200m -Xmx1200m -XX:+AlwaysPreTouch -XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=192m"
+    expose:
+      - "8080"
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  caddy:
+    image: caddy:2.8.4
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  caddy_data:
+  caddy_config:

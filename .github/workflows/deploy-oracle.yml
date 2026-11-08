@@ -1,0 +1,31 @@
+# main に push したら、Oracle Cloud の VM で deploy/oracle/deploy.sh を動かす
+# Settings → Secrets and variables → Actions に ORACLE_HOST と ORACLE_SSH_KEY がないときは、何もしない
+name: Oracle へ反映
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: oracle-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: サーバーで反映
+        env:
+          HOST: ${{ secrets.ORACLE_HOST }}
+          KEY: ${{ secrets.ORACLE_SSH_KEY }}
+        run: |
+          if [ -z "$HOST" ] || [ -z "$KEY" ]; then
+            echo "ORACLE_HOST / ORACLE_SSH_KEY がまだないので、とばします"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 "ubuntu@$HOST" deploy

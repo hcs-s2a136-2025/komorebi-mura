@@ -1,7 +1,7 @@
 # こもれび村 — 開発メモ（Claude 用）
 
 1枚のHTMLで動くドット絵のスローライフゲームと、それを配る Spring Boot サーバー。
-公開リポジトリ。本番は Render（Docker）＋ Neon（PostgreSQL）。
+公開リポジトリ。本番は Oracle Cloud の Always Free の VM（Docker Compose で アプリ＋Caddy・`deploy/oracle/`・手順は `docs/Oracleへの引っ越し.md`）＋ Neon（PostgreSQL）。`main` に push すると GitHub Actions「Oracle へ反映」が VM で `deploy.sh` を動かす（Secrets `ORACLE_HOST` `ORACLE_SSH_KEY`。ないときは何もしない）。Render（`render.yaml`）は前の本番で、止めておく（同じ DB を2つのサーバーで使わない）。
 
 **このファイルの約束**：作業を終えるたびに、下の「決まっていること」と「変更履歴」を更新する。
 前と変わったことは、古い記述を**書きかえる**（追記して両方残さない）。このファイルと食いちがうことを頼まれたら、どちらが正しいか確かめてから直す。
@@ -19,7 +19,7 @@
 5. アイテムを足したら `python3 tools/items/gen_items.py game-src/komorebi.html`（管理人室の一覧 `admin-items.json`）
 6. `main` に直接コミットして push。コミットの最後に、会話で指示された Co-Authored-By などの行を入れる
 7. テスト用のページ（アーティファクト）を `game-src/komorebi.html` で更新する（URL は会話のはじめに伝えられる）
-8. 報告：コミットのハッシュ（全部）、サーバーの変更が入っているか、Render のデプロイ確認のお願い
+8. 報告：コミットのハッシュ（全部）、サーバーの変更が入っているか、反映の確認のお願い（GitHub の Actions の「Oracle へ反映」が緑か）
 
 ## 2. ファイル
 
@@ -92,6 +92,7 @@
 - 管理人の見学：`WatchService` のトークン（`w_…`・10分）で hello すると、見えない人（マイナスの番号）としてつながる。`GameSocketHandler` は見学の人からのメッセージを `ping` と家の `get` しか通さず、`join`/`leave`・人の一覧・`isOnline` にも出さない
 
 **サーバーの約束**
+- 遊ぶ人の住所（回数の制限に使う）は `CF-Connecting-IP` か `getRemoteAddr()`。Oracle では前に Caddy がいるので `FORWARD_HEADERS=native`（`server.forward-headers-strategy`）で X-Forwarded-For から取る。新しい制限を足すときも `getRemoteAddr()` を使えばよい
 - WebSocket のメッセージ1種類 ＝ `MessageHandler` を実装した `@Component` 1つ（`type()` が `"type"` と同じ）
 - つないだときに渡すもの ＝ `WelcomeContributor`
 - サーバーだけが持つ情報は `SharedWorldService.putSystem("_名前", json)`。**`_` で始まる名前はプレイヤーに配られない**
@@ -105,7 +106,7 @@
 - 管理人室のコントローラーを新しいパッケージに置いたら、`AdminVillageAdvice` の `basePackages` に足す。足さないと `adminVillage` が村ではなく番号（Long）のまま村の帯に渡って 500 になる（v0.60.3）
 - 共有の村の1つの値は600字まで（`MAX_VALUE`）。`houses` だけは合鍵（20人）があるので2,400字まで（`MAX_HOUSE`）
 - スマホのゲームのランキング（`GameRankService`）：管理人室の「ゲームのランキング」（`/admin/rank`）でえらんだ人は `_gamerankHidden`（村ごと）に入り、`board()` はその人を**見ている本人以外**の名前の表から外す（本人には今までどおり出る。スコアは消さない。週間3位のコインのごほうびは本人から見た順位で決まる）。mock は `/mock/rankhide?id=&hide=1|0`
-- **転送量（Render の Hobby は月5GBの無料帯域。超えるとサービスが止まる。v0.70.1）**：いちばん大きかったのは、畑のようす（`farmSnap44`・作物600こまで＋家畜＋ペット）を全員に中継すること。クライアントは家畜の位置が変わるたびに2.5秒ごとに送っていた。今は、作物・家畜の数と名前・ペット・ビニールハウスが変わったときだけ（10秒に1回まで・位置だけの変化は送らない）、何も変わらなくても60秒に1回（`farmLast44 = ""` に戻すと、すぐ2.5秒あとに送る）。**村ぜんたいに中継するメッセージを足すときは、頻度と大きさを必ず考える**（Metrics の Bandwidth は、サービスの画面の左の「Metrics」）
+- **転送量（前の Render の Hobby は月5GBで止まった。v0.70.1。Oracle は月10TBまで無料）**：いちばん大きかったのは、畑のようす（`farmSnap44`・作物600こまで＋家畜＋ペット）を全員に中継すること。クライアントは家畜の位置が変わるたびに2.5秒ごとに送っていた。今は、作物・家畜の数と名前・ペット・ビニールハウスが変わったときだけ（10秒に1回まで・位置だけの変化は送らない）、何も変わらなくても60秒に1回（`farmLast44 = ""` に戻すと、すぐ2.5秒あとに送る）。**村ぜんたいに中継するメッセージを足すときは、頻度と大きさを必ず考える**
 - 畑のようす（`FarmService`）の家畜は `[種類, 名前, x, y, 小屋の場所?]`。5つ目は家畜小屋の decor の鍵（"48,21"）で、小屋にいる家畜は牧場に出さない
 - 麻雀の卓：`create` の `a` は 1のビット＝半荘戦・2のビット＝鳴きなし（`Table.noNaki`。ポン・チー・明槓を出さない）。`b` は 0〜4 が決まったレート（`RATES`）、**10以上は1000点あたりの G をそのまま**入れる自由レート（v0.69.0・`rate`＝`CUSTOM`(5)・`Table.perK`・10〜20,000・10Gきざみ）。精算はどれも `pt × perK`。一覧と卓の画面に `perK` と `rateName`（`rateNameOf`）を送る。保存した卓に `perK` がなければ `RATES[rate]`
 - 競どんぐりの馬主（`RaceGame` の stable）：`{type:"race",act:"own",op:list|buy|train|entry|retire|claim,name,k}` → 本人に `raceOwn`。厩舎は共有の村の `_racestable`（`RaceService` が保存・起動時に読む）。1レースに2粒まで・1日（日本時間）3回まで・賞金は持ち主の unpaid にためて claim で渡す。お金は画面が、OK が返ってから引く。mock は `RaceBridge` の `O` 行
@@ -117,7 +118,7 @@
 - 討伐クエスト（`raid/`）：`RaidService` が村ごとに `_raid`（plans・cur・last・feast・buff）を持つ。1秒ごとの tick で予定の時間に始め・時間切れで終える。`{type:"raid",a:"hit",d}`（1〜80・1人250msに1回・buff で上乗せ）／`a:"dish"`（宴のあいだ・1人3品・+2%で50%まで）／`a:"look"`。結果の `last.pay` に人ごとのごほうび（ゲーム側は `world.raid111.paid` で1回だけ受けとる）。管理人室は `/admin/raid`。mock も同じ（`/mock/raid?act=plan|start|stop`）
 
 **確かめ方**
-- この作業環境では Maven Central に届かないので `mvn` は使えない。Java は `tools/javacheck/check_all.sh` で全体の型を確かめ、本番のビルドは Render にまかせる（報告でデプロイ確認をお願いする）
+- この作業環境では Maven Central に届かないので `mvn` は使えない。Java は `tools/javacheck/check_all.sh` で全体の型を確かめ、本番のビルドは VM にまかせる（報告で反映の確認をお願いする）
 - SQL（Flyway の `db/migration/V*.sql`）は、入っている PostgreSQL 16 で確かめられる（root では動かないので postgres ユーザーで `initdb` と `pg_ctl` → `psql -f` で V1 から順に流す）。ローカルの H2 とも通る書き方にする（`ALTER COLUMN … SET DATA TYPE`・`ALTER COLUMN id RESTART WITH`）
 - `python3 tools/tests/smoke.py` … PC・スマホ縦・スマホ横で主な場所と画面を回す。新しい場所や画面を足したら STEPS に足す
 - `python3 tools/tests/villages.py` … 村を作る（こもれび村の人が「村」アプリから）・合言葉だけで入る（招待コードなし）・村ごとのチャットと共有の村・村長・キャラの切りかえ・全部の村の番付・見学を確かめる（先に `cd tools/mock-server && npm install`）
@@ -313,6 +314,7 @@
 
 ## 7. 変更履歴（新しい順・1行ずつ）
 
+- v0.70.2 Oracle Cloud の VM で動かす設定（`deploy/oracle/`・push で反映する GitHub Actions）・前に Caddy をはさんでも遊ぶ人の住所がわかるように（サーバー：`server.forward-headers-strategy` を環境変数 `FORWARD_HEADERS` で。Render はそのまま）
 - v0.70.1 サーバーの転送量をへらした（畑のようすを、家畜が動くたびに全員へ送らない・サーバー変更なし）
 - v0.70.0 遺跡の深層（どこまでも続く階・5階ごとの番人・たおれても失わない）・鍛冶師の剣の強化（+20まで）・腕前の Lv20 の先（Lv20+N）・こもれびブロックの回し方を SRS に（Tスピン）（サーバー変更なし）
 - v0.69.0 麻雀の自由レート（1000点＝10〜20,000G）・闘鶏の育成回数をにわとり1羽ずつに・こもれびつなぎのマスを作物ごとの色に（サーバー：麻雀の `create` の `b` に自由レート）

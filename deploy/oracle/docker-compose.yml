@@ -10,8 +10,9 @@ services:
       # Caddy を通ると、遊ぶ人の住所が X-Forwarded-For で届く（村を作る回数の制限などに使う）
       FORWARD_HEADERS: native
       THYMELEAF_CACHE: "true"
-      # 6GB の VM。メモリを2割より多く使っていないと「使っていない VM」として止められることがあるので、はじめから確保しておく
-      JAVA_OPTS: "-Xms1200m -Xmx1200m -XX:+AlwaysPreTouch -XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=192m"
+      # 6GB の VM（Ampere）。メモリを2割より多く使っていないと「使っていない VM」として止められることがあるので、はじめから確保しておく
+      # 1GB の VM（AMD の Micro）は、setup.sh が .env に小さい JAVA_OPTS を書く
+      JAVA_OPTS: ${JAVA_OPTS:--Xms1200m -Xmx1200m -XX:+AlwaysPreTouch -XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=192m}
     expose:
       - "8080"
     logging:

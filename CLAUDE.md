@@ -1,7 +1,7 @@
 # こもれび村 — 開発メモ（Claude 用）
 
 1枚のHTMLで動くドット絵のスローライフゲームと、それを配る Spring Boot サーバー。
-公開リポジトリ。本番は Oracle Cloud の Always Free の VM（Docker Compose で アプリ＋Caddy・`deploy/oracle/`・手順は `docs/Oracleへの引っ越し.md`）＋ Neon（PostgreSQL）。`main` に push すると GitHub Actions「Oracle へ反映」が VM で `deploy.sh` を動かす（Secrets `ORACLE_HOST` `ORACLE_SSH_KEY`。ないときは何もしない）。Render（`render.yaml`）は前の本番で、止めておく（同じ DB を2つのサーバーで使わない）。
+公開リポジトリ。本番は Oracle Cloud の Always Free の VM（Docker Compose で アプリ＋Caddy・`deploy/oracle/`・手順は `docs/Oracleへの引っ越し.md`）＋ Neon（PostgreSQL）。`main` に push すると GitHub Actions「Oracle へ反映」が VM で `deploy.sh` を動かす（Secrets `ORACLE_HOST` `ORACLE_SSH_KEY`。ないときは何もしない）。VM は Ubuntu 24.04 の Ampere（1 OCPU・6GB）か、つなぎの AMD Micro（1GB。`setup.sh` が `.env` に小さい `JAVA_OPTS` を書く）。Render（`render.yaml`）は前の本番で、止めておく（同じ DB を2つのサーバーで使わない）。
 
 **このファイルの約束**：作業を終えるたびに、下の「決まっていること」と「変更履歴」を更新する。
 前と変わったことは、古い記述を**書きかえる**（追記して両方残さない）。このファイルと食いちがうことを頼まれたら、どちらが正しいか確かめてから直す。

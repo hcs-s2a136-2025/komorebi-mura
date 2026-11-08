@@ -55,6 +55,10 @@ chown -R "$U":"$U" "$DIR"
 if [ ! -f "$DIR/deploy/oracle/.env" ]; then
   install -m 600 -o "$U" -g "$U" "$DIR/deploy/oracle/.env.example" "$DIR/deploy/oracle/.env"
 fi
+# メモリが少ない VM（AMD の Micro・1GB）では、Java を小さく動かす
+if [ "$(awk '/MemTotal/{print $2}' /proc/meminfo)" -lt 2500000 ] && ! grep -q '^JAVA_OPTS=' "$DIR/deploy/oracle/.env"; then
+  echo 'JAVA_OPTS=-Xmx320m -Xss512k -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m' >> "$DIR/deploy/oracle/.env"
+fi
 
 echo "== 6/6 GitHub から反映するための鍵（この鍵では deploy.sh しか動かせない）"
 K="$H/.ssh/komorebi_deploy"

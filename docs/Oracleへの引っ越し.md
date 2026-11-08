@@ -42,6 +42,7 @@
 **Create** を押して、状態が **Running** になったら、画面の **Public IP address** をメモします（例：`140.238.1.2`）。
 
 - 「Out of capacity」と出たら、東京の無料の VM がいっぱいです。時間をおいてもう一度か、**Availability domain** を変えてためしてください
+- どうしても作れないときは、つなぎに **Specialty and previous generation** → **VM.Standard.E2.1.Micro**（AMD・1GB）でも動きます（`setup.sh` が Java を小さく動かす設定にします。ビルドは20〜30分かかります）。ただし Micro は「使っていない VM」として止められやすいので、Ampere が作れたら移ってください。**Image はどちらも Ubuntu 24.04**（Oracle Linux だと `setup.sh` が動きません。ログインの名前が `ubuntu` ではなく `opc` なら Oracle Linux です）
 - OCPU 1・6GB にするのは、無料の枠に収めるためと、「使っていない VM」として止められないようにメモリを2割より多く使うためです（`docker-compose.yml` の `JAVA_OPTS`）
 
 ## 3. 80番と443番を開ける（Oracle の画面）

@@ -17,6 +17,7 @@ import jp.komorebi.ws.PlayerSession;
  * {"type":"house","act":"put","key":"48,21","layout":{...},"seed":{"storage":{...},"priv":{...}}} … 持ち主（か同居人）が家具の並びを送る。seed は持ち主だけ
  * {"type":"house","act":"returns"} … 共有の村のリセットで消えた家の箱の中身を受け取る → {"type":"houseReturn","items":[{id,n}]}
  * {"type":"house","act":"import","key":"home","items":{...},"rid":"x"} … ひとりで遊んでいたときの家の物を、自分だけの箱へ → {"type":"houseImport","rid","ok":{...}}
+ * {"type":"house","act":"send","key":"48,21","items":{...},"rid":"x"} … 自分で建てた家の自分だけの箱へ送る（持ち主だけ） → {"type":"houseSend","rid","key","ok":{...}}
  * key "home" はオンラインの「みんなの家」。だれでも入れて模様替えでき、鍵つきの箱はひとりずつ別
  * 返事と、同じ家の中にいる人へのお知らせは {"type":"house","key":...,"layout":...,"storage":[...]}（持ち主には "priv" も）
  */
@@ -68,6 +69,17 @@ public class HouseHandler implements MessageHandler {
                 box.setAll(houses.view(key, true, me));
                 box.remove("layout");
                 hub.send(from, box);
+            }
+            case "send" -> {
+                // 自分で建てた家の「自分だけの箱」へ物を送る（家畜小屋の集荷箱から）。みんなの家は import を使う
+                if (HouseService.HOME.equals(key) || !owner) return;
+                String rid = msg.path("rid").asText("");
+                if (rid.length() > 20) rid = rid.substring(0, 20);
+                Map<String, Long> ok = houses.sendToOwnBox(key, counts(msg.path("items")));
+                ObjectNode r = hub.json().createObjectNode().put("type", "houseSend").put("rid", rid).put("key", key);
+                ObjectNode okNode = r.putObject("ok");
+                ok.forEach(okNode::put);
+                hub.send(from, r);
             }
             case "put" -> {
                 if (!owner && !houses.canEdit(key, me)) return;

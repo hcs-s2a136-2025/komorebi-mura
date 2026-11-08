@@ -1115,3 +1115,26 @@ button.jn106.lock { opacity: .45; }
 .st122 { margin-top: 4px; font-size: 12px; color: var(--ink); }
 .st122 .bar7 i { background: linear-gradient(90deg, #8a6ad8, #c8b0ff); }
 .st122 span { display: block; opacity: .8; font-size: 11px; }
+
+/* v123：乗り物のボタン・きせかえガチャのピックアップ */
+.ebtn8.ride123 { font-weight: 700; }
+.ebtn8.ride123.on123 { background: rgba(255, 214, 120, .95); }
+.pu123 { margin: 6px 0 8px; padding: 8px; border-radius: 10px; background: rgba(255, 240, 200, .6); border: 2px solid #e8b020; }
+.pu123l { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+.pu123l > div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; border-radius: 8px; background: #fffaf0; border: 2px solid var(--rc); text-align: center; font-size: .8rem; color: var(--ink); }
+.pu123l > div.own { opacity: .7; }
+.pu123l img { width: 48px; height: 48px; image-rendering: pixelated; }
+.pu123l b { color: var(--rc); font-size: .75rem; }
+.pu123l small { font-size: .65rem; color: #8a7a6a; }
+
+/* v124：握手会・SNS／v125：主催レース */
+.hs124 #hs124q { min-height: 70px; }
+.hs124k { font-weight: 700; color: #ff9ac8; }
+.hs124bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.2); overflow: hidden; margin-top: 6px; }
+.hs124bar i { display: block; height: 100%; width: 100%; background: #ffd86a; }
+.sns124 { display: flex; gap: 10px; align-items: center; }
+.sns124 canvas { width: 96px; height: 96px; border-radius: 10px; image-rendering: pixelated; }
+.sns124 > div { display: flex; flex-direction: column; gap: 4px; }
+.sns124 em { color: #ff7aa8; font-style: normal; font-weight: 700; }
+#act124 h4 { margin-top: 8px; }
+.host125 { background: rgba(255, 226, 122, .25); border-radius: 8px; padding: 4px 8px; }

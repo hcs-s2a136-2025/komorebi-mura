@@ -149,6 +149,15 @@ public class HouseService {
         return ok;
     }
 
+    /** 家畜小屋の集荷箱などから、自分で建てた家の「自分だけの箱」へ送る（持ち主だけ。呼ぶ側で確かめる） */
+    public Map<String, Long> sendToOwnBox(String key, Map<String, Long> items) {
+        Map<String, Long> ok = new LinkedHashMap<>();
+        if (HOME.equals(key) || !HouseBook.validKey(key)) return ok;
+        items.forEach((id, n) -> { if (n != null && n > 0 && book().put(key, true, id, Math.min(n, HouseBook.MAX_MOVE)) >= 0) ok.put(id, Math.min(n, HouseBook.MAX_MOVE)); });
+        if (!ok.isEmpty()) save(key);
+        return ok;
+    }
+
     public ObjectNode view(String key, boolean owner) {
         ObjectNode v = om.valueToTree(book().view(key, owner));
         String layout = v.path("layout").asText(null);

@@ -39,12 +39,12 @@ final class Sanitize {
     /** 服のマイデザイン（よこ20×たて10マス、1マス16色を16進数1文字で） */
     private static final Pattern MYDESIGN = Pattern.compile("[0-9a-f]{200}");
 
-    /** 見た目の設定：文字列の値だけ・28項目まで・各20文字まで（メイクの paint は決まった形の90文字、pt2 は360文字、服のマイデザイン md は200文字） */
+    /** 見た目の設定：文字列の値だけ・36項目まで・各20文字まで（メイクの paint は決まった形の90文字、pt2 は360文字、服のマイデザイン md は200文字） */
     static ObjectNode cfg(JsonNode n, ObjectMapper om) {
         ObjectNode out = om.createObjectNode();
         if (n == null || !n.isObject()) return out;
         int count = 0;
-        for (Iterator<Map.Entry<String, JsonNode>> it = n.fields(); it.hasNext() && count < 28; ) {
+        for (Iterator<Map.Entry<String, JsonNode>> it = n.fields(); it.hasNext() && count < 36; ) {
             Map.Entry<String, JsonNode> e = it.next();
             if (e.getKey().length() > 12) continue;
             JsonNode v = e.getValue();

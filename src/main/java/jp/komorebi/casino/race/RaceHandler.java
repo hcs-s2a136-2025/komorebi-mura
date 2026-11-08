@@ -11,7 +11,7 @@ import jp.komorebi.ws.GameSocketHandler;
 import jp.komorebi.ws.MessageHandler;
 import jp.komorebi.ws.PlayerSession;
 
-/** {"type":"race","act":"bet|look","runner":0,"kind":"win|place","amount":100} … 競どんぐり */
+/** {"type":"race","act":"bet|look","runner":0,"kind":"win|place","amount":100} … 競どんぐり。act "own" は馬主、act "host" は主催レース（op book|cancel|join|leave|look・title・purse・k） */
 @Component
 public class RaceHandler implements MessageHandler {
 
@@ -37,6 +37,14 @@ public class RaceHandler implements MessageHandler {
             if (p0 != null && now0 - p0 < 400) return;
             if (from.playerId() <= 0) return;
             race.own(from, msg.path("op").asText("list"), msg.path("name").asText(""), msg.path("k").asText(""));
+            return;
+        }
+        if ("host".equals(act)) {
+            long now0 = System.currentTimeMillis();
+            Long p0 = lastOwn.put(from.playerId(), now0);
+            if (p0 != null && now0 - p0 < 400) return;
+            if (from.playerId() <= 0) return;
+            race.host(from, msg.path("op").asText("look"), msg.path("title").asText(""), msg.path("purse").asLong(0), msg.path("k").asText(""));
             return;
         }
         if (!"bet".equals(act)) return;

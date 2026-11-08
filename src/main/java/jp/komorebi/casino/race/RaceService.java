@@ -86,6 +86,10 @@ public class RaceService implements WelcomeContributor {
         game().own(from.playerId(), from.name(), op, arg, key);
     }
 
+    public void host(PlayerSession from, String op, String title, long purse, String key) {
+        game().host(from.playerId(), from.name(), op, title, purse, key, System.currentTimeMillis());
+    }
+
     public ObjectNode state() {
         return om.valueToTree(game().state(System.currentTimeMillis()));
     }

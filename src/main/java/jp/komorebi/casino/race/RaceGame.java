@@ -46,6 +46,25 @@ public class RaceGame {
     }
 
     private final Map<String, Owned> stable = new LinkedHashMap<>();
+
+    // ------------------------------------------------------------------ 主催レース（v0.71.0）
+    // 馬主が賞金（purse）を出して「主催レース」を開く。ほかの馬主も自分のどんぐりを出走させられる（1人2粒まで・6粒まで）。
+    // 受付は HOST_WAIT_MS。そのあとの最初のレースが主催レースになる（2粒そろわなければ取りやめ・賞金は主催者にもどる）。
+    // 賞金は 1着60%・2着25%・3着15%。ふつうのどんぐり（持ち主なし）がその着に入った分は、主催者にもどる。ふつうの馬主の賞金（PRIZE）は出ない
+    public static final long HOST_MIN = 10_000, HOST_MAX = 1_000_000;
+    /** 主催レースの受付の長さ（模擬サーバーのテストでは短くできる） */
+    public static long HOST_WAIT_MS = 180_000;
+    public static final int HOST_PER_OWNER = 2;
+    static final double[] HOST_SPLIT = { 0.60, 0.25, 0.15 };
+    static final java.util.regex.Pattern HOST_TITLE = java.util.regex.Pattern.compile("[^\\p{Cntrl}<>&\"'\\\\]{1,14}");
+
+    static final class Hosted {
+        long host, purse, startAt;
+        String hostName = "", title = "";
+        final List<String> entries = new ArrayList<>();
+    }
+
+    private Hosted hosted, running;
     private final Map<Long, Long> unpaid = new HashMap<>();
     private int ownSeq;
 
@@ -116,8 +135,25 @@ public class RaceGame {
         }
         java.util.Collections.shuffle(cand, rnd);
         List<Owned> go = new ArrayList<>();
-        java.util.Set<Long> owners = new java.util.HashSet<>();
-        for (Owned o : cand) { if (go.size() >= OWNED_PER_RACE) break; if (owners.add(o.owner)) go.add(o); }
+        running = null;
+        if (hosted != null && now >= hosted.startAt) {
+            Hosted h = hosted; hosted = null;
+            List<Owned> es = new ArrayList<>();
+            for (String k : h.entries) { Owned o = stable.get(k); if (o != null && es.size() < RUNNERS) es.add(o); }
+            if (es.size() >= 2) { running = h; go.addAll(es); }
+            else {
+                unpaid.merge(h.host, h.purse, Long::sum);
+                Map<String, Object> n = new LinkedHashMap<>();
+                n.put("type", "raceHost"); n.put("ev", "refund"); n.put("purse", h.purse);
+                n.put("msg", "主催レース「" + h.title + "」は、出走するどんぐりが2粒そろわなかったので取りやめになった。賞金 " + h.purse + "G はもどるよ");
+                out.toPlayer(h.host, n);
+            }
+            saveStable();
+        }
+        if (running == null) {
+            java.util.Set<Long> owners = new java.util.HashSet<>();
+            for (Owned o : cand) { if (go.size() >= OWNED_PER_RACE) break; if (owners.add(o.owner)) go.add(o); }
+        }
         List<Integer> slots = new ArrayList<>();
         for (int i = 0; i < RUNNERS; i++) slots.add(i);
         java.util.Collections.shuffle(slots, rnd);
@@ -203,7 +239,7 @@ public class RaceGame {
         for (int pos = 0; pos < order.length; pos++) {
             Runner r = runners.get(order[pos]);
             if (r.own == null) continue;
-            long pz = pos < PRIZE.length ? PRIZE[pos] : 0;
+            long pz = running != null ? (pos < HOST_SPLIT.length ? Math.round(running.purse * HOST_SPLIT[pos]) : 0) : pos < PRIZE.length ? PRIZE[pos] : 0;
             if (pos == 0) r.own.wins++; else if (pos == 1) r.own.seconds++; else if (pos == 2) r.own.thirds++;
             if (pz > 0) { r.own.prize += pz; unpaid.merge(r.own.owner, pz, Long::sum); }
             Map<String, Object> e = new LinkedHashMap<>();
@@ -216,6 +252,20 @@ public class RaceGame {
             }
         }
         h.put("own", own);
+        if (running != null) {
+            // ふつうのどんぐりが入った着の賞金は、主催者にもどす
+            long back = 0;
+            for (int pos = 0; pos < Math.min(HOST_SPLIT.length, order.length); pos++) if (runners.get(order[pos]).own == null) back += Math.round(running.purse * HOST_SPLIT[pos]);
+            if (back > 0) {
+                unpaid.merge(running.host, back, Long::sum);
+                Map<String, Object> n = new LinkedHashMap<>();
+                n.put("type", "raceHost"); n.put("ev", "refund"); n.put("purse", back);
+                n.put("msg", "主催レース「" + running.title + "」で、ふつうのどんぐりが入着した分の賞金 " + back + "G がもどってきた");
+                out.toPlayer(running.host, n);
+                saveStable();
+            }
+            h.put("hosted", running.title);
+        }
         if (!own.isEmpty()) saveStable();
         h.put("bettors", bets.stream().map(Bet::pid).distinct().count());
         history.addFirst(h);
@@ -330,6 +380,68 @@ public class RaceGame {
         out.toPlayer(pid, r);
     }
 
+    /** 主催レースの操作：book（title・purse。お金は OK が返ってから画面で払う）・cancel（主催者・受付中だけ。賞金は unpaid にもどる）・join／leave（自分のどんぐり k）・look */
+    public synchronized void host(long pid, String name, String op, String title, long purse, String key, long now) {
+        String msg = null;
+        boolean ok = true;
+        Owned o = key == null ? null : stable.get(key);
+        if (o != null && o.owner != pid) o = null;
+        String nm = name == null ? "" : name.length() > 16 ? name.substring(0, 16) : name;
+        switch (op == null ? "" : op) {
+            case "book" -> {
+                String t = title == null ? "" : title.trim();
+                if (hosted != null) { ok = false; msg = "いまは「" + hosted.title + "」の受付中。終わってから開けるよ"; }
+                else if (!HOST_TITLE.matcher(t).matches()) { ok = false; msg = "レースの名前は1〜14文字で、記号の < > & などは使えないよ"; }
+                else if (purse < HOST_MIN || purse > HOST_MAX || purse % 1000 != 0) { ok = false; msg = "賞金は " + HOST_MIN + "〜" + HOST_MAX + "G（1,000Gきざみ）だよ"; }
+                else {
+                    Hosted h = new Hosted();
+                    h.host = pid; h.hostName = nm; h.title = t; h.purse = purse; h.startAt = now + HOST_WAIT_MS;
+                    hosted = h;
+                    msg = "主催レース「" + t + "」の受付をはじめた！ 馬主のみんなが、どんぐりを出走させられるよ";
+                }
+            }
+            case "cancel" -> {
+                if (hosted == null || hosted.host != pid) { ok = false; msg = "とりやめられる主催レースはないよ"; }
+                else { unpaid.merge(pid, hosted.purse, Long::sum); msg = "主催レース「" + hosted.title + "」をとりやめた。賞金 " + hosted.purse + "G はもどるよ"; hosted = null; }
+            }
+            case "join" -> {
+                if (hosted == null) { ok = false; msg = "いま受付中の主催レースはないよ"; }
+                else if (o == null) { ok = false; msg = "そのどんぐりは見つからなかった"; }
+                else if (hosted.entries.contains(o.k)) { ok = false; msg = "もう出走が決まっているよ"; }
+                else if (hosted.entries.size() >= RUNNERS) { ok = false; msg = "出走は " + RUNNERS + " 粒まで。もういっぱいだよ"; }
+                else if (hosted.entries.stream().map(stable::get).filter(x -> x != null && x.owner == pid).count() >= HOST_PER_OWNER) { ok = false; msg = "1人 " + HOST_PER_OWNER + " 粒までだよ"; }
+                else { hosted.entries.add(o.k); msg = "「" + o.name + "」を「" + hosted.title + "」に出走させた"; }
+            }
+            case "leave" -> {
+                if (hosted == null || o == null || !hosted.entries.remove(o.k)) { ok = false; msg = "とりけせる出走はないよ"; }
+                else msg = "「" + o.name + "」の出走をとりけした";
+            }
+            default -> { }
+        }
+        if (!"look".equals(op)) saveStable();
+        Map<String, Object> r = new LinkedHashMap<>();
+        r.put("type", "raceHost"); r.put("op", op); r.put("ok", ok); if (msg != null) r.put("msg", msg);
+        if ("book".equals(op) && ok) r.put("purse", purse);
+        r.put("min", HOST_MIN); r.put("max", HOST_MAX); r.put("wait", HOST_WAIT_MS);
+        r.put("unpaid", unpaid.getOrDefault(pid, 0L));
+        out.toPlayer(pid, r);
+        if (!"look".equals(op) && ok) out.toAll(state(now));
+    }
+
+    private Map<String, Object> hostView(Hosted h, long now) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("title", h.title); m.put("host", h.host); m.put("hostName", h.hostName); m.put("purse", h.purse);
+        m.put("startIn", Math.max(0, h.startAt - now));
+        List<Object> es = new ArrayList<>();
+        for (String k : h.entries) {
+            Owned o = stable.get(k); if (o == null) continue;
+            Map<String, Object> e = new LinkedHashMap<>(); e.put("k", o.k); e.put("name", o.name); e.put("owner", o.owner); e.put("ownerName", o.ownerName); e.put("s", Math.round(o.s * 100));
+            es.add(e);
+        }
+        m.put("entries", es);
+        return m;
+    }
+
     private void saveStable() {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("seq", ownSeq);
@@ -345,6 +457,11 @@ public class RaceGame {
         Map<String, Object> up = new LinkedHashMap<>();
         unpaid.forEach((k, v) -> up.put(String.valueOf(k), v));
         m.put("unpaid", up);
+        if (hosted != null) {
+            Map<String, Object> hz = new LinkedHashMap<>();
+            hz.put("host", hosted.host); hz.put("hostName", hosted.hostName); hz.put("title", hosted.title); hz.put("purse", hosted.purse); hz.put("startAt", hosted.startAt); hz.put("entries", new ArrayList<>(hosted.entries));
+            m.put("hosted", hz);
+        }
         out.saveStable(m);
     }
 
@@ -364,6 +481,13 @@ public class RaceGame {
             stable.put(o.k, o);
         }
         if (m.get("unpaid") instanceof Map<?, ?> up) up.forEach((k, v) -> { try { unpaid.put(Long.parseLong(String.valueOf(k)), num(v)); } catch (NumberFormatException ex) { } });
+        hosted = null;
+        if (m.get("hosted") instanceof Map<?, ?> hz) {
+            Hosted h = new Hosted();
+            h.host = num(hz.get("host")); h.hostName = str(hz.get("hostName")); h.title = str(hz.get("title")); h.purse = num(hz.get("purse")); h.startAt = num(hz.get("startAt"));
+            if (hz.get("entries") instanceof List<?> el) for (Object x : el) if (x != null && stable.containsKey(String.valueOf(x))) h.entries.add(String.valueOf(x));
+            if (h.host != 0 && h.purse > 0 && !h.title.isEmpty()) hosted = h;
+        }
     }
 
     private static long num(Object o) { return o instanceof Number n ? n.longValue() : 0; }
@@ -395,6 +519,8 @@ public class RaceGame {
             rs.add(e);
         }
         m.put("runners", rs);
+        if (hosted != null) m.put("host", hostView(hosted, now));
+        if (running != null) { Map<String, Object> hr = new LinkedHashMap<>(); hr.put("title", running.title); hr.put("hostName", running.hostName); hr.put("purse", running.purse); m.put("hosted", hr); }
         if (!"bet".equals(phase)) {
             m.put("order", toList(order));
             m.put("times", toList(times));

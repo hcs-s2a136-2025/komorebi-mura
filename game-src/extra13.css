@@ -1138,3 +1138,49 @@ button.jn106.lock { opacity: .45; }
 .sns124 em { color: #ff7aa8; font-style: normal; font-weight: 700; }
 #act124 h4 { margin-top: 8px; }
 .host125 { background: rgba(255, 226, 122, .25); border-radius: 8px; padding: 4px 8px; }
+
+/* v0.72.0：一覧の行のボタンが3つ以上のとき、スマホでは名前の下の行に並べる（馬主の厩舎で名前が縦書きになった） */
+@media (max-width: 560px) {
+  .li:has(> img) > .acts:has(> :nth-child(3)), .li:has(> canvas) > .acts:has(> :nth-child(3)) { grid-column: 1 / -1; white-space: normal; flex-wrap: wrap; }
+}
+/* 現金の窓口・水族館の数を入れる欄 */
+.cq78 { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+.cq78 input { width: 8em; flex: 0 1 auto; }
+/* v126 素潜りの道具・アイドルのイメチェン */
+.dv126 { margin: 8px 0; }
+.dv126 .chk { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; }
+.if126 { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.if126v { display: grid; grid-template-columns: repeat(2, 72px); gap: 6px; }
+.if126v canvas { width: 72px; height: 72px; image-rendering: pixelated; border-radius: 8px; }
+.if126s { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; flex: 1; min-width: 200px; }
+.if126s label { display: flex; flex-direction: column; gap: 2px; font-size: .8rem; color: #e8e0f0; }
+.if126s select { width: 100%; }
+#if126b { margin-top: 6px; }
+/* v127 装備 */
+.eq127p { display: flex; gap: 12px; align-items: center; margin: 6px 0; }
+.eq127p canvas { width: 72px; height: 72px; image-rendering: pixelated; border-radius: 8px; border: 2px solid var(--panel-2); }
+.eq127s { grid-template-columns: 52px 36px 1fr auto; }
+.eq127k { font-size: .75rem; font-weight: 700; color: var(--ink-soft); }
+.eq127e { width: 32px; height: 32px; border: 2px dashed var(--panel-2); border-radius: 6px; }
+/* v128 みんなの水族館 */
+.aq128bar { margin: 6px 0; }
+.aq128bar i { display: block; height: 10px; border-radius: 6px; background: #d8e4ec; overflow: hidden; margin: 4px 0; }
+.aq128bar b { display: block; height: 100%; background: linear-gradient(90deg, #5ab0e0, #3a8ac8); }
+.dex.aq128 small { color: var(--ink-soft); }
+/* v129 こもれびブティック */
+.bq129h { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; }
+.bq129h b { font-size: 1.05rem; color: #ffe27a; }
+.bq129h span { font-size: .8rem; color: #e8e0f0; }
+.bq129t { background: rgba(255, 122, 168, .25); border-radius: 6px; padding: 1px 6px; }
+.bq129req { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 6px; }
+.bq129req span { background: rgba(255, 255, 255, .14); color: #fff8e8; border-radius: 6px; padding: 2px 8px; font-size: .82rem; }
+.bq129g { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.bq129c { display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fffaf0; color: var(--ink); border: 2px solid var(--panel-2); border-radius: 8px; padding: 6px 4px; font: inherit; cursor: pointer; text-align: center; }
+.bq129c:hover, .bq129c:focus-visible { border-color: #ff7aa8; }
+.bq129c img { width: 40px; height: 40px; image-rendering: pixelated; }
+.bq129c b { font-size: .78rem; line-height: 1.2; }
+.bq129c span { font-size: .7rem; color: var(--ink-soft); }
+.bq129c em { color: #d0507a; font-style: normal; }
+.bq129r { display: flex; gap: 10px; align-items: center; }
+.bq129r canvas { width: 96px; height: 96px; image-rendering: pixelated; border-radius: 10px; flex: none; }
+.bq129 .li img { width: 32px; height: 32px; }

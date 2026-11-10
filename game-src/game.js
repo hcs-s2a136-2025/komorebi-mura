@@ -2232,7 +2232,7 @@ function enterCave(n) {
 }
 function hurtPlayer(dmg, src) {
   if (F6.inv > 0) return;
-  const armor = count("armor") > 0 ? .6 : 1; const d = Math.max(1, Math.round(dmg * armor));
+  const armor = eqArmor127() || (count("armor") > 0 ? .6 : 1); const d = Math.max(1, Math.round(dmg * armor));   // v127：身につけた防具・アクセサリー
   world.hp -= d; F6.inv = .8; F6.hurtFlash = .3; particles.push(...Array.from({ length: 6 }, () => ({ x: player.px + 8, y: player.py + 6, vx: (Math.random() - .5) * 50, vy: -30 - Math.random() * 20, life: .4, col: [230, 70, 70] })));
   if (world.hp <= 0) faint();
   updateHp();
@@ -2262,7 +2262,7 @@ function updateDungeon(dt) {
   for (let i = dg.drops.length - 1; i >= 0; i--) { const d = dg.drops[i]; if (d.x === player.x && d.y === player.y && addItem(d.id, d.n || 1, true)) { toast(ITEMS[d.id].icon, `${ITEMS[d.id].name}を拾った`); dg.drops.splice(i, 1); } }
 }
 function swordHit(tx, ty) {
-  const sel = world.inv[world.sel]; const dmg = (ITEMS[sel?.id]?.weapon || 1) + rnd(2);
+  const sel = world.inv[world.sel], hw = ITEMS[sel?.id]?.weapon; const dmg = (hw ? hw + accAtk127() : (eqW127() || 1)) + rnd(2);   // v127：身につけた武器・アクセサリー
   const targets = (dg?.mobs || []).filter(m => (m.x === tx && m.y === ty) || (m.fx === tx && m.fy === ty));
   for (const m of targets) {
     m.hp -= dmg; m.flash = .2; const [dx, dy] = DIRS[player.dir];
@@ -2385,7 +2385,7 @@ F6.act = (tx, ty, key, sel, item, other) => {
     if (a.petted !== world.day) { a.petted = world.day; a.hearts = Math.min(10, a.hearts + 1); saveWorld(); }
     other.say = { text: `${info.say} ♥${a.hearts}${a.fed ? "" : "（おなかすいた）"}`, until: performance.now() + 1800 }; return true;
   }
-  if (other && other.kind === "mob") { if (ITEMS[sel?.id]?.weapon || !sel) { swing("sword", .25, () => swordHit(tx, ty)); return true; } }
+  if (other && other.kind === "mob") { if (ITEMS[sel?.id]?.weapon || !sel || eqW127()) { swing("sword", .25, () => swordHit(tx, ty)); return true; } }
   if (map === village) {
     if (tx === BOARD_AT[0] && ty === BOARD_AT[1]) { openBoard(); return true; }
     if (tx === JOB_AT[0] && ty === JOB_AT[1]) { openJobs93("village"); return true; }
@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.71.0";
+const CLIENT_VERSION = "0.72.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6023,6 +6023,16 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.72.0", date: "2026/11/10", title: "装備・みんなの水族館・こもれびブティック", items: [
+    "スマホの「装備」：武器・防具・アクセサリー（2つ）を身につけられるように。身につけた物はホットバーから出るので、手に剣を持っていなくても魔物と戦える。旅の武具屋で、よろいや指輪・お守り・王者の冠を買える（騎士と竜うろこのよろいは遺跡の鍛冶師テツが作る）",
+    "みなと町に「みんなの水族館」：村のみんなの募金で建てる（1億Gで建って、4億G・10億Gで展示がふえる）。建ったら釣った魚や海の幸を寄贈して、水槽をうめよう。はじめての種類には寄贈した人の名前が出る",
+    "スマホの「ゲーム」の「村の仕立て屋」が、服のお店を育てる「こもれびブティック」に：仕入れ・工房で作る・お客さんの好みにぴったりの1着をすすめる・お店を広げる・内装・今週のテーマ",
+    "信用金庫の現金の窓口で、引き出す・預ける枚数を入力できるように",
+    "素潜りに「たも網」（つかめる範囲が広い）と「さきいか」（エビやカニが逃げずに寄ってくる）。さきいかを池の釣りにつけると、季節に関係なくザリガニがよくかかる",
+    "アイドルプロデュースに「イメチェン」：アイドルの肌・髪・前髪・目・口・ほっぺを変えられる（連れて歩くアイドルやライブでも、その顔で見える）",
+    "カジノの番付表の「この1週間」に、同じ勝ち負けが2回数えられることがあったのを直した（遊んでいる途中に番付表を開いたときなど）。ボタンを選んだまま Enter やスペースを長押ししても、くり返し押したことにならないように",
+    "スマホで、馬主の厩舎のどんぐりの名前が縦書きになってしまうのを直した（ボタンが3つ以上ある行は、ボタンを下の行に並べる）",
+  ] },
   { v: "0.71.0", date: "2026/11/09", title: "アイドルの活躍の場・主催レース・花畑", items: [
     "アイドルプロデュース：野外ステージのライブが、同じ村のほかの人にも見えるように（はじまるとお知らせ）。「村で連れて歩く」をONにすると、アイドルと衣装がほかの人にも見える",
     "アイドルのファンをふやす方法がふえた：握手会・SNSに投稿・オーディション（村・地方・全国。はじめて合格すると新しい衣装）。称号も3つ",
@@ -9557,19 +9567,24 @@ openSalon26 = function () {
   });
 };
 // ---- お金の調整を受け取る ----
-function applyAdminPay39(money, text) {
+function applyAdminPay39(money, text, cash) {
   money = Math.max(-10000000, Math.min(10000000, Math.floor(+money || 0)));
-  if (!money) return;
-  if (money > 0) addMoney(money); else addMoney(-Math.min(world.money, -money));
+  cash = Math.max(-9999, Math.min(9999, Math.floor(+cash || 0)));
+  if (!money && !cash) return;
+  if (money > 0) addMoney(money); else if (money < 0) addMoney(-Math.min(world.money, -money));
+  // 現金（1,000G札）：足すのは本物のお札。減らすのは本物のつもりのお札から、足りなければわかっている偽札から
+  if (cash > 0) addCash78(Math.min(cash, 9999 - cash78().n));
+  else if (cash < 0) { const c = cash78(), n = Math.min(c.n, -cash); drawCash78(n, Math.max(0, n - (c.n - c.fk))); }
   saveWorld(); updateHud(true);
   const t = String(text || "").slice(0, 60);
-  if (t) F7.notify(`${t}（${money > 0 ? "+" : ""}${fmt(money)}）`, "coin");
+  const parts = [money ? `${money > 0 ? "+" : ""}${fmt(money)}` : "", cash ? `お札 ${cash > 0 ? "+" : "−"}${Math.abs(cash)}枚` : ""].filter(Boolean).join("・");
+  if (t) F7.notify(`${t}（${parts}）`, "coin");
 }
 const _handle39 = handle8;
 handle8 = m => {
-  if (m && m.type === "adminPay") { applyAdminPay39(m.money, m.text); return; }
+  if (m && m.type === "adminPay") { applyAdminPay39(m.money, m.text, m.cash); return; }
   _handle39(m);
-  if (m && m.type === "welcome" && m.adminPay && typeof m.adminPay === "object") applyAdminPay39(m.adminPay.money, m.adminPay.text);
+  if (m && m.type === "welcome" && m.adminPay && typeof m.adminPay === "object") applyAdminPay39(m.adminPay.money, m.adminPay.text, m.adminPay.cash);
 };
 F39.ready = true;
 
@@ -11476,6 +11491,8 @@ function dive55() {
     const kind = d[4], x = 20 + Math.random() * (W - 40), y = kind === "move" ? 110 + Math.random() * 50 : BED + 6 + Math.random() * 18;
     items.push({ d, kind, x, y, vx: kind === "fast" ? (Math.random() < .5 ? -1 : 1) * 46 : kind === "move" ? 22 : kind === "slow" ? 6 : 0, ph: Math.random() * 6, open: false });
   }
+  const DV = dvOpt126();   // v126：たも網（つかめる範囲が広い）・さきいか（すばやい生きものが逃げずに寄ってくる・2ひき増える）
+  if (DV.bait) for (let i = 0; i < 2; i++) { const fp = pool.filter(d => d[4] === "fast"), d = fp.length ? fp[rnd(fp.length)] : null; if (d) items.push({ d, kind: "fast", x: 20 + Math.random() * (W - 40), y: BED + 6 + Math.random() * 18, vx: (Math.random() < .5 ? -1 : 1) * 30, ph: Math.random() * 6, open: false }); }
   if (Math.random() < .08) items.push({ d: DIVE55.find(x => x[0] === "sea_odako55"), kind: "boss", x: 40 + Math.random() * (W - 80), y: BED + 4, vx: 14, ph: 0, hp: 3, cool: 0 });
   if (Math.random() < .12) items.push({ d: null, kind: "chest", x: 30 + Math.random() * (W - 60), y: BED + 10, vx: 0, ph: 0 });
   const jellies = Array.from({ length: 2 + (Math.random() < .5 ? 1 : 0) }, () => ({ x: 40 + Math.random() * (W - 80), y: 50 + Math.random() * 80, ph: Math.random() * 6, hit: 0 }));
@@ -11500,7 +11517,7 @@ function dive55() {
   function stop() { if (stopped) return; stopped = true; removeEventListener("keydown", onKey, true); removeEventListener("keyup", onKey, true); }
   function grab() {
     if (ended || dv.y < SURF) return;
-    let best = null, bd = 18;
+    let best = null, bd = 20 * DV.r;
     for (const it of items) { if (it.gone) continue; const d = Math.hypot(it.x - dv.x, it.y - dv.y); if (d < bd) { bd = d; best = it; } }
     if (!best) { say("なにもない…"); return; }
     if (best.kind === "clam" && !best.open) { breath = Math.max(0, breath - 12); say("パクッ！ 貝にはさまれた（息-12）"); se13("small"); return; }
@@ -11553,7 +11570,7 @@ function dive55() {
     for (const it of items) {
       if (it.gone) continue; it.ph += dt;
       if (it.kind === "clam") it.open = Math.sin(it.ph * 2.2) > .2;
-      if (it.kind === "fast" || it.kind === "slow") { it.x += it.vx * dt; if (it.x < 12 || it.x > W - 12) it.vx *= -1; if (it.kind === "fast" && Math.hypot(it.x - dv.x, it.y - dv.y) < 30) it.vx = (it.x > dv.x ? 1 : -1) * 70; else if (it.kind === "fast" && Math.random() < dt * .5) it.vx = (Math.random() < .5 ? -1 : 1) * 46; }
+      if (it.kind === "fast" || it.kind === "slow") { it.x += it.vx * dt; if (it.x < 12 || it.x > W - 12) it.vx *= -1; if (it.kind === "fast" && DV.bait && Math.hypot(it.x - dv.x, it.y - dv.y) < 70) it.vx = (it.x > dv.x ? -1 : 1) * 14; else if (it.kind === "fast" && Math.hypot(it.x - dv.x, it.y - dv.y) < 26) it.vx = (it.x > dv.x ? 1 : -1) * 56; else if (it.kind === "fast" && Math.random() < dt * .5) it.vx = (Math.random() < .5 ? -1 : 1) * 40; }
       if (it.kind === "move") { it.x += Math.cos(it.ph * .9) * it.vx * dt; it.y += Math.sin(it.ph * 1.3) * 10 * dt; it.x = Math.max(12, Math.min(W - 12, it.x)); }
       if (it.kind === "boss") { it.cool = Math.max(0, it.cool - dt); it.x += Math.sin(it.ph * .7) * it.vx * dt; it.x = Math.max(16, Math.min(W - 16, it.x)); }
     }
@@ -13303,28 +13320,34 @@ F74.wait = null; F74.sentTotal = null; F74.board = null; F74.tab = "all";
 F74.flush = force => {
   if (!F8.connected) return;
   const c = crank74(), total = Math.floor(+world.stats.gambleNet || 0);
+  // 返事が来るまでは、同じ rid・同じ add で送りなおす（サーバーは同じ rid を2回は足さない。v0.72.0 で、番付表を開いたときに同じ分を2回送っていたのを直した）
+  if (!F74.wait && c.w && typeof c.w.rid === "string" && Number.isFinite(+c.w.add)) F74.wait = { rid: c.w.rid, add: Math.floor(+c.w.add), total, at: 0 };
+  if (F74.wait) {
+    if (Date.now() - F74.wait.at < 8000) return;
+    F74.wait.at = Date.now(); F74.wait.total = total;
+    send8({ type: "crank", total, add: F74.wait.add, rid: F74.wait.rid }); return;
+  }
   if (!force && !c.pend && F74.sentTotal === total) return;
-  if (F74.wait && Date.now() - F74.wait.at < 8000) return;
   const rid = Math.random().toString(36).slice(2, 10);
-  F74.wait = { rid, add: c.pend, total, at: Date.now() };
+  F74.wait = { rid, add: c.pend, total, at: Date.now() }; c.w = { rid, add: c.pend };
   send8({ type: "crank", total, add: c.pend, rid });
 };
 setInterval(() => F74.flush(false), 10000);
 const _handle74 = handle8;
 handle8 = m => {
   if (m && m.type === "crank") {
-    if (typeof m.ok === "string" && F74.wait && m.ok === F74.wait.rid) { crank74().pend -= F74.wait.add; F74.sentTotal = F74.wait.total; F74.wait = null; saveWorld(); }
+    if (typeof m.ok === "string" && F74.wait && m.ok === F74.wait.rid) { const c = crank74(); c.pend -= F74.wait.add; delete c.w; F74.sentTotal = F74.wait.total; F74.wait = null; saveWorld(); }
     if (m.board && typeof m.board === "object") { F74.board = m.board; if (F74.render) F74.render(); }
     return;
   }
   _handle74(m);
-  if (m && m.type === "welcome") { F74.wait = null; F74.sentTotal = null; setTimeout(() => F74.flush(true), 1500); }
+  if (m && m.type === "welcome") { if (F74.wait) F74.wait.at = 0; F74.sentTotal = null; setTimeout(() => F74.flush(true), 1500); }
 };
 const sg74 = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${fmt(Math.abs(v))}`;
 F74.open = () => {
   F74.board = null;
   F74.ask = () => send8({ type: "crank", get: true, everywhere: F74.scope === "everywhere" });
-  if (F8.connected) { F74.wait = null; F74.flush(true); setTimeout(() => F74.ask(), 300); }
+  if (F8.connected) { F74.flush(true); setTimeout(() => F74.ask(), 300); }
   openModal("こもれびパレス 番付表", "dark", body => {
     F74.render = () => {
       if (!body.isConnected) { F74.render = null; return; }
@@ -14366,11 +14389,28 @@ function openCashDesk78(note) {
     body.innerHTML = staffSay13(charIcon13({ skin: "色白", hair: "ボブ", hairc: "黒", top: "スーツ", topc: "白" }), "いらっしゃいませ。現金の引き出しとお預け入れはこちらです。お預かりするお札は、すべて機械で確かめさせていただきますね")
       + `<p class="mtext">所持金 <b>${fmt(world.money)}</b>・現金 <b>${billTxt78(c.n)}</b>${c.fk ? `（うち偽札だとわかっている分 ${c.fk}枚）` : ""}</p>${note ? `<p class="mtext"><b>${esc(note)}</b></p>` : ""}
       <h4>引き出す（電子マネー → お札）</h4><div class="row2">${[1, 5, 10, 50].map(k => `<button class="btn light" type="button" data-wd78="${k}" ${world.money >= k * BILL78 && c.n + k <= 9999 ? "" : "disabled"}>${k}枚（${fmt(k * BILL78)}）</button>`).join("")}</div>
+      <div class="row cq78"><input id="wdN78" type="number" inputmode="numeric" min="1" max="${Math.max(1, Math.min(9999 - c.n, Math.floor(world.money / BILL78)))}" placeholder="枚数" aria-label="引き出す枚数"><span class="mtext small">枚</span><button class="btn" type="button" id="wdGo78" ${world.money >= BILL78 && c.n < 9999 ? "" : "disabled"}>枚数を入れて引き出す</button></div>
+      <p class="mtext small">引き出せるのは、あと ${Math.max(0, Math.min(9999 - c.n, Math.floor(world.money / BILL78)))}枚まで（お札は9,999枚まで持てる）</p>
       <h4>預ける（お札 → 電子マネー）</h4><div class="row2">${[1, 5, 10].map(k => `<button class="btn light" type="button" data-dp78="${k}" ${believed >= k ? "" : "disabled"}>${k}枚</button>`).join("")}<button class="btn" type="button" data-dp78="${believed}" ${believed ? "" : "disabled"}>本物だと思う分をぜんぶ（${believed}枚）</button></div>
+      <div class="row cq78"><input id="dpN78" type="number" inputmode="numeric" min="1" max="${Math.max(1, believed)}" placeholder="枚数" aria-label="預ける枚数"><span class="mtext small">枚</span><button class="btn" type="button" id="dpGo78" ${believed ? "" : "disabled"}>枚数を入れて預ける</button></div>
       ${c.fk ? `<div class="row2"><button class="btn light" type="button" id="dp78f">偽札もまぜて、ぜんぶ預ける（バレたら捕まる）</button></div>` : ""}
       <p class="mtext small">預けたお札に知らない偽札がまざっていたら、銀行が回収して、届けてくれたお礼に1枚につき100Gくれる。わざと偽札をまぜると、見破られたときに捕まるよ。</p>`;
     body.querySelectorAll("[data-wd78]").forEach(b => b.onclick = () => { const k = +b.dataset.wd78; if (world.money < k * BILL78) return; addMoney(-k * BILL78); addCash78(k); se13("small"); closeModal(); openCashDesk78(`${billTxt78(k)} を引き出した`); });
     body.querySelectorAll("[data-dp78]").forEach(b => b.onclick = () => { closeModal(); deposit78(+b.dataset.dp78, 0); });
+    const numOf78 = id => { const v = Math.floor(+String($(id).value || "").replace(/[,，]/g, "")); return Number.isFinite(v) && v > 0 ? v : 0; };
+    body.querySelector("#wdGo78").onclick = () => {
+      const c = cash78(), k = numOf78("wdN78"), max = Math.min(9999 - c.n, Math.floor(world.money / BILL78));
+      if (!k) { toast(null, "枚数を入れてね"); return; }
+      if (k > max) { toast(null, max > 0 ? `引き出せるのは${max}枚までだよ` : "これ以上は引き出せないよ"); return; }
+      addMoney(-k * BILL78); addCash78(k); se13("small"); closeModal(); openCashDesk78(`${billTxt78(k)} を引き出した`);
+    };
+    body.querySelector("#dpGo78").onclick = () => {
+      const c = cash78(), k = numOf78("dpN78"), max = c.n - c.fk;
+      if (!k) { toast(null, "枚数を入れてね"); return; }
+      if (k > max) { toast(null, `預けられるのは${max}枚までだよ`); return; }
+      closeModal(); deposit78(k, 0);
+    };
+    for (const [i, b] of [["wdN78", "wdGo78"], ["dpN78", "dpGo78"]]) $(i).addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); $(b).click(); } });
     body.querySelector("#dp78f")?.addEventListener("click", () => { closeModal(); deposit78(cash78().n, cash78().fk); });
   });
 }
@@ -20223,7 +20263,7 @@ F100.sew = sew100;
     const hub = document.querySelector("#mbody .gm92hub"); if (!hub || hub.querySelector("[data-g100]")) return r;
     const at = hub.querySelector("[data-g99]") || hub.querySelector("p");
     at.insertAdjacentHTML("afterend", `<button class="gm92c" type="button" data-g100="dress"><b>ペットの着せ替え</b><span>ペットに帽子・服・首輪・リボン。村のペットにもそのまま見える</span><em>持っている服 ${c98().closet.length + tail100().length}着</em></button>
-      <button class="gm92c" type="button" data-g100="tailor"><b>村の仕立て屋</b><span>注文どおりに服を作る。うまくできた服は自分の物に</span><em>作った服 ${tail100().length}着</em></button>`);
+      <button class="gm92c" type="button" data-g100="tailor"><b>村の仕立て屋（こもれびブティック）</b><span>服を仕入れて・作って、お客さんの好みにぴったりの1着をすすめる。お店を広げよう</span><em>${world.bq129 ? `お店 Lv${world.bq129.lv || 1}・売った服 ${world.bq129.sold || 0}着` : "新しくなった！"}</em></button>`);
     hub.querySelectorAll("[data-g100]").forEach(b => b.onclick = () => { closeModal(); if (b.dataset.g100 === "dress") openDress100(); else openTailor100(); });
     return r;
   };
@@ -20495,7 +20535,7 @@ const idol102 = () => {
 };
 F102.state = idol102;
 const total102 = () => { const s = idol102().st; return s.vo + s.da + s.ex; };
-const idolCfg102 = () => { const d = idol102(), I = IDOLS102[Math.max(0, d.pick)], O = OUTFIT102[d.outfit] && total102() >= OUTFIT102[d.outfit][1] ? OUTFIT102[d.outfit][2] : null; return { ...DEFAULT, ...I.cfg, ...(O || {}) }; };
+const idolCfg102 = () => { const d = idol102(), I = IDOLS102[Math.max(0, d.pick)], O = OUTFIT102[d.outfit] && total102() >= OUTFIT102[d.outfit][1] ? OUTFIT102[d.outfit][2] : null; return { ...DEFAULT, ...I.cfg, ...idolLook126(d), ...(O || {}) }; };
 const stageReady102 = () => !!(world.projects && world.projects.stage35 && world.projects.stage35.done);
 const fanTitle102 = f => f >= 5000 ? "伝説のプロデューサー" : f >= 1000 ? "人気プロデューサー" : f >= 100 ? "新人プロデューサー" : "";
 function openIdol102(note) {
@@ -21600,7 +21640,7 @@ swordHit = function (tx, ty) {
   try {
     const targets = (dg?.mobs || []).filter(m => (m.x === tx && m.y === ty) || (m.fx === tx && m.fy === ty));
     if (targets.length) {
-      const sel = world.inv[world.sel], base = (ITEMS[sel?.id]?.weapon || 1);
+      const sel = world.inv[world.sel], base = (ITEMS[sel?.id]?.weapon || eqW127() || 1);
       const extra = (has106("a2") ? 2 : 0) + (has106("a8b") ? 4 : 0) + (has106("a4b") && Math.random() < .15 ? base : 0);
       if (extra) for (const m of targets) m.hp -= extra;
     }
@@ -22514,7 +22554,7 @@ act = function () {
     const c = RD.cur, b = bossAt111(c);
     if (b && b.onMap(map) && distBoss111(b, player.x, player.y) <= b.reach) {
       const now = performance.now(); if (now - RD.hitAt < 600) return; RD.hitAt = now;
-      const sel = world.inv[world.sel], w = ITEMS[sel?.id]?.weapon || 0, B = F106 && F106.raidBonus ? F106.raidBonus() : { add: 0, crit: 0, mul: 1 };
+      const sel = world.inv[world.sel], w = ITEMS[sel?.id]?.weapon ? ITEMS[sel.id].weapon + accAtk127() : eqW127(), B = F106 && F106.raidBonus ? F106.raidBonus() : { add: 0, crit: 0, mul: 1 };
       let d = 2 + w + rnd(3) + B.add; const crit = Math.random() < B.crit; if (crit) d *= 2; d = Math.round(d * B.mul);
       d = Math.max(1, Math.min(80, d));
       // 向きを魔物のほうへ
@@ -24632,7 +24672,7 @@ function openDeep122() {
       <p class="mtext small">いちばん深く行った階：<b>地下${F.best}階</b>　・たおした番人：${F.boss}回　・いまのHP ${Math.round(world.hp)}</p>
       <div class="row2"><button class="btn" type="button" data-d122="1">地下1階から</button>${F.cp ? `<button class="btn" type="button" data-d122="${F.cp + 1}">地下${F.cp + 1}階から（続き）</button>` : ""}</div>
       ${Math.max(F.best, F.cp + 1) > 1 ? `<div class="row2"><select id="d122sel" class="inp" aria-label="行く階">${Array.from({ length: Math.max(F.best, F.cp + 1) }, (_, i) => i + 1).reverse().map(n => `<option value="${n}">地下${n}階${n % 5 === 0 ? "（番人）" : ""}</option>`).join("")}</select><button class="btn light" type="button" id="d122go">この階へ行く</button></div><p class="mtext small">行ったことのある階なら、どこからでも始められるよ。</p>` : ""}
-      ${world.inv.some(x => x && ITEMS[x.id]?.weapon) ? "" : `<p class="mtext small"><b>剣を持っていないみたい。</b>素手だととても弱いよ。</p>`}`;
+      ${world.inv.some(x => x && ITEMS[x.id]?.weapon) || eqW127() ? "" : `<p class="mtext small"><b>剣を持っていないみたい。</b>素手だととても弱いよ。</p>`}`;
     b.querySelectorAll("[data-d122]").forEach(x => x.onclick = () => { closeModal(); enterDeep122(+x.dataset.d122); });
     const go = b.querySelector("#d122go"); if (go) go.onclick = () => { const n = Math.max(1, Math.min(Math.max(F.best, F.cp + 1), +b.querySelector("#d122sel").value | 0)); closeModal(); enterDeep122(n); };
   });
@@ -25067,10 +25107,11 @@ const idlCode124 = () => {
   const d = idol102(); if (d.pick < 0) return null;
   const o = id124(), mode = Date.now() < live124 ? "l" : o.walk ? "w" : null; if (!mode) return null;
   const outfit = OUTFIT102[d.outfit] && total102() >= OUTFIT102[d.outfit][1] ? d.outfit : 0;
-  return `${d.pick}${outfit.toString(36)}${Math.min(9, d.song | 0)}${mode}`;
+  return `${d.pick}${outfit.toString(36)}${Math.min(9, d.song | 0)}${mode}${faceCode126(d)}`;
 };
-const parseIdl124 = s => { const m = /^([0-2])([0-9a-z])([0-9])([wl])$/.exec(typeof s === "string" ? s : ""); if (!m) return null; const p = +m[1], o = parseInt(m[2], 36); return { pick: p, outfit: OUTFIT102[o] ? o : 0, song: +m[3], mode: m[4] }; };
-const lookOf124 = x => ({ ...DEFAULT, ...IDOLS102[x.pick].cfg, ...((OUTFIT102[x.outfit] && OUTFIT102[x.outfit][2]) || {}) });
+// v0.72.0：うしろに16文字の顔のコード（イメチェン・v126）がつくことがある
+const parseIdl124 = s => { const m = /^([0-2])([0-9a-z])([0-9])([wl])([0-9a-z]{16})?$/.exec(typeof s === "string" ? s : ""); if (!m) return null; const p = +m[1], o = parseInt(m[2], 36); return { pick: p, outfit: OUTFIT102[o] ? o : 0, song: +m[3], mode: m[4], face: m[5] || "" }; };
+const lookOf124 = x => ({ ...DEFAULT, ...IDOLS102[x.pick].cfg, ...faceOf126(x.face), ...((OUTFIT102[x.outfit] && OUTFIT102[x.outfit][2]) || {}) });
 const _clean124 = cleanCfg;
 cleanCfg = function (c) { const o = _clean124(c); if (c && parseIdl124(c.idl)) o.idl = c.idl; return o; };
 setInterval(() => {
@@ -25346,6 +25387,726 @@ for (const t of TTL125) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT
 GUIDE54.push(["競どんぐりの主催レース", "acorn_shiny", `<p>オンラインでは、競どんぐりの画面の「主催レース」で、自分で賞金を出してレースを開けます（10,000〜1,000,000G）。</p>
   <ul><li>受付は3分。村の馬主が、自分のどんぐりを出走させられる（1人2粒・ぜんぶで6粒まで）</li><li>しめきりのあとの最初のレースが主催レース。2粒そろわなかったら取りやめで、賞金はもどる</li>
   <li>賞金は 1着60%・2着25%・3着15%。ふつうのどんぐりが入着した分は、主催した人にもどる</li><li>主催レースにも、みんなが賭けられるよ</li></ul>`]);
+
+// =================== v126: お便りから（ボタンの押しっぱなし・素潜りのたも網とさきいか・ザリガニ・アイドルのイメチェン） ===================
+var F126 = {};
+// ---- ボタンを選んだまま Enter／スペースを押しっぱなしにしても、くり返し押したことにしない（スロットの長押しで回りつづけた） ----
+addEventListener("keydown", e => {
+  if (!e.repeat || (e.key !== "Enter" && e.key !== " ")) return;
+  const t = e.target; if (t && (t.tagName === "BUTTON" || (t.getAttribute && t.getAttribute("role") === "button"))) e.preventDefault();
+}, true);
+
+// ---- さきいか（えさ）：池につけるとザリガニが季節に関係なく寄ってくる・素潜りに持っていくと、すばやい生きものが逃げない ----
+BAIT29.bait_ika126 = { name: "さきいか", price: 30, note: "ザリガニやカニの大好物。池の釣りにつけると、季節に関係なくザリガニが寄ってくる。素潜りに持っていくと、エビやカニが逃げずに寄ってくる",
+  like: { "ザリガニ": 6, "ドジョウ": 1.5, "タコ": 1.5, "イカ": 1.3 },
+  spr: (s, r, e) => { for (let i = 0; i < 5; i++) { r(4 + i * 2, 4 + (i % 2), 1, 9, C17(i % 2 ? "#f2dcb0" : "#e8c890")); } r(3, 12, 11, 1, C17("#c8a070")); s(6, 3, C17("#fff4dc")); s(10, 4, C17("#fff4dc")); } };
+addSpr17("bait_ika126", BAIT29.bait_ika126.spr);
+ITEMS.bait_ika126 = { name: "さきいか", icon: "bait_ika126", price: 30, bait: true };
+SHOP_STOCK.push("bait_ika126"); SHOP_BASE.push("bait_ika126");
+{ const _ok = fishOk; fishOk = f => (f && f.n === "ザリガニ" && baitOn29() === "bait_ika126") ? _ok({ ...f, s: undefined }) : _ok(f); }
+{ const _hint = fishHint; fishHint = f => f && f.n === "ザリガニ" ? `${_hint(f)}（さきいかをつけると、いつでも）` : _hint(f); }
+
+// ---- 素潜り：たも網（ずっと使える）とさきいか（1回に1つ） ----
+const NET126 = 12000;
+const dv126 = () => { const o = world.dive126 && typeof world.dive126 === "object" ? world.dive126 : (world.dive126 = {}); o.net = !!o.net; o.useBait = o.useBait !== false; return o; };
+function dvOpt126() {
+  const o = dv126(), bait = o.useBait && count("bait_ika126") > 0;
+  if (bait) { removeItem("bait_ika126", 1); renderHotbar(); saveWorld(); }
+  return { r: o.net ? 1.7 : 1, bait };
+}
+F126.dvOpt = dvOpt126;
+{
+  const _od = openDive55;
+  openDive55 = function () {
+    const r = _od.apply(this, arguments);
+    const body = $("mbody"), row = body && body.querySelector(".row2"); if (!row || !world.wetsuit55) return r;
+    const o = dv126(), n = count("bait_ika126");
+    row.insertAdjacentHTML("beforebegin", `<div class="dv126"><h4>素潜りの道具</h4>
+      <div class="list">${itemLi("net126", o.net ? "持っている。つかめる範囲が広くなる（すばやいエビやカニもつかまえやすい）" : `つかめる範囲が広くなる。ずっと使える（${fmt(NET126)}）`, o.net ? "✓" : `<button class="btn" type="button" id="dvNet126" ${world.money >= NET126 ? "" : "disabled"}>買う</button>`)}
+      ${itemLi("bait_ika126", `持っている数 ${n}こ。潜るときに1つ使うと、エビやカニが逃げずに寄ってきて、2ひき増える`, `<button class="btn light" type="button" id="dvBait126" ${world.money >= 30 ? "" : "disabled"}>5こ買う（${fmt(150)}）</button>`)}</div>
+      <label class="chk"><input type="checkbox" id="dvUse126" ${o.useBait ? "checked" : ""} ${n ? "" : "disabled"}> 潜るときにさきいかを使う</label></div>`);
+    $("dvNet126")?.addEventListener("click", () => { if (world.money < NET126 || dv126().net) return; addMoney(-NET126); dv126().net = true; saveWorld(); se13("small"); toast("net126", "たも網を手に入れた！"); closeModal(); openDive55(); });
+    $("dvBait126")?.addEventListener("click", () => { if (world.money < 150) return; if (!addItem("bait_ika126", 5)) { toast(null, "持ち物がいっぱいだよ"); return; } addMoney(-150); saveWorld(); closeModal(); openDive55(); });
+    $("dvUse126")?.addEventListener("change", e => { dv126().useBait = e.target.checked; saveWorld(); });
+    return r;
+  };
+}
+addSpr17("net126", (s, r, e) => { r(9, 8, 2, 7, C17("#a8743a")); r(10, 14, 1, 1, C17("#7a5226")); e(7, 5, 5, 4, C17("#e8e4d8")); e(7, 5, 3.8, 2.8, C17("#9ad0e8")); for (let x = 3; x <= 11; x += 2) r(x, 3, 1, 5, C17("#c8c4b8")); for (let y = 3; y <= 7; y += 2) r(3, y, 9, 1, C17("#c8c4b8")); });
+ITEMS.net126 = { name: "たも網", icon: "net126", price: NET126, tool: true };
+
+// ---- アイドルのイメチェン（顔・髪を変える。ほかの人にも、連れて歩くアイドル・ライブのアイドルの顔が見える） ----
+const FACE126 = [["skin", "肌", () => Object.keys(CHAR.SKIN)], ["hair", "髪型", () => Object.keys(CHAR.HAIR)], ["hairc", "髪の色", () => Object.keys(CHAR.HAIRC)], ["bangs", "前髪", () => Object.keys(BANGS34)],
+  ["eyes", "目", () => Object.keys(EYES34)], ["eyec", "目の色", () => Object.keys(EYEC34)], ["mouth", "口", () => Object.keys(MOUTH34)], ["cheek", "ほっぺ", () => Object.keys(CHEEK34)]];
+const FACEP126 = 10000;
+function idolLook126(d) {
+  const L = d && d.look && typeof d.look === "object" ? d.look : null; if (!L) return {};
+  const o = {}; for (const [k, , list] of FACE126) if (typeof L[k] === "string" && list().includes(L[k])) o[k] = L[k];
+  return o;
+}
+function faceCode126(d) {
+  if (!d || !d.look) return "";
+  const c = { ...DEFAULT, ...IDOLS102[Math.max(0, d.pick)].cfg, ...idolLook126(d) };
+  let out = ""; for (const [k, , list] of FACE126) { const i = Math.max(0, list().indexOf(c[k])); out += i.toString(36).padStart(2, "0").slice(-2); }
+  return out.length === 16 ? out : "";
+}
+function faceOf126(code) {
+  if (typeof code !== "string" || code.length !== 16) return {};
+  const o = {}; FACE126.forEach(([k, , list], i) => { const v = list()[parseInt(code.slice(i * 2, i * 2 + 2), 36)]; if (v) o[k] = v; });
+  return o;
+}
+F126.faceCode = faceCode126; F126.faceOf = faceOf126;
+function openIdolFace126(note) {
+  const d = idol102(); if (d.pick < 0) { openIdol102(); return; }
+  const I = IDOLS102[d.pick], base = { ...DEFAULT, ...I.cfg };
+  const pick = { ...base, ...idolLook126(d) };
+  openModal("アイドルのイメチェン", "dark", body => {
+    const draw = msg => {
+      const cost = (world.stats.idolFace126 || 0) ? FACEP126 : 0;
+      body.innerHTML = `<p class="mtext">${esc(I.name)}の顔と髪を、好きなように変えられるよ。衣装はプロデュースの画面のまま。連れて歩くアイドルやライブのアイドルにも、この顔で出る（オンラインなら、ほかの人にも）。</p>
+        ${msg || note ? `<p class="mtext"><b>${esc(msg || note)}</b></p>` : ""}
+        <div class="if126"><div class="if126v">${["down", "left", "right", "up"].map(dir => `<canvas width="48" height="48" data-if126="${dir}"></canvas>`).join("")}</div>
+        <div class="if126s">${FACE126.map(([k, nm, list]) => `<label><span>${nm}</span><select data-fk126="${k}">${list().map(v => `<option ${pick[k] === v ? "selected" : ""}>${esc(v)}</option>`).join("")}</select></label>`).join("")}</div></div>
+        <div class="row2"><button class="btn" type="button" id="if126ok">この顔にする（${cost ? fmt(cost) : "はじめてなので無料"}）</button><button class="btn light" type="button" id="if126rs">はじめの顔にもどす（無料）</button><button class="btn light" type="button" id="if126bk">プロデュースにもどる</button></div>`;
+      body.querySelectorAll("[data-if126]").forEach(cv => { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#3a2450"; g.fillRect(0, 0, 48, 48); g.drawImage(charImg118({ ...idolCfg102(), ...Object.fromEntries(FACE126.map(([k]) => [k, pick[k]])) }, cv.dataset.if126, 0), 0, 0, 48, 48); });
+      body.querySelectorAll("[data-fk126]").forEach(sl => sl.onchange = () => { pick[sl.dataset.fk126] = sl.value; draw(); });
+      body.querySelector("#if126ok").onclick = () => {
+        if (world.money < cost) { draw(`${fmt(cost)} いるよ`); return; }
+        if (cost) addMoney(-cost);
+        const look = {}; for (const [k] of FACE126) if (pick[k] !== base[k]) look[k] = pick[k];
+        idol102().look = Object.keys(look).length ? look : undefined; if (!idol102().look) delete idol102().look;
+        world.stats.idolFace126 = (world.stats.idolFace126 || 0) + 1; saveWorld(); se13("harvest");
+        try { checkTitles42(); } catch (e) { }
+        draw(`${I.name}「わあ……新しいわたし、どうかな？ プロデューサー！」`);
+      };
+      body.querySelector("#if126rs").onclick = () => { delete idol102().look; Object.assign(pick, base); saveWorld(); draw(`${I.name}「やっぱり、いつものわたしが一番かな」`); };
+      body.querySelector("#if126bk").onclick = () => { closeModal(); openIdol102(); };
+    };
+    draw();
+  });
+}
+F126.face = openIdolFace126;
+setInterval(() => {
+  try {
+    if (!modalOpen || !$("id102cv") || $("if126b")) return;
+    const l = document.querySelector("#mbody .id102l"); if (!l) return;
+    l.insertAdjacentHTML("beforeend", `<button class="btn light" type="button" id="if126b">イメチェン</button>`);
+    $("if126b").onclick = () => { closeModal(); openIdolFace126(); };
+  } catch (e) { }
+}, 300);
+const TTL126 = [["イメチェンの魔法使い", "アイドルのイメチェンを5回する", () => (world.stats.idolFace126 || 0) >= 5]];
+for (const t of TTL126) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
+// =================== v127: 装備（武器・防具・アクセサリー2つを身につける） ===================
+// world.eq127 = { w: 武器のID, a: 防具のID, x: [アクセサリー, アクセサリー] }。身につけた物は持ち物から出て、ホットバーがあく。
+// 武器：剣を持っていなくても、魔物に向かってⒶで、身につけた武器で攻撃する（手に持った剣があれば、そちらが先）。
+// 防具：受けるダメージが減る（身につけていないときは、今までどおり持ち物の鉄の鎧が効く）。
+// アクセサリー：攻撃・守り・歩く速さ・売値・経験・HPの回復。
+var F127 = {};
+const eq127 = () => {
+  const o = world.eq127 && typeof world.eq127 === "object" && !Array.isArray(world.eq127) ? world.eq127 : (world.eq127 = {});
+  const ok = (id, f) => typeof id === "string" && ITEMS[id] && f(ITEMS[id]) ? id : null;
+  o.w = ok(o.w, it => it.weapon); o.a = ok(o.a, it => it.armor127); o.x = Array.isArray(o.x) ? [0, 1].map(i => ok(o.x[i], it => it.acc127)) : [null, null];
+  return o;
+};
+ITEMS.armor.armor127 = .6;
+function ring127(band, gem, hi) { return (s, r, e) => { for (let a = 0; a < 40; a++) { const t = a / 40 * Math.PI * 2; s(Math.round(8 + Math.cos(t) * 4), Math.round(10 + Math.sin(t) * 3.2), C17(band)); } e(8, 5, 2.2, 2.2, C17(gem)); s(7, 4, C17(hi)); }; }
+// 防具とアクセサリー：[ID, 名前, 値段, 中身, 絵]
+const GEAR127 = [
+  ["arm_leather127", "革のよろい", 8000, { armor127: .8 }, (s, r, e) => { r(4, 4, 8, 9, C17("#a8743a")); r(4, 4, 8, 1, C17("#c8945a")); r(3, 5, 2, 4, C17("#8a5a2a")); r(11, 5, 2, 4, C17("#8a5a2a")); r(7, 6, 2, 6, C17("#7a4a1e")); s(8, 8, C17("#e8c070")); }],
+  ["arm_knight127", "騎士のよろい", 250000, { armor127: .5 }, (s, r, e) => { r(4, 3, 8, 10, C17("#c8ccd8")); r(4, 3, 8, 1, C17("#f0f2f8")); r(2, 4, 3, 4, C17("#a8acb8")); r(11, 4, 3, 4, C17("#a8acb8")); r(7, 5, 2, 7, C17("#3a5aa8")); r(5, 7, 6, 1, C17("#3a5aa8")); s(8, 4, C17("#f0c840")); }],
+  ["arm_dragon127", "竜うろこのよろい", 3000000, { armor127: .4 }, (s, r, e) => { r(4, 3, 8, 10, C17("#3a8a6a")); for (let y = 4; y < 13; y += 2) for (let x = 4 + (y % 4 ? 1 : 0); x < 12; x += 2) s(x, y, C17("#6ac09a")); r(2, 4, 3, 4, C17("#2a6a4a")); r(11, 4, 3, 4, C17("#2a6a4a")); s(8, 6, C17("#f05a5a")); }],
+  ["ring_pow127", "力の指輪", 30000, { acc127: { atk: 3 } }, ring127("#c89a3a", "#e83a3a", "#ffb0b0")],
+  ["ring_spd127", "風の指輪", 40000, { acc127: { spd: .12 } }, ring127("#c8ccd8", "#5ad0a0", "#c8fff0")],
+  ["amu_guard127", "守りのお守り", 25000, { acc127: { def: .85 } }, (s, r, e) => { r(5, 4, 6, 9, C17("#d83a4a")); r(5, 4, 6, 1, C17("#f06a7a")); r(6, 7, 4, 3, C17("#f0c840")); r(7, 2, 2, 2, C17("#f0e0b0")); }],
+  ["amu_heal127", "いやしのペンダント", 60000, { acc127: { heal: 2 } }, (s, r, e) => { for (let i = 0; i < 6; i++) { s(4 + i, 3 + (i < 3 ? i : 5 - i), C17("#c8a048")); s(11 - i, 3 + (i < 3 ? i : 5 - i), C17("#c8a048")); } e(8, 10, 3, 3, C17("#5ad06a")); s(7, 9, C17("#c8ffd0")); }],
+  ["charm_xp127", "四つ葉のお守り", 80000, { acc127: { xp: .1 } }, (s, r, e) => { for (const [x, y] of [[6, 5], [10, 5], [6, 9], [10, 9]]) e(x, y, 2.2, 2.2, C17("#4ab05a")); s(8, 7, C17("#2a7a3a")); r(8, 9, 1, 5, C17("#2a7a3a")); }],
+  ["brooch_gold127", "金のブローチ", 400000, { acc127: { sell: .03 } }, (s, r, e) => { e(8, 8, 5, 5, C17("#e8b830")); e(8, 8, 3.4, 3.4, C17("#f8d860")); e(8, 8, 1.6, 1.6, C17("#e83a6a")); s(6, 6, C17("#fff6c8")); }],
+  ["crown127", "王者の冠", 8000000, { acc127: { atk: 5, def: .9 } }, (s, r, e) => { r(3, 8, 10, 5, C17("#e8b830")); for (const x of [3, 7, 12]) r(x, 4, 1, 4, C17("#e8b830")); r(5, 6, 1, 2, C17("#e8b830")); r(10, 6, 1, 2, C17("#e8b830")); s(8, 10, C17("#e83a6a")); s(5, 10, C17("#3a8ae0")); s(11, 10, C17("#3a8ae0")); r(3, 12, 10, 1, C17("#b88a20")); }],
+];
+for (const [id, name, price, extra, spr] of GEAR127) { addSpr17(id, spr); ITEMS[id] = { name, icon: id, price, tool: true, ...extra }; }
+// 店（行商の武具屋）に出す物と、遺跡の鍛冶師テツだけが作れる物
+const SHOP127 = ["sword_wood", "sword_iron", "arm_leather127", "armor", "ring_pow127", "ring_spd127", "amu_guard127", "amu_heal127", "charm_xp127", "brooch_gold127", "crown127"];
+const FORGE127 = { arm_knight127: { shard122: 12 }, arm_dragon127: { shard122: 30, crystal122: 5 } };
+const accSum127 = k => eq127().x.reduce((a, id) => { const v = id && ITEMS[id].acc127 && ITEMS[id].acc127[k]; return k === "def" ? a * (v || 1) : a + (v || 0); }, k === "def" ? 1 : 0);
+/** 身につけた武器の攻撃（＋アクセサリーの攻撃）。武器がなければ 0 */
+function eqW127() { const o = eq127(); return o.w ? ITEMS[o.w].weapon + accSum127("atk") : 0; }
+/** 受けるダメージの倍率（防具とアクセサリー）。どちらもなければ 0（今までどおり） */
+function eqArmor127() { const o = eq127(), a = o.a ? ITEMS[o.a].armor127 : 0, d = accSum127("def"); if (!a && d === 1) return 0; return (a || (count("armor") > 0 ? .6 : 1)) * d; }
+/** 手に持った剣の攻撃に足すアクセサリーの攻撃 */
+function accAtk127() { return accSum127("atk"); }
+F127.atkAdd = accAtk127;
+F127.w = eqW127; F127.armor = eqArmor127; F127.state = eq127;
+// 歩く速さ：乗り物の速さに、風の指輪をかける
+{ let base = +player.speed || 1; try { Object.defineProperty(player, "speed", { configurable: true, enumerable: true, get: () => { try { return base * (1 + accSum127("spd")); } catch (e) { return base; } }, set: v => { base = +v || 1; } }); } catch (e) { } }
+// 売値・経験
+{ const _sm = F7.sellMul; F7.sellMul = id => _sm(id) + accSum127("sell"); }
+{ const _ax = addXp; addXp = function (k, n) { const x = accSum127("xp"); return _ax.call(this, k, x > 0 && n > 0 ? Math.max(n + 1, Math.round(n * (1 + x))) : n); }; }
+// いやしのペンダント：洞窟・深層のあいだ、10秒ごとにHP+2
+setInterval(() => { try { const h = accSum127("heal"); if (h > 0 && !modalOpen && world.hp > 0 && world.hp < 100 && map && map.isDungeon) { world.hp = Math.min(100, world.hp + h); updateHp(); } } catch (e) { } }, 10000);
+
+function equip127(id) {
+  const it = ITEMS[id], o = eq127(); if (!it || count(id) < 1) return false;
+  const slot = it.weapon ? "w" : it.armor127 ? "a" : it.acc127 ? "x" : null; if (!slot) return false;
+  if (slot === "x") {
+    if (o.x.includes(id)) { toast(it.icon, "同じアクセサリーは2つつけられないよ"); return false; }
+    const i = o.x[0] ? (o.x[1] ? 0 : 1) : 0; if (o.x[i] && !unequip127("x", i)) return false;
+    removeItem(id, 1); o.x[i] = id;
+  } else {
+    if (o[slot] && !unequip127(slot)) return false;
+    removeItem(id, 1); o[slot] = id;
+  }
+  if (world.sel >= 0 && !world.inv[world.sel]) renderHotbar();
+  saveWorld(); renderHotbar(); se13("small"); return true;
+}
+function unequip127(slot, i) {
+  const o = eq127(), id = slot === "x" ? o.x[i] : o[slot]; if (!id) return true;
+  if (!addItem(id, 1, true)) { homeStore18(id, 1); toast(ITEMS[id].icon, `持ち物がいっぱいなので、${ITEMS[id].name}は家の収納箱へ`); }
+  if (slot === "x") o.x[i] = null; else o[slot] = null;
+  saveWorld(); renderHotbar(); return true;
+}
+function openEquip127(tab, note) {
+  tab = tab || "eq";
+  openModal("装備", "", body => {
+    const draw = msg => {
+      const o = eq127(), atk = o.w ? eqW127() : 1 + accSum127("atk"), dm = eqArmor127() || (count("armor") > 0 ? .6 : 1);
+      const slotLi = (lbl, id, act) => `<div class="li eq127s"><span class="eq127k">${lbl}</span>${id ? `<img src="${ASSETS[ITEMS[id].icon]}" alt="">` : `<span class="eq127e"></span>`}<span class="nm">${id ? esc(ITEMS[id].name) : "なし"}<span class="sub2">${id ? esc(gearSub127(id)) : ""}</span></span><span class="acts">${id ? `<button class="btn light" type="button" data-un127="${act}">はずす</button>` : ""}</span></div>`;
+      const cand = world.inv.map(x => x && x.id).filter((id, i, a) => id && a.indexOf(id) === i && (ITEMS[id].weapon || ITEMS[id].armor127 || ITEMS[id].acc127));
+      let html = `<div class="mtabs">${[["eq", "身につける"], ["shop", "行商の武具屋"]].map(([k, n]) => `<button class="chip" type="button" data-t127="${k}" aria-pressed="${tab === k}">${n}</button>`).join("")}</div>${msg || note ? `<p class="mtext"><b>${esc(msg || note)}</b></p>` : ""}`;
+      if (tab === "eq") {
+        html += `<div class="eq127p"><canvas id="eq127cv" width="48" height="48"></canvas><div class="mtext small">攻撃 <b>${atk}</b><br>受けるダメージ <b>×${dm.toFixed(2)}</b>${accSum127("spd") ? `<br>歩く速さ <b>+${Math.round(accSum127("spd") * 100)}%</b>` : ""}${accSum127("sell") ? `<br>売値 <b>+${Math.round(accSum127("sell") * 100)}%</b>` : ""}${accSum127("xp") ? `<br>経験 <b>+${Math.round(accSum127("xp") * 100)}%</b>` : ""}${accSum127("heal") ? `<br>洞窟でHP回復 <b>+${accSum127("heal")}</b>/10秒` : ""}</div></div>
+          <div class="list">${slotLi("武器", o.w, "w")}${slotLi("防具", o.a, "a")}${slotLi("アクセ1", o.x[0], "x0")}${slotLi("アクセ2", o.x[1], "x1")}</div>
+          <h3 class="lbl">持ち物から身につける</h3>
+          <div class="list">${cand.length ? cand.map(id => itemLi(id, esc(gearSub127(id)), `<button class="btn" type="button" data-eq127="${id}">身につける</button>`)).join("") : `<p class="mtext">身につけられる物を持っていないよ。「行商の武具屋」で買えるよ。</p>`}</div>
+          <p class="note">身につけた物は持ち物から出るので、ホットバーがあくよ。武器を身につけていれば、剣を手に持っていなくても、魔物に向かってⒶで攻撃できる。手に持った剣があれば、そちらで攻撃する。</p>`;
+      } else {
+        html += staffSay13(charIcon13({ skin: "小麦色", hair: "ショート", hairc: "黒", top: "よろい", topc: "グレー", bottom: "パンツ", bottomc: "茶", hat: "なし", acc: "なし", shoesc: "茶" }), "旅の武具屋ガルドだ。いい品はそろってるぞ。強いよろいは、遺跡の鍛冶師テツに頼むといい")
+          + `<p class="mtext">所持金 <b>${fmt(world.money)}</b></p><div class="list">${SHOP127.map(id => itemLi(id, `${esc(gearSub127(id))}・${fmt(ITEMS[id].price)}`, `<button class="btn" type="button" data-by127="${id}" ${world.money >= ITEMS[id].price ? "" : "disabled"}>買う</button>`)).join("")}</div>
+          <h3 class="lbl">遺跡の鍛冶師テツが作る</h3><div class="list">${Object.entries(FORGE127).map(([id, need]) => itemLi(id, `${esc(gearSub127(id))}・${fmt(ITEMS[id].price)}＋${Object.entries(need).map(([k, n]) => `${esc(ITEMS[k].name)}×${n}`).join("・")}`, "")).join("")}</div>`;
+      }
+      body.innerHTML = html;
+      const cv = body.querySelector("#eq127cv"); if (cv) { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#e8dcc0"; g.fillRect(0, 0, 48, 48); g.drawImage(charImg118(cfg, "down", 0), 0, 0, 48, 48); if (o.w) g.drawImage(IMG[ITEMS[o.w].icon], 30, 22, 16, 16); }
+      body.querySelectorAll("[data-t127]").forEach(b => b.onclick = () => { tab = b.dataset.t127; draw(); });
+      body.querySelectorAll("[data-eq127]").forEach(b => b.onclick = () => { const id = b.dataset.eq127; if (equip127(id)) draw(`${ITEMS[id].name}を身につけた`); else draw(); });
+      body.querySelectorAll("[data-un127]").forEach(b => b.onclick = () => { const k = b.dataset.un127; unequip127(k[0], +k[1] || 0); draw("はずした"); });
+      body.querySelectorAll("[data-by127]").forEach(b => b.onclick = () => {
+        const id = b.dataset.by127, p = ITEMS[id].price; if (world.money < p) return;
+        if (!addItem(id, 1)) { draw("持ち物がいっぱいだよ"); return; }
+        addMoney(-p); world.stats.gear127 = (world.stats.gear127 || 0) + 1; saveWorld(); se13("small"); draw(`${ITEMS[id].name}を買った。「身につける」でつけられるよ`);
+      });
+    };
+    draw();
+  });
+}
+function gearSub127(id) {
+  const it = ITEMS[id]; if (!it) return "";
+  if (it.weapon) return `武器・攻撃 ${it.weapon}`;
+  if (it.armor127) return `防具・受けるダメージ ×${it.armor127}`;
+  const a = it.acc127 || {}, p = [];
+  if (a.atk) p.push(`攻撃 +${a.atk}`); if (a.def) p.push(`受けるダメージ ×${a.def}`); if (a.spd) p.push(`歩く速さ +${Math.round(a.spd * 100)}%`);
+  if (a.sell) p.push(`売値 +${Math.round(a.sell * 100)}%`); if (a.xp) p.push(`腕前の経験 +${Math.round(a.xp * 100)}%`); if (a.heal) p.push(`洞窟でHPがじわじわ回復`);
+  return `アクセサリー・${p.join("・")}`;
+}
+F127.open = openEquip127; F127.equip = equip127; F127.unequip = unequip127;
+// 鍛冶師テツの画面に、よろいを作る欄を足す
+{
+  const _of = openForge122;
+  openForge122 = function () {
+    const r = _of.apply(this, arguments);
+    const body = $("mbody"); if (!body || body.querySelector("#fg127")) return r;
+    body.insertAdjacentHTML("beforeend", `<div id="fg127"><h3 class="lbl">よろいを作る</h3><div class="list">${Object.entries(FORGE127).map(([id, need]) => {
+      const ok = world.money >= ITEMS[id].price && Object.entries(need).every(([k, n]) => count(k) >= n);
+      return itemLi(id, `${esc(gearSub127(id))}<br>${fmt(ITEMS[id].price)}＋${Object.entries(need).map(([k, n]) => `${esc(ITEMS[k].name)}×${n}（${count(k)}）`).join("・")}`, `<button class="btn" type="button" data-fg127="${id}" ${ok ? "" : "disabled"}>作る</button>`);
+    }).join("")}</div><p class="mtext small">作ったよろいは、スマホの「装備」で身につけられるよ。</p></div>`);
+    body.querySelectorAll("[data-fg127]").forEach(b => b.onclick = () => {
+      const id = b.dataset.fg127, need = FORGE127[id];
+      if (world.money < ITEMS[id].price || !Object.entries(need).every(([k, n]) => count(k) >= n)) return;
+      if (!addItem(id, 1)) { toast(null, "持ち物がいっぱいだよ"); return; }
+      addMoney(-ITEMS[id].price); for (const [k, n] of Object.entries(need)) removeItem(k, n); world.stats.forge127 = (world.stats.forge127 || 0) + 1; saveWorld(); se13("big");
+      toast(ITEMS[id].icon, `${ITEMS[id].name}ができた！`); closeModal(); openForge122();
+    });
+    return r;
+  };
+}
+ICON80.equip127 = `<path d="M16 3l10 4v8c0 7-4.5 11.5-10 14-5.5-2.5-10-7-10-14V7z"/><path d="M16 9v14M11 14h10"/>`;
+F76.add({ id: "equip127", name: "装備", ch: "装", c: "#8a6a4a", open: () => openEquip127() });
+const TTL127 = [["フル装備", "武器・防具・アクセサリー2つを、ぜんぶ身につける", () => { const o = world.eq127; return !!(o && o.w && o.a && o.x && o.x[0] && o.x[1]); }], ["竜の騎士", "竜うろこのよろいを身につける", () => world.eq127 && world.eq127.a === "arm_dragon127"]];
+for (const t of TTL127) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["装備", "armor", `<p>スマホの「装備」で、武器・防具・アクセサリー（2つまで）を身につけられます。</p>
+  <ul><li>身につけた物は持ち物から出るので、ホットバーがあきます。はずすと持ち物にもどります（いっぱいなら家の収納箱へ）</li>
+  <li>武器を身につけていれば、剣を手に持っていなくても、魔物に向かってⒶで攻撃できます。鍛冶師テツの鍛えた分もそのまま効きます</li>
+  <li>防具は受けるダメージを減らします。アクセサリーは攻撃・守り・歩く速さ・売値・腕前の経験・洞窟でのHP回復</li>
+  <li>買えるのは「行商の武具屋」。騎士のよろい・竜うろこのよろいは、遺跡の鍛冶師テツが作ります</li></ul>`]);
+
+// =================== v128: みなと町の「みんなの水族館」（村のみんなの募金で建てて、魚を寄贈して水槽をうめる） ===================
+// サーバー：aqua/AquaHandler（{type:"aqua",a:look|give|fish}）。共有の村の _aqua（村ごと）。
+// 段階は募金の合計で決まる：1 建つ（1億G）・2 大水槽と展示がふえる（4億G）・3 深海の間（10億G）。
+// お金と魚は、サーバーが OK を返してから画面で減らす。オフラインのときは見るだけ（中には入れない）。
+var F128 = {};
+const A128 = { st: null, pend: {}, portObj: null, tab: "give" };
+const lv128 = () => (A128.st && A128.st.lv) | 0;
+const fishOf128 = () => (A128.st && A128.st.fish && typeof A128.st.fish === "object") ? A128.st.fish : {};
+// 寄贈できる生きもの（魚と、素潜りの海の幸）。並び順が水槽の並び
+const CATALOG128 = () => Object.keys(ITEMS).filter(id => (ITEMS[id].fish && id.startsWith("fish_")) || ITEMS[id].sea55);
+const AQ_GOAL_NAMES128 = ["水族館が建つ", "大水槽と展示がふえる", "深海の間ができる"];
+const sendAqua128 = (a, o) => { if (!F8.connected) return null; const rid = Math.random().toString(36).slice(2, 10); A128.pend[rid] = { a, ...o, at: Date.now() }; send8({ type: "aqua", a, rid, ...o }); return rid; };
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "aqua") {
+      try {
+        if (m.st && typeof m.st === "object") A128.st = m.st;
+        const p = m.rid && A128.pend[m.rid]; if (p) delete A128.pend[m.rid];
+        if (m.ok === "give" && p && p.a === "give") {
+          const g = Math.min(p.g, Math.floor(+m.g || 0)); addMoney(-g); world.stats.aquaG128 = (world.stats.aquaG128 || 0) + g; saveWorld(); se13("small");
+          A128.msg = `${fmt(g)} を募金した。ありがとう！`;
+        }
+        if (m.ok === "fish" && p && p.a === "fish") {
+          const n = Math.min(p.n, Math.floor(+m.n || 0)), id = p.id; removeT128(id, n);
+          world.stats.aquaF128 = (world.stats.aquaF128 || 0) + n;
+          if (m.first) { world.stats.aquaNew128 = (world.stats.aquaNew128 || 0) + 1; addRep(3); toast(ITEMS[id]?.icon || null, `${ITEMS[id]?.name || ""}は、この水族館ではじめての展示！（評判+3）`); }
+          saveWorld(); se13(m.first ? "harvest" : "small"); A128.msg = `${ITEMS[id]?.name || "魚"}を${n}ぴき寄贈した${m.first ? "（はじめての種類！ 水槽にあなたの名前が出るよ）" : ""}`;
+        }
+        if (m.ng) { A128.msg = String(m.ng).slice(0, 60); toast(null, A128.msg); }
+        if (m.up) { const t = `みなと町の水族館：${AQ_GOAL_NAMES128[m.up - 1] || "新しい展示"}！（${esc(String(m.by || "").slice(0, 12))}さんの募金で）`; F7.notify(t, "fish_タイ"); toast("fish_タイ", t); }
+        refreshPort128(); if (map && map.kind === "aqua128") refreshAquaMap128();
+        if (modalOpen && $("mtitle").textContent === "みんなの水族館") renderAqua128();
+        try { checkTitles42(); } catch (e) { }
+      } catch (e) { if (window.__komoErr) window.__komoErr(e, "v128"); }
+      return;
+    }
+    _h(m);
+    if (m && m.type === "welcome") { A128.st = m.aqua && typeof m.aqua === "object" ? m.aqua : { fund: 0, lv: 0, goals: [100000000, 400000000, 1000000000], fish: {} }; refreshPort128(); }
+  };
+}
+// 持ち物から、ふつうの物を先に、レアは最後に減らす
+function removeT128(id, n) {
+  let left = n;
+  const plain = Math.min(left, count(id) - ((typeof countT === "function") ? (countT(id, 2) + countT(id, 3)) : 0)); if (plain > 0) { removeItem(id, plain); left -= plain; }
+  if (left > 0) removeItem(id, Math.min(left, count(id)));
+  renderHotbar();
+}
+
+// ---- 絵：みなと町の建物・建設予定地・中の床と壁 ----
+IMG.s128_aqua = pix13(80, 64, (set, rect) => {
+  rect(4, 22, 72, 40, C13["#d8e8f0"]); rect(4, 22, 72, 2, C13["#ffffff"]); rect(4, 58, 72, 4, C13["#8aa0b0"]);
+  for (let x = 6; x < 76; x += 10) rect(x, 30, 6, 10, C13["#5ab0e0"]), rect(x, 30, 6, 2, C13["#a8e0f8"]);
+  ell13(set, 40, 22, 24, 16, C13["#3a8ac8"]); ell13(set, 40, 22, 20, 13, C13["#5ab0e0"]); ell13(set, 34, 16, 6, 4, C13["#c8ecfc"]); rect(14, 22, 52, 4, C13["#2a6aa8"]);
+  for (let x = 4; x < 76; x += 8) { rect(x, 20, 4, 2, C13["#2a6aa8"]); rect(x + 4, 19, 4, 2, C13["#3a8ac8"]); }
+  rect(32, 44, 16, 18, C13["#2a4a6a"]); rect(33, 45, 14, 16, C13["#6ac0e8"]); rect(39, 45, 2, 16, C13["#2a4a6a"]); rect(30, 42, 20, 2, C13["#c8a048"]);
+  ell13(set, 18, 50, 7, 4, C13["#f0a040"]); rect(24, 48, 3, 5, C13["#f0a040"]); set(14, 49, C13["#1a1a2a"]); ell13(set, 62, 50, 7, 4, C13["#f05a7a"]); rect(53, 48, 3, 5, C13["#f05a7a"]); set(66, 49, C13["#1a1a2a"]);
+});
+IMG.s128_site = pix13(80, 64, (set, rect) => {
+  for (let x = 2; x < 78; x += 6) { rect(x, 30, 2, 30, C13["#b88a5a"]); } rect(2, 34, 76, 2, C13["#d8aa6a"]); rect(2, 50, 76, 2, C13["#d8aa6a"]);
+  rect(20, 8, 40, 22, C13["#f4ecdc"]); rect(20, 8, 40, 2, C13["#3a8ac8"]); rect(20, 28, 40, 2, C13["#a89a80"]); rect(28, 30, 2, 10, C13["#7a5a3a"]); rect(50, 30, 2, 10, C13["#7a5a3a"]);
+  for (const [x, y] of [[26, 14], [34, 14], [44, 14], [26, 20], [36, 20], [46, 20]]) rect(x, y, 6, 2, C13["#5a6a7a"]);
+  ell13(set, 52, 17, 4, 2.4, C13["#f0a040"]); set(49, 16, C13["#1a1a2a"]);
+  rect(34, 44, 12, 12, C13["#c8402a"]); rect(34, 44, 12, 2, C13["#e8604a"]); rect(38, 47, 4, 1, C13["#2a1a1a"]); rect(36, 50, 8, 2, C13["#f2d070"]);
+});
+ASSETS.s128_aqua = IMG.s128_aqua.toDataURL(); ASSETS.s128_site = IMG.s128_site.toDataURL();
+TILE105["@aquaw128"] = R => { R("#1a3a5a", 0, 0, 16, 13); R("#24507a", 0, 0, 16, 2); for (const a of [3, 11]) R("#3a6a9a", a, 4, 2, 2); R("#7ac8f0", 7, 8, 1, 1); R("#0e2238", 0, 13, 16, 3); };
+TILE105["@aquaf128"] = R => { R("#2c4a68", 0, 0, 16, 16); R("#355878", 0, 0, 8, 8); R("#355878", 8, 8, 8, 8); R("#4a7aa0", 3, 4, 2, 1); R("#4a7aa0", 11, 12, 2, 1); };
+TILE105["@deep128"] = R => { R("#0e1a30", 0, 0, 16, 16); R("#142444", 0, 0, 8, 8); R("#142444", 8, 8, 8, 8); R("#3a5a9a", 5, 6, 1, 1); R("#6a4aa0", 12, 3, 1, 1); };
+IMG.s128_desk = pix13(32, 24, (set, rect) => { rect(1, 8, 30, 14, C13["#e8dcc0"]); rect(1, 8, 30, 2, C13["#fff8e8"]); rect(1, 20, 30, 2, C13["#a89070"]); rect(4, 12, 24, 5, C13["#5ab0e0"]); ell13(set, 16, 14, 4, 2, C13["#f0a040"]); rect(22, 2, 6, 6, C13["#c8402a"]); rect(23, 4, 4, 1, C13["#2a1a1a"]); });
+IMG.s128_plaque = pix13(16, 24, (set, rect) => { rect(2, 2, 12, 14, C13["#c8a048"]); rect(3, 3, 10, 12, C13["#e8c870"]); for (const y of [5, 8, 11]) rect(5, y, 6, 1, C13["#8a6a2a"]); rect(7, 16, 2, 8, C13["#7a5a3a"]); });
+ASSETS.s128_desk = IMG.s128_desk.toDataURL(); ASSETS.s128_plaque = IMG.s128_plaque.toDataURL();
+
+// ---- みなと町：左上に建物（建つまでは建設予定地と募金箱） ----
+const AQ_DOOR128 = [4, 3];
+{
+  const _mp = makePort;
+  makePort = function () {
+    const m = _mp.apply(this, arguments);
+    const o = { img: lv128() ? "s128_aqua" : "s128_site", x: 2 * TS, y: 0, sortY: 4 * TS - 1 }; m.objs.push(o); A128.portObj = o;
+    for (let y = 1; y <= 3; y++) for (let x = 2; x <= 6; x++) m.base[y][x] = true;
+    for (const x of [3, 4, 5]) m.interact[x + "," + 3] = () => aquaDoor128();
+    m.labels.push({ x: 4 * TS + 8, y: 6, text: "みんなの水族館" });
+    return m;
+  };
+}
+function refreshPort128() { if (A128.portObj) A128.portObj.img = lv128() ? "s128_aqua" : "s128_site"; }
+function aquaDoor128() {
+  if (lv128() >= 1 && F8.connected) { enterAqua128(); return; }
+  openAqua128(lv128() >= 1 ? "fish" : "give");
+}
+
+// ---- 中：水槽（8種類ずつ）・受付・寄付した人の板 ----
+// 水槽 [x, y, 幅(マス), 高さ(マス), 何番目からの魚, 何種類, 必要な段階, 種類]
+const TANKS128 = [
+  [1, 2, 3, 2, 0, 8, 1], [4, 2, 3, 2, 8, 8, 1], [7, 2, 3, 2, 16, 8, 1], [10, 2, 3, 2, 24, 8, 1], [13, 2, 3, 2, 32, 8, 1], [16, 2, 3, 2, 40, 8, 1],
+  [2, 6, 3, 2, 48, 8, 2], [6, 6, 3, 2, 56, 8, 2], [11, 6, 3, 2, 64, 8, 2], [15, 6, 3, 2, 72, 8, 2],
+  [1, 9, 4, 2, -1, 8, 2, "big"], [15, 9, 4, 2, -2, 8, 3, "deep"],
+];
+const TANKNAME128 = t => t[7] === "big" ? "大水槽（いちばん値打ちのある魚たち）" : t[7] === "deep" ? "深海の大水槽" : `水槽 ${TANKS128.indexOf(t) + 1}`;
+function tankFish128(t) {
+  const F = fishOf128(), cat = CATALOG128();
+  if (t[7] === "big") return Object.keys(F).filter(id => ITEMS[id]).sort((a, b) => ITEMS[b].price - ITEMS[a].price).slice(0, 8);
+  if (t[7] === "deep") { const deep = id => /ヌシ|アンコウ|オオダコ|虹色|イカ|タコ|マグロ|リュウグウ|ダイオウ/.test(ITEMS[id]?.name || "") || (typeof BOATFISH81 !== "undefined" && BOATFISH81.some(f => "fish_" + (f.n || f[0]) === id)); return Object.keys(F).filter(id => ITEMS[id] && deep(id)).slice(0, 8); }
+  return cat.slice(t[4], t[4] + t[5]);
+}
+function drawTank128(t, cv, now) {
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height, F = fishOf128(), deep = t[7] === "deep";
+  g.imageSmoothingEnabled = false; g.clearRect(0, 0, W, H);
+  g.fillStyle = "#5a6a7a"; g.fillRect(0, 2, W, H - 2); g.fillStyle = "#8aa0b0"; g.fillRect(0, 2, W, 2);
+  const gr = g.createLinearGradient(0, 4, 0, H - 4); gr.addColorStop(0, deep ? "#1a2a5a" : "#7ad0f0"); gr.addColorStop(1, deep ? "#060a1a" : "#2a7ab8");
+  g.fillStyle = gr; g.fillRect(2, 5, W - 4, H - 10);
+  g.fillStyle = deep ? "#2a2a3a" : "#e8d8a8"; g.fillRect(2, H - 9, W - 4, 4);
+  for (let x = 5; x < W - 4; x += 9) { g.fillStyle = deep ? "#3a4a8a" : "#3a9a5a"; for (let y = 0; y < 7; y += 2) g.fillRect(x + Math.round(Math.sin(now / 600 + y + x) * 1), H - 10 - y, 1, 2); }
+  const list = tankFish128(t).filter(id => F[id]);
+  list.forEach((id, i) => {
+    const im = IMG[ITEMS[id]?.icon]; if (!im) return;
+    const sp = 6 + (i % 3) * 3, span = W - 18, ph = now / 1000 * sp / span * 2 + i * 1.7, u = (Math.sin(ph) + 1) / 2, x = 3 + u * span, dirR = Math.cos(ph) > 0;
+    const y = 6 + ((i * 7) % Math.max(1, H - 24)) + Math.sin(now / 500 + i) * 1.5;
+    g.save(); if (dirR) { g.translate(Math.round(x) + 12, 0); g.scale(-1, 1); g.drawImage(im, 0, Math.round(y), 12, 12); } else g.drawImage(im, Math.round(x), Math.round(y), 12, 12); g.restore();
+  });
+  if (!list.length) { g.fillStyle = "rgba(255,255,255,.7)"; g.font = "7px sans-serif"; g.fillText("からっぽ", W / 2 - 14, H / 2 + 2); }
+  g.fillStyle = "rgba(255,255,255,.25)"; g.fillRect(4, 6, 2, H - 14); if (deep) { g.fillStyle = "rgba(160,120,255,.5)"; g.fillRect(((now / 20) | 0) % W, 7, 1, 1); }
+}
+function makeAqua128() {
+  const w = 20, h = 12, mid = 9, m = blankMap(w, h, "みんなの水族館"), L = lv128();
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m.ground[y][x] = y < 2 ? "@aquaw128" : (L >= 3 && x >= 14 && y >= 8) ? "@deep128" : "@aquaf128";
+  solidRect(m, 0, 0, w, 2);
+  m.isInterior = true; m.kind = "aqua128"; m.floorT = "@aquaf128"; m.statics = []; m.interact = {}; m.labels = []; m.tanks128 = [];
+  m.exit = [mid, h - 1]; m.exits = { [mid + "," + (h - 1)]: true }; m.ground[h - 1][mid] = "@exit";
+  for (const t of TANKS128) {
+    if (L < t[6]) continue;
+    const [x, y, tw, th] = t, cv = document.createElement("canvas"); cv.width = tw * TS; cv.height = th * TS + 4;
+    drawTank128(t, cv, performance.now());
+    m.objs.push({ cv, x: x * TS, y: (y + th) * TS - cv.height, sortY: (y + th) * TS - 1 }); m.tanks128.push([t, cv]);
+    for (let a = x; a < x + tw; a++) for (let b = y; b < y + th; b++) { m.base[b][a] = true; m.interact[a + "," + b] = () => openTank128(t); }
+    m.labels.push({ x: (x + tw / 2) * TS, y: y * TS - 2, text: t[7] === "big" ? "大水槽" : t[7] === "deep" ? "深海の大水槽" : `水槽${TANKS128.indexOf(t) + 1}` });
+  }
+  const obj = (img, x, y, tiles, fn, label) => { m.objs.push({ img, x: x * TS, y: (y + 1) * TS - IMG[img].height, sortY: (y + 1) * TS - 1 }); tiles.forEach(([a, b]) => { m.base[b][a] = true; if (fn) m.interact[a + "," + b] = fn; }); if (label) m.labels.push({ x: (x + tiles.length / 2) * TS, y: (y + 1) * TS - IMG[img].height - 2, text: label }); };
+  obj("s128_desk", 7, 9, [[7, 9], [8, 9]], () => openAqua128(), "受付");
+  obj("s128_plaque", 11, 9, [[11, 9]], () => openAqua128("who"), "寄付した人");
+  return m;
+}
+function refreshAquaMap128() {
+  if (!map || map.kind !== "aqua128") return;
+  const want = TANKS128.filter(t => lv128() >= t[6]).length; if (want === map.tanks128.length) return;
+  const m = makeAqua128(); interior = m; rebuildSolid(); enter(m, player.x, player.y, player.dir);
+}
+setInterval(() => { try { if (map && map.kind === "aqua128") { const now = performance.now(); for (const [t, cv] of map.tanks128) drawTank128(t, cv, now); } } catch (e) { } }, 120);
+function enterAqua128() {
+  if (!F8.connected) { openAqua128(); return; }
+  const m = makeAqua128(); interior = m; rebuildSolid(); enter(m, m.exit[0], m.exit[1] - 1, "up");
+  world.stats.aquaVisit128 = (world.stats.aquaVisit128 || 0) + 1;
+  toast(null, `みんなの水族館。${Object.keys(fishOf128()).length}種類の生きものがいるよ`);
+}
+F128.enter = enterAqua128;
+{
+  const _tm = tryMove;
+  tryMove = function (dir) {
+    if (map && map.kind === "aqua128" && map.exits[player.x + "," + player.y] && dir === "down") { port = port || makePort(); rebuildSolid(); enter(port, AQ_DOOR128[0], AQ_DOOR128[1] + 1, "down"); return; }
+    return _tm.apply(this, arguments);
+  };
+  const _mk = mapKey;
+  mapKey = function () { if (map && map.kind === "aqua128") return "int:aqua128"; return _mk.apply(this, arguments); };
+}
+function openTank128(t) {
+  const F = fishOf128(), list = tankFish128(t);
+  openModal(TANKNAME128(t), "shop", body => {
+    const have = list.filter(id => F[id]);
+    body.innerHTML = `<p class="mtext">${t[7] ? "寄贈された魚の中から、えらばれた生きものたち。" : `この水槽の生きもの ${have.length} / ${list.length}`}</p>
+      <div class="dex aq128">${list.map(id => F[id] ? `<div><img src="${ASSETS[ITEMS[id].icon]}" alt="">${esc(ITEMS[id].name)}<br><small>${fmt92(F[id][0])}ぴき・はじめての寄贈 ${esc(F[id][1] || "")}さん</small></div>` : `<div class="no"><img src="${ASSETS[ITEMS[id].icon]}" alt="">？？？<br><small>まだいない</small></div>`).join("") || `<p class="mtext">まだからっぽ。受付で魚を寄贈しよう</p>`}</div>
+      <div class="row2"><button class="btn" type="button" id="tk128g">受付で寄贈する</button><button class="btn light" type="button" id="tk128c">とじる</button></div>`;
+    body.querySelector("#tk128g").onclick = () => { closeModal(); openAqua128("fish"); };
+    body.querySelector("#tk128c").onclick = () => closeModal();
+  });
+}
+
+// ---- 受付：募金・寄贈・寄付した人 ----
+function openAqua128(tab) {
+  if (tab) A128.tab = tab; A128.msg = "";
+  openModal("みんなの水族館", "shop", () => renderAqua128());
+  if (F8.connected) send8({ type: "aqua", a: "look" });
+}
+F128.open = openAqua128;
+function renderAqua128() {
+  const body = $("mbody"); if (!body) return;
+  const st = A128.st || { fund: 0, lv: 0, goals: [100000000, 400000000, 1000000000], fish: {} }, L = st.lv | 0, goals = st.goals || [], F = fishOf128(), cat = CATALOG128();
+  const next = goals[L], prev = L ? goals[L - 1] : 0, pct = next ? Math.max(0, Math.min(100, (st.fund - prev) / (next - prev) * 100)) : 100;
+  const tab = A128.tab;
+  let html = staffSay13(charIcon13({ skin: "色白", hair: "ボブ", hairc: "水色", top: "シルクのブラウス", topc: "水色", bottom: "スカート", bottomc: "青", hat: "なし", acc: "なし", shoesc: "白" }),
+    L ? "ようこそ、みんなの水族館へ。村のみんなが寄贈してくれた魚たちが泳いでいます。新しい魚も、いつでも受けつけていますよ" : "ここに、村のみんなで水族館を建てる計画なんです。募金が集まったら工事を始めますね")
+    + `<div class="aq128bar"><div class="mtext small">${L >= goals.length ? `ぜんぶの展示ができた！（募金の合計 ${fmt(st.fund)}）` : `次は「${AQ_GOAL_NAMES128[L]}」まで：${fmt(st.fund)} / ${fmt(next)}`}</div><i><b style="width:${pct.toFixed(1)}%"></b></i>
+      <div class="mtext small">いまの展示：${L ? `${Object.keys(F).length} / ${cat.length} 種類` : "まだ建っていない"}${L >= 2 ? "・大水槽" : ""}${L >= 3 ? "・深海の間" : ""}</div></div>
+    <div class="mtabs">${[["give", "募金する"], ["fish", "魚を寄贈する"], ["who", "寄付した人"]].map(([k, n]) => `<button class="chip" type="button" data-aq128t="${k}" aria-pressed="${tab === k}">${n}</button>`).join("")}</div>
+    ${A128.msg ? `<p class="mtext"><b>${esc(A128.msg)}</b></p>` : ""}${F8.connected ? "" : `<p class="mtext"><b>水族館への募金と寄贈は、オンラインにつないでいるときだけできるよ。</b></p>`}`;
+  if (tab === "give") {
+    const P = [10000, 100000, 1000000, 10000000, 100000000];
+    html += `<p class="mtext">所持金 <b>${fmt(world.money)}</b>。あなたの募金の合計 <b>${fmt(world.stats.aquaG128 || 0)}</b></p>
+      <div class="row2">${P.map(p => `<button class="btn light" type="button" data-aq128g="${p}" ${world.money >= p && F8.connected ? "" : "disabled"}>${fmt(p)}</button>`).join("")}</div>
+      <div class="row cq78"><input id="aq128n" type="number" inputmode="numeric" min="1" placeholder="金額（G）" aria-label="募金する金額"><button class="btn" type="button" id="aq128go" ${F8.connected && world.money > 0 ? "" : "disabled"}>この金額を募金する</button></div>
+      <p class="note">募金は村ぜんぶのもの。1億Gで水族館が建ち、4億Gで大水槽と展示がふえ、10億Gで深海の間ができる。募金した額は「寄付した人」の板に出るよ。もどってこないので気をつけてね。</p>`;
+  } else if (tab === "fish") {
+    const mine = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => cat.includes(id));
+    html += L ? `<p class="mtext">持っている魚と海の幸を寄贈できるよ。<b>★はじめて</b>の種類を寄贈すると、水槽にあなたの名前が出て、評判が上がる。</p>
+      <div class="list">${mine.length ? mine.map(id => itemLi(id, `${count(id)}ぴき持っている${F[id] ? `・展示中 ${fmt92(F[id][0])}ぴき` : "・<b>★はじめて</b>"}`, `<button class="btn" type="button" data-aq128f="${id}" data-n="1" ${F8.connected ? "" : "disabled"}>1ぴき</button><button class="btn light" type="button" data-aq128f="${id}" data-n="all" ${F8.connected && count(id) > 1 ? "" : "disabled"}>ぜんぶ</button>`)).join("") : `<p class="mtext">寄贈できる魚を持っていないよ。釣りや素潜りでつかまえてこよう。</p>`}</div>
+      <p class="mtext small">まだいない種類：${cat.filter(id => !F[id]).length}種類</p>` : `<p class="mtext">水族館が建ったら、魚を寄贈できるようになるよ。まずはみんなで募金しよう。</p>`;
+  } else {
+    const top = Array.isArray(st.top) ? st.top : [];
+    html += `<h3 class="lbl">たくさん寄付してくれた人</h3><div class="list">${top.length ? top.map((t, i) => `<div class="li"><span class="nm">${i + 1}. ${esc(t.n)}<span class="sub2">募金 ${fmt(t.g)}・寄贈 ${fmt92(t.f)}ぴき</span></span></div>`).join("") : `<p class="mtext">まだだれも寄付していないよ。</p>`}</div>
+      <p class="mtext small">あなた：募金 ${fmt(world.stats.aquaG128 || 0)}・寄贈 ${fmt92(world.stats.aquaF128 || 0)}ぴき・はじめての種類 ${world.stats.aquaNew128 || 0}種類</p>`;
+  }
+  html += `<div class="row2">${L && F8.connected && !(map && map.kind === "aqua128") ? `<button class="btn" type="button" id="aq128in">中に入る</button>` : ""}<button class="btn light" type="button" id="aq128x">とじる</button></div>`;
+  body.innerHTML = html;
+  body.querySelectorAll("[data-aq128t]").forEach(b => b.onclick = () => { A128.tab = b.dataset.aq128t; A128.msg = ""; renderAqua128(); });
+  const give = g => { g = Math.floor(g); if (!(g > 0)) { A128.msg = "金額を入れてね"; renderAqua128(); return; } if (g > world.money) { A128.msg = "所持金が足りないよ"; renderAqua128(); return; } if (g > 1e9) { A128.msg = "1回の募金は10億Gまで"; renderAqua128(); return; } if (sendAqua128("give", { g })) { A128.msg = "…"; renderAqua128(); } };
+  body.querySelectorAll("[data-aq128g]").forEach(b => b.onclick = () => give(+b.dataset.aq128g));
+  body.querySelector("#aq128go")?.addEventListener("click", () => give(+String($("aq128n").value || "").replace(/[,，]/g, "")));
+  body.querySelectorAll("[data-aq128f]").forEach(b => b.onclick = () => { const id = b.dataset.aq128f, n = b.dataset.n === "all" ? Math.min(99, count(id)) : 1; if (count(id) < n || n < 1) return; if (sendAqua128("fish", { id, n })) { A128.msg = "…"; b.disabled = true; } });
+  body.querySelector("#aq128in")?.addEventListener("click", () => { closeModal(); enterAqua128(); });
+  body.querySelector("#aq128x").onclick = () => closeModal();
+}
+F128.state = A128;
+const TTL128 = [["水族館のパトロン", "みんなの水族館に、合わせて1,000万G募金する", () => (world.stats.aquaG128 || 0) >= 10000000], ["名誉館長", "みんなの水族館に、合わせて1億G募金する", () => (world.stats.aquaG128 || 0) >= 100000000], ["海の語り部", "みんなの水族館で、はじめての種類を10種類寄贈する", () => (world.stats.aquaNew128 || 0) >= 10]];
+for (const t of TTL128) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["みんなの水族館", "fish_タイ", `<p>みなと町の左上に、村のみんなで建てる水族館があります（オンラインのとき）。</p>
+  <ul><li>受付（建つまでは募金箱）で募金できます。募金は村ぜんぶの合計で、1億Gで水族館が建ち、4億Gで大水槽と展示がふえ、10億Gで深海の間ができます</li>
+  <li>建ったら、釣った魚や素潜りの海の幸を寄贈できます。はじめての種類を寄贈すると、水槽にあなたの名前が出て、評判が上がります</li>
+  <li>中では、水槽の前でⒶを押すと、どんな生きものがいるか見られます</li></ul>`]);
+
+// =================== v129: 村の仕立て屋を「こもれびブティック」に（仕入れ・工房で作る・お客さんに提案・満足度・お店を広げる） ===================
+// スマホの「ゲーム」の「村の仕立て屋」から。world.bq129 に、お店の段階 lv（1〜5）・評判 rep・在庫 stock{商品:[ふつう,★2,★3]}・内装 deco・お客さんとのなかよし aff・
+// 今日（日本時間）の接客の数 day/n・売上 earn・売った数 sold・★5の数 s5。前の仕立て屋（自分の服を作る・特別な布）は「工房」から開ける。
+var F129 = {};
+const TAGS129 = ["かわいい", "クール", "ナチュラル", "ゴージャス", "ポップ", "クラシック"];
+const CATS129 = { top: "トップス", bottom: "ボトムス", dress: "ワンピース", hat: "ぼうし", shoes: "くつ" };
+// 商品：[ID, 名前, 種類, 見た目, テイスト, 色, 仕入れ値, 出てくる段階]
+const PROD129 = [
+  ["t1", "白いTシャツ", "top", { top: "Tシャツ", topc: "白" }, ["ナチュラル", "ポップ"], "白", 400, 1],
+  ["t2", "ボーダーのシャツ", "top", { top: "ボーダー", topc: "青" }, ["ナチュラル", "クラシック"], "青", 700, 1],
+  ["t3", "ピンクのフリルブラウス", "top", { top: "フリルブラウス", topc: "ピンク" }, ["かわいい"], "ピンク", 900, 1],
+  ["t4", "黄色のパーカー", "top", { top: "パーカー", topc: "黄" }, ["ポップ"], "黄", 800, 1],
+  ["t5", "緑のカーディガン", "top", { top: "カーディガン", topc: "緑" }, ["ナチュラル", "クラシック"], "緑", 1000, 1],
+  ["t6", "黒のライダース", "top", { top: "ライダース", topc: "黒" }, ["クール"], "黒", 1800, 2],
+  ["t7", "ラベンダーのキャミソール", "top", { top: "キャミソール", topc: "ラベンダー" }, ["かわいい", "ゴージャス"], "ラベンダー", 1500, 2],
+  ["t8", "チェックシャツ（赤）", "top", { top: "チェックシャツ", topc: "赤" }, ["ナチュラル", "ポップ"], "赤", 1200, 2],
+  ["t9", "ツイードジャケット", "top", { top: "ツイードジャケット", topc: "茶" }, ["クラシック", "ゴージャス"], "茶", 3200, 3],
+  ["t10", "トレンチコート", "top", { top: "トレンチコート", topc: "ベージュ" }, ["クール", "クラシック"], "ベージュ", 3600, 3],
+  ["t11", "シルクのブラウス（白）", "top", { top: "シルクのブラウス", topc: "白" }, ["ゴージャス", "クラシック"], "白", 4200, 4],
+  ["t12", "オフショルダー（水色）", "top", { top: "オフショルダー", topc: "水色" }, ["かわいい", "ポップ"], "水色", 2600, 3],
+  ["b1", "青いジーンズ", "bottom", { bottom: "ジーンズ", bottomc: "青" }, ["ナチュラル", "クール"], "青", 700, 1],
+  ["b2", "白いプリーツスカート", "bottom", { bottom: "プリーツスカート", bottomc: "白" }, ["かわいい", "クラシック"], "白", 800, 1],
+  ["b3", "茶色のパンツ", "bottom", { bottom: "パンツ", bottomc: "茶" }, ["ナチュラル"], "茶", 500, 1],
+  ["b4", "ピンクのフリルスカート", "bottom", { bottom: "フリルスカート", bottomc: "ピンク" }, ["かわいい", "ポップ"], "ピンク", 1100, 2],
+  ["b5", "黒のワイドパンツ", "bottom", { bottom: "ワイドパンツ", bottomc: "黒" }, ["クール", "クラシック"], "黒", 1300, 2],
+  ["b6", "ミントのキュロット", "bottom", { bottom: "キュロット", bottomc: "ミント" }, ["ポップ", "ナチュラル"], "ミント", 1000, 2],
+  ["b7", "ワインのロングスカート", "bottom", { bottom: "ロングスカート", bottomc: "ワイン" }, ["ゴージャス", "クラシック"], "ワイン", 2400, 3],
+  ["b8", "白いチュチュ", "bottom", { bottom: "チュチュ", bottomc: "白" }, ["かわいい", "ゴージャス"], "白", 3000, 4],
+  ["d1", "生成りのワンピース", "dress", { top: "ワンピース", topc: "生成り" }, ["ナチュラル", "かわいい"], "生成り", 1200, 1],
+  ["d2", "水色のワンピース", "dress", { top: "ワンピース", topc: "水色" }, ["かわいい", "ポップ"], "水色", 1300, 1],
+  ["d3", "紺のセーラー服", "dress", { top: "セーラー服", topc: "青" }, ["クラシック", "かわいい"], "青", 2200, 2],
+  ["d4", "黒のドレス", "dress", { top: "ドレス", topc: "黒" }, ["クール", "ゴージャス"], "黒", 5000, 3],
+  ["d5", "ラベンダーのロリータドレス", "dress", { top: "ロリータドレス", topc: "ラベンダー" }, ["かわいい", "ゴージャス"], "ラベンダー", 6500, 4],
+  ["d6", "赤いドレス", "dress", { top: "ドレス", topc: "赤" }, ["ゴージャス"], "赤", 8000, 4],
+  ["d7", "ジャンパースカート（ベージュ）", "dress", { top: "ジャンパースカート", topc: "ベージュ" }, ["ナチュラル", "クラシック"], "ベージュ", 2600, 3],
+  ["d8", "虹色のドレス", "dress", { top: "ドレス", topc: "虹" }, ["ゴージャス", "ポップ"], "虹", 30000, 5],
+  ["h1", "麦わら帽子", "hat", { hat: "麦わら帽子" }, ["ナチュラル"], "黄", 600, 1],
+  ["h2", "ニット帽", "hat", { hat: "ニット帽" }, ["ポップ", "クール"], "赤", 700, 1],
+  ["h3", "リボン", "hat", { hat: "リボン" }, ["かわいい"], "ピンク", 600, 2],
+  ["h4", "マリン帽", "hat", { hat: "マリン帽" }, ["クラシック", "ポップ"], "白", 1100, 2],
+  ["h5", "花かんむり", "hat", { hat: "花かんむり" }, ["かわいい", "ナチュラル"], "ピンク", 1500, 3],
+  ["h6", "シルクハット", "hat", { hat: "シルクハット" }, ["クラシック", "クール"], "黒", 4000, 4],
+  ["h7", "王冠", "hat", { hat: "王冠" }, ["ゴージャス"], "金", 20000, 5],
+  ["s1", "茶色の靴", "shoes", { shoesc: "茶" }, ["ナチュラル", "クラシック"], "茶", 500, 1],
+  ["s2", "白いスニーカー", "shoes", { shoesc: "白" }, ["ポップ", "ナチュラル"], "白", 600, 1],
+  ["s3", "黒のブーツ", "shoes", { shoesc: "黒" }, ["クール"], "黒", 900, 2],
+  ["s4", "ピンクのパンプス", "shoes", { shoesc: "ピンク" }, ["かわいい"], "ピンク", 1200, 2],
+  ["s5", "金のヒール", "shoes", { shoesc: "金" }, ["ゴージャス"], "金", 6000, 4],
+].filter(p => Object.entries(p[3]).every(([k, v]) => POOLS[k] && v in POOLS[k]));
+const PROD_BY129 = Object.fromEntries(PROD129.map(p => [p[0], p]));
+const price129 = p => Math.round(p[6] * 1.6 / 10) * 10;
+// お客さん：[ID, なまえ, 見た目, 好きなテイスト, 好きな色, 苦手な色, 予算（ふつう）, 出てくる段階, ひとこと]
+const NPC129 = [
+  ["yuzu", "ゆず", { skin: "色白", hair: "ロング", hairc: "ピンク", top: "ワンピース", topc: "生成り" }, ["かわいい", "ナチュラル"], "ピンク", "黒", 2500, 1, "かわいいのが大好き"],
+  ["sora", "そら", { skin: "小麦色", hair: "アフロ", hairc: "黒", top: "オーバーオール", topc: "青" }, ["ポップ", "ナチュラル"], "黄", "ラベンダー", 2000, 1, "動きやすいのがいいな"],
+  ["mio", "みお", { skin: "色白", hair: "ツインテール", hairc: "ゲーミング", top: "Tシャツ", topc: "赤" }, ["ポップ", "かわいい"], "水色", "茶", 2200, 1, "目立ちたい！"],
+  ["hana", "ハナ", { skin: "やや明るめ", hair: "おだんご", hairc: "ブラウン", top: "ワンピース", topc: "黄" }, ["ナチュラル", "クラシック"], "緑", "黒", 2600, 1, "やさしい色が好き"],
+  ["ren", "レン", { skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "パーカー", topc: "黒", bottom: "ジーンズ", bottomc: "青" }, ["クール"], "黒", "ピンク", 3000, 2, "かっこよく決めたい"],
+  ["koharu", "コハル", { skin: "色白", hair: "ボブ", hairc: "ブラウン", top: "カーディガン", topc: "ベージュ", bottom: "スカート", bottomc: "茶" }, ["クラシック", "かわいい"], "ベージュ", "蛍光イエロー", 3500, 2, "きちんと見える服がいいな"],
+  ["tome", "トメおばあちゃん", { skin: "やや明るめ", hair: "おだんご", hairc: "白", top: "着物", topc: "紫" }, ["クラシック", "ナチュラル"], "紫", "蛍光イエロー", 4000, 2, "落ちついた服をおねがいね"],
+  ["aoi", "アオイ", { skin: "色白", hair: "ロング", hairc: "黒", top: "シルクのブラウス", topc: "白", bottom: "ロングスカート", bottomc: "黒" }, ["クール", "ゴージャス"], "白", "ミント", 8000, 3, "上品なものしか着ないの"],
+  ["shion", "シオン", { skin: "やや明るめ", hair: "ウルフカット", hairc: "むらさき", top: "ライダース", topc: "黒", bottom: "ワイドパンツ", bottomc: "黒" }, ["クール", "ポップ"], "紫", "生成り", 7000, 3, "人とかぶらない服がほしい"],
+  ["momo", "モモ", { skin: "色白", hair: "ツインテール", hairc: "ピンク", top: "ロリータドレス", topc: "ピンク" }, ["かわいい", "ゴージャス"], "ラベンダー", "茶", 9000, 3, "お姫さまみたいになりたい"],
+  ["luna", "ルナ", { skin: "色白", hair: "ロング", hairc: "銀", top: "ドレス", topc: "紫" }, ["ゴージャス", "クラシック"], "黒", "黄", 30000, 4, "今夜のパーティーに着ていく物を"],
+  ["star", "トップスターのキララ", { skin: "やや明るめ", hair: "縦ロール", hairc: "金", top: "ドレス", topc: "白" }, ["ゴージャス", "ポップ"], "金", "茶", 80000, 5, "ステージ衣装を探しているの"],
+].map(n => { const c = { ...DEFAULT, ...n[2] }; for (const k of Object.keys(c)) if (POOLS[k] && !(c[k] in POOLS[k])) c[k] = DEFAULT[k] || Object.keys(POOLS[k])[0]; return [n[0], n[1], c, ...n.slice(3)]; });
+const NPC_BY129 = Object.fromEntries(NPC129.map(n => [n[0], n]));
+// お店の段階：[名前, 広げる値段, 棚の数, 1日のお客さんの数]
+const LV129 = [null, ["小さな仕立て屋", 0, 20, 15], ["ブティック", 500000, 40, 20], ["セレクトショップ", 5000000, 70, 25], ["ファッションハウス", 50000000, 110, 30], ["こもれびメゾン", 300000000, 160, 40]];
+// 内装：[ID, 名前, 値段, 満足度+, 必要な段階]
+const DECO129 = [["mirror", "大きな姿見", 300000, 3, 1], ["fit", "試着室", 2000000, 4, 2], ["chand", "シャンデリア", 20000000, 4, 3], ["runway", "ランウェイ", 100000000, 5, 4], ["gold", "金の看板", 500000000, 6, 5]];
+const bq129 = () => {
+  const o = world.bq129 && typeof world.bq129 === "object" && !Array.isArray(world.bq129) ? world.bq129 : (world.bq129 = {});
+  const I = (k, a, b) => { const v = Math.floor(+o[k]); o[k] = Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : a; };
+  I("lv", 1, 5); I("rep", 0, 99999); I("earn", 0, 1e15); I("sold", 0, 1e9); I("s5", 0, 1e9); I("n", 0, 999);
+  o.stock = o.stock && typeof o.stock === "object" ? o.stock : {}; for (const k of Object.keys(o.stock)) { const v = o.stock[k]; if (!PROD_BY129[k] || !Array.isArray(v)) { delete o.stock[k]; continue; } o.stock[k] = [0, 1, 2].map(i => Math.max(0, Math.floor(+v[i] || 0))); if (!o.stock[k].some(x => x)) delete o.stock[k]; }
+  o.deco = o.deco && typeof o.deco === "object" ? o.deco : {}; o.aff = o.aff && typeof o.aff === "object" ? o.aff : {};
+  const d = jpDay129(); if (o.day !== d) { o.day = d; o.n = 0; }
+  if (!o.cust || typeof o.cust !== "object") o.cust = null;
+  return o;
+};
+F129.state = bq129;
+function jpDay129() { const t = new Date(Date.now() + 9 * 3600000); return t.toISOString().slice(0, 10); }
+const jpWeek129 = () => Math.floor((Date.now() + 9 * 3600000 - 4 * 86400000) / (7 * 86400000));
+const theme129 = () => bq129().lv >= 3 ? TAGS129[jpWeek129() % TAGS129.length] : null;
+const stockN129 = () => Object.values(bq129().stock).reduce((a, v) => a + v[0] + v[1] + v[2], 0);
+const decoBonus129 = () => DECO129.filter(d => bq129().deco[d[0]]).reduce((a, d) => a + d[3], 0);
+const lookOf129 = (npc, pid) => ({ ...npc[2], ...(PROD_BY129[pid] ? PROD_BY129[pid][3] : {}), ...(PROD_BY129[pid] && PROD_BY129[pid][2] === "dress" ? { bottom: npc[2].bottom } : {}) });
+const icon129 = new Map();
+const prodIcon129 = pid => { if (icon129.has(pid)) return icon129.get(pid); const p = PROD_BY129[pid]; const u = charIcon13({ ...DEFAULT, skin: "やや明るめ", hair: "ボブ", hairc: "ブラウン", top: "Tシャツ", topc: "白", bottom: "パンツ", bottomc: "グレー", ...p[3] }); icon129.set(pid, u); return u; };
+// お客さんと注文を決める
+function newCust129() {
+  const o = bq129(), pool = NPC129.filter(n => n[7] <= o.lv), npc = pool[rnd(pool.length)];
+  const cats = [...new Set(PROD129.filter(p => p[7] <= o.lv).map(p => p[2]))], have = [...new Set(Object.keys(o.stock).map(k => PROD_BY129[k] && PROD_BY129[k][2]).filter(Boolean))];
+  const cat = Math.random() < .12 ? "any" : have.length && Math.random() < .65 ? have[rnd(have.length)] : cats[rnd(cats.length)];
+  const th = theme129(), tag = th && Math.random() < .35 ? th : Math.random() < .7 ? npc[3][rnd(npc[3].length)] : TAGS129[rnd(TAGS129.length)];
+  const colors = [...new Set(PROD129.filter(p => p[7] <= o.lv && (cat === "any" || p[2] === cat)).map(p => p[5]))];
+  const color = Math.random() < .4 && colors.length ? colors[rnd(colors.length)] : null;
+  const budget = Math.round(npc[6] * (.8 + Math.random() * .7) / 100) * 100;
+  return { id: npc[0], cat, tag, color, budget };
+}
+const SAY129 = {
+  "かわいい": ["デートに着ていく、かわいい{c}がほしいな", "ふわっとかわいい{c}、ある？"], "クール": ["クールに決まる{c}を探してるんだ", "かっこいい{c}をおねがい"],
+  "ナチュラル": ["ふだん着にできる、やさしい感じの{c}がほしいな", "肩の力がぬけた{c}がいいな"], "ゴージャス": ["パーティーで目立つ、豪華な{c}を", "とびきり華やかな{c}がほしいの"],
+  "ポップ": ["元気が出る、明るい{c}がほしい！", "ポップで楽しい{c}ある？"], "クラシック": ["きちんとした場所に着ていく{c}を", "流行に左右されない{c}がほしいな"],
+};
+const reqText129 = c => { const L = SAY129[c.tag] || ["{c}がほしいな"]; const t = L[(c.budget / 100) % L.length | 0].replace("{c}", c.cat === "any" ? "服" : CATS129[c.cat]); return `${t}。${c.color ? `色は${c.color}がいいな。` : ""}予算は ${fmt(c.budget)} くらい`; };
+function judge129(c, pid, q) {
+  const p = PROD_BY129[pid], npc = NPC_BY129[c.id], o = bq129(), aff = Math.min(10, o.aff[c.id] | 0), pr = price129(p);
+  const why = [];
+  let s = 0;
+  const catOk = c.cat === "any" || p[2] === c.cat; if (catOk) s += 25; else why.push(`${CATS129[c.cat]}がほしかったのに…`);
+  if (p[4].includes(c.tag)) { s += 30; why.push(`「${c.tag}」にぴったり`); } else why.push(`「${c.tag}」とはちがうかも`);
+  if (npc[3].some(t => p[4].includes(t))) { s += 10; if (aff >= 3) why.push("好きなテイスト"); }
+  if (c.color) { if (p[5] === c.color) { s += 15; why.push("色も注文どおり"); } else why.push(`${c.color}がよかったな`); } else s += 8;
+  if (p[5] === npc[4]) { s += 8; if (aff >= 2) why.push("大好きな色"); }
+  if (p[5] === npc[5]) { s -= 20; why.push("この色はちょっと苦手…"); }
+  s += q * 3 + decoBonus129() + Math.min(5, aff >> 1);
+  const th = theme129(); if (th && p[4].includes(th)) { s += 6; why.push(`今週のテーマ「${th}」`); }
+  if (!catOk) s = Math.min(s, 30);
+  const over = pr > c.budget * 1.15; if (over) { s = Math.min(s, 30); why.push("予算オーバー…"); }
+  s = Math.max(0, Math.min(100, Math.round(s)));
+  const star = s >= 90 ? 5 : s >= 75 ? 4 : s >= 55 ? 3 : s >= 35 ? 2 : 1;
+  const buy = star >= 2 && !over;
+  const pay = buy ? Math.round(pr * (star === 5 ? 1.3 : star === 4 ? 1.15 : 1)) : 0;
+  return { s, star, buy, pay, why, pr };
+}
+// ---- 画面 ----
+function openBoutique129(tab, note) {
+  F129.tab = tab || F129.tab || "shop";
+  openModal("こもれびブティック", "dark", () => renderBq129(note));
+}
+function renderBq129(note) {
+  const body = $("mbody"); if (!body) return;
+  const o = bq129(), L = LV129[o.lv], tab = F129.tab, th = theme129();
+  let html = `<div class="bq129"><div class="bq129h"><b>${esc(L[0])}</b><span>評判 ${fmt92(o.rep)}・売上 ${fmt(o.earn)}・棚 ${stockN129()} / ${L[2]}</span>${th ? `<span class="bq129t">今週のテーマ「${th}」</span>` : ""}</div>
+    <div class="mtabs">${[["shop", "接客"], ["buy", "仕入れ"], ["make", "工房"], ["up", "お店を広げる"], ["npc", "お客さん"]].map(([k, n]) => `<button class="chip" type="button" data-bq129t="${k}" aria-pressed="${tab === k}">${n}</button>`).join("")}</div>
+    ${note ? `<p class="mtext"><b>${esc(note)}</b></p>` : ""}`;
+  if (tab === "shop") {
+    const left = L[3] - o.n;
+    if (!o.cust) {
+      html += `<p class="mtext">お客さんの注文を聞いて、在庫の中からぴったりの1着を提案しよう。テイスト・色・予算が合うほど満足して、評判とお代が上がるよ。</p>
+        <p class="mtext small">今日（日本時間）のお客さん あと <b>${Math.max(0, left)}人</b>・在庫 ${stockN129()}着${stockN129() ? "" : "（まずは「仕入れ」か「工房」で服をそろえよう）"}</p>
+        <div class="row2"><button class="btn" type="button" id="bq129open" ${left > 0 && stockN129() ? "" : "disabled"}>お店を開ける（次のお客さん）</button></div>`;
+    } else {
+      const c = o.cust, npc = NPC_BY129[c.id];
+      const list = Object.entries(o.stock).filter(([k]) => PROD_BY129[k]).sort((a, b) => PROD_BY129[a[0]][2].localeCompare(PROD_BY129[b[0]][2]));
+      html += staffSay13(charIcon13(npc[2]), `${esc(npc[1])}「${esc(reqText129(c))}」`)
+        + `<div class="bq129req"><span>${c.cat === "any" ? "なんでも" : CATS129[c.cat]}</span><span>${esc(c.tag)}</span>${c.color ? `<span>${esc(c.color)}</span>` : ""}<span>予算 ${fmt(c.budget)}</span></div>
+        <p class="mtext small">在庫から1着えらんで「すすめる」</p><div class="bq129g">${list.map(([k, v]) => { const p = PROD_BY129[k], q = v[2] ? 3 : v[1] ? 2 : 1; return `<button class="bq129c" type="button" data-bq129p="${k}"><img src="${prodIcon129(k)}" alt=""><b>${esc(p[1])}</b><span>${CATS129[p[2]]}・${p[4].join("/")}</span><span>${fmt(price129(p))}${q > 1 ? `・<em>${"★".repeat(q)}</em>` : ""}・${v[0] + v[1] + v[2]}着</span></button>`; }).join("") || `<p class="mtext">在庫がないよ</p>`}</div>
+        <div class="row2"><button class="btn light" type="button" id="bq129skip">ごめんなさい（帰ってもらう）</button></div>`;
+    }
+  } else if (tab === "buy") {
+    const cap = L[2] - stockN129();
+    html += `<p class="mtext">問屋さんから仕入れる（ふつうの品質）。売るときは仕入れ値の1.6倍。棚はあと <b>${Math.max(0, cap)}着</b>・所持金 <b>${fmt(world.money)}</b></p>
+      <div class="list">${PROD129.filter(p => p[7] <= o.lv).map(p => `<div class="li"><img src="${prodIcon129(p[0])}" alt=""><span class="nm">${esc(p[1])}<span class="sub2">${CATS129[p[2]]}・${p[4].join("/")}・${esc(p[5])}<br>仕入れ ${fmt(p[6])}・売値 ${fmt(price129(p))}・在庫 ${(o.stock[p[0]] || [0, 0, 0]).reduce((a, b) => a + b, 0)}</span></span><span class="acts"><button class="btn" type="button" data-bq129b="${p[0]}" data-n="1" ${world.money >= p[6] && cap >= 1 ? "" : "disabled"}>1着</button><button class="btn light" type="button" data-bq129b="${p[0]}" data-n="5" ${world.money >= p[6] * 5 && cap >= 5 ? "" : "disabled"}>5着</button></span></div>`).join("")}</div>
+      ${PROD129.some(p => p[7] > o.lv) ? `<p class="mtext small">お店を広げると、仕入れられる服がふえるよ（あと ${PROD129.filter(p => p[7] > o.lv).length}種類）</p>` : ""}`;
+  } else if (tab === "make") {
+    const cap = L[2] - stockN129();
+    html += `<p class="mtext">工房で自分で作ると、仕入れ値の半分の布代ですむ。ミシンのタイミングで品質（★1〜★3）が決まって、★が多いほどお客さんが喜ぶ。1回で2着できる。棚はあと <b>${Math.max(0, cap)}着</b></p>
+      <div class="list">${PROD129.filter(p => p[7] <= o.lv).map(p => { const c = Math.round(p[6] / 2); return `<div class="li"><img src="${prodIcon129(p[0])}" alt=""><span class="nm">${esc(p[1])}<span class="sub2">布代 ${fmt(c)}・売値 ${fmt(price129(p))}</span></span><span class="acts"><button class="btn" type="button" data-bq129m="${p[0]}" ${world.money >= c && cap >= 2 ? "" : "disabled"}>作る</button></span></div>`; }).join("")}</div>
+      <h3 class="lbl">前の仕立て屋</h3><div class="row2"><button class="btn light" type="button" id="bq129old">自分の服を仕立てる・特別な布と模様</button></div>`;
+  } else if (tab === "up") {
+    const nx = LV129[o.lv + 1];
+    html += `<p class="mtext">お店を広げると、棚がふえて、新しい服とお客さんが来るようになる。${o.lv < 3 ? "セレクトショップからは「今週のテーマ」も始まるよ。" : ""}</p>
+      ${nx ? `<div class="list"><div class="li"><span class="nm">「${esc(nx[0])}」に広げる<span class="sub2">${fmt(nx[1])}・棚 ${nx[2]}着・1日のお客さん ${nx[3]}人・新しい服 ${PROD129.filter(p => p[7] === o.lv + 1).length}種類・新しいお客さん ${NPC129.filter(n => n[7] === o.lv + 1).map(n => n[1]).join("・") || "なし"}</span></span><span class="acts"><button class="btn" type="button" id="bq129up" ${world.money >= nx[1] ? "" : "disabled"}>広げる</button></span></div></div>` : `<p class="mtext"><b>いちばん大きなお店になった！</b></p>`}
+      <h3 class="lbl">内装（お客さんの満足度が上がる）</h3><div class="list">${DECO129.map(d => `<div class="li"><span class="nm">${esc(d[1])}<span class="sub2">満足度 +${d[3]}・${fmt(d[2])}${d[4] > o.lv ? `・「${LV129[d[4]][0]}」から` : ""}</span></span><span class="acts">${o.deco[d[0]] ? "✓" : `<button class="btn light" type="button" data-bq129d="${d[0]}" ${world.money >= d[2] && d[4] <= o.lv ? "" : "disabled"}>買う</button>`}</span></div>`).join("")}</div>
+      <p class="mtext small">所持金 <b>${fmt(world.money)}</b></p>`;
+  } else {
+    html += `<p class="mtext">来てくれたお客さん。何度もぴったりの服をすすめると、なかよくなって、好みが見えてくるよ。</p><div class="list">${NPC129.map(n => { const a = Math.min(10, o.aff[n[0]] | 0), met = n[7] <= o.lv; return `<div class="li"><img src="${met ? charIcon13(n[2]) : ASSETS.coin}" alt=""><span class="nm">${met ? esc(n[1]) : "？？？"}<span class="sub2">${met ? `${esc(n[8])}・なかよし ${"♥".repeat(Math.ceil(a / 2)) || "－"}${a >= 3 ? `<br>好きなテイスト：${n[3].join("・")}` : ""}${a >= 2 ? `・好きな色：${n[4]}` : ""}${a >= 5 ? `・苦手な色：${n[5]}` : ""}` : `「${LV129[n[7]][0]}」になると来る`}</span></span></div>`; }).join("")}</div>`;
+  }
+  html += `</div>`;
+  body.innerHTML = html;
+  body.querySelectorAll("[data-bq129t]").forEach(b => b.onclick = () => { F129.tab = b.dataset.bq129t; renderBq129(); });
+  body.querySelector("#bq129open")?.addEventListener("click", () => { const o = bq129(); if (o.n >= LV129[o.lv][3] || !stockN129()) return; o.cust = newCust129(); saveWorld(); se13("small"); renderBq129(); });
+  body.querySelector("#bq129skip")?.addEventListener("click", () => { const o = bq129(); o.cust = null; o.n++; o.rep = Math.max(0, o.rep - 1); saveWorld(); renderBq129("お客さんは、ちょっと残念そうに帰っていった（評判-1）"); });
+  body.querySelectorAll("[data-bq129p]").forEach(b => b.onclick = () => propose129(b.dataset.bq129p));
+  body.querySelectorAll("[data-bq129b]").forEach(b => b.onclick = () => {
+    const o = bq129(), p = PROD_BY129[b.dataset.bq129b], n = +b.dataset.n; if (!p || world.money < p[6] * n || LV129[o.lv][2] - stockN129() < n) return;
+    addMoney(-p[6] * n); const v = o.stock[p[0]] = o.stock[p[0]] || [0, 0, 0]; v[0] += n; saveWorld(); se13("small"); renderBq129(`${p[1]}を${n}着仕入れた`);
+  });
+  body.querySelectorAll("[data-bq129m]").forEach(b => b.onclick = () => sew129(b.dataset.bq129m));
+  body.querySelector("#bq129old")?.addEventListener("click", () => { closeModal(); oldTailor129(); });
+  body.querySelector("#bq129up")?.addEventListener("click", () => {
+    const o = bq129(), nx = LV129[o.lv + 1]; if (!nx || world.money < nx[1]) return;
+    addMoney(-nx[1]); o.lv++; saveWorld(); se13("big"); try { checkTitles42(); } catch (e) { }
+    renderBq129(`お店が「${nx[0]}」になった！`);
+  });
+  body.querySelectorAll("[data-bq129d]").forEach(b => b.onclick = () => { const o = bq129(), d = DECO129.find(x => x[0] === b.dataset.bq129d); if (!d || o.deco[d[0]] || world.money < d[2] || d[4] > o.lv) return; addMoney(-d[2]); o.deco[d[0]] = 1; saveWorld(); se13("harvest"); renderBq129(`${d[1]}を入れた（満足度+${d[3]}）`); });
+}
+function propose129(pid) {
+  const o = bq129(), c = o.cust, v = o.stock[pid]; if (!c || !v) return;
+  const q = v[2] ? 2 : v[1] ? 1 : 0, npc = NPC_BY129[c.id], r = judge129(c, pid, q + 1), p = PROD_BY129[pid];
+  if (r.buy) { v[q]--; if (!v.some(x => x)) delete o.stock[pid]; addMoney(r.pay); o.earn += r.pay; o.sold++; }
+  o.rep = Math.max(0, o.rep + (r.star - 2) * (r.star >= 4 ? 2 : 1)); o.aff[c.id] = Math.min(10, Math.max(0, (o.aff[c.id] | 0) + (r.star >= 4 ? 1 : r.star <= 1 ? -1 : 0)));
+  if (r.star === 5) o.s5++;
+  o.cust = null; o.n++; saveWorld(); se13(r.star >= 4 ? "big" : r.buy ? "harvest" : "miss"); try { checkTitles42(); } catch (e) { }
+  const line = r.star === 5 ? "えっ、すごい……！ これ、まさにほしかったの！" : r.star === 4 ? "うん、すてき！ これにする！" : r.star === 3 ? "悪くないね。これにしようかな" : r.buy ? "うーん……まあ、これでいいか" : "ごめんね、今日はやめておくね";
+  const body = $("mbody"); if (!body) return;
+  body.innerHTML = `<div class="bq129"><div class="bq129r"><canvas id="bq129cv" width="64" height="64"></canvas><p class="mtext"><b>${esc(npc[1])}</b>「${esc(line)}」</p></div>
+    <div class="dk75r"><b>${"★".repeat(r.star)}${"☆".repeat(5 - r.star)}（満足度 ${r.s}）</b><span>${esc(p[1])}${r.buy ? `・お代 <em>${fmt(r.pay)}</em>${r.pay > r.pr ? "（チップこみ）" : ""}` : "・売れなかった"}</span><span>${r.why.map(esc).join("・")}</span></div>
+    <div class="row2"><button class="btn" type="button" id="bq129next" ${o.n < LV129[o.lv][3] && stockN129() ? "" : "disabled"}>次のお客さん</button><button class="btn light" type="button" id="bq129back">お店にもどる</button></div></div>`;
+  const g = $("bq129cv").getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = r.buy ? "#3a2a50" : "#2a2a34"; g.fillRect(0, 0, 64, 64);
+  g.drawImage(charImg118(r.buy ? lookOf129(npc, pid) : npc[2], "down", 0), 0, 0, 64, 64);
+  if (r.star >= 4) { g.fillStyle = "#ffe27a"; for (let i = 0; i < 6; i++) g.fillRect(6 + i * 10, 4 + (i % 2) * 6, 2, 2); }
+  $("bq129next").onclick = () => { const o = bq129(); if (o.n >= LV129[o.lv][3] || !stockN129()) return; o.cust = newCust129(); saveWorld(); renderBq129(); };
+  $("bq129back").onclick = () => renderBq129();
+}
+// 工房：3回のタイミングで品質
+function sew129(pid) {
+  const o = bq129(), p = PROD_BY129[pid], cost = Math.round(p[6] / 2); if (!p || world.money < cost || LV129[o.lv][2] - stockN129() < 2) return;
+  addMoney(-cost); saveWorld();
+  const body = $("mbody"); let i = 0, hit = 0, tt = 0, last = performance.now(), ended = false, zc = .5;
+  body.innerHTML = `<div class="gl97"><p class="mtext small">「${esc(p[1])}」を縫う。ゲージが緑のときに「縫う！」（3回）</p><canvas id="sw129cv" width="240" height="70"></canvas><button type="button" class="btn" id="sw129b">縫う！</button></div>`;
+  const cv = $("sw129cv"), g = cv.getContext("2d");
+  const cur = () => Math.sin(tt * (2.4 + i * .5)) * .5 + .5, W = .22;
+  const press = () => { if (ended || i >= 3) return; if (Math.abs(cur() - zc) <= W / 2) { hit++; se13("harvest"); } else se13("miss"); i++; zc = .25 + Math.random() * .5; if (i >= 3) setTimeout(done, 350); };
+  $("sw129b").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+  const kd = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) press(); } };
+  addEventListener("keydown", kd, true);
+  const loop = now => { if (ended || !cv.isConnected) { removeEventListener("keydown", kd, true); return; } tt += Math.min(.05, (now - last) / 1000); last = now;
+    g.fillStyle = "#2a1f38"; g.fillRect(0, 0, 240, 70); g.fillStyle = "#4a3a5a"; g.fillRect(10, 28, 220, 14); g.fillStyle = "#5ad06a"; g.fillRect(10 + (zc - W / 2) * 220, 28, W * 220, 14);
+    g.fillStyle = "#ffe27a"; g.fillRect(10 + cur() * 220 - 2, 22, 4, 26); g.fillStyle = "#fff"; g.font = "12px sans-serif"; g.fillText(`${i} / 3`, 104, 64); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  function done() {
+    if (ended) return; ended = true; removeEventListener("keydown", kd, true);
+    const q = hit >= 3 ? 2 : hit >= 2 ? 1 : 0, o = bq129(), v = o.stock[pid] = o.stock[pid] || [0, 0, 0]; v[q] += 2; world.stats.bqMade129 = (world.stats.bqMade129 || 0) + 2; saveWorld();
+    if (!$("mbody")) return; renderBq129(`「${p[1]}」を2着作った（${"★".repeat(q + 1)}）`);
+  }
+}
+const oldTailor129 = openTailor100;
+openTailor100 = function (note) { openBoutique129(null, note); };
+F129.open = openBoutique129; F129.propose = propose129; F129.newCust = newCust129; F129.judge = judge129; F129.PROD = PROD129; F129.NPC = NPC129;
+const TTL129 = [["ブティックの看板", "こもれびブティックで100着売る", () => (world.bq129?.sold || 0) >= 100], ["カリスマ店長", "こもれびブティックを「こもれびメゾン」にする", () => (world.bq129?.lv || 1) >= 5], ["スタイリスト", "こもれびブティックで★5を30回とる", () => (world.bq129?.s5 || 0) >= 30]];
+for (const t of TTL129) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["こもれびブティック", "coin", `<p>スマホの「ゲーム」の「村の仕立て屋」は、服のお店を育てるゲーム「こもれびブティック」になりました。</p>
+  <ul><li><b>仕入れ・工房</b>：問屋さんから仕入れるか、工房で布代（半分）で作る。工房はミシンのタイミングで★1〜★3の品質になる</li>
+  <li><b>接客</b>：お客さんの注文（種類・テイスト・色・予算）を聞いて、在庫から1着すすめる。合うほど満足度が上がり、★4・★5ならチップもくれる。苦手な色や予算オーバーは売れない</li>
+  <li><b>お客さん</b>：何度もぴったりの服をすすめると、なかよくなって好みが見えてくる</li>
+  <li><b>お店を広げる</b>：棚・1日のお客さん・新しい服とお客さんがふえる。セレクトショップからは「今週のテーマ」。内装を入れると満足度が上がる</li>
+  <li>1日（日本時間）に来るお客さんの数は、お店の大きさで決まる。前の仕立て屋（自分の服を作る）は「工房」から開ける</li></ul>`]);
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -25807,5 +26568,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

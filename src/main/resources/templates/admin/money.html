@@ -16,20 +16,25 @@
   <p class="flash" th:if="${msg}" th:text="${msg}"></p>
   <section class="card">
     <h2>プレイヤーのお金</h2>
-    <p class="muted">金額は、その人が最後にサーバーへセーブしたときのものです（遊んでいる最中の人は、少しずれていることがあります）。「預金」は信用金庫の普通預金と定期預金、「借金」は返す額の合計、「合計」は所持金＋預金−借金です。ここで足したり減らしたりできるのは所持金だけです。足すか減らすかを選んで金額を入れると、つないでいる人にはすぐ、つないでいない人には次に村に来たときに反映されます。<br>
+    <p class="muted">金額は、その人が最後にサーバーへセーブしたときのものです（遊んでいる最中の人は、少しずれていることがあります）。「預金」は信用金庫の普通預金と定期預金、「借金」は返す額の合計、「現金」は1,000G札の枚数（カッコの中はそのうち本人が偽札だとわかっている枚数）、「合計」は所持金＋現金＋預金−借金です。ここで足したり減らしたりできるのは所持金と現金（お札の枚数）です。「G」か「お札」を選び、足すか減らすかを選んで数を入れると、つないでいる人にはすぐ、つないでいない人には次に村に来たときに反映されます。<br>
       「本人へのひとこと」を空のままにすると、本人の画面には何も出ずに、お金だけが変わります。書いたときは、その言葉といっしょにお知らせが出ます。</p>
     <form method="post" th:action="@{/admin/money/all}" class="row allrow">
       <b>この村の全員に足す</b>
-      <input name="amount" inputmode="numeric" placeholder="金額" size="9" autocomplete="off" required>
+      <select name="unit" aria-label="単位"><option value="g">G</option><option value="bill">お札（枚）</option></select>
+      <input name="amount" inputmode="numeric" placeholder="金額・枚数" size="9" autocomplete="off" required>
       <input name="text" placeholder="みんなへのひとこと（例：おわびです）" size="22" maxlength="60" autocomplete="off">
       <button class="btn" type="submit" onclick="return confirm('この村の全員に送ります。いいですか？')">全員に送る</button>
     </form>
     <table class="players">
-      <tr><th>なまえ</th><th>所持金</th><th>預金</th><th>借金</th><th>合計</th><th>状態</th><th>調整</th></tr>
+      <tr><th>なまえ</th><th>所持金</th><th>現金</th><th>預金</th><th>借金</th><th>合計</th><th>状態</th><th>調整</th></tr>
       <tr th:each="r : ${rows}">
         <td><b th:text="${r.name()}">name</b><br><span class="muted" th:text="|ID ${r.id()}|">ID</span></td>
         <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.money(), 1, 'COMMA')} + ' G' : 'セーブなし'">0 G</span>
           <br><span class="muted" th:if="${r.pending() != 0}" th:text="|届いていない分 ${r.pending() > 0 ? '+' : ''}${#numbers.formatInteger(r.pending(), 1, 'COMMA')} G|"></span></td>
+        <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.cash(), 1, 'COMMA')} + ' 枚' : '-'">0 枚</span>
+          <span class="muted" th:if="${r.fake() > 0}" th:text="|（偽札 ${#numbers.formatInteger(r.fake(), 1, 'COMMA')}）|"></span>
+          <br><span class="muted" th:if="${r.money() != null and r.cash() > 0}" th:text="|${#numbers.formatInteger(r.cashG(), 1, 'COMMA')} G ぶん|"></span>
+          <br><span class="muted" th:if="${r.pendingCash() != 0}" th:text="|届いていない分 ${r.pendingCash() > 0 ? '+' : ''}${#numbers.formatInteger(r.pendingCash(), 1, 'COMMA')} 枚|"></span></td>
         <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.bank(), 1, 'COMMA')} + ' G' : '-'">0 G</span>
           <br><span class="muted" th:if="${r.money() != null and r.bank() > 0}" th:text="|普通 ${#numbers.formatInteger(r.save(), 1, 'COMMA')}・定期 ${#numbers.formatInteger(r.fixed(), 1, 'COMMA')}|"></span></td>
         <td th:text="${r.money() != null} ? ${#numbers.formatInteger(r.debt(), 1, 'COMMA')} + ' G' : '-'">0 G</td>
@@ -37,8 +42,9 @@
         <td th:text="${r.online()} ? 'つないでいる' : 'いない'">いない</td>
         <td>
           <form method="post" th:action="@{/admin/money/{id}(id=${r.id()})}" class="row">
+            <select name="unit" aria-label="単位"><option value="g">G</option><option value="bill">お札（枚）</option></select>
             <select name="sign"><option value="plus">足す</option><option value="minus">減らす</option></select>
-            <input name="amount" inputmode="numeric" placeholder="金額" size="9" autocomplete="off" required>
+            <input name="amount" inputmode="numeric" placeholder="金額・枚数" size="9" autocomplete="off" required>
             <input name="text" placeholder="本人へのひとこと（なくてもOK）" size="22" maxlength="60" autocomplete="off">
             <button class="btn" type="submit">反映する</button>
           </form>

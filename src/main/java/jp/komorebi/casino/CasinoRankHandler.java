@@ -20,6 +20,8 @@ public class CasinoRankHandler implements MessageHandler {
 
     private final CasinoRankService ranks;
     private final Map<Long, Long> lastPut = new ConcurrentHashMap<>(), lastGet = new ConcurrentHashMap<>();
+    /** 人ごとに、足し算をすませた最近の rid（同じ rid の送りなおしは足さずに返事だけする） */
+    private final Map<Long, java.util.ArrayDeque<String>> doneRid = new ConcurrentHashMap<>();
 
     public CasinoRankHandler(CasinoRankService ranks) {
         this.ranks = ranks;
@@ -40,9 +42,17 @@ public class CasinoRankHandler implements MessageHandler {
             JsonNode t = msg.get("total");
             long add = msg.path("add").asLong(0);
             // 送りすぎは、全期間だけ受けて、足し算の分は落とさないよう次に回してもらう（クライアントは送れた分だけ消す）
-            if (prev == null || now - prev >= 1500) {
+            String rid = msg.path("rid").asText("");
+            if (rid.length() > 16) rid = rid.substring(0, 16);
+            var seen = doneRid.computeIfAbsent(id, k -> new java.util.ArrayDeque<>());
+            boolean dup;
+            synchronized (seen) { dup = !rid.isEmpty() && seen.contains(rid); }
+            if (dup) {
+                hub.send(from, hub.json().createObjectNode().put("type", "crank").put("ok", rid));
+            } else if (prev == null || now - prev >= 1500) {
                 lastPut.put(id, now);
                 ranks.record(id, t != null && t.isNumber() ? t.asLong() : null, add);
+                if (!rid.isEmpty()) synchronized (seen) { seen.addLast(rid); while (seen.size() > 20) seen.removeFirst(); }
                 hub.send(from, hub.json().createObjectNode().put("type", "crank").put("ok", msg.path("rid").asText("")));
             }
         }

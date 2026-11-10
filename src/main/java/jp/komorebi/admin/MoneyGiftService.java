@@ -33,14 +33,23 @@ public class MoneyGiftService implements WelcomeContributor {
         this.world = world;
     }
 
+    /** 現金（1,000G札）の枚数の上限（1回・とっておく分とも） */
+    public static final long MAX_CASH = 9_999L;
+
     /** @return true ならすぐ届いた、false なら次につないだときに届く */
-    public synchronized boolean give(long playerId, long money, String text) {
+    public boolean give(long playerId, long money, String text) {
+        return give(playerId, money, 0, text);
+    }
+
+    /** money は所持金（G）、cash は現金（1,000G札の枚数）。どちらもマイナスなら減らす */
+    public synchronized boolean give(long playerId, long money, long cash, String text) {
         long m = Math.max(-MAX, Math.min(MAX, money));
+        long c = Math.max(-MAX_CASH, Math.min(MAX_CASH, cash));
         String t = text == null ? "" : text.strip();
         if (t.length() > 60) t = t.substring(0, 60);
         GameSocketHandler h = hub.getIfAvailable();
         if (h != null && h.isOnline(playerId)) {
-            h.sendToPlayer(playerId, om.createObjectNode().put("type", "adminPay").put("money", m).put("text", t));
+            h.sendToPlayer(playerId, om.createObjectNode().put("type", "adminPay").put("money", m).put("cash", c).put("text", t));
             return true;
         }
         JsonNode cur = world.getSystem(PENDING);
@@ -48,6 +57,7 @@ public class MoneyGiftService implements WelcomeContributor {
         String key = String.valueOf(playerId);
         ObjectNode e = p.path(key) instanceof ObjectNode old ? old : om.createObjectNode();
         e.put("money", Math.max(-MAX, Math.min(MAX, e.path("money").asLong(0) + m)));
+        if (c != 0 || e.has("cash")) e.put("cash", Math.max(-MAX_CASH, Math.min(MAX_CASH, e.path("cash").asLong(0) + c)));
         if (!t.isEmpty()) e.put("text", t);
         p.set(key, e);
         world.putSystem(PENDING, p);

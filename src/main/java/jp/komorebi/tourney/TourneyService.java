@@ -139,6 +139,18 @@ public class TourneyService implements WelcomeContributor {
         return prev != null && now - prev < 300;
     }
 
+    /** スコアと「釣れた」は、いくつかの大会へ続けて送られるので、0.3秒の連打よけとは別に数える（1人 1秒に10通まで） */
+    private final Map<Long, long[]> fast = new ConcurrentHashMap<>();
+
+    private boolean tooFast(long me) {
+        long now = System.currentTimeMillis();
+        long[] r = fast.computeIfAbsent(me, x -> new long[] { now, 0 });
+        synchronized (r) {
+            if (now - r[0] >= 1000) { r[0] = now; r[1] = 0; }
+            return ++r[1] > 10;
+        }
+    }
+
     private void ng(PlayerSession s, GameSocketHandler hub, String text, String rid) {
         hub.send(s, out().put("ng", text).put("rid", rid));
     }
@@ -182,7 +194,8 @@ public class TourneyService implements WelcomeContributor {
         String a = msg.path("a").asText(""), rid = msg.path("rid").asText("");
         if (rid.length() > 16) rid = rid.substring(0, 16);
         if ("look".equals(a)) { hub.send(from, state(me)); return; }
-        if (throttled(me)) { ng(from, hub, "少し待ってからもう一度", rid); return; }
+        if ("score".equals(a) || "catch".equals(a)) { if (tooFast(me)) return; }
+        else if (throttled(me)) { ng(from, hub, "少し待ってからもう一度", rid); return; }
         switch (a) {
             case "host" -> {
                 String err = open(me, from.name(), msg.path("kind").asText(""), msg.path("game").asText(""), msg.path("fish").asText(""), msg.path("rnd").asBoolean(false),

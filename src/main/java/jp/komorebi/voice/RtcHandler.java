@@ -16,7 +16,7 @@ import jp.komorebi.ws.PlayerSession;
 /**
  * 声の通話（v0.74.0）の「つなぎ方」の受けわたし（WebRTC のシグナリング）。声そのものは画面どうしが直接やりとりして、サーバーは通らない。
  * {"type":"rtc","to":相手,"k":"offer"|"answer"|"ice"|"bye","d":中身} を、同じ村でつないでいる相手にだけ {"type":"rtc","from","name","k","d"} で届ける。
- * 中身は 16,000 字まで・1人1秒に60通まで。見学の人は使えない。とっておかない。
+ * 中身は 16,000 字まで・1人1秒に60通まで（その前に、1人のメッセージぜんぶで1秒30通までの制限がある。画面は ice の候補を0.25秒ぶんまとめて、配列で送る）。見学の人は使えない。とっておかない。
  */
 @Component
 public class RtcHandler implements MessageHandler {

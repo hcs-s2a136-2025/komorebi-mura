@@ -651,8 +651,10 @@ function localRun(st) {
 }
 const payoutOf = (b, order) => { const hit = b.kind === "win" ? order[0] === b.runner : order[0] === b.runner || order[1] === b.runner; return hit ? Math.floor(b.amount * b.odds) : 0; };
 // 結果が出たら、自分の賭けを精算する（カジノにいなくても）
-function settleRace(id, order, local) {
-  const R = raceBets(), mine = R.bets.filter(b => b.id === id && !!b.local === !!local);
+// boot＝サーバーが起動した時刻（秒）。賭けたときの boot とちがうレースは、番号が同じでも別のレースなので精算しない
+const sameBoot = (b, boot) => !boot || (b.boot ? b.boot === boot : (b.t || 0) >= boot * 1000);
+function settleRace(id, order, local, boot) {
+  const R = raceBets(), mine = R.bets.filter(b => b.id === id && !!b.local === !!local && (local || sameBoot(b, boot)));
   if (!mine.length) return null;
   R.bets = R.bets.filter(b => !mine.includes(b));
   const staked = mine.reduce((a, b) => a + b.amount, 0), paid = mine.reduce((a, b) => a + payoutOf(b, order), 0);
@@ -665,24 +667,31 @@ function settleRace(id, order, local) {
 }
 function settleOld(results) {
   const R = raceBets(); if (!R.bets.length) return;
-  for (const r of results || []) if (r && Array.isArray(r.order) && r.order.length >= 2) { const res = settleRace(r.id, r.order, false); if (res && res.paid) K.toast("coin", `留守のあいだの競どんぐり：払い戻し +${fmt(res.paid)}`); }
+  for (const r of results || []) if (r && Array.isArray(r.order) && r.order.length >= 2) { const res = settleRace(r.id, r.order, false, r.boot); if (res && res.paid) K.toast("coin", `留守のあいだの競どんぐり：払い戻し +${fmt(res.paid)}`); }
   // 10分たっても結果がわからない賭け（サーバーが入れかわったなど）は返す
   const now = Date.now(), old = R.bets.filter(b => !b.local && now - (b.t || 0) > 10 * 60e3);
   if (old.length) { const back = old.reduce((a, b) => a + b.amount, 0); R.bets = R.bets.filter(b => !old.includes(b)); K.addMoney(back); K.toast("coin", `取り消しになった競どんぐりの賭け金 ${fmt(back)} を返したよ`); K.saveWorld(); }
 }
+// サーバーが入れかわる前の賭け（結果がもう出ない）は、すぐ返す
+function refundOldBoot(boot) {
+  if (!boot) return;
+  const R = raceBets(), old = R.bets.filter(b => !b.local && !sameBoot(b, boot)); if (!old.length) return;
+  const back = old.reduce((a, b) => a + b.amount, 0); R.bets = R.bets.filter(b => !old.includes(b)); K.addMoney(back); K.saveWorld();
+  K.toast("coin", `取り消しになった競どんぐりの賭け金 ${fmt(back)} を返したよ`);
+}
 K.raceIn = m => {
   if (m.type === "race") {
-    const prev = RC.st; RC.st = m; RC.at = performance.now();
+    const prev = RC.st; RC.st = m; RC.at = performance.now(); refundOldBoot(m.boot);
     if (m.phase === "result" && Array.isArray(m.order) && (!prev || prev.id !== m.id || prev.phase !== "result")) {
-      const res = settleRace(m.id, m.order, false);
+      const res = settleRace(m.id, m.order, false, m.boot);
       if (res && !(RC.ui && RC.ui.cb.isConnected)) K.toast("coin", res.paid ? `競どんぐり：${m.runners[m.order[0]].name}が1着！ 払い戻し +${fmt(res.paid)}` : `競どんぐり：${m.runners[m.order[0]].name}が1着。はずれ…`);
       if (res) RC.lastRes = { id: m.id, ...res };
     }
   } else if (m.type === "raceOk") {
-    const R = raceBets(); K.addMoney(-m.amount); R.bets.push({ id: m.id, runner: m.runner, kind: m.kind, amount: m.amount, odds: m.odds, t: Date.now() }); K.saveWorld();
+    const R = raceBets(); K.addMoney(-m.amount); R.bets.push({ id: m.id, runner: m.runner, kind: m.kind, amount: m.amount, odds: m.odds, t: Date.now(), ...(m.boot ? { boot: m.boot } : {}) }); K.saveWorld();
     if (RC.ui) { RC.ui.msg = `${m.runner + 1}番に${m.kind === "win" ? "単勝" : "複勝"} ${fmt(m.amount)}（${m.odds}倍）賭けた`; RC.ui.dirty = true; }
   } else if (m.type === "raceNg") { if (RC.ui) { RC.ui.msg = String(m.text || "").slice(0, 60); RC.ui.dirty = true; } }
-  else if (m.type === "raceWelcome") { if (m.race) { RC.st = m.race; RC.at = performance.now(); } settleOld(m.raceResults); }
+  else if (m.type === "raceWelcome") { if (m.race) { RC.st = m.race; RC.at = performance.now(); refundOldBoot(m.race.boot); } settleOld(m.raceResults); }
   if (RC.ui) RC.ui.dirty = true;
 };
 const raceOnline = () => K.net && K.net.connected();

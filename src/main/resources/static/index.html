@@ -1843,7 +1843,7 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.75.0";
+  const VER = "0.76.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6348,7 +6348,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.75.0";
+const CLIENT_VERSION = "0.76.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8426,6 +8426,16 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.76.0", date: "2026/11/10", title: "おばけ調査隊が毎回ちがう屋敷に・不具合の修正", items: [
+    "おばけ調査隊：屋敷の間取りも、おばけも、入るたびにランダムに。同じ村の人が同じ難易度で調査中なら、その屋敷に入って一緒に調べられる（8人まで）",
+    "おばけ調査隊：答えられるのは1つの屋敷で1回。答えずに出たら、10分のあいだは同じ屋敷にもどれる",
+    "おばけ調査隊のごほうび：道具で証拠を2つ以上見つけて当てたとき。難易度ごとに、その日の1回目は満額・2回目からは1割。狩りがはじまった瞬間には、つかまらないようにした",
+    "競どんぐり：主催レースやこもれび記念のとちゅうでサーバーが入れかわると、賞金やレースが消えることがあったのを直した（賞金は主催者にもどり、こもれび記念はやりなおす）",
+    "競どんぐり：サーバーが入れかわる前の賭けは、すぐ返すようにした",
+    "村の大会：同じゲームの大会に2つ参加していると、片方にスコアが届かないことがあったのを直した",
+    "通話：グループ通話でつながらない人が出にくいように。電波が一瞬切れても、通話のつづきにもどれるように",
+    "にわとりグランプリの結果を、先に読めないようにした・こもれび記念の画面の文を直した",
+  ] },
   { v: "0.75.0", date: "2026/11/10", title: "おばけ調査隊", items: [
     "スマホに「調査隊」：古い洋館に出るおばけの正体を、道具で調べて当てるゲーム。おばけは8種類で、毎日かわる",
     "道具は温度計・EMF・霊の声（ことばを入れて話しかける）・カメラ・粉（足あと）。おばけの好きな部屋で使うと証拠が出ることがある。証拠を3つ集めて、帰るときに正体を答えよう",
@@ -14038,7 +14048,7 @@ function dive55() {
   requestAnimationFrame(loop);
   F55.d = { dv, items, get breath() { return breath; }, set breath(v) { breath = v; }, grab, haul, jellies };
 }
-F55.open = openDive55; F55.dive = dive55;
+F55.open = () => openDive55(); F55.dive = dive55;
 // 桟橋から、釣り竿を持たずに海に向かってⒶでも、素潜りの画面を開く
 const _act55 = act;
 act = function () {
@@ -28560,7 +28570,7 @@ function renderGrand130(note) {
   const left = Math.max(0, 28 - (g.inYear || 0));
   let html = `<p class="mtext">村の1年の最後、<b>冬の7日目の18:00</b> のあとに走る、年に1度の大レース。冬の6日目と7日目に、馬主は自分のどんぐりを1粒登録できて、村のみんなはファン投票で1票入れられる。<b>票の多い6粒</b>が出走するよ。</p>
     ${note || R125.msg ? `<p class="mtext small"><b>${esc(note || R125.msg)}</b></p>` : ""}
-    <div class="stat grand130s"><span>次の大レース</span><b>第${g.year}回 こもれび記念</b><span>いまは</span><b>${g.open ? "登録・投票の受付中" : `村の1年の${g.inYear || "?"}日目（受付まで あと${Math.max(0, left - 1)}日）`}</b>
+    <div class="stat grand130s"><span>次の大レース</span><b>第${g.year}回 こもれび記念</b><span>いまは</span><b>${g.open ? "登録・投票の受付中" : (g.inYear || 0) >= 27 ? `村の1年の${g.inYear}日目（今年のレースはおわった。次は来年の冬）` : `村の1年の${g.inYear || "?"}日目（受付まで あと${Math.max(0, left - 1)}日）`}</b>
       <span>賞金</span><b>${prize.map((p, i) => `${i + 1}着 ${fmt(p)}`).join("・")}</b></div>`;
   if (g.open) {
     html += `<h3 class="lbl">登録しているどんぐり（${ent.length} / 16）</h3>
@@ -28777,8 +28787,8 @@ function tPay132(p) {
     if (m && m.type === "tny") {
       try {
         if (m.st) { F132.cur = m.st.cur || []; F132.last = m.st.last || []; if (m.st.now) F132.skew = Date.now() - m.st.now; }
-        if (m.ok === "host" && F132.wait) { F132.wait = 0; const n = Math.max(0, Math.floor(+m.purse || 0)); addMoney(-n); tny132().hosts++; saveWorld(); F132.msg = "大会を開いた！ 村のみんなに知らせが出たよ"; F132.tab = "cur"; tSend132("look"); try { checkTitles42(); } catch (e) { } }
-        if (m.ng) { F132.wait = 0; F132.msg = String(m.ng); }
+        if (m.ok === "host" && F132.rid && String(m.rid || "") === F132.rid) { F132.wait = 0; F132.rid = ""; const n = Math.max(0, Math.floor(+m.purse || 0)); addMoney(-n); tny132().hosts++; saveWorld(); F132.msg = "大会を開いた！ 村のみんなに知らせが出たよ"; F132.tab = "cur"; tSend132("look"); try { checkTitles42(); } catch (e) { } }
+        if (m.ng) { if (!F132.rid || String(m.rid || "") === F132.rid) { F132.wait = 0; F132.rid = ""; } F132.msg = String(m.ng); }
         if (m.ok === "join" && m.t) { F132.cur = F132.cur.filter(t => t.id !== m.t.id).concat([m.t]).sort((a, b) => a.id - b.id); tny132().joins++; saveWorld(); F132.msg = `「${m.t.title}」に参加した！`; }
         if (m.ok === "score") { const t = F132.cur.find(x => x.id === m.id); if (t) t.best = m.best; }
         if (m.ok === "cancel") { F132.msg = "大会をとりやめた"; tSend132("look"); }
@@ -28863,11 +28873,12 @@ function renderTny132() {
     keepTitle();
     const title = String(f.title || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim().slice(0, 16);
     if (world.money < f.purse) { F132.msg = "所持金が足りないよ"; renderTny132(); return; }
-    F132.wait = Date.now();
-    tSend132("host", { kind: f.kind, game: f.game, fish: f.fish, rnd: f.kind === "fish" && !f.fish, mins: f.mins, purse: f.purse, title, rid: String(Date.now() % 1e9) });
+    F132.wait = Date.now(); F132.rid = "h" + (Date.now() % 1e9).toString(36) + Math.floor(Math.random() * 1296).toString(36);
+    if (!tSend132("host", { kind: f.kind, game: f.game, fish: f.fish, rnd: f.kind === "fish" && !f.fish, mins: f.mins, purse: f.purse, title, rid: F132.rid })) { F132.wait = 0; F132.rid = ""; }
     renderTny132();
   });
 }
+setInterval(() => { if (F132.wait && Date.now() - F132.wait > 15000) { F132.wait = 0; if (modalOpen && $("mtitle").textContent === "村の大会") renderTny132(); } }, 2000);
 function openTny132() { F132.msg = ""; openModal("村の大会", "dark", () => renderTny132()); tSend132("look"); }
 F132.open = openTny132;
 setInterval(() => { document.querySelectorAll("[data-tl132]").forEach(el => { const t = F132.cur.find(x => x.id === +el.dataset.tl132); if (t) el.textContent = tTime132(tLeft132(t)); }); }, 1000);
@@ -29204,7 +29215,7 @@ function watchLive135(who) {
     if (done) return; done = true; removeEventListener("keydown", onKey, true);
     const o = id135(); o.watched++; o.calls += ok;
     const rep = who.id && ok >= 5 && o.day !== world.day; if (rep) { o.day = world.day; addRep(1); }
-    if (who.id) world.stats.cheerOthers135 = (world.stats.cheerOthers135 || 0) + 1;
+    if (who.id && ok >= 1) world.stats.cheerOthers135 = (world.stats.cheerOthers135 || 0) + 1;
     saveWorld(); try { checkTitles42(); } catch (e) { }
     const el = $("wl135m"); if (el) el.innerHTML = `<b>おしまい！</b> コール成功 ${ok}回${who.id ? `（${esc(who.owner)}さんのアイドルに届いた）` : ""}${rep ? "・村の評判 +1" : ""}`;
     const k = document.querySelector(".wl135k"); if (k) k.innerHTML = `<button class="btn light" type="button" id="wl135back">ライブをえらぶ</button>`;
@@ -29327,11 +29338,16 @@ function addTrack136(p) {
 }
 function makePeer136(id, initiator) {
   const pc = new RTCPeerConnection({ iceServers: ICE136 });
-  const p = { id, pc, init: initiator, sent: false, ice: [], audio: null, gain: null, an: null, buf: null, lv: 0, on: false, t: 0, vol: 0, made: Date.now() };
+  const p = { id, pc, init: initiator, sent: false, ice: [], iceOut: [], iceTm: 0, audio: null, gain: null, an: null, buf: null, lv: 0, on: false, t: 0, vol: 0, made: Date.now() };
   VC.peers.set(id, p);
   // つなぎはじめる側だけ、ここで音の通り道を作る（受ける側は、相手の申しこみを読んでから声をのせる）
   if (initiator) { if (VC.mic) addTrack136(p); else p.tx = pc.addTransceiver("audio", { direction: "recvonly" }); }
-  pc.onicecandidate = e => { if (e.candidate) rtcSend136(id, "ice", e.candidate.toJSON ? e.candidate.toJSON() : e.candidate); };
+  // ICE の候補は、0.25秒ぶんをまとめて1通で送る（グループ通話に入った瞬間に、サーバーの「1人1秒30通まで」をこえて捨てられないように）
+  pc.onicecandidate = e => {
+    if (!e.candidate) return;
+    p.iceOut.push(e.candidate.toJSON ? e.candidate.toJSON() : e.candidate);
+    if (!p.iceTm) p.iceTm = setTimeout(() => { p.iceTm = 0; const L = p.iceOut.splice(0); if (L.length && VC.peers.get(id) === p) rtcSend136(id, "ice", L); }, 250);
+  };
   pc.ontrack = e => {
     const st = e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]);
     if (!p.audio) { p.audio = new Audio(); p.audio.autoplay = true; p.audio.playsInline = true; }
@@ -29355,6 +29371,7 @@ function makePeer136(id, initiator) {
 function closePeer136(id, tell) {
   const p = VC.peers.get(id); if (!p) return;
   VC.peers.delete(id);
+  clearTimeout(p.iceTm); p.iceTm = 0;
   try { p.pc.close(); } catch (e) { }
   try { if (p.audio) { p.audio.srcObject = null; } if (p.gain) p.gain.disconnect(); } catch (e) { }
   if (tell) rtcSend136(id, "bye");
@@ -29378,7 +29395,7 @@ async function onRtc136(m) {
   } else if (m.k === "answer" && p) {
     try { await p.pc.setRemoteDescription(m.d); for (const c of p.ice.splice(0)) await p.pc.addIceCandidate(c).catch(() => { }); } catch (e) { }
   } else if (m.k === "ice" && p) {
-    if (!p.pc.remoteDescription) p.ice.push(m.d); else p.pc.addIceCandidate(m.d).catch(() => { });
+    for (const c of (Array.isArray(m.d) ? m.d : [m.d]).slice(0, 40)) { if (!c) continue; if (!p.pc.remoteDescription) p.ice.push(c); else p.pc.addIceCandidate(c).catch(() => { }); }
   }
 }
 // ---- だれとつなぐか（0.5秒ごと） ----
@@ -29484,8 +29501,9 @@ function showRing136(m) {
         if (m.ev === "declined") toast(null, `${m.name}さんは、いまは出られないみたい`);
         if (m.ev === "room") {
           const was = VC.room; VC.room = m.room || ""; VC.members = Array.isArray(m.members) ? m.members : [];
-          if (VC.room && !was) { world.stats.calls136 = (world.stats.calls136 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { } }
+          if (VC.room && !was && VC.room !== VC.lastRoom) { world.stats.calls136 = (world.stats.calls136 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { } }
           if (!VC.members.some(x => x.id === myId136())) { VC.room = ""; VC.members = []; }
+          if (VC.room) VC.lastRoom = VC.room;
           if (VC.members.length >= 3) { world.stats.group136 = (world.stats.group136 || 0) + 1; }
         }
         refresh136();
@@ -29494,7 +29512,11 @@ function showRing136(m) {
     }
     _h(m);
     if (m && m.type === "leave" && m.id) { closePeer136(+m.id, false); VC.members = VC.members.filter(x => x.id !== +m.id); }
-    if (m && m.type === "welcome") { for (const id of [...VC.peers.keys()]) closePeer136(id, false); VC.room = ""; VC.members = []; ringStop136(); }
+    if (m && m.type === "welcome") {
+      for (const id of [...VC.peers.keys()]) closePeer136(id, false); VC.room = ""; VC.members = []; ringStop136();
+      // 電波が一瞬切れただけなら、サーバーにはまだ通話の部屋がのこっている。聞き直して、つづきから
+      if (!WATCH88) setTimeout(() => { try { if (F8.connected) send8({ type: "call", a: "look" }); } catch (e) { } }, 1500);
+    }
   };
 }
 // ---- 画面の上の小さな帯（通話中・近くの声） ----
@@ -29551,12 +29573,14 @@ GUIDE54.push(["通話", "letter", `<p>オンラインでは、声で話せます
   <li>イヤホンを使うと聞きやすいよ。ネットワークによっては、つながらないことがあります</li></ul>`]);
 
 // =================== v137: おばけ調査隊（古い洋館で、日替わりのおばけの正体を道具で調べて当てる・8人まで・難易度） ===================
-// サーバー変更なし。屋敷は難易度ごとに1つ（マップキー int:ghost137_easy|normal|hard）。同じ難易度をえらんだ同じ村の人は、同じ屋敷にいる（8人まで）。
-// おばけの種類・好きな部屋・歩く道すじ・狩りの時間は、日本時間の日・村・難易度から決まる（だれの画面でも同じ。サーバーはいらない）。
+// サーバー変更なし。屋敷は「回」ごとに1つ（マップキー int:ghost137_難易度_種）。入るたびに、間取り（3つの型×左右の反転×部屋の名前×かくれ場所）とおばけ・好きな部屋がランダムに決まる（v0.76.0）。
+// 同じ村で同じ難易度の屋敷を調査中の人がいれば、その屋敷（同じ種）に入る（8人まで）。だれもいなければ新しい屋敷。答えずに出たら、10分のあいだは同じ屋敷にもどれる。
+// おばけの歩く道すじ・狩りの時間は、種と本物の時計から決まる（同じ屋敷の人には同じに見える。サーバーはいらない）。
 // 道具：温度計・EMF・霊の声（ことばを入れる）・カメラ・粉（足あと）。おばけの好きな部屋で使うと、そのおばけの持つ証拠が出ることがある。証拠は3つ。
 // 狩りの時間：屋敷の時計で決まった時刻に、おばけが見えるようになって速く動く。押入れ・ベッドの下・戸棚にかくれてやりすごす（Ⓐ）。つかまると気絶して外へ。
-// 人数がふえるほど、狩りが長く・おばけが速くなる。帰る（出口）ときに正体を答える。ごほうびは日本時間の1日に1回ずつ（難易度ごと）。
-// 状態：world.gh137 = { day（日本時間）, paid:{diff:1}, ok, ng, caught, ev:{diff:{証拠:1|-1}}, powder:{} }
+// 人数がふえるほど、狩りが長く・おばけが速くなる。帰る（出口）ときに正体を答える（1つの屋敷で1回だけ）。
+// ごほうび：道具で証拠を2つ以上見つけて当てたときだけ。難易度ごとに、日本時間のその日の1回目は満額・2回目からは1割。気絶は半分。
+// 状態：world.gh137 = { day（日本時間）, paid:{diff:1}, ok, ng, caught, run:{key, found:{証拠:1}, ev:{証拠:1|-1}}, done:{屋敷:1} }
 var F137 = {};
 const GD137 = { easy: { name: "やさしい", p: .9, period: 150, hunt: 12, hop: 2.4, pay: 30000 }, normal: { name: "ふつう", p: .65, period: 100, hunt: 16, hop: 1.8, pay: 80000 }, hard: { name: "むずかしい", p: .45, period: 70, hunt: 20, hop: 1.35, pay: 200000 } };
 const EV137 = { cold: "寒さ（温度計）", emf: "EMF レベル5", voice: "霊の声", photo: "写真に写る", dots: "足あと（粉）" };
@@ -29570,36 +29594,64 @@ const GH137 = [
   { n: "ロクロクビ", ev: ["cold", "photo", "dots"], tip: "首が長い。声は出さない", say: [] },
   { n: "ツクモガミ", ev: ["emf", "photo", "dots"], tip: "古い道具に宿る。狩りが多い", often: .75, say: [] },
 ];
-// 部屋（床のマス・名前）。0〜5 がおばけの好きな部屋の候補
-const ROOM137 = [
-  { n: "台所", r: [1, 2, 6, 6] }, { n: "書斎", r: [8, 2, 14, 6] }, { n: "寝室", r: [16, 2, 22, 6] },
-  { n: "子ども部屋", r: [1, 11, 8, 14] }, { n: "浴室", r: [15, 11, 17, 14] }, { n: "物置", r: [19, 11, 22, 14] },
-  { n: "廊下", r: [1, 8, 22, 9] }, { n: "玄関", r: [10, 11, 13, 14] },
+// 屋敷の間取り（3つの型）。rooms の6つが、おばけの好きな部屋の候補。extra は廊下・玄関。doors は壁にあける戸口
+const LAY137 = [
+  { rooms: [[1, 2, 6, 6], [8, 2, 14, 6], [16, 2, 22, 6], [1, 11, 8, 14], [15, 11, 17, 14], [19, 11, 22, 14]], extra: [["廊下", [1, 8, 22, 9]], ["玄関", [10, 11, 13, 14]]], doors: [[3, 7], [11, 7], [19, 7], [4, 10], [11, 10], [12, 10], [16, 10], [20, 10]] },
+  { rooms: [[1, 2, 10, 6], [12, 2, 22, 6], [1, 11, 4, 14], [6, 11, 8, 14], [15, 11, 18, 14], [20, 11, 22, 14]], extra: [["廊下", [1, 8, 22, 9]], ["玄関", [10, 11, 13, 14]]], doors: [[5, 7], [17, 7], [2, 10], [7, 10], [11, 10], [12, 10], [16, 10], [21, 10]] },
+  { rooms: [[1, 2, 9, 5], [1, 7, 9, 10], [1, 12, 9, 14], [14, 2, 22, 5], [14, 7, 22, 10], [14, 12, 22, 14]], extra: [["廊下", [11, 2, 12, 14]]], doors: [[10, 3], [10, 8], [10, 13], [13, 4], [13, 9], [13, 13]] },
 ];
-const HIDE137 = [[1, 2, "戸棚"], [16, 2, "押入れ"], [21, 3, "ベッドの下"], [1, 11, "押入れ"], [22, 14, "物置の箱"], [8, 2, "本棚のかげ"]];
-const gh137 = () => { const o = world.gh137 = world.gh137 && typeof world.gh137 === "object" ? world.gh137 : {}; const d = jstDay137(); if (o.day !== d) { o.day = d; o.paid = {}; o.ev = {}; } o.paid = o.paid || {}; o.ev = o.ev || {}; o.ok = o.ok | 0; o.ng = o.ng | 0; o.caught = o.caught | 0; return o; };
+const RNAME137 = ["台所", "書斎", "寝室", "子ども部屋", "浴室", "物置"];
+const HNAME137 = ["戸棚", "押入れ", "ベッドの下", "押入れ", "物置の箱", "本棚のかげ"];
+const prng137 = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const shuf137 = (a, R) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+/** その回（難易度と種）の屋敷：おばけ・好きな部屋・間取り。同じ種なら、だれの画面でも同じ */
+function runOf137(diff, seed) {
+  seed = seed >>> 0;
+  const key = diff + "_" + seed.toString(36);
+  if (G137.memo && G137.memo.key === key) return G137.memo;
+  const R = prng137(hash137(key));
+  const base = LAY137[Math.floor(R() * LAY137.length)], flip = R() < .5;
+  const fx = r => flip ? [23 - r[2], r[1], 23 - r[0], r[3]] : r.slice();
+  const names = shuf137(RNAME137, R), hn = shuf137(HNAME137, R);
+  const doors = base.doors.map(([x, y]) => [flip ? 23 - x : x, y]);
+  const rooms = base.rooms.map((r, i) => ({ n: names[i], r: fx(r) })).concat(base.extra.map(([n, r]) => ({ n, r: fx(r) })));
+  // かくれ場所は、部屋ごとに1つ（すみ。戸口のとなりはさける）
+  const hides = rooms.slice(0, 6).map((ro, i) => {
+    const [x0, y0, x1, y1] = ro.r, cs = shuf137([[x0, y0], [x1, y0], [x0, y1], [x1, y1]], R);
+    const c = cs.find(([x, y]) => !doors.some(([dx, dy]) => Math.abs(dx - x) + Math.abs(dy - y) <= 1)) || cs[0];
+    return [c[0], c[1], hn[i]];
+  });
+  const g = GH137[Math.floor(R() * GH137.length)], fav = Math.floor(R() * 6);
+  return G137.memo = { key, diff, seed, g, fav, L: { rooms, doors, hides } };
+}
+/** いまいる屋敷 */
+const T137 = () => runOf137(G137.diff || "normal", G137.seed || 1);
+const gh137 = () => { const o = world.gh137 = world.gh137 && typeof world.gh137 === "object" ? world.gh137 : {}; const d = jstDay137(); if (o.day !== d) { o.day = d; o.paid = {}; } o.paid = o.paid || {}; o.done = o.done && typeof o.done === "object" ? o.done : {}; o.run = o.run && typeof o.run === "object" && o.run.key ? o.run : null; delete o.ev; o.ok = o.ok | 0; o.ng = o.ng | 0; o.caught = o.caught | 0; return o; };
 const jstDay137 = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 const hash137 = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 const rng137 = (a, b) => (hash137(a + ":" + b) % 100000) / 100000;
-const G137 = { diff: null, back: null, hide: null, enterAt: 0, caught: false, cool: 0, powder: {}, warned: 0, flick: 0, near: 0 };
+const G137 = { diff: null, seed: 0, memo: null, resume: null, back: null, hide: null, enterAt: 0, caught: false, cool: 0, powder: {}, warned: 0, flick: 0, near: 0 };
 const vil137 = () => (typeof F88 !== "undefined" && F88.v && F88.v.id) || 1;
-function today137(diff) {
-  const seed = hash137(jstDay137() + "|" + vil137() + "|" + diff);
-  return { seed, g: GH137[seed % GH137.length], fav: (seed >>> 4) % 6 };
+const inRoom137 = (x, y) => T137().L.rooms.findIndex(R => x >= R.r[0] && x <= R.r[2] && y >= R.r[1] && y <= R.r[3]);
+const center137 = i => { const r = T137().L.rooms[i].r; return [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]; };
+const key137 = (diff, seed) => "int:ghost137_" + diff + "_" + (seed >>> 0).toString(36);
+const people137 = () => { if (!G137.diff) return 1; const k = key137(G137.diff, G137.seed); let n = 1; for (const e of remotes.values()) if (e.rmap === k) n++; return Math.min(8, n); };
+/** ほかの人が調査中の屋敷（その難易度の、種ごとの人数） */
+function sessions137(diff) {
+  const re = new RegExp("^int:ghost137_" + diff + "_([a-z0-9]{1,7})$"), S = new Map();
+  for (const e of remotes.values()) { const mm = re.exec(e.rmap || ""); if (mm) S.set(mm[1], (S.get(mm[1]) || 0) + 1); }
+  return S;
 }
-const inRoom137 = (x, y) => ROOM137.findIndex(R => x >= R.r[0] && x <= R.r[2] && y >= R.r[1] && y <= R.r[3]);
-const center137 = i => { const r = ROOM137[i].r; return [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]; };
-const people137 = () => { if (!G137.diff) return 1; const k = "int:ghost137_" + G137.diff; let n = 1; for (const e of remotes.values()) if (e.rmap === k) n++; return Math.min(8, n); };
-/** いまの狩りのようす：{on, warn, left} */
+/** いまの狩りのようす：{on, warn, left, ph（狩りがはじまってからの秒）} */
 function hunt137(diff, t) {
-  const D = GD137[diff], T = today137(diff), n = people137();
+  const D = GD137[diff], T = T137(), n = people137();
   const period = D.period * (T.g.slow || 1) * (T.g.often || 1), len = D.hunt + (n - 1);
   const ph = ((t / 1000) + (T.seed % 997)) % period;
-  return { on: ph < len, warn: ph >= period - 4, left: Math.ceil(len - ph) };
+  return { on: ph < len, warn: ph >= period - 4, left: Math.ceil(len - ph), ph };
 }
 /** おばけのいる場所（マスの座標・小数） */
 function ghostPos137(diff, t) {
-  const D = GD137[diff], T = today137(diff), H = hunt137(diff, t), n = people137();
+  const D = GD137[diff], T = T137(), H = hunt137(diff, t), n = people137();
   const hop = (H.on ? D.hop / (T.g.fast || 1) / (1 + .05 * (n - 1)) : 6) * 1000;
   const k = Math.floor(t / hop), f = (t % hop) / hop;
   const at = j => { const r = rng137(T.seed, j); if (!H.on && r < .65) return T.fav; return Math.floor(rng137(T.seed + 7, j) * 6); };
@@ -29609,7 +29661,7 @@ function ghostPos137(diff, t) {
   const e = f < .5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
   return [ax + (bx - ax) * e, ay + (by - ay) * e];
 }
-F137.today = today137; F137.ghostAt = ghostPos137; F137.hunt = hunt137;
+F137.today = () => T137(); F137.run = runOf137; F137.sessions = sessions137; F137.ghostAt = ghostPos137; F137.hunt = hunt137;
 // ---- 屋敷の絵 ----
 TILE105["@gfloor137"] = R => { R("#3a2a22", 0, 0, 16, 16); R("#45322a", 0, 0, 16, 1); R("#45322a", 0, 8, 16, 1); R("#2e211a", 7, 1, 1, 7); R("#2e211a", 12, 9, 1, 7); };
 TILE105["@gwall137"] = R => { R("#2a2236", 0, 0, 16, 16); R("#3a3048", 0, 0, 16, 3); for (const x of [2, 8, 13]) R("#4a3e5a", x, 5, 2, 9); R("#1a1424", 0, 14, 16, 2); };
@@ -29617,39 +29669,51 @@ addSpr17("g137_closet", (s, r) => { r(2, 1, 12, 14, C17("#5a3e2a")); r(3, 2, 5, 
 addSpr17("g137_bed", (s, r) => { r(1, 5, 14, 9, C17("#4a3a5a")); r(1, 5, 4, 4, C17("#e8e0d0")); r(5, 6, 10, 7, C17("#7a4a6a")); r(1, 13, 1, 3, C17("#2a1a20")); r(14, 13, 1, 3, C17("#2a1a20")); });
 addSpr17("g137_shelf", (s, r) => { r(2, 1, 12, 15, C17("#4a321e")); for (const y of [3, 7, 11]) { r(3, y, 10, 3, C17("#2a1a10")); for (let x = 3; x < 13; x += 2) r(x, y, 1, 3, C17(["#a83a3a", "#3a6aa8", "#c8a040"][(x + y) % 3])); } });
 addSpr17("g137_van", (s, r, e) => { r(1, 5, 14, 8, C17("#e8e0d0")); r(10, 3, 5, 5, C17("#e8e0d0")); r(11, 4, 3, 3, C17("#7ab8d8")); r(2, 7, 7, 3, C17("#3a3a4a")); s(4, 8, C17("#7ae0a0")); e(4, 13, 2, 2, C17("#222")); e(12, 13, 2, 2, C17("#222")); });
-function makeMansion137(diff) {
+function makeMansion137(diff, seed) {
+  const T = runOf137(diff, seed), L = T.L;
   const w = 24, h = 16, m = blankMap(w, h, `おばけ屋敷（${GD137[diff].name}）`);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { m.ground[y][x] = "@gwall137"; solidRect(m, x, y, 1, 1); }
   const carve = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { m.ground[y][x] = "@gfloor137"; m.base[y][x] = false; } };
-  for (const R of ROOM137) carve(...R.r);
-  for (const [x, y] of [[3, 7], [11, 7], [19, 7], [4, 10], [11, 10], [12, 10], [16, 10], [20, 10]]) carve(x, y, x, y);
-  m.isInterior = true; m.kind = "ghost137"; m.diff137 = diff; m.floorT = "@gfloor137"; m.statics = []; m.interact = {}; m.labels = []; m.music = "dark";
+  for (const R of L.rooms) carve(...R.r);
+  for (const [x, y] of L.doors) carve(x, y, x, y);
+  m.isInterior = true; m.kind = "ghost137"; m.diff137 = diff; m.seed137 = T.seed; m.floorT = "@gfloor137"; m.statics = []; m.interact = {}; m.labels = []; m.music = "dark";
   m.exit = [11, 15]; m.exits = { "11,15": true, "12,15": true }; m.ground[15][11] = "@exit"; m.ground[15][12] = "@exit"; m.base[15][11] = false; m.base[15][12] = false;
-  for (const [x, y, nm] of HIDE137) {
+  for (const [x, y, nm] of L.hides) {
     const img = nm === "ベッドの下" ? "g137_bed" : nm === "本棚のかげ" ? "g137_shelf" : "g137_closet";
     m.objs.push({ img, x: x * TS, y: (y + 1) * TS - IMG[img].height, sortY: (y + 1) * TS - 1 }); m.base[y][x] = true;
     m.interact[x + "," + y] = () => toggleHide137(x, y, nm);
   }
-  for (const R of ROOM137.slice(0, 6)) m.labels.push({ x: (R.r[0] + R.r[2] + 1) / 2 * TS, y: R.r[1] * TS + 4, text: R.n });
+  for (const R of L.rooms.slice(0, 6)) m.labels.push({ x: (R.r[0] + R.r[2] + 1) / 2 * TS, y: R.r[1] * TS + 4, text: R.n });
   return m;
 }
 F137.make = makeMansion137;
 const ghostMap137 = () => map && map.kind === "ghost137";
 function enterMansion137(diff) {
+  if (!GD137[diff]) return;
   if (map !== village) { toast(null, "村にいるときに出発できるよ"); return; }
-  const others = (() => { const k = "int:ghost137_" + diff; let n = 0; for (const e of remotes.values()) if (e.rmap === k) n++; return n; })();
-  if (others >= 8) { toast(null, "この屋敷はもう8人で調査中。ほかの難易度をえらんでね"); return; }
-  G137.diff = diff; G137.back = [player.x, player.y]; G137.hide = null; G137.enterAt = Date.now(); G137.caught = false; G137.powder = {};
-  const m = makeMansion137(diff); interior = m; rebuildSolid(); enter(m, 11, 14, "up");
+  // ほかの人が調査中の屋敷があれば、そこへ（8人まで・人数の多い順）。なければ、答えずに出てきた屋敷のつづき（10分まで）。それもなければ新しい屋敷
+  const S = sessions137(diff), open = [...S.entries()].filter(([, n]) => n < 8).sort((a, b) => b[1] - a[1])[0], rs = G137.resume;
+  let seed, how = "new";
+  if (open) { seed = parseInt(open[0], 36) >>> 0; how = "join"; }
+  else if (rs && rs.diff === diff && Date.now() < rs.until) { seed = rs.seed >>> 0; how = "back"; }
+  else seed = (Math.floor(Math.random() * 0x7ffffffe) + 1) >>> 0;
+  G137.diff = diff; G137.seed = seed; G137.resume = null; G137.back = [player.x, player.y]; G137.hide = null; G137.enterAt = Date.now(); G137.caught = false; G137.powder = {};
+  const T = runOf137(diff, seed), O = gh137();
+  if (!O.run || O.run.key !== T.key) O.run = { key: T.key, found: {}, ev: {} };
+  const m = makeMansion137(diff, seed); interior = m; rebuildSolid(); enter(m, 11, 14, "up");
   world.stats.ghostIn137 = (world.stats.ghostIn137 || 0) + 1; saveWorld();
   document.body.classList.add("ghin137"); hud137();
-  toast(null, `おばけ屋敷に入った。道具でおばけの好きな部屋をさがして、証拠を3つ集めよう`);
+  toast(null, how === "join" ? "調査中の仲間のいる屋敷に入った。おばけも間取りも、仲間と同じだよ" : how === "back" ? "さっきの屋敷にもどってきた。つづきを調べよう" : "新しい屋敷に入った。道具でおばけの好きな部屋をさがして、証拠を集めよう");
 }
 function leaveMansion137(caught) {
-  const diff = G137.diff, back = G137.back || [32, 20];
+  const diff = G137.diff, seed = G137.seed, back = G137.back || [32, 20];
   G137.hide = null; document.body.classList.remove("ghin137"); const el = $("gh137"); if (el) el.remove();
   interior = null; rebuildSolid(); enter(village, back[0], back[1], "down"); G137.diff = null;
-  if (diff) setTimeout(() => answer137(diff, caught), 200);
+  if (diff) {
+    const T = runOf137(diff, seed);
+    G137.resume = gh137().done[T.key] ? null : { diff, seed, until: Date.now() + 600000 };
+    setTimeout(() => answer137(T, caught), 200);
+  }
 }
 {
   const _tm = tryMove;
@@ -29661,7 +29725,7 @@ function leaveMansion137(caught) {
     return _tm.apply(this, arguments);
   };
   const _mk = mapKey;
-  mapKey = function () { if (ghostMap137()) return "int:ghost137_" + map.diff137; return _mk.apply(this, arguments); };
+  mapKey = function () { if (ghostMap137()) return key137(map.diff137, map.seed137); return _mk.apply(this, arguments); };
   const _de = drawEnt;
   drawEnt = function (e) { if (e === player && G137.hide && ghostMap137()) return; return _de.apply(this, arguments); };
 }
@@ -29677,9 +29741,9 @@ function tool137(k) {
   if (!ghostMap137() || G137.hide) return;
   if (Date.now() < G137.cool) { toast(null, "少し待ってね"); return; }
   G137.cool = Date.now() + 1500;
-  const diff = G137.diff, T = today137(diff), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes(k), D = GD137[diff];
+  const diff = G137.diff, T = T137(), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes(k), D = GD137[diff];
   const lucky = rng137(T.seed + Math.floor(Date.now() / 6000), k.length + ri) < D.p;
-  const rn = ri >= 0 ? ROOM137[ri].n : "ここ";
+  const rn = ri >= 0 ? T.L.rooms[ri].n : "ここ";
   let text = "", found = false;
   if (k === "cold") {
     if (inFav && has && lucky) { text = `${rn}：-2℃。息が白い！`; found = true; }
@@ -29698,8 +29762,9 @@ function tool137(k) {
 function say137(text, ev) {
   toast(null, text);
   if (ev) {
-    const E = gh137().ev[G137.diff] = gh137().ev[G137.diff] || {};
-    if (E[ev] !== 1) { E[ev] = 1; saveWorld(); se13("win"); F7.notify(`証拠を見つけた：${EV137[ev]}`, null); }
+    const O = gh137(), T = T137();
+    if (!O.run || O.run.key !== T.key) O.run = { key: T.key, found: {}, ev: {} };
+    if (!O.run.found[ev]) { O.run.found[ev] = 1; O.run.ev[ev] = 1; saveWorld(); se13("win"); F7.notify(`証拠を見つけた：${EV137[ev]}`, null); }
   }
   hud137();
 }
@@ -29712,7 +29777,7 @@ function voice137() {
     const ask = q => {
       q = String(q || "").trim(); if (!q) return;
       if (Date.now() < G137.cool) return; G137.cool = Date.now() + 2000;
-      const T = today137(G137.diff), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes("voice") && T.g.say.length;
+      const T = T137(), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes("voice") && T.g.say.length;
       const lucky = rng137(T.seed + Math.floor(Date.now() / 5000), q.length) < GD137[G137.diff].p;
       const a = $("vq137a"); if (!a) return;
       a.textContent = "ザー……ザザ……";
@@ -29730,7 +29795,7 @@ function voice137() {
 function photo137() {
   if (!ghostMap137() || G137.hide) return;
   if (Date.now() < G137.cool) return; G137.cool = Date.now() + 2500;
-  const T = today137(G137.diff), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes("photo");
+  const T = T137(), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes("photo");
   const lucky = rng137(T.seed + Math.floor(Date.now() / 7000), 77 + ri) < GD137[G137.diff].p, hit = inFav && has && lucky;
   se13("small");
   openModal("カメラ", "dark", body => {
@@ -29740,52 +29805,72 @@ function photo137() {
     g.fillStyle = "#3a2a22"; for (let x = 0; x < 240; x += 30) g.fillRect(x, 100, 2, 50);
     g.fillStyle = "rgba(255,240,200,.08)"; g.beginPath(); g.arc(120, 75, 90, 0, Math.PI * 2); g.fill();
     if (hit) { g.fillStyle = "rgba(220,230,255,.5)"; g.beginPath(); g.ellipse(150, 70, 18, 30, 0, 0, Math.PI * 2); g.fill(); g.fillRect(132, 70, 36, 30); g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(143, 60, 4, 6); g.fillRect(154, 60, 4, 6); }
-    g.fillStyle = "#fff"; g.font = "9px sans-serif"; g.fillText(`${ri >= 0 ? ROOM137[ri].n : ""} ${new Date().toTimeString().slice(0, 5)}`, 8, 142);
+    g.fillStyle = "#fff"; g.font = "9px sans-serif"; g.fillText(`${ri >= 0 ? T.L.rooms[ri].n : ""} ${new Date().toTimeString().slice(0, 5)}`, 8, 142);
   });
   if (hit) say137("カメラ：写真に、白いかげが写った！", "photo"); else toast(null, "写真には、なにも写らなかった");
 }
 // ---- ノート（推理） ----
-function note137() {
-  const diff = G137.diff || "normal", E = gh137().ev[diff] = gh137().ev[diff] || {};
+/** T＝どの屋敷のノートか（屋敷の中なら、いまの屋敷） */
+function note137(T) {
+  T = T || T137();
+  const O = gh137(), diff = T.diff;
+  if (!O.run || O.run.key !== T.key) O.run = { key: T.key, found: {}, ev: {} };
+  const E = O.run.ev = O.run.ev || {}, F = O.run.found = O.run.found || {};
   openModal("調査ノート", "dark", body => {
     const draw = () => {
       const got = Object.keys(EV137).filter(k => E[k] === 1), no = Object.keys(EV137).filter(k => E[k] === -1);
       const cand = GH137.filter(g => got.every(k => g.ev.includes(k)) && !no.some(k => g.ev.includes(k)));
-      body.innerHTML = `<p class="mtext small">見つけた証拠に○、ないと思う証拠に×をつけると、おばけの候補がしぼられるよ（${GD137[diff].name}の屋敷）。</p>
-        <div class="list">${Object.entries(EV137).map(([k, n]) => `<div class="li"><span class="nm">${n}</span><span class="acts"><button class="chip" type="button" data-e137="${k}" data-v="1" aria-pressed="${E[k] === 1}">○</button><button class="chip" type="button" data-e137="${k}" data-v="-1" aria-pressed="${E[k] === -1}">×</button></span></div>`).join("")}</div>
+      body.innerHTML = `<p class="mtext small">見つけた証拠に○、ないと思う証拠に×をつけると、おばけの候補がしぼられるよ（${GD137[diff].name}の屋敷）。道具で見つけた証拠には「道具で確認」と出る（仲間から聞いた証拠は、自分で○をつけよう）。</p>
+        <div class="list">${Object.entries(EV137).map(([k, n]) => `<div class="li"><span class="nm">${n}${F[k] ? `<span class="sub2">道具で確認</span>` : ""}</span><span class="acts"><button class="chip" type="button" data-e137="${k}" data-v="1" aria-pressed="${E[k] === 1}">○</button><button class="chip" type="button" data-e137="${k}" data-v="-1" aria-pressed="${E[k] === -1}">×</button></span></div>`).join("")}</div>
         <h4>候補（${cand.length}）</h4><div class="list">${cand.map(g => `<div class="li"><span class="nm">${g.n}<span class="sub2">${g.ev.map(k => EV137[k]).join("・")}　${esc(g.tip)}</span></span></div>`).join("") || `<p class="mtext small">当てはまるおばけがいないよ。証拠を見なおしてみて</p>`}</div>
         <div class="row2"><button class="btn light" type="button" id="nt137s" ${F8.connected && got.length ? "" : "disabled"}>見つけた証拠をチャットで伝える</button></div>`;
       body.querySelectorAll("[data-e137]").forEach(b => b.onclick = () => { const k = b.dataset.e137, v = +b.dataset.v; E[k] = E[k] === v ? 0 : v; saveWorld(); draw(); });
-      body.querySelector("#nt137s").onclick = () => { const t = `【調査】${got.map(k => EV137[k]).join("・")} を見つけた${room137() >= 0 ? `（いま${ROOM137[room137()].n}）` : ""}`; closeModal(); $("chatIn").value = t.slice(0, 80); $("chatbar11").requestSubmit(); };
+      body.querySelector("#nt137s").onclick = () => { const ri = ghostMap137() ? room137() : -1, t = `【調査】${got.map(k => EV137[k]).join("・")} を見つけた${ri >= 0 ? `（いま${T.L.rooms[ri].n}）` : ""}`; closeModal(); $("chatIn").value = t.slice(0, 80); $("chatbar11").requestSubmit(); };
     };
     draw();
   });
 }
-function answer137(diff, caught) {
-  const T = today137(diff), O = gh137(), paid = O.paid[diff];
+/** 屋敷から出てきたとき：正体を答える（1つの屋敷で1回だけ）。ごほうびは、道具で証拠を2つ以上見つけて当てたとき（その日の1回目は満額・2回目から1割・気絶は半分） */
+function answer137(T, caught) {
+  const diff = T.diff, O = gh137(), D = GD137[diff];
+  const R = O.run && O.run.key === T.key ? O.run : { key: T.key, found: {}, ev: {} };
+  const nf = Object.keys(R.found || {}).length;
+  const amount = () => Math.round(D.pay * (caught ? .5 : 1) * (O.paid[diff] ? .1 : 1));
   openModal("おばけの正体は？", "dark", body => {
-    body.innerHTML = `<p class="mtext">${caught ? "気絶して、調査車にもどってきた。" : "屋敷から出てきた。"}調べたことから、おばけの正体を答えよう。${paid ? "（今日のごほうびは、もうもらったよ）" : `当たると ${fmt(GD137[diff].pay * (caught ? .5 : 1))}`}</p>
+    if (O.done[T.key]) {
+      body.innerHTML = `<p class="mtext">${caught ? "気絶して、調査車にもどってきた。" : "屋敷から出てきた。"}この屋敷のおばけは、もう答えたよ。</p><p class="mtext small">仲間が調査しているあいだは、同じ屋敷に入るよ。みんなが出たあとは、新しい屋敷とおばけになる。</p>`;
+      return;
+    }
+    body.innerHTML = `<p class="mtext">${caught ? "気絶して、調査車にもどってきた。" : "屋敷から出てきた。"}調べたことから、おばけの正体を答えよう。<b>答えられるのは、1つの屋敷で1回だけ</b>だよ。</p>
+      <p class="mtext small">${nf >= 2 ? `道具で見つけた証拠 ${nf}つ。当たると <b>${fmt(amount())}</b>${O.paid[diff] ? "（今日の2回目からは1割）" : ""}${caught ? "（気絶したので半分）" : ""}` : `道具で見つけた証拠は、まだ ${nf}つ。<b>2つ以上</b>見つけてから当てると、ごほうびがもらえる（いま答えると、当たってもごほうびはなし）`}</p>
       <div class="list">${GH137.map((g, i) => `<div class="li"><span class="nm">${g.n}<span class="sub2">${g.ev.map(k => EV137[k]).join("・")}</span></span><span class="acts"><button class="btn" type="button" data-a137="${i}">これだ</button></span></div>`).join("")}</div>
-      <div class="row2"><button class="btn light" type="button" id="an137n">まだ答えない（また入れる）</button><button class="btn light" type="button" id="an137b">ノート</button></div>`;
+      <div class="row2"><button class="btn light" type="button" id="an137n">まだ答えない（10分のあいだ、同じ屋敷にもどれる）</button><button class="btn light" type="button" id="an137b">ノート</button></div>`;
     body.querySelectorAll("[data-a137]").forEach(b => b.onclick = () => {
-      const g = GH137[+b.dataset.a137], ok = g === T.g;
-      if (ok) { O.ok++; if (!O.paid[diff]) { O.paid[diff] = 1; const n = Math.round(GD137[diff].pay * (caught ? .5 : 1)); addMoney(n); if (diff === "hard") world.stats.ghostHard137 = (world.stats.ghostHard137 || 0) + 1; } se13("win"); }
+      if (O.done[T.key]) return;
+      const g = GH137[+b.dataset.a137], ok = g === T.g; let n = 0;
+      O.done[T.key] = 1; for (const k of Object.keys(O.done).slice(0, -30)) delete O.done[k];
+      if (G137.resume && G137.resume.diff === diff && G137.resume.seed === T.seed) G137.resume = null;
+      if (ok && nf >= 2) { O.ok++; n = amount(); O.paid[diff] = 1; addMoney(n); if (diff === "hard") world.stats.ghostHard137 = (world.stats.ghostHard137 || 0) + 1; se13("win"); }
+      else if (ok) se13("win");
       else { O.ng++; se13("miss"); }
-      O.ev[diff] = {}; saveWorld(); try { checkTitles42(); } catch (e) { }
-      body.innerHTML = `<p class="mtext"><b>${ok ? "大正解！" : "ざんねん…"}</b> 今日の${GD137[diff].name}の屋敷のおばけは「${T.g.n}」（好きな部屋は${ROOM137[T.fav].n}）だった。</p><p class="mtext small">${ok && !paid ? `ごほうび ${fmt(Math.round(GD137[diff].pay * (caught ? .5 : 1)))}` : ""}　明日はちがうおばけが出るよ。</p>`;
+      if (O.run && O.run.key === T.key) O.run = null;
+      saveWorld(); try { checkTitles42(); } catch (e) { }
+      body.innerHTML = `<p class="mtext"><b>${ok ? "大正解！" : "ざんねん…"}</b> この屋敷のおばけは「${T.g.n}」（好きな部屋は${T.L.rooms[T.fav].n}）だった。</p><p class="mtext small">${ok ? (n ? `ごほうび ${fmt(n)}` : "道具で見つけた証拠が2つより少なかったので、ごほうびはなし") : ""}　次に入るときは、新しい屋敷とおばけになるよ。</p>`;
     });
     body.querySelector("#an137n").onclick = () => closeModal();
-    body.querySelector("#an137b").onclick = () => { closeModal(); G137.diff = G137.diff || diff; note137(); };
+    body.querySelector("#an137b").onclick = () => { closeModal(); note137(T); };
   });
 }
 // ---- 出発の画面（スマホの「調査隊」） ----
 function openGhost137() {
   const O = gh137();
   openModal("おばけ調査隊", "dark", body => {
-    const cnt = d => { const k = "int:ghost137_" + d; let n = 0; for (const e of remotes.values()) if (e.rmap === k) n++; return n; };
-    body.innerHTML = `<p class="mtext">古い洋館に出るおばけの正体を、道具で調べて当てよう。おばけは毎日かわるよ（同じ村の、同じ難易度の屋敷はみんな同じおばけ）。8人まで一緒に調査できる。人数が多いほど、狩りの時間が長く、おばけが速くなる。</p>
-      <div class="list">${Object.entries(GD137).map(([k, D]) => `<div class="li"><span class="nm">${D.name}<span class="sub2">証拠の出やすさ ${Math.round(D.p * 100)}%・狩りはだいたい${D.period}秒ごと・当たると ${fmt(D.pay)}${O.paid[k] ? "（今日はもらった）" : ""}${F8.connected ? `・いま ${cnt(k)}人` : ""}</span></span><span class="acts"><button class="btn" type="button" data-g137="${k}">出発</button></span></div>`).join("")}</div>
-      <p class="mtext small">道具：温度計・EMF・霊の声・カメラ・粉。おばけの好きな部屋で使うと、証拠が出ることがある（好きな部屋は、ひんやりしたり、EMF が少し動いたりする）。狩りの時間（画面がちらついて「狩りがはじまる」）は、押入れ・ベッドの下・戸棚などでⒶでかくれよう。帰るときに正体を答える。</p>
+    const cnt = d => { let n = 0; for (const v of sessions137(d).values()) n += v; return n; };
+    const rs = G137.resume && Date.now() < G137.resume.until ? G137.resume.diff : "";
+    body.innerHTML = `<p class="mtext">古い洋館に出るおばけの正体を、道具で調べて当てよう。<b>屋敷の間取りも、おばけも、入るたびにかわる</b>よ。同じ村の人が同じ難易度で調査中なら、その屋敷に入って一緒に調べられる（8人まで）。人数が多いほど、狩りの時間が長く、おばけが速くなる。</p>
+      <div class="list">${Object.entries(GD137).map(([k, D]) => `<div class="li"><span class="nm">${D.name}<span class="sub2">証拠の出やすさ ${Math.round(D.p * 100)}%・狩りはだいたい${D.period}秒ごと・当たると ${fmt(Math.round(D.pay * (O.paid[k] ? .1 : 1)))}${O.paid[k] ? "（今日の2回目から）" : ""}${F8.connected ? `・いま ${cnt(k)}人` : ""}${rs === k ? "・さっきの屋敷のつづき" : ""}</span></span><span class="acts"><button class="btn" type="button" data-g137="${k}">出発</button></span></div>`).join("")}</div>
+      <p class="mtext small">道具：温度計・EMF・霊の声・カメラ・粉。おばけの好きな部屋で使うと、証拠が出ることがある（好きな部屋は、ひんやりしたり、EMF が少し動いたりする）。狩りの時間（画面がちらついて「狩りがはじまる」）は、押入れ・ベッドの下・戸棚などでⒶでかくれよう。帰るときに正体を答える（1つの屋敷で1回だけ）。</p>
+      <p class="mtext small">ごほうびは、道具で証拠を2つ以上見つけて当てたとき。難易度ごとに、その日の1回目は満額・2回目からは1割。</p>
       <p class="mtext small">これまで：当てた ${O.ok}回・はずれ ${O.ng}回・気絶 ${O.caught}回</p>`;
     body.querySelectorAll("[data-g137]").forEach(b => b.onclick = () => { closeModal(); enterMansion137(b.dataset.g137); });
   });
@@ -29796,7 +29881,7 @@ function hud137() {
   let el = $("gh137");
   if (!ghostMap137()) { if (el) el.remove(); return; }
   if (!el) { document.body.insertAdjacentHTML("beforeend", `<div id="gh137" class="gh137"></div>`); el = $("gh137"); }
-  const E = gh137().ev[G137.diff] || {}, n = Object.values(E).filter(v => v === 1).length;
+  const R137 = gh137().run, n = R137 && R137.key === T137().key ? Object.keys(R137.found || {}).length : 0;
   el.innerHTML = `${[["cold", "温度"], ["emf", "EMF"], ["voice", "声"], ["photo", "写真"], ["dots", "粉"]].map(([k, l]) => `<button type="button" data-t137="${k}" ${G137.hide ? "disabled" : ""}>${l}</button>`).join("")}<button type="button" data-t137="note">ノート ${n}/3</button>${G137.hide ? `<button type="button" data-t137="out" class="hl">出る</button>` : ""}`;
   el.querySelectorAll("[data-t137]").forEach(b => b.onclick = () => { const k = b.dataset.t137; if (k === "voice") voice137(); else if (k === "photo") photo137(); else if (k === "note") note137(); else if (k === "out") { const h = G137.hide; if (h) toggleHide137(h.x, h.y, h.nm); } else tool137(k); });
 }
@@ -29806,7 +29891,7 @@ setInterval(() => {
     if (!ghostMap137()) { if ($("gh137")) { $("gh137").remove(); document.body.classList.remove("ghin137"); } return; }
     const t = Date.now(), H = hunt137(G137.diff, t);
     if (H.warn && t - G137.warned > 6000) { G137.warned = t; toast(null, "電気がちらつく…狩りがはじまる！ かくれる場所へ！"); se13("miss"); }
-    if (H.on && !G137.hide && !G137.caught && t - G137.enterAt > 10000) {
+    if (H.on && H.ph > 1.5 && !G137.hide && !G137.caught && t - G137.enterAt > 10000) {
       const [gx, gy] = ghostPos137(G137.diff, t), d = Math.hypot(gx - player.px / TS, gy - player.py / TS);
       G137.near = d;
       if (d < .85) {
@@ -29853,16 +29938,17 @@ setInterval(() => { try { if (ghostMap137()) { const H = hunt137(G137.diff, Date
 // Ⓐでかくれ場所を出る（かくれているときは、どこを向いていても）
 { const _act = act; act = function () { if (ghostMap137() && G137.hide) { const h = G137.hide; toggleHide137(h.x, h.y, h.nm); return; } return _act.apply(this, arguments); }; }
 // 読みこみ直しで屋敷の中から始まったときは村へ
-{ const _h = handle8; handle8 = m => { _h(m); if (m && m.type === "welcome" && ghostMap137()) { G137.diff = G137.diff || map.diff137; } }; }
+{ const _h = handle8; handle8 = m => { _h(m); if (m && m.type === "welcome" && ghostMap137()) { G137.diff = G137.diff || map.diff137; G137.seed = G137.seed || map.seed137; } }; }
 ICON80.ghost137 = `<path d="M8 28V14a8 8 0 0 1 16 0v14l-3-2-2.5 2-2.5-2-2.5 2-2.5-2z"/><path d="M13 14h.01M19 14h.01"/>`;
 F76.add({ id: "ghost137", name: "調査隊", ch: "霊", c: "#6a5aa0", open: () => openGhost137() });
 const TTL137 = [["新米調査員", "おばけの正体を当てる", () => gh137().ok >= 1], ["ベテラン調査員", "おばけの正体を10回当てる", () => gh137().ok >= 10], ["こわいもの知らず", "むずかしい屋敷で正体を当てる", () => (world.stats.ghostHard137 || 0) >= 1], ["かくれんぼ名人", "おばけ屋敷で20回かくれる", () => (world.stats.ghostHide137 || 0) >= 20]];
 for (const t of TTL137) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 GUIDE54.push(["おばけ調査隊", "letter", `<p>スマホの「調査隊」から、村にいるときにおばけ屋敷へ出発できます（やさしい・ふつう・むずかしい）。</p>
-  <ul><li>おばけは8種類。毎日かわります。同じ村・同じ難易度の屋敷は、みんな同じおばけ（8人まで一緒に）</li>
+  <ul><li>おばけは8種類。<b>屋敷の間取りも、おばけも、入るたびにかわります</b>。同じ村の人が同じ難易度で調査中なら、その屋敷に入って一緒に調べられます（8人まで）</li>
   <li>道具：温度計・EMF・霊の声（ことばを入れて話しかける）・カメラ・粉（まいて15秒たってから調べる）。おばけの好きな部屋で使うと証拠が出ることがあります。証拠は3つ</li>
   <li>狩りの時間は、押入れ・ベッドの下・戸棚などでⒶでかくれよう。つかまると気絶して外へ（ごほうびは半分）</li>
-  <li>屋敷から出るときに正体を答えます。ノートで候補をしぼれるよ。見つけた証拠はチャットで仲間に伝えられます</li></ul>`]);
+  <li>屋敷から出るときに正体を答えます（1つの屋敷で1回だけ）。答えずに出たら、10分のあいだは同じ屋敷にもどれます。ノートで候補をしぼれるよ</li>
+  <li>ごほうびは、道具で証拠を2つ以上見つけて当てたとき。難易度ごとに、その日の1回目は満額・2回目からは1割</li></ul>`]);
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -30982,8 +31068,10 @@ function localRun(st) {
 }
 const payoutOf = (b, order) => { const hit = b.kind === "win" ? order[0] === b.runner : order[0] === b.runner || order[1] === b.runner; return hit ? Math.floor(b.amount * b.odds) : 0; };
 // 結果が出たら、自分の賭けを精算する（カジノにいなくても）
-function settleRace(id, order, local) {
-  const R = raceBets(), mine = R.bets.filter(b => b.id === id && !!b.local === !!local);
+// boot＝サーバーが起動した時刻（秒）。賭けたときの boot とちがうレースは、番号が同じでも別のレースなので精算しない
+const sameBoot = (b, boot) => !boot || (b.boot ? b.boot === boot : (b.t || 0) >= boot * 1000);
+function settleRace(id, order, local, boot) {
+  const R = raceBets(), mine = R.bets.filter(b => b.id === id && !!b.local === !!local && (local || sameBoot(b, boot)));
   if (!mine.length) return null;
   R.bets = R.bets.filter(b => !mine.includes(b));
   const staked = mine.reduce((a, b) => a + b.amount, 0), paid = mine.reduce((a, b) => a + payoutOf(b, order), 0);
@@ -30996,24 +31084,31 @@ function settleRace(id, order, local) {
 }
 function settleOld(results) {
   const R = raceBets(); if (!R.bets.length) return;
-  for (const r of results || []) if (r && Array.isArray(r.order) && r.order.length >= 2) { const res = settleRace(r.id, r.order, false); if (res && res.paid) K.toast("coin", `留守のあいだの競どんぐり：払い戻し +${fmt(res.paid)}`); }
+  for (const r of results || []) if (r && Array.isArray(r.order) && r.order.length >= 2) { const res = settleRace(r.id, r.order, false, r.boot); if (res && res.paid) K.toast("coin", `留守のあいだの競どんぐり：払い戻し +${fmt(res.paid)}`); }
   // 10分たっても結果がわからない賭け（サーバーが入れかわったなど）は返す
   const now = Date.now(), old = R.bets.filter(b => !b.local && now - (b.t || 0) > 10 * 60e3);
   if (old.length) { const back = old.reduce((a, b) => a + b.amount, 0); R.bets = R.bets.filter(b => !old.includes(b)); K.addMoney(back); K.toast("coin", `取り消しになった競どんぐりの賭け金 ${fmt(back)} を返したよ`); K.saveWorld(); }
 }
+// サーバーが入れかわる前の賭け（結果がもう出ない）は、すぐ返す
+function refundOldBoot(boot) {
+  if (!boot) return;
+  const R = raceBets(), old = R.bets.filter(b => !b.local && !sameBoot(b, boot)); if (!old.length) return;
+  const back = old.reduce((a, b) => a + b.amount, 0); R.bets = R.bets.filter(b => !old.includes(b)); K.addMoney(back); K.saveWorld();
+  K.toast("coin", `取り消しになった競どんぐりの賭け金 ${fmt(back)} を返したよ`);
+}
 K.raceIn = m => {
   if (m.type === "race") {
-    const prev = RC.st; RC.st = m; RC.at = performance.now();
+    const prev = RC.st; RC.st = m; RC.at = performance.now(); refundOldBoot(m.boot);
     if (m.phase === "result" && Array.isArray(m.order) && (!prev || prev.id !== m.id || prev.phase !== "result")) {
-      const res = settleRace(m.id, m.order, false);
+      const res = settleRace(m.id, m.order, false, m.boot);
       if (res && !(RC.ui && RC.ui.cb.isConnected)) K.toast("coin", res.paid ? `競どんぐり：${m.runners[m.order[0]].name}が1着！ 払い戻し +${fmt(res.paid)}` : `競どんぐり：${m.runners[m.order[0]].name}が1着。はずれ…`);
       if (res) RC.lastRes = { id: m.id, ...res };
     }
   } else if (m.type === "raceOk") {
-    const R = raceBets(); K.addMoney(-m.amount); R.bets.push({ id: m.id, runner: m.runner, kind: m.kind, amount: m.amount, odds: m.odds, t: Date.now() }); K.saveWorld();
+    const R = raceBets(); K.addMoney(-m.amount); R.bets.push({ id: m.id, runner: m.runner, kind: m.kind, amount: m.amount, odds: m.odds, t: Date.now(), ...(m.boot ? { boot: m.boot } : {}) }); K.saveWorld();
     if (RC.ui) { RC.ui.msg = `${m.runner + 1}番に${m.kind === "win" ? "単勝" : "複勝"} ${fmt(m.amount)}（${m.odds}倍）賭けた`; RC.ui.dirty = true; }
   } else if (m.type === "raceNg") { if (RC.ui) { RC.ui.msg = String(m.text || "").slice(0, 60); RC.ui.dirty = true; } }
-  else if (m.type === "raceWelcome") { if (m.race) { RC.st = m.race; RC.at = performance.now(); } settleOld(m.raceResults); }
+  else if (m.type === "raceWelcome") { if (m.race) { RC.st = m.race; RC.at = performance.now(); refundOldBoot(m.race.boot); } settleOld(m.raceResults); }
   if (RC.ui) RC.ui.dirty = true;
 };
 const raceOnline = () => K.net && K.net.connected();

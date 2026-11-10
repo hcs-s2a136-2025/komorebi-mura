@@ -548,7 +548,8 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
         ObjectNode c = (ObjectNode) d.get("cup");
         String day = c.path("day").asText();
         boolean sun = sunday(day);
-        Random rng = new Random(day.hashCode() * 31L + Villages.current());
+        // 種は毎回ちがう（日付と村だけで決めると、公開しているコードから結果を先に計算できてしまう）
+        Random rng = new Random(new java.security.SecureRandom().nextLong());
         java.util.List<JsonNode> ent = new java.util.ArrayList<>();
         c.path("ent").forEach(ent::add);
         java.util.List<ObjectNode> who = new java.util.ArrayList<>();

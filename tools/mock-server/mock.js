@@ -229,9 +229,12 @@ function tnyTick(V, now) { const d = tnyOf(V); for (const t of d.cur.filter(t =>
     else { const es = tnyRank(t).filter(([, e]) => e.s > 0); let given = 0; es.slice(0, 3).forEach(([id, e], pos) => { const g = Math.round(t.purse * [.6, .25, .15][pos]); given += g; t.pay.push({ pos: pos + 1, n: e.n, g, s: e.s }); tnyPay(V, +id, t, g, "win", pos + 1); }); back = t.purse - given; }
     if (back > 0 && t.host > 0) tnyPay(V, t.host, t, back, "refund", 0); t.back = back; tnyBc(V, { ev: "end", t: tnyView(t, 0) }); delete t.ent; d.last.unshift(t); d.last.length = Math.min(d.last.length, 6); } }
 setInterval(() => { const now = Date.now(); for (const V of tnyBy.keys()) tnyTick(V, now); }, 1000);
+const tnyLast = new Map();
 function tnyHandle(s, m) {
   if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), d = tnyOf(V), a = String(m.a || ""), rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "tny", ...o }));
   if (a === "look") return send({ st: { cur: d.cur.map(t => tnyView(t, me)), last: d.last.map(t => tnyView(t, me)), now: Date.now() } });
+  // 連打よけ（本物と同じ）：スコアと「釣れた」は別に数える（ここでは止めない）。ほかは 0.3 秒に1回
+  if (a !== "score" && a !== "catch") { const now = Date.now(), prev = tnyLast.get(me); tnyLast.set(me, now); if (prev && now - prev < 300) return send({ ng: "少し待ってからもう一度", rid }); }
   if (a === "host") { const kind = String(m.kind), puzzle = kind === "puzzle", mins = +m.mins, purse = Math.floor(+m.purse || 0); let fish = String(m.fish || ""), title = String(m.title || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim().slice(0, 16);
     if (d.cur.length >= 3) return send({ ng: "いっぺんに開ける大会は 3 つまで。いまの大会がおわってからね", rid });
     if (d.cur.some(t => t.host === me)) return send({ ng: "開いている大会がおわってから、次を開けるよ", rid });
@@ -245,7 +248,7 @@ function tnyHandle(s, m) {
     const now = Date.now(), t = { id: ++d.seq, kind, title, host: me, hostName: s.pl.name, purse, start: now, end: now + mins * 60000 * (+process.env.TNY_SCALE || 1), ent: {}, ...(puzzle ? { game: m.game } : { fish, rnd: !!m.rnd }) };
     d.cur.push(t); send({ ok: "host", rid, purse }); return tnyBc(V, { ev: "new", t: tnyView(t, 0) }); }
   const t = d.cur.find(x => x.id === +m.id);
-  if (a === "join") { if (!t) return send({ ng: "その大会は、もうおわったみたい", rid }); if (!t.ent[me]) t.ent[me] = { n: s.pl.name, s: 0, at: Date.now() }; return send({ ok: "join", id: t.id, rid, t: tnyView(t, me) }); }
+  if (a === "join") { if (!t) return send({ ng: "その大会は、もうおわったみたい", rid }); if (!t.ent[me]) { if (Object.keys(t.ent).length >= 60) return send({ ng: "参加は 60 人まで。もういっぱいだよ", rid }); t.ent[me] = { n: s.pl.name, s: 0, at: Date.now() }; } return send({ ok: "join", id: t.id, rid, t: tnyView(t, me) }); }
   if (a === "score") { if (!t || t.kind !== "puzzle" || Date.now() > t.end || !t.ent[me]) return; const v = Math.max(0, Math.min(99999999, Math.floor(+m.s || 0))); if (v > t.ent[me].s) { t.ent[me].s = v; t.ent[me].at = Date.now(); } return send({ ok: "score", id: t.id, best: t.ent[me].s, rid }); }
   if (a === "catch") { const now = Date.now(); for (const x of d.cur) if (x.kind === "fish" && !x.win && now <= x.end && x.ent[me] && x.fish === String(m.f)) { x.win = { id: me, n: s.pl.name, at: now }; x.end = now; } return tnyTick(V, now); }
   if (a === "cancel") { if (!t || t.host !== me) return send({ ng: "とりやめられる大会はないよ", rid }); if (Object.keys(t.ent).some(id => +id !== me)) return send({ ng: "もう参加している人がいるので、とりやめられないよ", rid }); t.cancel = true; t.end = 0; tnyTick(V, Date.now()); return send({ ok: "cancel", id: t.id, rid }); }
@@ -270,7 +273,7 @@ function callHandle(s, m) {
   if (a === "leave") return callLeave(me);
   if (a === "look") { const r = callRooms.get(callWhere.get(me)); return r ? callRoomSend(r) : send({ ev: "room", room: "", members: [] }); }
 }
-setInterval(() => { for (const r of [...callRooms.values()]) for (const id of [...r.members]) if (!callOn(id, r.v)) { callWhere.set(id, r.id); callLeave(id); } }, 3000);
+setInterval(() => { for (const r of [...callRooms.values()]) for (const id of [...r.members]) if (!callOn(id, r.v)) { callWhere.set(id, r.id); callLeave(id); } }, 10000);   // 本物と同じ 10 秒ごと
 function duelWelcome(pl) { const d = duelOf(vOf(pl)), id = pl.id, w = { in: d.box.filter(c => c.t === id), out: d.box.filter(c => c.f === id), live: d.live.map(L => duelView(L, id)) };
   if (d.res[id] && d.res[id].length) { w.res = d.res[id]; delete d.res[id]; } if (d.pay[id] && d.pay[id].length) { w.pay = d.pay[id]; delete d.pay[id]; }
   if (d.cres && d.cres[id]) { if (d.cup && d.cup.last && d.cup.last.id === d.cres[id]) w.cup = d.cup.last.r; delete d.cres[id]; }

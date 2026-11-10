@@ -62,6 +62,8 @@ public class RaceGame {
         long host, purse, startAt;
         String hostName = "", title = "", cond = "";
         boolean grand;
+        /** 賞金を払いおわった（結果が出た）。まだのあいだにサーバーが止まったら、次の起動でやりなおす／賞金をもどす */
+        boolean settled;
         int year;
         final List<String> entries = new ArrayList<>();
     }
@@ -98,6 +100,10 @@ public class RaceGame {
     boolean grandOpen() { return day > 0 && dayInYear(day) >= YEAR_DAYS - 2 && grandDone < yearOf(day); }
 
     private Hosted hosted, running;
+    /** 読みこんだあとで、もう一度保存しておく（とちゅうで止まったレースの賞金をもどした・こもれび記念をやりなおす） */
+    private boolean saveSoon;
+    /** このサーバーが起動した時刻（秒）。画面は、賭けたときとちがう boot のレースでは精算しない（番号が同じでも別のレース） */
+    private final long boot = System.currentTimeMillis() / 1000;
     private final Map<Long, Long> unpaid = new HashMap<>();
     private int ownSeq;
 
@@ -146,6 +152,7 @@ public class RaceGame {
     public synchronized void tick(long now, int clockDay, double clockMinute) {
         day = clockDay;
         minute = clockMinute;
+        if (saveSoon) { saveSoon = false; saveStable(); }
         int y = yearOf(day);
         if (day > 0 && grandYearOf != y && !grandOpen()) { grandYearOf = y; grandEntries.clear(); grandVotes.clear(); }
         if (id == 0) { newRace(now); return; }
@@ -188,7 +195,7 @@ public class RaceGame {
             for (String k : keys) { if (go.size() >= RUNNERS) break; go.add(stable.get(k)); }
             running = g;
             grandDone = g.year; grandYearOf = g.year;
-            grandEntries.clear(); grandVotes.clear();
+            // 登録と票は、結果が出るまで残しておく（レースのとちゅうでサーバーが止まったら、次の起動でやりなおせるように）
             saveStable();
         }
         if (running == null && hosted != null && now >= hosted.startAt) {
@@ -325,7 +332,9 @@ public class RaceGame {
             }
         }
         h.put("own", own);
+        if (running != null) running.settled = true;
         if (running != null && running.grand) {
+            grandEntries.clear(); grandVotes.clear();
             Runner w = runners.get(order[0]);
             Map<String, Object> gw = new LinkedHashMap<>();
             gw.put("year", running.year); gw.put("name", w.name); gw.put("ownerName", w.own != null ? w.own.ownerName : "");
@@ -345,11 +354,10 @@ public class RaceGame {
                 n.put("type", "raceHost"); n.put("ev", "refund"); n.put("purse", back);
                 n.put("msg", "主催レース「" + running.title + "」で、ふつうのどんぐりが入着した分の賞金 " + back + "G がもどってきた");
                 out.toPlayer(running.host, n);
-                saveStable();
             }
             h.put("hosted", running.title);
         }
-        if (!own.isEmpty()) saveStable();
+        if (!own.isEmpty() || running != null) saveStable();
         h.put("bettors", bets.stream().map(Bet::pid).distinct().count());
         history.addFirst(h);
         while (history.size() > 40) history.removeLast();
@@ -383,6 +391,7 @@ public class RaceGame {
         ok.put("kind", kind);
         ok.put("amount", amount);
         ok.put("odds", odds);
+        ok.put("boot", boot);
         out.toPlayer(pid, ok);
         out.toAll(state(now));
     }
@@ -574,11 +583,18 @@ public class RaceGame {
             hz.put("cond", hosted.cond);
             m.put("hosted", hz);
         }
+        // 走っているとちゅうの主催レース（結果が出る前にサーバーが止まったら、次の起動で賞金を主催者にもどす）
+        if (running != null && !running.grand && !running.settled) {
+            Map<String, Object> rz = new LinkedHashMap<>();
+            rz.put("host", running.host); rz.put("title", running.title); rz.put("purse", running.purse);
+            m.put("running", rz);
+        }
         Map<String, Object> gz = new LinkedHashMap<>();
         gz.put("done", grandDone); gz.put("year", grandYearOf); gz.put("entries", new ArrayList<>(grandEntries));
         Map<String, Object> vz = new LinkedHashMap<>();
         grandVotes.forEach((k, v) -> vz.put(String.valueOf(k), v));
         gz.put("votes", vz); gz.put("winners", new ArrayList<>(grandWinners));
+        gz.put("live", running != null && running.grand && !running.settled);
         m.put("grand", gz);
         out.saveStable(m);
     }
@@ -607,11 +623,19 @@ public class RaceGame {
             h.cond = CONDS.containsKey(str(hz.get("cond"))) ? str(hz.get("cond")) : "";
             if (h.host != 0 && h.purse > 0 && !h.title.isEmpty()) hosted = h;
         }
+        // 走っているとちゅうで止まった主催レース：賞金を主催者の「受けとっていない賞金」にもどす
+        if (m.get("running") instanceof Map<?, ?> rz) {
+            long host = num(rz.get("host")), purse = num(rz.get("purse"));
+            if (host != 0 && purse > 0) unpaid.merge(host, purse, Long::sum);
+            saveSoon = true;
+        }
         grandEntries.clear(); grandVotes.clear(); grandWinners.clear();
         if (m.get("grand") instanceof Map<?, ?> gz) {
             grandDone = (int) num(gz.get("done")); grandYearOf = (int) num(gz.get("year"));
             if (gz.get("entries") instanceof List<?> el) for (Object x : el) if (x != null && stable.containsKey(String.valueOf(x))) grandEntries.add(String.valueOf(x));
             if (gz.get("votes") instanceof Map<?, ?> vz) vz.forEach((k, v) -> { try { if (grandEntries.contains(String.valueOf(v))) grandVotes.put(Long.parseLong(String.valueOf(k)), String.valueOf(v)); } catch (NumberFormatException ex) { } });
+            // こもれび記念のとちゅうで止まった：その年のレースを、もう一度走らせる（登録と票は残っている）
+            if (Boolean.TRUE.equals(gz.get("live")) && grandDone > 0) { grandDone--; saveSoon = true; }
             if (gz.get("winners") instanceof List<?> wl) for (Object x : wl) if (x instanceof Map<?, ?> w) { Map<String, Object> c = new LinkedHashMap<>(); w.forEach((k, v) -> c.put(String.valueOf(k), v)); grandWinners.addLast(c); }
         }
     }
@@ -626,6 +650,7 @@ public class RaceGame {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("type", "race");
         m.put("id", id);
+        m.put("boot", boot);
         m.put("phase", phase);
         m.put("ms", Math.max(0, phaseEnd - now));
         List<Object> rs = new ArrayList<>();
@@ -706,6 +731,7 @@ public class RaceGame {
             Map<String, Object> e = new LinkedHashMap<>();
             e.put("id", h.get("id"));
             e.put("order", h.get("order"));
+            e.put("boot", boot);
             l.add(e);
         }
         return l;

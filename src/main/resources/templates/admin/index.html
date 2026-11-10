@@ -61,6 +61,12 @@
   </section>
 
   <section class="card">
+    <h2>村の大会</h2>
+    <p class="muted">パズル大会（スマホのゲームのスコア）と釣り大会（えらんだ魚をいちばん先に釣った人の勝ち）を開きます。賞金は村から出ます。</p>
+    <div class="row"><a class="btn" href="/admin/tourney">大会を開く・見る</a></div>
+  </section>
+
+  <section class="card">
     <h2>村の時計</h2>
     <p th:text="${clockText}">1日目</p>
     <form class="row" method="post" th:action="@{/admin/clock/morning}"><button class="btn ghost" type="submit">次の日の朝にする</button></form>

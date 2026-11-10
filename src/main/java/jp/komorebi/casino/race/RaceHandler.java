@@ -44,7 +44,7 @@ public class RaceHandler implements MessageHandler {
             Long p0 = lastOwn.put(from.playerId(), now0);
             if (p0 != null && now0 - p0 < 400) return;
             if (from.playerId() <= 0) return;
-            race.host(from, msg.path("op").asText("look"), msg.path("title").asText(""), msg.path("purse").asLong(0), msg.path("k").asText(""));
+            race.host(from, msg.path("op").asText("look"), msg.path("title").asText(""), msg.path("purse").asLong(0), msg.path("k").asText(""), msg.path("cond").asText(""));
             return;
         }
         if (!"bet".equals(act)) return;

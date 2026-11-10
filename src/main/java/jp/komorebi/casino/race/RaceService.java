@@ -75,7 +75,7 @@ public class RaceService implements WelcomeContributor {
         // レースは、だれもいない村でも時間どおりに進む（村の時計の日にちを使う）
         jp.komorebi.village.VillageService vs = villages.getIfAvailable();
         for (long v : vs == null ? java.util.List.of(jp.komorebi.village.Villages.MAIN) : vs.ids())
-            jp.komorebi.village.Villages.run(v, () -> games.of(v).tick(System.currentTimeMillis(), clock.day()));
+            jp.komorebi.village.Villages.run(v, () -> games.of(v).tick(System.currentTimeMillis(), clock.day(), clock.time()));
     }
 
     public void bet(PlayerSession from, int runner, String kind, int amount) {
@@ -86,8 +86,8 @@ public class RaceService implements WelcomeContributor {
         game().own(from.playerId(), from.name(), op, arg, key);
     }
 
-    public void host(PlayerSession from, String op, String title, long purse, String key) {
-        game().host(from.playerId(), from.name(), op, title, purse, key, System.currentTimeMillis());
+    public void host(PlayerSession from, String op, String title, long purse, String key, String cond) {
+        game().host(from.playerId(), from.name(), op, title, purse, key, cond, System.currentTimeMillis());
     }
 
     public ObjectNode state() {

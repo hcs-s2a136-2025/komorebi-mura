@@ -770,11 +770,14 @@ function renderRaceBody(cb, body, st) {
   const last = RC.lastRes && (RC.lastRes.id === st.id || st.phase === "bet") ? `<div class="result ${RC.lastRes.paid ? "win" : ""}">${RC.lastRes.paid ? `当たり！ 払い戻し +${fmt(RC.lastRes.paid)}` : "はずれ…"}</div>` : "";
   const others = !st.local && (st.bets || []).length ? `<p class="mtext small">みんなの賭け：${st.bets.slice(-6).map(b => `${esc(b.name)}が${b.runner + 1}番に${fmt(b.amount)}`).join("、")}</p>` : "";
   const hist = (st.hist || []).length ? `<p class="mtext small">これまでの1着：${st.hist.slice(0, 6).map(h => `${esc((h.names || [])[0] || "")}（${h.winOdds}倍）`).join("・")}</p>` : "";
-  const hostNote = !st.local && st.hosted ? `<p class="mtext host125"><b>主催レース「${esc(st.hosted.title)}」</b>（${esc(st.hosted.hostName)}さん主催・賞金 ${fmt(st.hosted.purse)}）</p>` : !st.local && st.host ? `<p class="mtext small host125">「${esc(st.host.title)}」の出走受付中（${esc(st.host.hostName)}さん主催・賞金 ${fmt(st.host.purse)}・${(st.host.entries || []).length}粒）</p>` : "";
-  el.innerHTML = `<p class="mtext small">レース ${st.id}　${st.phase === "bet" ? "受付中" : st.phase === "run" ? "レース中" : "結果"}</p>${hostNote}
+  const hostNote = !st.local && st.hosted && st.hosted.grand ? `<p class="mtext host125 grand130"><b>【大レース】${esc(st.hosted.title)}</b>（年に1度の大レース・1着の賞金 ${fmt((st.hosted.prize || [0])[0])}）</p>`
+    : !st.local && st.hosted ? `<p class="mtext host125"><b>主催レース「${esc(st.hosted.title)}」</b>${st.hosted.condName ? `【${esc(st.hosted.condName)}】` : ""}（${esc(st.hosted.hostName)}さん主催・賞金 ${fmt(st.hosted.purse)}）</p>`
+    : !st.local && st.host ? `<p class="mtext small host125">「${esc(st.host.title)}」${st.host.condName ? `【${esc(st.host.condName)}】` : ""}の出走受付中（${esc(st.host.hostName)}さん主催・賞金 ${fmt(st.host.purse)}・${(st.host.entries || []).length}粒）</p>` : "";
+  const grandNote = !st.local && st.grand && st.grand.open ? `<p class="mtext small grand130">「第${st.grand.year}回 こもれび記念」の登録とファン投票の受付中（冬の7日目の18:00のあとのレース）</p>` : "";
+  el.innerHTML = `<p class="mtext small">レース ${st.id}　${st.phase === "bet" ? "受付中" : st.phase === "run" ? "レース中" : "結果"}</p>${hostNote}${grandNote}
     ${open ? betRow("rbet", "賭け金", Math.max(10, Math.min(S.lastBet || 100, K.world.money || 10))) : ""}
     <div class="rlist">${rows}</div>${myList}${RC.ui && RC.ui.msg ? `<p class="mtext small">${esc(RC.ui.msg)}</p>` : ""}${last}${others}${hist}
-    ${!st.local && K.openStable ? `<div class="row2"><button class="btn light" type="button" id="rStable">馬主の厩舎（自分のどんぐりを走らせる）</button>${K.openHost ? `<button class="btn light" type="button" id="rHost">主催レース</button>` : ""}</div>` : ""}
+    ${!st.local && K.openStable ? `<div class="row2"><button class="btn light" type="button" id="rStable">馬主の厩舎（自分のどんぐりを走らせる）</button>${K.openHost ? `<button class="btn light" type="button" id="rHost">主催レース</button>` : ""}${K.openGrand ? `<button class="btn light" type="button" id="rGrand">こもれび記念</button>` : ""}</div>` : ""}
     ${st.local ? `<div class="row2">${st.phase === "bet" ? `<button class="btn" type="button" id="rGo">出走！</button>` : st.phase === "result" ? `<button class="btn" type="button" id="rNext">次のレースへ</button>` : ""}</div>` : ""}`;
   wireBets(el);
   if (keepBet && el.querySelector("#rbet")) el.querySelector("#rbet").value = keepBet;
@@ -790,6 +793,7 @@ function renderRaceBody(cb, body, st) {
   });
   const stb = el.querySelector("#rStable"); if (stb) stb.onclick = () => K.openStable();
   const hst = el.querySelector("#rHost"); if (hst) hst.onclick = () => K.openHost();
+  const grd = el.querySelector("#rGrand"); if (grd) grd.onclick = () => K.openGrand();
   const go = el.querySelector("#rGo"); if (go) go.onclick = () => { if (st.phase !== "bet") return; localRun(st); RC.ui.dirty = true; if (typeof SFX !== "undefined" && SFX.lever) SFX.lever(); };
   const nx = el.querySelector("#rNext"); if (nx) nx.onclick = () => { RC.local = localRace(st.id + 1); RC.lastRes = null; RC.ui.msg = ""; RC.ui.dirty = true; };
 }

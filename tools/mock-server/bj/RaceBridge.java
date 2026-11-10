@@ -8,7 +8,7 @@ import jp.komorebi.casino.race.RaceGame;
 
 /**
  * 模擬サーバー（mock.js）から、本物と同じ競どんぐり（casino/race/RaceGame.java）を動かすための小さな橋渡し。
- * 入力：  O<TAB>id<TAB>name<TAB>op<TAB>名前<TAB>k（馬主）／ H<TAB>id<TAB>name<TAB>op<TAB>レース名<TAB>賞金<TAB>k（主催レース）／ B<TAB>id<TAB>name<TAB>runner<TAB>kind<TAB>amount ／ T<TAB>村の日付 ／ S<TAB>id<TAB>日付（新聞用のまとめ）／ L<TAB>id（いまのようす）
+ * 入力：  O<TAB>id<TAB>name<TAB>op<TAB>名前<TAB>k（馬主）／ H<TAB>id<TAB>name<TAB>op<TAB>レース名<TAB>賞金<TAB>k<TAB>cond（主催レース・こもれび記念）／ B<TAB>id<TAB>name<TAB>runner<TAB>kind<TAB>amount ／ T<TAB>村の日付<TAB>村の時計（分） ／ S<TAB>id<TAB>日付（新聞用のまとめ）／ L<TAB>id（いまのようす）
  * 出力：  A<TAB>json（全員へ） ／ P<TAB>id<TAB>json（その人へ） ／ S<TAB>id<TAB>日付<TAB>json
  */
 public class RaceBridge {
@@ -24,10 +24,10 @@ public class RaceBridge {
             String[] f = line.split("\t", -1);
             long now = System.currentTimeMillis();
             if (f[0].equals("B") && f.length >= 6) game.bet(Long.parseLong(f[1]), f[2], (int) BjBridge.parse(f[3]), f[4], (int) BjBridge.parse(f[5]), now);
-            else if (f[0].equals("T") && f.length >= 2) game.tick(now, (int) BjBridge.parse(f[1]));
+            else if (f[0].equals("T") && f.length >= 2) game.tick(now, (int) BjBridge.parse(f[1]), f.length >= 3 ? Double.parseDouble(f[2]) : -1);
             else if (f[0].equals("S") && f.length >= 3) BjBridge.OUT.println("S\t" + f[1] + "\t" + f[2] + "\t" + BjBridge.json(game.daySummary((int) BjBridge.parse(f[2]))));
             else if (f[0].equals("O") && f.length >= 6) game.own(Long.parseLong(f[1]), f[2], f[3], f[4], f[5]);
-            else if (f[0].equals("H") && f.length >= 7) game.host(Long.parseLong(f[1]), f[2], f[3], f[4], BjBridge.parse(f[5]), f[6], now);
+            else if (f[0].equals("H") && f.length >= 7) game.host(Long.parseLong(f[1]), f[2], f[3], f[4], BjBridge.parse(f[5]), f[6], f.length >= 8 ? f[7] : "", now);
             else if (f[0].equals("L") && f.length >= 2) BjBridge.OUT.println("P\t" + f[1] + "\t" + BjBridge.json(game.state(now)));
         }
     }

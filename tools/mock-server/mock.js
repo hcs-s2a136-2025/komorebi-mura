@@ -115,7 +115,7 @@ const duelLast = new Map();
 function duelHandle(s, m) {
   if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), d = duelOf(V), a = String(m.a || ""), send = o => s.send(JSON.stringify({ type: "duel", ...o }));
   const toP = (id, o) => { for (const x of sessions) if (x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V) x.send(JSON.stringify({ type: "duel", ...o })); }, on = id => [...sessions].some(x => x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V);
-  if (a !== "list" && a !== "put" && a !== "rank") { const n = Date.now(), pv = duelLast.get(me); duelLast.set(me, n); if (pv && n - pv < 400) return send({ ng: "少し待ってからもう一度ためしてね" }); }
+  if (a !== "list" && a !== "put" && a !== "rank" && !(a === "cup" && (m.op || "look") === "look")) { const n = Date.now(), pv = duelLast.get(me); duelLast.set(me, n); if (pv && n - pv < 400) return send({ ng: "少し待ってからもう一度ためしてね" }); }
   if (a === "put") { const L = [], ks = new Set(); for (const c of (Array.isArray(m.list) ? m.list : [])) { if (L.length >= 20) break; const o = duelChicken(c); if (o && !ks.has(o.k)) { ks.add(o.k); L.push(o); } } if (L.length) d.ros[me] = { n: duelName(s.pl.name), list: L }; else delete d.ros[me]; return; }
   if (a === "list") { const list = Object.entries(d.ros).map(([id, r]) => [+id, r]).filter(([id]) => id !== me && accounts.some(x => x.id === id && !x.deleted && vOf(x) === V)).slice(0, 40).map(([id, r]) => ({ id, owner: (accounts.find(x => x.id === id) || {}).name || r.n, chs: r.list.map(c => ({ k: c.k, n: c.n, s: duelTotal(c), sk: c.sk })) })); return send({ a: "list", list }); }
   if (a === "send") { const to = Math.floor(+m.to || 0), tk = String(m.tk || ""), st = String(m.st || ""), mine = duelChicken(m.me);
@@ -142,6 +142,7 @@ function duelHandle(s, m) {
     if (L.f === me || L.t === me) return send({ ng: "自分の勝負には賭けられないよ" });
     if (L.bets.some(b => b.u === me)) return send({ ng: "この勝負には、もう賭けてあるよ" });
     L.bets.push({ u: me, side, n }); send({ ok: "bet", id, side, n }); const v = duelView(L, 0); return duelBc(V, { ev: "pool", id, pool: v.pool, k: v.k }); }
+  if (a === "cup") return duelCup(s, m, V, d, send);
   if (a === "rank") { const wk = duelWeek(), rows = Object.entries(d.pt).map(([id, e]) => [+id, e]).filter(([id]) => accounts.some(x => x.id === id && !x.deleted && vOf(x) === V)).map(([id, e]) => ({ id, name: (accounts.find(x => x.id === id) || {}).name || e.n, p: e.p, wp: e.wk === wk ? e.wp : 0 }));
     const col = k => rows.filter(x => x[k] > 0).sort((x, y) => y[k] - x[k]).slice(0, 20).map(x => ({ name: x.name, v: x[k], ...(x.id === me ? { me: true } : {}) })), mine = d.pt[me] || {};
     return send({ a: "rank", all: col("p"), week: col("wp"), me: { p: mine.p || 0, wp: mine.wk === wk ? mine.wp || 0 : 0 } }); }
@@ -172,9 +173,88 @@ function duelSettle(V, L) {
   for (const b of L.bets) duelPay(V, b.u, { ev: "pay", id: L.id, why: "bet", stake: b.n, n: b.side === w && pool[w] > 0 ? Math.floor(Math.floor(all * 7 / 10) * b.n / pool[w]) : 0, side: b.side });
 }
 setInterval(() => { for (const [V, d] of duelBy) { const due = d.live.filter(L => Date.now() >= L.until); if (!due.length) continue; d.live = d.live.filter(L => Date.now() < L.until); due.forEach(L => duelSettle(V, L)); } }, 1000);
+// にわとりグランプリ（本物は DuelHandler の cup と DuelRace.runMany）。毎日 21:00（日本時間）。テストは /mock/cuprun?v=村 ですぐ走る
+const CUP_PRIZE = [200000, 80000, 40000], CUP_PT = [30, 20, 10], CUP_NPC = ["ハヤテ", "コトブキ", "ツバサ", "ヒナタ", "モミジ", "ゴマ", "キナコ", "シロガネ", "アカネ", "ミドリ"];
+const cupDay = () => { const t = duelJst(); if (t.getUTCHours() >= 21) t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
+const cupSun = day => new Date(day + "T00:00:00Z").getUTCDay() === 0;
+function cupOf(d) { const c = d.cup = d.cup || { day: cupDay(), ent: [] }; const want = cupDay(); if (c.day !== want && (!c.ent.length || c.day === c.done)) { c.day = want; c.ent = []; } return c; }
+function cupView(c, me) { const sun = cupSun(c.day); return { day: c.day, hour: 21, max: 12, per: 2, sun, prize: CUP_PRIZE.map(x => x * (sun ? 3 : 1)), ent: c.ent.map(e => ({ u: e.u, o: e.o, k: e.c.k, n: e.c.n, st: e.c.st, s: duelTotal(e.c), ...(e.u === me ? { me: true } : {}) })), ...(c.last ? { last: { day: c.last.day, id: c.last.id, top: c.last.top } } : {}) }; }
+function duelCup(s, m, V, d, send) {
+  const me = s.pl.id, c = cupOf(d), op = String(m.op || "look"); let ng = null, msg = null;
+  if (op === "join") { const ch = duelChicken(m.me), st = DUEL_ST.includes(String(m.st)) ? String(m.st) : "saki", mine = c.ent.filter(e => e.u === me);
+    if (!ch) ng = "そのにわとりは出られないみたい"; else if (mine.some(e => e.c.k === ch.k)) ng = "その子はもう登録してあるよ"; else if (mine.length >= 2) ng = "1人 2 羽までだよ"; else if (c.ent.length >= 12) ng = "今回の登録は 12 羽でいっぱいだよ";
+    else { c.ent.push({ u: me, o: duelName(s.pl.name), c: { ...ch, st } }); msg = "「" + ch.n + "」をにわとりグランプリに登録した。21:00 に走るよ"; } }
+  if (op === "leave") { const k = String(m.k || ""), n0 = c.ent.length; c.ent = c.ent.filter(e => !(e.u === me && e.c.k === k)); if (c.ent.length < n0) msg = "登録をとりけした"; else ng = "とりけせる登録はないよ"; }
+  send({ a: "cup", ...(ng ? { ng } : {}), ...(msg ? { msg } : {}), cup: cupView(c, me) });
+}
+function duelRaceMany(list) {
+  // 2羽ずつの duelRace とは別に、同じ決まりのかんたん版（mock なので数はちがってよい）
+  const PACE = { nige: [1.10, 1.02, .96], saki: [1.05, 1.02, 1.00], sashi: [.97, 1.01, 1.065], oi: [.93, 1.00, 1.115] }, N = list.length;
+  const x = Array(N).fill(0), e = list.map(c => 100 + (c.ab.sta | 0) * .6), cond = list.map(() => Math.floor(Math.random() * 5) - 2), fin = Array(N).fill(-1), p = list.map(() => [0]), ev = [];
+  let step = 0; while (fin.some(f => f < 0) && step < 300) { step++;
+    for (let i = 0; i < N; i++) { if (fin[i] >= 0) continue; const c = list[i], st = PACE[c.st] ? c.st : "saki", P = x[i] < 300 ? 0 : x[i] < 700 ? 1 : 2, pace = PACE[st][P];
+      let m = pace * (1 + cond[i] * .03) * (1 + (Math.random() * 2 - 1) * (.05 - (c.ab.wis | 0) / 400 * .03)); if (e[i] <= 0) m *= .80 + (c.ab.gut | 0) / 400 * .15;
+      let dx = (8 + (c.ab.spd | 0) * .02) * m; for (const h of [250, 500, 750]) if (x[i] < h && x[i] + dx >= h) { if ((c.sk || []).includes("saku")) { if (!ev.some(q => q[1] === i && q[2] === "saku")) ev.push([step, i, "saku"]); } else dx *= .72 + .28 * Math.min(1, (c.ab.pow | 0) / 260); }
+      if (P === 2 && (c.sk || []).includes("nobi") && !ev.some(q => q[1] === i && q[2] === "nobi") && Math.random() < .6) { ev.push([step, i, "nobi"]); dx *= 1.12; }
+      e[i] -= pace * pace; let nx = x[i] + dx; if (nx >= 1000) { fin[i] = step - 1 + (1000 - x[i]) / dx; nx = 1000; } x[i] = nx; }
+    for (let i = 0; i < N; i++) p[i].push(Math.round(x[i])); }
+  for (let i = 0; i < N; i++) if (fin[i] < 0) fin[i] = 300 + (1000 - x[i]);
+  const rank = [...Array(N).keys()].sort((a, b) => fin[a] - fin[b]);
+  return { p, e: ev, rank, fin: fin.map(f => Math.round(f * 100) / 100), ph: N > 1 && Math.abs(fin[rank[0]] - fin[rank[1]]) < .35, c: cond };
+}
+function cupRun(V) {
+  const d = duelOf(V), c = cupOf(d); if (!c.ent.length) return null; const day = c.day, sun = cupSun(day);
+  const who = c.ent.map(e => ({ id: e.u, o: e.o, k: e.c.k, n: e.c.n, st: e.c.st, s: duelTotal(e.c), sk: e.c.sk, ab: e.c.ab })), npc = CUP_NPC.slice().sort(() => Math.random() - .5);
+  while (who.length < 6) { const ab = {}; let t = 0; for (const a of DUEL_AB) { ab[a] = 50 + Math.floor(Math.random() * 110); t += ab[a]; } who.push({ id: 0, o: "村", k: "npc" + who.length, n: npc.shift(), st: DUEL_ST[Math.floor(Math.random() * 4)], s: t, sk: [], ab }); }
+  const r = { ...duelRaceMany(who), id: "cup" + day, day, at: Date.now(), sun, n: who.map(({ ab, ...w }) => w) }, wk = duelWeek();
+  r.prize = r.rank.map((i, pos) => pos < 3 && who[i].id > 0 ? CUP_PRIZE[pos] * (sun ? 3 : 1) : 0);
+  r.rank.forEach((i, pos) => { const w = who[i]; if (w.id > 0 && pos < 3) { const e = d.pt[w.id] = d.pt[w.id] || { n: w.o, p: 0, wk, wp: 0 }; if (e.wk !== wk) { e.wk = wk; e.wp = 0; } e.p += CUP_PT[pos]; e.wp += CUP_PT[pos]; } });
+  c.last = { day, id: r.id, top: r.rank.slice(0, 3).map((i, pos) => ({ pos: pos + 1, n: who[i].n, o: who[i].o })), r }; c.done = day; c.ent = []; c.day = cupDay(); d.cres = d.cres || {};
+  duelBc(V, { ev: "cup", r });
+  const seen = new Set(); r.rank.forEach((i, pos) => { const w = who[i]; if (!(w.id > 0)) return; if (!seen.has(w.id)) { seen.add(w.id); if (!duelOnline(V, w.id)) d.cres[w.id] = r.id; } if (r.prize[pos] > 0) duelPay(V, w.id, { ev: "pay", id: r.id, why: "cup", n: r.prize[pos], pos: pos + 1, cn: w.n }); });
+  return r;
+}
+setInterval(() => { const t = duelJst(), today = t.toISOString().slice(0, 10); for (const [V, d] of duelBy) { const c = d.cup; if (c && c.ent.length && c.day !== c.done && (c.day < today || (c.day === today && t.getUTCHours() >= 21))) cupRun(V); } }, 1000);
+// 村の大会（本物は jp.komorebi.tourney.TourneyService。村ごと）。/mock/tny?v=村 で中身、/mock/tnyend?v=&id= ですぐおわる
+const TNY_GAMES = { blk: "こもれびブロック", tsu: "こもれびつなぎ", mrg: "マージパズル", jmp: "にわとりジャンプ", puyo: "こもれびドロップ" };
+const TNY_ANY = ["フナ", "アジ", "マグロ", "タコ"], TNY_SEASON = [["イワナ", "タイ", "ヤマメ", "ニジマス", "ヒラメ"], ["ブラックバス", "タイ", "ネッタイギョ", "カツオ", "ヤマメ", "ザリガニ", "キス"], ["イワナ", "サケ", "カツオ", "サバ"], ["ワカサギ", "ブリ", "ニジマス", "ヒラメ", "ハタハタ"]];
+const tnyBy = new Map(), tnyOf = v => { if (!tnyBy.has(v)) tnyBy.set(v, { seq: 0, cur: [], last: [], pend: {} }); return tnyBy.get(v); };
+const tnyRank = t => Object.entries(t.ent || {}).sort((a, b) => b[1].s - a[1].s || a[1].at - b[1].at);
+function tnyView(t, me) { const es = tnyRank(t), v = { id: t.id, kind: t.kind, title: t.title, host: t.host, hostName: t.hostName, purse: t.purse, start: t.start, end: t.end, ...(t.done ? { done: true } : {}), ...(t.kind === "puzzle" ? { game: t.game, gameName: TNY_GAMES[t.game] } : { fish: t.fish, rnd: !!t.rnd }), n: es.length, top: es.slice(0, 20).map(([id, e]) => ({ n: e.n, s: e.s, ...(+id === me ? { me: true } : {}) })) };
+  if (t.ent && t.ent[me]) { v.in = true; v.best = t.ent[me].s; } if (t.win) v.win = t.win; if (t.pay) v.pay = t.pay; return v; }
+const tnyBc = (V, o) => { const x = JSON.stringify({ type: "tny", ...o }); for (const q of sessions) if (q.pl && !q.watch && vOf(q.pl) === V) q.send(x); };
+function tnyPay(V, to, t, n, why, pos) { const o = { ev: "pay", id: t.id, n, why, pos, title: t.title }; if (duelOnline(V, to)) { for (const q of sessions) if (q.pl && q.pl.id === to && !q.watch && vOf(q.pl) === V) q.send(JSON.stringify({ type: "tny", ...o })); return; } const d = tnyOf(V); (d.pend[to] = d.pend[to] || []).push(o); }
+function tnyTick(V, now) { const d = tnyOf(V); for (const t of d.cur.filter(t => now >= t.end)) { d.cur = d.cur.filter(x => x !== t); t.done = true; t.pay = []; let back = 0;
+    if (t.cancel) back = t.purse; else if (t.kind === "fish") { if (t.win) { t.pay.push({ pos: 1, n: t.win.n, g: t.purse }); tnyPay(V, t.win.id, t, t.purse, "win", 1); } else back = t.purse; }
+    else { const es = tnyRank(t).filter(([, e]) => e.s > 0); let given = 0; es.slice(0, 3).forEach(([id, e], pos) => { const g = Math.round(t.purse * [.6, .25, .15][pos]); given += g; t.pay.push({ pos: pos + 1, n: e.n, g, s: e.s }); tnyPay(V, +id, t, g, "win", pos + 1); }); back = t.purse - given; }
+    if (back > 0 && t.host > 0) tnyPay(V, t.host, t, back, "refund", 0); t.back = back; tnyBc(V, { ev: "end", t: tnyView(t, 0) }); delete t.ent; d.last.unshift(t); d.last.length = Math.min(d.last.length, 6); } }
+setInterval(() => { const now = Date.now(); for (const V of tnyBy.keys()) tnyTick(V, now); }, 1000);
+function tnyHandle(s, m) {
+  if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), d = tnyOf(V), a = String(m.a || ""), rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "tny", ...o }));
+  if (a === "look") return send({ st: { cur: d.cur.map(t => tnyView(t, me)), last: d.last.map(t => tnyView(t, me)), now: Date.now() } });
+  if (a === "host") { const kind = String(m.kind), puzzle = kind === "puzzle", mins = +m.mins, purse = Math.floor(+m.purse || 0); let fish = String(m.fish || ""), title = String(m.title || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim().slice(0, 16);
+    if (d.cur.length >= 3) return send({ ng: "いっぺんに開ける大会は 3 つまで。いまの大会がおわってからね", rid });
+    if (d.cur.some(t => t.host === me)) return send({ ng: "開いている大会がおわってから、次を開けるよ", rid });
+    if (!puzzle && kind !== "fish") return send({ ng: "大会の種類がわからなかった", rid });
+    if (!(puzzle ? [10, 30, 60, 180] : [10, 30, 60]).includes(mins)) return send({ ng: "時間の長さがおかしいよ", rid });
+    if (puzzle && !TNY_GAMES[m.game]) return send({ ng: "そのゲームでは大会を開けないよ", rid });
+    if (!puzzle && m.rnd) { const P = TNY_ANY.concat(TNY_SEASON[Math.floor((clock.day - 1) / 7) % 4]); fish = P[Math.floor(Math.random() * P.length)]; }
+    if (!puzzle && !/^[^\u0000-\u001f<>&"'\\\s]{1,16}$/.test(fish)) return send({ ng: "魚の名前がおかしいよ", rid });
+    if (purse < 10000 || purse > 1e8 || purse % 1000) return send({ ng: "賞金は 10000〜100000000G（1,000Gきざみ）だよ", rid });
+    if (!title) title = puzzle ? TNY_GAMES[m.game] + "大会" : (m.rnd ? "なぞの魚" : fish) + "釣り大会";
+    const now = Date.now(), t = { id: ++d.seq, kind, title, host: me, hostName: s.pl.name, purse, start: now, end: now + mins * 60000 * (+process.env.TNY_SCALE || 1), ent: {}, ...(puzzle ? { game: m.game } : { fish, rnd: !!m.rnd }) };
+    d.cur.push(t); send({ ok: "host", rid, purse }); return tnyBc(V, { ev: "new", t: tnyView(t, 0) }); }
+  const t = d.cur.find(x => x.id === +m.id);
+  if (a === "join") { if (!t) return send({ ng: "その大会は、もうおわったみたい", rid }); if (!t.ent[me]) t.ent[me] = { n: s.pl.name, s: 0, at: Date.now() }; return send({ ok: "join", id: t.id, rid, t: tnyView(t, me) }); }
+  if (a === "score") { if (!t || t.kind !== "puzzle" || Date.now() > t.end || !t.ent[me]) return; const v = Math.max(0, Math.min(99999999, Math.floor(+m.s || 0))); if (v > t.ent[me].s) { t.ent[me].s = v; t.ent[me].at = Date.now(); } return send({ ok: "score", id: t.id, best: t.ent[me].s, rid }); }
+  if (a === "catch") { const now = Date.now(); for (const x of d.cur) if (x.kind === "fish" && !x.win && now <= x.end && x.ent[me] && x.fish === String(m.f)) { x.win = { id: me, n: s.pl.name, at: now }; x.end = now; } return tnyTick(V, now); }
+  if (a === "cancel") { if (!t || t.host !== me) return send({ ng: "とりやめられる大会はないよ", rid }); if (Object.keys(t.ent).some(id => +id !== me)) return send({ ng: "もう参加している人がいるので、とりやめられないよ", rid }); t.cancel = true; t.end = 0; tnyTick(V, Date.now()); return send({ ok: "cancel", id: t.id, rid }); }
+}
+function tnyWelcome(pl) { const d = tnyOf(vOf(pl)), w = { cur: d.cur.map(t => tnyView(t, pl.id)) }; if (d.pend[pl.id] && d.pend[pl.id].length) { w.pay = d.pend[pl.id]; delete d.pend[pl.id]; } return w.cur.length || w.pay ? { tny: w } : {}; }
 function duelWelcome(pl) { const d = duelOf(vOf(pl)), id = pl.id, w = { in: d.box.filter(c => c.t === id), out: d.box.filter(c => c.f === id), live: d.live.map(L => duelView(L, id)) };
   if (d.res[id] && d.res[id].length) { w.res = d.res[id]; delete d.res[id]; } if (d.pay[id] && d.pay[id].length) { w.pay = d.pay[id]; delete d.pay[id]; }
-  return w.in.length || w.out.length || w.live.length || w.res || w.pay ? { duel: w } : {}; }
+  if (d.cres && d.cres[id]) { if (d.cup && d.cup.last && d.cup.last.id === d.cres[id]) w.cup = d.cup.last.r; delete d.cres[id]; }
+  return w.in.length || w.out.length || w.live.length || w.res || w.pay || w.cup ? { duel: w } : {}; }
 function coinHandle(s, m) {
   if (!s.pl || s.watch) return; const a = String(m.a || ""), me = coinMe(s), out = { type: "coin", a, rid: String(m.rid || "") }, send = o => s.send(JSON.stringify(o));
   if (a === "tori") { const t = m.t || {}; toriDB.set(vOf(s.pl) + ":" + s.pl.id, { name: String(t.name || "にわとり").slice(0, 12), sp: Math.max(0, Math.min(999, t.sp | 0)), jp: Math.max(0, Math.min(999, t.jp | 0)), st: Math.max(0, Math.min(999, t.st | 0)) }); return; }
@@ -300,7 +380,7 @@ if (fs.existsSync(path.join(BJ_CP, "RaceBridge.class"))) {
     if (f[0] === "A") { try { const m = JSON.parse(f[1]); if (m.type === "race") { raceLast = m; if (m.phase === "result" && !raceResults.some(r => r.id === m.id)) { raceResults.unshift({ id: m.id, order: m.order }); raceResults.length = Math.min(raceResults.length, 40); } } } catch (e) {} for (const o of sessions) if (o.pl) o.send(f[1]); }
     else if (f[0] === "P") { for (const o of sessions) if (o.pl && o.pl.id === +f[1]) o.send(f[2]); }
     else if (f[0] === "S") { const w = newsWait.get(f[1] + ":" + f[2]); newsWait.delete(f[1] + ":" + f[2]); if (w) { let sum = { races: 0 }; try { sum = JSON.parse(f[3]); } catch (e) {} w.s.send(JSON.stringify({ type: "news", day: +f[2], reports: w.reps, race: sum })); } } } });
-  setInterval(() => race.stdin.write("T\t" + clock.day + "\n"), 500);
+  setInterval(() => race.stdin.write("T\t" + clock.day + "\t" + Math.min(1439.9, ctime()).toFixed(1) + "\n"), 500);
   process.on("exit", () => race.kill());
 }
 const RATE = +process.argv[5] || 1;
@@ -358,12 +438,16 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, { ok: true }); }
   if (p === "/mock/players") return json(res, 200, accounts.filter(a => !a.deleted).map(a => ({ id: a.id, name: a.name })));
   if (p === "/mock/saves") return json(res, 200, Object.fromEntries([...saves].map(([k, v]) => [k, { rev: v.rev, size: v.doc.length }])));
+  if (p === "/mock/day") { const d = +u.searchParams.get("d"); if (d >= 1) { clock.day = d; if (u.searchParams.get("t")) clock.start = Date.now() - (+u.searchParams.get("t") - 360) / RATE * 1000; for (const o of sessions) o.pl && o.send(JSON.stringify({ type: "clock", ...cstate(), reason: "mock" })); } return json(res, 200, cstate()); }
   if (p === "/mock/jackpot") return json(res, 200, { jackpot });
   if (p.startsWith("/mock/reply")) { const t = threads.find(t => t.id === +u.searchParams.get("id")); t.messages.push({ sender: "ADMIN", body: u.searchParams.get("body"), createdAt: new Date().toISOString() }); t.playerUnread = true; t.status = "WIP"; for (const s of sessions) if (s.pl && s.pl.id === t.player.id) s.send(JSON.stringify({ type: "feedbackReply", threadId: t.id, title: t.title })); return json(res, 200, {}); }
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
   if (p === "/mock/world") { if (u.searchParams.has("v")) useV(+u.searchParams.get("v")); return json(res, 200, shared); }
   if (p === "/mock/villages") return json(res, 200, villages);
+  if (p === "/mock/tny") return json(res, 200, tnyOf(+u.searchParams.get("v") || 1));
+  if (p === "/mock/tnyend") { const t = tnyOf(+u.searchParams.get("v") || 1).cur.find(x => x.id === +u.searchParams.get("id")); if (t) t.end = 0; return json(res, 200, { ok: !!t }); }
   if (p === "/mock/duel") return json(res, 200, duelOf(+u.searchParams.get("v") || 1));
+  if (p === "/mock/cuprun") { const r = cupRun(+u.searchParams.get("v") || 1); return json(res, 200, r ? { ok: true, rank: r.rank } : { ok: false }); }
   if (p === "/mock/rankhide") { const id = +u.searchParams.get("id"); if (id) { if (u.searchParams.get("hide") === "0") rankHidden.delete(id); else rankHidden.add(id); } return json(res, 200, [...rankHidden]); }
   if (p === "/mock/raid") { const q = u.searchParams, v = +q.get("v") || 1, R = raidOf(v), act = q.get("act") || "";
     if (act === "plan") { const id = ++R.seq; R.plans.push({ id, kind: q.get("kind") || "boar", place: q.get("place") || "hill", start: Date.now() + (+q.get("in") || 0) * 1000, mins: +q.get("mins") || 10, hp: +q.get("hp") || 3000, reward: +q.get("reward") || 3000 }); bcVil(v, raidState(v)); return json(res, 200, { id }); }
@@ -444,7 +528,7 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...tnyWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -539,7 +623,7 @@ wss.on("connection", s => {
       const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 20).filter(x => Array.isArray(x)).map(x => [String(x[0]), x[1] | 0, String(x[2] || "").slice(0, 12), ...(/^[a-z0-9]{1,12}$/.test(String(x[3] || "")) ? [String(x[3])] : [])]), gh: (Array.isArray(m.gh) ? m.gh : []).slice(0, 4).filter(g => Array.isArray(g) && g[0] >= 0 && g[1] >= 0 && g[0] <= 200 && g[1] <= 200).map(g => [g[0] | 0, g[1] | 0, (Array.isArray(g[2]) ? g[2] : []).map(x => Math.floor(+x)).filter(x => x > 0).slice(0, 8)]) };
       pend = pend.filter(p => { const i = f.crops.findIndex(c => c[0] === p[0] && c[1] === p[1] && c[2] === p[2] && (c[3] | 0) >= 2); if (i >= 0) { f.crops.splice(i, 1); return true; } return false; }); if (pend.length) f.stolen = pend;
       farms.set(s.pl.id, f); bc(f, s); }
-    if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); else if (m.act === "host" && s.pl.id > 0) race.stdin.write(["H", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.op || "look").replace(/\W/g, ""), String(m.title || "").replace(/[\t\n\r]/g, ""), Math.floor(+m.purse || 0), String(m.k || "").replace(/\W/g, "")].join("\t") + "\n"); else if (m.act === "own" && s.pl.id > 0) race.stdin.write(["O", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.op || "list").replace(/\W/g, ""), String(m.name || "").replace(/[\t\n\r]/g, ""), String(m.k || "").replace(/\W/g, "")].join("\t") + "\n"); }
+    if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); else if (m.act === "host" && s.pl.id > 0) race.stdin.write(["H", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.op || "look").replace(/\W/g, ""), String(m.title || "").replace(/[\t\n\r]/g, ""), Math.floor(+m.purse || 0), String(m.k || "").replace(/\W/g, ""), String(m.cond || "").replace(/\W/g, "")].join("\t") + "\n"); else if (m.act === "own" && s.pl.id > 0) race.stdin.write(["O", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.op || "list").replace(/\W/g, ""), String(m.name || "").replace(/[\t\n\r]/g, ""), String(m.k || "").replace(/\W/g, "")].join("\t") + "\n"); }
     if (m.type === "news") { const day = Math.floor(+m.day || 0);
       if (m.act === "put" && day >= clock.day - 2 && day <= clock.day && day >= 1) { (news[day] = news[day] || {})[s.pl.id] = { name: s.pl.name, items: (Array.isArray(m.items) ? m.items : []).slice(0, 12).map(it => ({ k: String(it.k || "").slice(0, 12), t: String(it.t || "").slice(0, 90), s: Math.max(0, Math.min(999, it.s | 0)) })).filter(it => it.t), sum: m.sum && typeof m.sum === "object" ? m.sum : {} }; }
       else if (m.act === "get") { const reps = Object.entries(news[day] || {}).map(([id, r]) => ({ ...r, id })); if (race) { newsWait.set(s.pl.id + ":" + day, { s, reps }); race.stdin.write("S\t" + s.pl.id + "\t" + day + "\n"); } else s.send(JSON.stringify({ type: "news", day, reports: reps, race: { races: 0 } })); } }
@@ -591,6 +675,8 @@ wss.on("connection", s => {
         const [it] = d.items.splice(i, 1); s.send(JSON.stringify({ type: "recycleOk", u: it.u, id: it.id, p: it.p })); const t = JSON.stringify(view()); for (const o of sessions) if (o.pl && vOf(o.pl) === vOf(s.pl)) o.send(t); return; }
       return; }
     // みんなの水族館（本物は aqua/AquaHandler.java）
+    if (m.type === "tny") return tnyHandle(s, m);
+    if (m.type === "cheer") { if (s.watch || !(s.pl.id > 0)) return; const to = Math.floor(+m.to || 0), k = Math.floor(+m.k); if (!(to > 0) || to === s.pl.id || !(k >= 0 && k <= 3)) return; const n = Date.now(); s.cr = s.cr && n - s.cr.t < 1000 ? s.cr : { t: n, c: 0 }; if (++s.cr.c > 4) return; for (const x of sessions) if (x.pl && x.pl.id === to && !x.watch && vOf(x.pl) === vOf(s.pl)) x.send(JSON.stringify({ type: "cheer", from: s.pl.id, name: s.pl.name, k })); return; }
     if (m.type === "aqua") { if (s.watch || !(s.pl.id > 0)) return; const v = vOf(s.pl), d = aquaOf(v), rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "aqua", ...o })), others = o => { const t = JSON.stringify({ type: "aqua", ...o }); for (const x of sessions) if (x !== s && x.pl && vOf(x.pl) === v) x.send(t); };
       if (m.a === "look") { send({ st: aquaSt(d) }); return; }
       const now = Date.now(); if (s.aq128 && now - s.aq128 < 300) { send({ ng: "少し待ってからもう一度", rid }); return; } s.aq128 = now;

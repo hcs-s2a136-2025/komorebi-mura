@@ -103,4 +103,100 @@ final class DuelRace {
         out.putArray("c").add(cond[0]).add(cond[1]);
         return out;
     }
+
+    /**
+     * にわとりグランプリ（v0.73.0）：何羽でも一斉に走る。1対1と同じ決まりで、「相手」はいちばん近い前の子（いなければいちばん近い子）。
+     * 返すのは {p:[[毎歩の位置]...], e:[[歩, 子, スキル]], rank:[着順の子の番号], fin:[ゴールした歩], c:[調子], ph:1着と2着が写真判定か}
+     */
+    static ObjectNode runMany(long seed, Runner[] R, ObjectMapper om) {
+        Random rng = new Random(seed);
+        int N = R.length;
+        double[] x = new double[N], e = new double[N], cm = new double[N], fin = new double[N], boost = new double[N];
+        int[] cond = new int[N], boostLeft = new int[N];
+        boolean[][] used = new boolean[N][8];
+        java.util.Arrays.fill(fin, -1);
+        java.util.Arrays.fill(boost, 1);
+        ObjectNode out = om.createObjectNode();
+        ArrayNode ev = out.putArray("e");
+        ArrayNode[] p = new ArrayNode[N];
+        String[] names = { "senko", "kaze", "nobi", "oikomi", "nebari", "saku", "ochi", "kokoro" };
+        for (int i = 0; i < N; i++) {
+            p[i] = om.createArrayNode();
+            cond[i] = rng.nextInt(5) - 2;
+            e[i] = 100 + R[i].sta() * .6;
+            cm[i] = 1 + cond[i] * .03;
+            if (cond[i] < 0 && R[i].sk().contains("ochi")) { cm[i] = 1; used[i][6] = true; ev.addArray().add(0).add(i).add("ochi"); }
+            if (R[i].sk().contains("kokoro")) { used[i][7] = true; ev.addArray().add(0).add(i).add("kokoro"); }
+            p[i].add(0);
+        }
+        int step = 0, left = N;
+        while (left > 0 && step < MAX_STEPS) {
+            step++;
+            double[] sx = x.clone();
+            for (int i = 0; i < N; i++) {
+                if (fin[i] >= 0) continue;
+                Runner r = R[i];
+                int ph = phase(x[i]);
+                // いちばん近い前の子（いなければ、いちばん近い子）
+                double ahead = Double.MAX_VALUE, near = Double.MAX_VALUE, lead = 0;
+                for (int j = 0; j < N; j++) {
+                    if (j == i) continue;
+                    double dd = sx[j] - x[i];
+                    if (dd > 0 && dd < ahead) ahead = dd;
+                    near = Math.min(near, Math.abs(dd));
+                    lead = Math.max(lead, sx[j]);
+                }
+                double chance = Math.min(.95, .55 + r.wis() / 800.0);
+                int k = -1;
+                if (step == 2 && !used[i][0] && r.sk().contains("senko")) k = 0;
+                else if (x[i] >= 400 && !used[i][1] && r.sk().contains("kaze")) k = 1;
+                else if (x[i] >= 750 && !used[i][2] && r.sk().contains("nobi")) k = 2;
+                else if (x[i] >= 700 && x[i] < lead && !used[i][3] && r.sk().contains("oikomi")) k = 3;
+                else if (ph == 2 && near < 25 && !used[i][4] && r.sk().contains("nebari")) k = 4;
+                if (k >= 0) {
+                    used[i][k] = true;
+                    if (rng.nextDouble() < chance) {
+                        double[] mul = { 1.12, 1.10, 1.12, 1.15, 1.08 };
+                        int[] len = { 8, 8, 10, 10, 8 };
+                        boost[i] = mul[k]; boostLeft[i] = len[k];
+                        ev.addArray().add(step).add(i).add(names[k]);
+                    }
+                }
+                double pace = PACE[r.strat()][ph], m = pace * cm[i];
+                double amp = (.05 - r.wis() / 400.0 * .03) * (used[i][7] ? .5 : 1);
+                double noise = 1 + (rng.nextDouble() * 2 - 1) * amp;
+                if ((r.st().equals("sashi") || r.st().equals("oi")) && ahead < 60) m *= 1.01;
+                if (e[i] <= 0) m *= .80 + r.gut() / 400.0 * .15;
+                double v0 = 8 + r.spd() * .02, dx = v0 * m * noise * (boostLeft[i] > 0 ? boost[i] : 1);
+                for (int h : HURDLES) {
+                    if (x[i] < h && x[i] + dx >= h) {
+                        if (r.sk().contains("saku")) { if (!used[i][5]) { used[i][5] = true; ev.addArray().add(step).add(i).add("saku"); } }
+                        else dx *= .72 + .28 * Math.min(1, r.pow() / 260.0);
+                    }
+                }
+                e[i] -= pace * pace + (boostLeft[i] > 0 ? .5 : 0);
+                if (boostLeft[i] > 0) boostLeft[i]--;
+                double nx = x[i] + dx;
+                if (nx >= GOAL) { fin[i] = step - 1 + (GOAL - x[i]) / dx; nx = GOAL; left--; }
+                x[i] = nx;
+            }
+            for (int i = 0; i < N; i++) p[i].add((int) Math.round(x[i]));
+        }
+        for (int i = 0; i < N; i++) if (fin[i] < 0) fin[i] = MAX_STEPS + (GOAL - x[i]);
+        Integer[] ord = new Integer[N];
+        for (int i = 0; i < N; i++) ord[i] = i;
+        double[] tie = new double[N];
+        for (int i = 0; i < N; i++) tie[i] = rng.nextDouble();
+        java.util.Arrays.sort(ord, (a, b) -> fin[a] != fin[b] ? Double.compare(fin[a], fin[b]) : Double.compare(tie[a], tie[b]));
+        ArrayNode rank = out.putArray("rank");
+        for (int i : ord) rank.add(i);
+        ArrayNode fa = out.putArray("fin");
+        for (int i = 0; i < N; i++) fa.add(Math.round(fin[i] * 100) / 100.0);
+        out.put("ph", N > 1 && Math.abs(fin[ord[0]] - fin[ord[1]]) < .35);
+        ArrayNode pp = out.putArray("p");
+        for (int i = 0; i < N; i++) pp.add(p[i]);
+        ArrayNode cc = out.putArray("c");
+        for (int i = 0; i < N; i++) cc.add(cond[i]);
+        return out;
+    }
 }

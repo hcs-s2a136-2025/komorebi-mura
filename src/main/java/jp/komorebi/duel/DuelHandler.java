@@ -6,6 +6,7 @@ import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -88,7 +89,7 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
         if (from.playerId() == null || from.playerId() <= 0 || from.watcher()) return;
         long me = from.playerId();
         String a = msg.path("a").asText("");
-        if (!"list".equals(a) && !"put".equals(a) && !"rank".equals(a)) {
+        if (!"list".equals(a) && !"put".equals(a) && !"rank".equals(a) && !("cup".equals(a) && "look".equals(msg.path("op").asText()))) {
             long now = System.currentTimeMillis();
             Long prev = last.put(me, now);
             if (prev != null && now - prev < 400) { ng(from, hub, "少し待ってからもう一度ためしてね"); return; }
@@ -102,6 +103,7 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
                 case "yes" -> yes(from, msg, hub);
                 case "bet" -> bet(from, msg, hub);
                 case "rank" -> rank(from, hub);
+                case "cup" -> cup(from, msg, hub);
                 default -> { }
             }
         }
@@ -310,6 +312,12 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
 
     synchronized void tickHere(GameSocketHandler hub) {
         JsonNode cur = world.getSystem(KEY);
+        if (cur instanceof ObjectNode && cupDue(cur.path("cup"))) {
+            ObjectNode d = loadFrom(cur);
+            runCup(d, hub);
+            save(d);
+            cur = world.getSystem(KEY);
+        }
         if (!(cur instanceof ObjectNode) || !cur.path("live").isArray() || cur.path("live").isEmpty()) return;
         ObjectNode d = loadFrom(cur);
         long now = System.currentTimeMillis();
@@ -439,6 +447,176 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
         return r;
     }
 
+    // ---- にわとりグランプリ（v0.73.0）：毎日 21:00（日本時間）に、登録した村のにわとりが一斉に走る ----
+    // _duel.cup = {day:登録している回の日付, ent:[{u,o,c:{k,n,ab,sk,st}}], last:前の回の結果, done:走った日}
+    // {a:"cup",op:"look"|"join"|"leave",k,me:{k,n,ab,sk},st} → 本人に {a:"cup",cup:{...}}。走ったら村に {ev:"cup",r}、賞金は pay の why:"cup"。
+    static final int CUP_HOUR = 21, CUP_MAX = 12, CUP_PER = 2, CUP_FILL = 6;
+    static final long[] CUP_PRIZE = { 200_000, 80_000, 40_000 };
+    static final int[] CUP_PT = { 30, 20, 10 };
+    static final String[] NPC_CH = { "ハヤテ", "コトブキ", "ツバサ", "ヒナタ", "モミジ", "ゴマ", "キナコ", "シロガネ", "アカネ", "ミドリ" };
+
+    /** 登録を受けつけている回の日付（21:00 をすぎたら次の日の回） */
+    static String cupDay() {
+        java.time.ZonedDateTime z = java.time.ZonedDateTime.now(JST);
+        return (z.getHour() >= CUP_HOUR ? z.toLocalDate().plusDays(1) : z.toLocalDate()).toString();
+    }
+
+    static boolean cupDue(JsonNode cup) {
+        if (!cup.isObject() || !cup.path("ent").isArray() || cup.path("ent").isEmpty()) return false;
+        String day = cup.path("day").asText("");
+        if (day.isEmpty() || day.equals(cup.path("done").asText(""))) return false;
+        java.time.ZonedDateTime z = java.time.ZonedDateTime.now(JST);
+        String today = z.toLocalDate().toString();
+        return day.compareTo(today) < 0 || (day.equals(today) && z.getHour() >= CUP_HOUR);
+    }
+
+    static boolean sunday(String day) {
+        try { return LocalDate.parse(day).getDayOfWeek() == DayOfWeek.SUNDAY; } catch (Exception e) { return false; }
+    }
+
+    private ObjectNode cupOf(ObjectNode d) {
+        ObjectNode c = d.path("cup") instanceof ObjectNode o ? o : d.putObject("cup");
+        String want = cupDay();
+        if (!want.equals(c.path("day").asText(""))) {
+            // 前の回が走っていなければ（だれもいなかった）消して、新しい回にする
+            if (!c.path("ent").isArray() || c.path("ent").isEmpty() || c.path("day").asText("").equals(c.path("done").asText(""))) { c.put("day", want); c.putArray("ent"); }
+        }
+        if (!c.path("ent").isArray()) c.putArray("ent");
+        return c;
+    }
+
+    private ObjectNode cupView(ObjectNode c, long me, GameSocketHandler hub) {
+        ObjectNode v = hub.json().createObjectNode();
+        String day = c.path("day").asText("");
+        boolean sun = sunday(day);
+        v.put("day", day).put("hour", CUP_HOUR).put("max", CUP_MAX).put("per", CUP_PER).put("sun", sun);
+        ArrayNode pz = v.putArray("prize");
+        for (long x : CUP_PRIZE) pz.add(x * (sun ? 3 : 1));
+        ArrayNode ent = v.putArray("ent");
+        for (JsonNode e : c.path("ent")) {
+            ObjectNode o = ent.addObject().put("u", e.path("u").asLong()).put("o", e.path("o").asText()).put("k", e.path("c").path("k").asText()).put("n", e.path("c").path("n").asText())
+                .put("st", e.path("c").path("st").asText()).put("s", total(e.path("c")));
+            if (e.path("u").asLong() == me) o.put("me", true);
+        }
+        if (c.has("last")) {
+            JsonNode L = c.get("last");
+            ObjectNode lv = v.putObject("last").put("day", L.path("day").asText());
+            lv.set("top", L.path("top").deepCopy());
+            lv.put("id", L.path("id").asText());
+        }
+        return v;
+    }
+
+    private void cup(PlayerSession from, JsonNode msg, GameSocketHandler hub) {
+        ObjectNode d = load(hub);
+        ObjectNode c = cupOf(d);
+        long me = from.playerId();
+        String op = msg.path("op").asText("look"), err = null, ok = null;
+        ArrayNode ent = (ArrayNode) c.get("ent");
+        if ("join".equals(op)) {
+            ObjectNode ch = chicken(msg.path("me"), hub);
+            String st = msg.path("st").asText("saki");
+            int mine = 0;
+            for (JsonNode e : ent) if (e.path("u").asLong() == me) mine++;
+            boolean dup = false;
+            if (ch != null) for (JsonNode e : ent) if (e.path("u").asLong() == me && e.path("c").path("k").asText().equals(ch.path("k").asText())) dup = true;
+            if (ch == null) err = "そのにわとりは出られないみたい";
+            else if (dup) err = "その子はもう登録してあるよ";
+            else if (mine >= CUP_PER) err = "1人 " + CUP_PER + " 羽までだよ";
+            else if (ent.size() >= CUP_MAX) err = "今回の登録は " + CUP_MAX + " 羽でいっぱいだよ";
+            else {
+                ch.put("st", STRATS.contains(st) ? st : "saki");
+                ent.addObject().put("u", me).put("o", name(from.name())).set("c", ch);
+                ok = "「" + ch.path("n").asText() + "」をにわとりグランプリに登録した。" + CUP_HOUR + ":00 に走るよ";
+            }
+        } else if ("leave".equals(op)) {
+            String k = msg.path("k").asText("");
+            boolean gone = false;
+            for (Iterator<JsonNode> it = ent.elements(); it.hasNext(); ) { JsonNode e = it.next(); if (e.path("u").asLong() == me && e.path("c").path("k").asText().equals(k)) { it.remove(); gone = true; } }
+            if (gone) ok = "登録をとりけした"; else err = "とりけせる登録はないよ";
+        }
+        if (!"look".equals(op) && err == null) save(d);
+        ObjectNode o = out(hub).put("a", "cup");
+        if (err != null) o.put("ng", err);
+        if (ok != null) o.put("msg", ok);
+        o.set("cup", cupView(c, me, hub));
+        hub.send(from, o);
+    }
+
+    /** グランプリを走らせる（d は呼んだ側が保存する） */
+    private void runCup(ObjectNode d, GameSocketHandler hub) {
+        ObjectNode c = (ObjectNode) d.get("cup");
+        String day = c.path("day").asText();
+        boolean sun = sunday(day);
+        Random rng = new Random(day.hashCode() * 31L + Villages.current());
+        java.util.List<JsonNode> ent = new java.util.ArrayList<>();
+        c.path("ent").forEach(ent::add);
+        java.util.List<ObjectNode> who = new java.util.ArrayList<>();
+        for (JsonNode e : ent) {
+            ObjectNode w = om.createObjectNode().put("id", e.path("u").asLong()).put("o", e.path("o").asText()).put("k", e.path("c").path("k").asText()).put("n", e.path("c").path("n").asText())
+                .put("st", e.path("c").path("st").asText("saki")).put("s", total(e.path("c")));
+            w.set("sk", e.path("c").path("sk").deepCopy());
+            w.set("ab", e.path("c").path("ab").deepCopy());
+            who.add(w);
+        }
+        java.util.List<String> npc = new java.util.ArrayList<>(java.util.List.of(NPC_CH));
+        java.util.Collections.shuffle(npc, rng);
+        while (who.size() < CUP_FILL) {
+            ObjectNode w = om.createObjectNode().put("id", 0).put("o", "村").put("k", "npc" + who.size()).put("n", npc.remove(0)).put("st", DuelRace.STRATS[rng.nextInt(4)]);
+            ObjectNode ab = w.putObject("ab");
+            int tot = 0;
+            for (String key : AB) { int v = 50 + rng.nextInt(110); ab.put(key, v); tot += v; }
+            w.put("s", tot);
+            w.putArray("sk");
+            who.add(w);
+        }
+        DuelRace.Runner[] R = new DuelRace.Runner[who.size()];
+        for (int i = 0; i < R.length; i++) R[i] = runner(who.get(i));
+        ObjectNode r = DuelRace.runMany(rng.nextLong(), R, om);
+        String id = "cup" + day;
+        r.put("id", id).put("day", day).put("at", System.currentTimeMillis()).put("sun", sun);
+        ArrayNode n = r.putArray("n");
+        for (ObjectNode w : who) { ObjectNode x = w.deepCopy(); x.remove("ab"); n.add(x); }
+        // 賞金とポイント（持ち主のいる子だけ）
+        ArrayNode top = om.createArrayNode();
+        ObjectNode pt = d.path("pt") instanceof ObjectNode o ? o : d.putObject("pt");
+        String wk = week();
+        JsonNode rank = r.get("rank");
+        ArrayNode prize = r.putArray("prize");
+        for (int pos = 0; pos < rank.size(); pos++) {
+            ObjectNode w = who.get(rank.get(pos).asInt());
+            long pid = w.path("id").asLong();
+            long pz = pos < CUP_PRIZE.length && pid > 0 ? CUP_PRIZE[pos] * (sun ? 3 : 1) : 0;
+            prize.add(pz);
+            if (pos < 3) top.addObject().put("pos", pos + 1).put("n", w.path("n").asText()).put("o", w.path("o").asText());
+            if (pid <= 0) continue;
+            if (pos < CUP_PT.length) {
+                ObjectNode e = pt.path(String.valueOf(pid)) instanceof ObjectNode o ? o : pt.putObject(String.valueOf(pid));
+                if (!wk.equals(e.path("wk").asText())) { e.put("wk", wk); e.put("wp", 0); }
+                e.put("n", name(w.path("o").asText())).put("p", e.path("p").asInt(0) + CUP_PT[pos]).put("wp", e.path("wp").asInt(0) + CUP_PT[pos]);
+            }
+        }
+        ObjectNode last = om.createObjectNode().put("day", day).put("id", id);
+        last.set("top", top);
+        last.set("r", r);
+        c.set("last", last);
+        c.put("done", day);
+        c.putArray("ent");
+        c.put("day", cupDay());
+        // 見せてから賞金（いない人の結果は次の welcome で）
+        hub.broadcastTo(Villages.current(), (ObjectNode) out(hub).put("ev", "cup").set("r", r), null);
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        ObjectNode cres = d.path("cres") instanceof ObjectNode o ? o : d.putObject("cres");
+        for (int pos = 0; pos < rank.size(); pos++) {
+            ObjectNode w = who.get(rank.get(pos).asInt());
+            long pid = w.path("id").asLong();
+            if (pid <= 0) continue;
+            if (seen.add(pid) && !hub.onlineHere(pid)) cres.put(String.valueOf(pid), id);
+            long pz = prize.get(pos).asLong();
+            if (pz > 0) pay(d, pid, out(hub).put("ev", "pay").put("id", id).put("why", "cup").put("n", pz).put("pos", pos + 1).put("cn", w.path("n").asText()), hub);
+        }
+    }
+
     @Override
     public synchronized void contribute(PlayerSession session, ObjectNode welcome) {
         if (session.playerId() == null || session.playerId() <= 0 || session.watcher()) return;
@@ -467,8 +645,14 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
             ((ObjectNode) d.get("pay")).remove(String.valueOf(me));
             changed = true;
         }
+        // にわとりグランプリ：いないあいだに走った回の結果
+        JsonNode cr = d.path("cres").path(String.valueOf(me));
+        if (cr.isTextual() && d.path("cup").path("last").path("id").asText().equals(cr.asText())) {
+            w.set("cup", d.path("cup").path("last").path("r").deepCopy());
+        }
+        if (cr.isTextual()) { ((ObjectNode) d.get("cres")).remove(String.valueOf(me)); changed = true; }
         if (changed) save(d);
-        if (!in.isEmpty() || !outs.isEmpty() || !live.isEmpty() || w.has("res") || w.has("pay")) welcome.set("duel", w);
+        if (!in.isEmpty() || !outs.isEmpty() || !live.isEmpty() || w.has("res") || w.has("pay") || w.has("cup")) welcome.set("duel", w);
     }
 
     /** welcome のとき用（hub がないので、しまってある値から作る） */
@@ -479,6 +663,7 @@ public class DuelHandler implements MessageHandler, WelcomeContributor {
         if (!(d.path("live") instanceof ArrayNode)) d.putArray("live");
         if (!(d.path("res") instanceof ObjectNode)) d.putObject("res");
         if (!(d.path("pay") instanceof ObjectNode)) d.putObject("pay");
+        if (!(d.path("cres") instanceof ObjectNode)) d.putObject("cres");
         long now = System.currentTimeMillis();
         for (Iterator<JsonNode> it = d.withArray("box").elements(); it.hasNext(); ) if (now - it.next().path("at").asLong(0) > LIFE) it.remove();
         return d;

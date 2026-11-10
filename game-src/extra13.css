@@ -1184,3 +1184,31 @@ button.jn106.lock { opacity: .45; }
 .bq129r { display: flex; gap: 10px; align-items: center; }
 .bq129r canvas { width: 96px; height: 96px; image-rendering: pixelated; border-radius: 10px; flex: none; }
 .bq129 .li img { width: 32px; height: 32px; }
+
+/* ===== v0.73.0：こもれび記念・主催レースの条件・にわとりグランプリ・村の大会・こもれびドロップ・水族館のショー・ライブの応援 ===== */
+.grand130 { color: #b8860b; }
+.grand130s b { white-space: normal; }
+.cond125 b { color: #c0392b; }
+.cup131 canvas, .sh134 canvas, .wl135 canvas { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 auto; image-rendering: pixelated; border-radius: 8px; }
+.cup131 .li.me131 { outline: 2px solid #ffe066; }
+.tny132 { border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; padding: 6px 8px; margin: 8px 0; }
+.tny132 .cr74l { margin: 4px 0; }
+.pu133 { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pu133 #pu133cv { width: min(100%, 300px); height: auto; image-rendering: pixelated; touch-action: none; border-radius: 6px; }
+.pu133k { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: min(100%, 420px); }
+.pu133k .btn { padding: 12px 0; touch-action: none; min-width: 0; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .pu133.w92 { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; }
+  .pu133.w92 #pu133cv { width: auto; height: calc(100dvh - 185px); max-height: 300px; }
+  .pu133.w92 .pu133k { grid-template-columns: repeat(2, 1fr); width: 100%; }
+  .pu133.w92 .pu133k [data-pk="H"] { grid-column: span 2; }
+}
+.wl135k { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.wl135k .btn { padding: 12px 0; font-weight: 700; touch-action: none; min-width: 0; }
+.ch135 { position: relative; background: rgba(255, 138, 200, .2); color: #fff; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; overflow: hidden; min-height: 1.6em; }
+.ch135h { position: absolute; bottom: 0; color: #ffe066; font-weight: 700; animation: ch135up 1.2s ease-out forwards; pointer-events: none; }
+@keyframes ch135up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-28px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ch135h { animation: none; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .cup131 canvas, .sh134 canvas, .wl135 canvas { width: auto; max-width: 100%; height: calc(100dvh - 190px); max-height: 260px; }
+}

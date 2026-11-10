@@ -60,9 +60,42 @@ public class RaceGame {
 
     static final class Hosted {
         long host, purse, startAt;
-        String hostName = "", title = "";
+        String hostName = "", title = "", cond = "";
+        boolean grand;
+        int year;
         final List<String> entries = new ArrayList<>();
     }
+
+    // ------------------------------------------------------------------ 主催レースの特殊条件（v0.73.0）
+    /** 条件の名前（画面にも出す）。heavy＝重馬場・long＝長距離・sprint＝短距離・handi＝ハンデ戦・debut＝新馬戦 */
+    public static final Map<String, String> CONDS = new LinkedHashMap<>();
+    static {
+        CONDS.put("heavy", "重馬場");
+        CONDS.put("long", "長距離");
+        CONDS.put("sprint", "短距離");
+        CONDS.put("handi", "ハンデ戦");
+        CONDS.put("debut", "新馬戦");
+    }
+    /** 新馬戦に出られるのは、この数より少ない戦数のどんぐり */
+    public static final int DEBUT_RUNS = 10;
+
+    // ------------------------------------------------------------------ 年に1度の「こもれび記念」（v0.73.0）
+    // 村の1年（4季節×7日＝28日）の、冬の最後の日の 18:00 のあとの最初のレース。前の日（冬の6日目）から出走の登録とファン投票ができる。
+    // 出走は1人1粒・16粒まで登録できて、ファン投票の多い順（同じなら賞金の多い順）に6粒が走る。足りない分はふつうの強いどんぐり。
+    // 賞金は6着まで（GRAND_PRIZE）。持ち主の unpaid にためる。
+    public static final int YEAR_DAYS = 28, GRAND_ENTRY_MAX = 16;
+    public static final double GRAND_MIN = 18 * 60;
+    public static final long[] GRAND_PRIZE = { 1_000_000, 400_000, 200_000, 100_000, 60_000, 40_000 };
+    private int grandDone, grandYearOf;
+    private final List<String> grandEntries = new ArrayList<>();
+    private final Map<Long, String> grandVotes = new LinkedHashMap<>();
+    private final Deque<Map<String, Object>> grandWinners = new ArrayDeque<>();
+    private double minute = -1;
+
+    static int yearOf(int day) { return Math.max(0, day - 1) / YEAR_DAYS + 1; }
+    static int dayInYear(int day) { return Math.max(0, day - 1) % YEAR_DAYS; }
+    /** こもれび記念の登録・投票ができるか（冬の6日目と7日目、まだ走っていない年） */
+    boolean grandOpen() { return day > 0 && dayInYear(day) >= YEAR_DAYS - 2 && grandDone < yearOf(day); }
 
     private Hosted hosted, running;
     private final Map<Long, Long> unpaid = new HashMap<>();
@@ -106,7 +139,15 @@ public class RaceGame {
     // ------------------------------------------------------------------ 進行
 
     public synchronized void tick(long now, int clockDay) {
+        tick(now, clockDay, -1);
+    }
+
+    /** minute＝村の時計（6:00＝360）。わからないときは -1（こもれび記念はその日の最初のレース） */
+    public synchronized void tick(long now, int clockDay, double clockMinute) {
         day = clockDay;
+        minute = clockMinute;
+        int y = yearOf(day);
+        if (day > 0 && grandYearOf != y && !grandOpen()) { grandYearOf = y; grandEntries.clear(); grandVotes.clear(); }
         if (id == 0) { newRace(now); return; }
         if (now < phaseEnd) return;
         switch (phase) {
@@ -136,7 +177,21 @@ public class RaceGame {
         java.util.Collections.shuffle(cand, rnd);
         List<Owned> go = new ArrayList<>();
         running = null;
-        if (hosted != null && now >= hosted.startAt) {
+        if (grandOpen() && dayInYear(day) == YEAR_DAYS - 1 && (minute < 0 || minute >= GRAND_MIN)) {
+            Hosted g = new Hosted();
+            g.grand = true; g.year = yearOf(day); g.title = "第" + g.year + "回 こもれび記念"; g.hostName = "村";
+            List<String> keys = new ArrayList<>(grandEntries);
+            keys.removeIf(k -> !stable.containsKey(k));
+            Map<String, Long> vc = new HashMap<>();
+            for (String k : grandVotes.values()) vc.merge(k, 1L, Long::sum);
+            keys.sort((a, b) -> { int c = Long.compare(vc.getOrDefault(b, 0L), vc.getOrDefault(a, 0L)); return c != 0 ? c : Long.compare(stable.get(b).prize, stable.get(a).prize); });
+            for (String k : keys) { if (go.size() >= RUNNERS) break; go.add(stable.get(k)); }
+            running = g;
+            grandDone = g.year; grandYearOf = g.year;
+            grandEntries.clear(); grandVotes.clear();
+            saveStable();
+        }
+        if (running == null && hosted != null && now >= hosted.startAt) {
             Hosted h = hosted; hosted = null;
             List<Owned> es = new ArrayList<>();
             for (String k : h.entries) { Owned o = stable.get(k); if (o != null && es.size() < RUNNERS) es.add(o); }
@@ -165,7 +220,9 @@ public class RaceGame {
             r.own = o;
             r.name = o != null ? o.name : pool.remove(rnd.nextInt(pool.size())) + "号";
             r.strength = o != null ? o.s * (0.97 + rnd.nextDouble() * 0.06) : 0.72 + rnd.nextDouble() * 0.56;
-            r.weight = Math.pow(r.strength, 6);
+            if (running != null && running.grand && o == null) { r.name = "名馬" + r.name; r.strength = 1.08 + rnd.nextDouble() * 0.2; }
+            if (running != null && "handi".equals(running.cond)) r.strength = 1.0 * (0.98 + rnd.nextDouble() * 0.04);
+            r.weight = Math.pow(r.strength, power());
             r.form = Math.max(1, Math.min(5, (int) Math.floor((r.strength - 0.72) / 0.56 * 5) + 1));
             total += r.weight;
             runners.add(r);
@@ -197,15 +254,30 @@ public class RaceGame {
         for (Runner r : runners) if (r.own != null) { r.own.today++; r.own.runs++; changed = true; }
         if (changed) saveStable();
         times = new int[RUNNERS];
-        int t = 15_000 + rnd.nextInt(3_000);
+        double tf = timeFactor();
+        int t = (int) Math.round((15_000 + rnd.nextInt(3_000)) * tf);
         for (int pos = 0; pos < RUNNERS; pos++) {
             times[order[pos]] = t;
-            t += 200 + rnd.nextInt(1_100);
+            t += (int) Math.round((200 + rnd.nextInt(1_100)) * Math.max(0.8, tf));
         }
         seed = rnd.nextInt(1_000_000_000);
         phase = "run";
         phaseEnd = now + t + 1_200;
         out.toAll(state(now));
+    }
+
+    /** 強さの重み（大きいほど強いどんぐりが勝ちやすい） */
+    private double power() {
+        if (running == null) return 6;
+        if (running.grand) return 7;
+        return switch (running.cond) { case "heavy" -> 3; case "long" -> 9; case "sprint" -> 5; default -> 6; };
+    }
+
+    /** 走る時間の倍率 */
+    private double timeFactor() {
+        if (running == null) return 1;
+        if (running.grand) return 1.5;
+        return switch (running.cond) { case "heavy" -> 1.15; case "long" -> 1.35; case "sprint" -> 0.7; default -> 1; };
     }
 
     private void finish(long now) {
@@ -239,7 +311,8 @@ public class RaceGame {
         for (int pos = 0; pos < order.length; pos++) {
             Runner r = runners.get(order[pos]);
             if (r.own == null) continue;
-            long pz = running != null ? (pos < HOST_SPLIT.length ? Math.round(running.purse * HOST_SPLIT[pos]) : 0) : pos < PRIZE.length ? PRIZE[pos] : 0;
+            long pz = running != null && running.grand ? (pos < GRAND_PRIZE.length ? GRAND_PRIZE[pos] : 0)
+                : running != null ? (pos < HOST_SPLIT.length ? Math.round(running.purse * HOST_SPLIT[pos]) : 0) : pos < PRIZE.length ? PRIZE[pos] : 0;
             if (pos == 0) r.own.wins++; else if (pos == 1) r.own.seconds++; else if (pos == 2) r.own.thirds++;
             if (pz > 0) { r.own.prize += pz; unpaid.merge(r.own.owner, pz, Long::sum); }
             Map<String, Object> e = new LinkedHashMap<>();
@@ -252,7 +325,17 @@ public class RaceGame {
             }
         }
         h.put("own", own);
-        if (running != null) {
+        if (running != null && running.grand) {
+            Runner w = runners.get(order[0]);
+            Map<String, Object> gw = new LinkedHashMap<>();
+            gw.put("year", running.year); gw.put("name", w.name); gw.put("ownerName", w.own != null ? w.own.ownerName : "");
+            if (w.own != null) gw.put("owner", w.own.owner);
+            grandWinners.addFirst(gw);
+            while (grandWinners.size() > 10) grandWinners.removeLast();
+            h.put("grand", running.year);
+            h.put("hosted", running.title);
+            saveStable();
+        } else if (running != null) {
             // ふつうのどんぐりが入った着の賞金は、主催者にもどす
             long back = 0;
             for (int pos = 0; pos < Math.min(HOST_SPLIT.length, order.length); pos++) if (runners.get(order[pos]).own == null) back += Math.round(running.purse * HOST_SPLIT[pos]);
@@ -382,6 +465,12 @@ public class RaceGame {
 
     /** 主催レースの操作：book（title・purse。お金は OK が返ってから画面で払う）・cancel（主催者・受付中だけ。賞金は unpaid にもどる）・join／leave（自分のどんぐり k）・look */
     public synchronized void host(long pid, String name, String op, String title, long purse, String key, long now) {
+        host(pid, name, op, title, purse, key, "", now);
+    }
+
+    /** cond＝主催レースの特殊条件（CONDS のどれか・なしは ""）。こもれび記念の gjoin／gleave／gvote（k）もここ */
+    public synchronized void host(long pid, String name, String op, String title, long purse, String key, String cond, long now) {
+        if (cond == null || !CONDS.containsKey(cond)) cond = "";
         String msg = null;
         boolean ok = true;
         Owned o = key == null ? null : stable.get(key);
@@ -395,9 +484,9 @@ public class RaceGame {
                 else if (purse < HOST_MIN || purse > HOST_MAX || purse % 1000 != 0) { ok = false; msg = "賞金は " + HOST_MIN + "〜" + HOST_MAX + "G（1,000Gきざみ）だよ"; }
                 else {
                     Hosted h = new Hosted();
-                    h.host = pid; h.hostName = nm; h.title = t; h.purse = purse; h.startAt = now + HOST_WAIT_MS;
+                    h.host = pid; h.hostName = nm; h.title = t; h.purse = purse; h.startAt = now + HOST_WAIT_MS; h.cond = cond;
                     hosted = h;
-                    msg = "主催レース「" + t + "」の受付をはじめた！ 馬主のみんなが、どんぐりを出走させられるよ";
+                    msg = "主催レース「" + t + "」" + (cond.isEmpty() ? "" : "（" + CONDS.get(cond) + "）") + "の受付をはじめた！ 馬主のみんなが、どんぐりを出走させられるよ";
                 }
             }
             case "cancel" -> {
@@ -408,6 +497,7 @@ public class RaceGame {
                 if (hosted == null) { ok = false; msg = "いま受付中の主催レースはないよ"; }
                 else if (o == null) { ok = false; msg = "そのどんぐりは見つからなかった"; }
                 else if (hosted.entries.contains(o.k)) { ok = false; msg = "もう出走が決まっているよ"; }
+                else if ("debut".equals(hosted.cond) && o.runs >= DEBUT_RUNS) { ok = false; msg = "新馬戦に出られるのは、" + DEBUT_RUNS + "戦より少ないどんぐりだけだよ"; }
                 else if (hosted.entries.size() >= RUNNERS) { ok = false; msg = "出走は " + RUNNERS + " 粒まで。もういっぱいだよ"; }
                 else if (hosted.entries.stream().map(stable::get).filter(x -> x != null && x.owner == pid).count() >= HOST_PER_OWNER) { ok = false; msg = "1人 " + HOST_PER_OWNER + " 粒までだよ"; }
                 else { hosted.entries.add(o.k); msg = "「" + o.name + "」を「" + hosted.title + "」に出走させた"; }
@@ -415,6 +505,23 @@ public class RaceGame {
             case "leave" -> {
                 if (hosted == null || o == null || !hosted.entries.remove(o.k)) { ok = false; msg = "とりけせる出走はないよ"; }
                 else msg = "「" + o.name + "」の出走をとりけした";
+            }
+            case "gjoin" -> {
+                if (!grandOpen()) { ok = false; msg = "こもれび記念の登録は、冬の6日目と7日目（レースの前まで）だよ"; }
+                else if (o == null) { ok = false; msg = "そのどんぐりは見つからなかった"; }
+                else if (grandEntries.contains(o.k)) { ok = false; msg = "もう登録してあるよ"; }
+                else if (grandEntries.stream().map(stable::get).anyMatch(x -> x != null && x.owner == pid)) { ok = false; msg = "こもれび記念に登録できるのは、1人1粒までだよ"; }
+                else if (grandEntries.size() >= GRAND_ENTRY_MAX) { ok = false; msg = "登録は " + GRAND_ENTRY_MAX + " 粒まで。もういっぱいだよ"; }
+                else { grandEntries.add(o.k); msg = "「" + o.name + "」をこもれび記念に登録した。ファン投票の多い6粒が走るよ"; }
+            }
+            case "gleave" -> {
+                if (o == null || !grandEntries.remove(o.k)) { ok = false; msg = "とりけせる登録はないよ"; }
+                else { grandVotes.values().removeIf(o.k::equals); msg = "「" + o.name + "」の登録をとりけした"; }
+            }
+            case "gvote" -> {
+                if (!grandOpen()) { ok = false; msg = "いまはファン投票の期間じゃないよ"; }
+                else if (key == null || !grandEntries.contains(key)) { ok = false; msg = "そのどんぐりは登録されていないよ"; }
+                else { grandVotes.put(pid, key); Owned v = stable.get(key); msg = "「" + (v == null ? "" : v.name) + "」に1票入れた（1人1票。あとから変えられるよ）"; }
             }
             default -> { }
         }
@@ -424,6 +531,9 @@ public class RaceGame {
         if ("book".equals(op) && ok) r.put("purse", purse);
         r.put("min", HOST_MIN); r.put("max", HOST_MAX); r.put("wait", HOST_WAIT_MS);
         r.put("unpaid", unpaid.getOrDefault(pid, 0L));
+        if (grandVotes.containsKey(pid)) r.put("gvote", grandVotes.get(pid));
+        Map<String, Object> cs = new LinkedHashMap<>(CONDS);
+        r.put("conds", cs);
         out.toPlayer(pid, r);
         if (!"look".equals(op) && ok) out.toAll(state(now));
     }
@@ -431,6 +541,7 @@ public class RaceGame {
     private Map<String, Object> hostView(Hosted h, long now) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("title", h.title); m.put("host", h.host); m.put("hostName", h.hostName); m.put("purse", h.purse);
+        if (!h.cond.isEmpty()) { m.put("cond", h.cond); m.put("condName", CONDS.get(h.cond)); }
         m.put("startIn", Math.max(0, h.startAt - now));
         List<Object> es = new ArrayList<>();
         for (String k : h.entries) {
@@ -460,8 +571,15 @@ public class RaceGame {
         if (hosted != null) {
             Map<String, Object> hz = new LinkedHashMap<>();
             hz.put("host", hosted.host); hz.put("hostName", hosted.hostName); hz.put("title", hosted.title); hz.put("purse", hosted.purse); hz.put("startAt", hosted.startAt); hz.put("entries", new ArrayList<>(hosted.entries));
+            hz.put("cond", hosted.cond);
             m.put("hosted", hz);
         }
+        Map<String, Object> gz = new LinkedHashMap<>();
+        gz.put("done", grandDone); gz.put("year", grandYearOf); gz.put("entries", new ArrayList<>(grandEntries));
+        Map<String, Object> vz = new LinkedHashMap<>();
+        grandVotes.forEach((k, v) -> vz.put(String.valueOf(k), v));
+        gz.put("votes", vz); gz.put("winners", new ArrayList<>(grandWinners));
+        m.put("grand", gz);
         out.saveStable(m);
     }
 
@@ -486,7 +604,15 @@ public class RaceGame {
             Hosted h = new Hosted();
             h.host = num(hz.get("host")); h.hostName = str(hz.get("hostName")); h.title = str(hz.get("title")); h.purse = num(hz.get("purse")); h.startAt = num(hz.get("startAt"));
             if (hz.get("entries") instanceof List<?> el) for (Object x : el) if (x != null && stable.containsKey(String.valueOf(x))) h.entries.add(String.valueOf(x));
+            h.cond = CONDS.containsKey(str(hz.get("cond"))) ? str(hz.get("cond")) : "";
             if (h.host != 0 && h.purse > 0 && !h.title.isEmpty()) hosted = h;
+        }
+        grandEntries.clear(); grandVotes.clear(); grandWinners.clear();
+        if (m.get("grand") instanceof Map<?, ?> gz) {
+            grandDone = (int) num(gz.get("done")); grandYearOf = (int) num(gz.get("year"));
+            if (gz.get("entries") instanceof List<?> el) for (Object x : el) if (x != null && stable.containsKey(String.valueOf(x))) grandEntries.add(String.valueOf(x));
+            if (gz.get("votes") instanceof Map<?, ?> vz) vz.forEach((k, v) -> { try { if (grandEntries.contains(String.valueOf(v))) grandVotes.put(Long.parseLong(String.valueOf(k)), String.valueOf(v)); } catch (NumberFormatException ex) { } });
+            if (gz.get("winners") instanceof List<?> wl) for (Object x : wl) if (x instanceof Map<?, ?> w) { Map<String, Object> c = new LinkedHashMap<>(); w.forEach((k, v) -> c.put(String.valueOf(k), v)); grandWinners.addLast(c); }
         }
     }
 
@@ -520,7 +646,33 @@ public class RaceGame {
         }
         m.put("runners", rs);
         if (hosted != null) m.put("host", hostView(hosted, now));
-        if (running != null) { Map<String, Object> hr = new LinkedHashMap<>(); hr.put("title", running.title); hr.put("hostName", running.hostName); hr.put("purse", running.purse); m.put("hosted", hr); }
+        if (running != null) {
+            Map<String, Object> hr = new LinkedHashMap<>(); hr.put("title", running.title); hr.put("hostName", running.hostName); hr.put("purse", running.purse);
+            if (running.grand) { hr.put("grand", running.year); hr.put("prize", toListL(GRAND_PRIZE)); }
+            if (!running.cond.isEmpty()) { hr.put("cond", running.cond); hr.put("condName", CONDS.get(running.cond)); }
+            m.put("hosted", hr);
+        }
+        // こもれび記念（登録の期間のあいだは登録と票、いつでも最近の勝ち馬）
+        Map<String, Object> g = new LinkedHashMap<>();
+        g.put("year", yearOf(Math.max(1, day)) + (day > 0 && grandDone >= yearOf(day) ? 1 : 0));
+        g.put("open", grandOpen());
+        g.put("inYear", day > 0 ? dayInYear(day) + 1 : 0);
+        g.put("at", (int) GRAND_MIN);
+        g.put("prize", toListL(GRAND_PRIZE));
+        if (grandOpen()) {
+            Map<String, Long> vc = new HashMap<>();
+            for (String k : grandVotes.values()) vc.merge(k, 1L, Long::sum);
+            List<Object> ge = new ArrayList<>();
+            for (String k : grandEntries) {
+                Owned o = stable.get(k); if (o == null) continue;
+                Map<String, Object> e = new LinkedHashMap<>(); e.put("k", o.k); e.put("name", o.name); e.put("owner", o.owner); e.put("ownerName", o.ownerName);
+                e.put("s", Math.round(o.s * 100)); e.put("prize", o.prize); e.put("votes", vc.getOrDefault(k, 0L));
+                ge.add(e);
+            }
+            g.put("entries", ge);
+        }
+        g.put("winners", new ArrayList<>(grandWinners));
+        m.put("grand", g);
         if (!"bet".equals(phase)) {
             m.put("order", toList(order));
             m.put("times", toList(times));
@@ -593,6 +745,12 @@ public class RaceGame {
     }
 
     static double clamp(double v, double lo, double hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    static List<Object> toListL(long[] a) {
+        List<Object> l = new ArrayList<>();
+        for (long x : a) l.add(x);
+        return l;
+    }
 
     static List<Object> toList(int[] a) {
         List<Object> l = new ArrayList<>();

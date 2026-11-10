@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>村の大会｜こもれび村 管理人室</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<header class="bar">
+  <h1>村の大会</h1>
+  <span class="grow"></span>
+  <a class="btn ghost" href="/admin">管理人室に戻る</a>
+</header>
+<nav th:replace="~{admin/fragments :: vbar}"></nav>
+<main class="wrap">
+  <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+
+  <section class="card">
+    <h2>パズル大会を開く</h2>
+    <p class="muted">時間内に、えらんだスマホのゲームでいちばんいいスコアを出した人の勝ち（参加した人だけ）。賞金は 1着60%・2着25%・3着15%。賞金は村から出ます（10,000〜10,000,000G）。</p>
+    <form method="post" th:action="@{/admin/tourney}" class="grid2">
+      <input type="hidden" name="kind" value="puzzle">
+      <label>ゲーム <select name="game"><option th:each="g : ${games}" th:value="${g.key}" th:text="${g.value}">ゲーム</option></select></label>
+      <label>長さ <select name="mins"><option value="10">10分</option><option value="30" selected>30分</option><option value="60">60分</option><option value="180">3時間</option></select></label>
+      <label>賞金（G） <input name="purse" inputmode="numeric" value="100000" size="9"></label>
+      <label>名前（空なら自動） <input name="title" maxlength="16" size="14"></label>
+      <button class="btn" type="submit">いま開く</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>釣り大会を開く</h2>
+    <p class="muted">えらんだ魚を、いちばん先に釣った人が賞金をぜんぶ（参加した人だけ）。魚を空にすると、いまの季節のふつうの魚からランダム（時間・天気・えさ・借金などの条件がある魚は出ません）。だれも釣れなければ賞金は出ません。</p>
+    <form method="post" th:action="@{/admin/tourney}" class="grid2">
+      <input type="hidden" name="kind" value="fish">
+      <label>魚の名前（空ならランダム） <input name="fish" maxlength="16" size="12" placeholder="例：サバ"></label>
+      <label>長さ <select name="mins"><option value="10">10分</option><option value="30" selected>30分</option><option value="60">60分</option></select></label>
+      <label>賞金（G） <input name="purse" inputmode="numeric" value="100000" size="9"></label>
+      <label>名前（空なら自動） <input name="title" maxlength="16" size="14"></label>
+      <button class="btn" type="submit">いま開く</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>いまの大会</h2>
+    <p class="muted" th:if="${#lists.isEmpty(cur)}">いま開いている大会はありません。</p>
+    <table class="players" th:unless="${#lists.isEmpty(cur)}">
+      <tr><th>名前</th><th>中身</th><th>開いた人</th><th>賞金</th><th>おわり</th><th>参加</th><th></th></tr>
+      <tr th:each="t : ${cur}">
+        <td th:text="${t.title()}">名前</td><td th:text="${t.what()}">中身</td><td th:text="${t.host()}">人</td>
+        <td th:text="|${t.purse()} G|">0</td><td th:text="${t.end()}">--</td><td th:text="|${t.people()}人|">0</td>
+        <td><form method="post" th:action="@{/admin/tourney/{id}/stop(id=${t.id()})}"><button class="btn ghost" type="submit" onclick="return confirm('大会をおわらせますか？')">おわらせる</button></form></td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="card" th:unless="${#lists.isEmpty(last)}">
+    <h2>おわった大会</h2>
+    <table class="players">
+      <tr><th>名前</th><th>中身</th><th>開いた人</th><th>賞金</th><th>結果</th></tr>
+      <tr th:each="t : ${last}">
+        <td th:text="${t.title()}">名前</td><td th:text="${t.what()}">中身</td><td th:text="${t.host()}">人</td><td th:text="|${t.purse()} G|">0</td><td th:text="${t.result()}">結果</td>
+      </tr>
+    </table>
+  </section>
+</main>
+</body>
+</html>

@@ -1646,6 +1646,34 @@ button.jn106.lock { opacity: .45; }
 .bq129r { display: flex; gap: 10px; align-items: center; }
 .bq129r canvas { width: 96px; height: 96px; image-rendering: pixelated; border-radius: 10px; flex: none; }
 .bq129 .li img { width: 32px; height: 32px; }
+
+/* ===== v0.73.0：こもれび記念・主催レースの条件・にわとりグランプリ・村の大会・こもれびドロップ・水族館のショー・ライブの応援 ===== */
+.grand130 { color: #b8860b; }
+.grand130s b { white-space: normal; }
+.cond125 b { color: #c0392b; }
+.cup131 canvas, .sh134 canvas, .wl135 canvas { display: block; width: 100%; max-width: 480px; height: auto; margin: 0 auto; image-rendering: pixelated; border-radius: 8px; }
+.cup131 .li.me131 { outline: 2px solid #ffe066; }
+.tny132 { border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; padding: 6px 8px; margin: 8px 0; }
+.tny132 .cr74l { margin: 4px 0; }
+.pu133 { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pu133 #pu133cv { width: min(100%, 300px); height: auto; image-rendering: pixelated; touch-action: none; border-radius: 6px; }
+.pu133k { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: min(100%, 420px); }
+.pu133k .btn { padding: 12px 0; touch-action: none; min-width: 0; }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .pu133.w92 { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; }
+  .pu133.w92 #pu133cv { width: auto; height: calc(100dvh - 185px); max-height: 300px; }
+  .pu133.w92 .pu133k { grid-template-columns: repeat(2, 1fr); width: 100%; }
+  .pu133.w92 .pu133k [data-pk="H"] { grid-column: span 2; }
+}
+.wl135k { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.wl135k .btn { padding: 12px 0; font-weight: 700; touch-action: none; min-width: 0; }
+.ch135 { position: relative; background: rgba(255, 138, 200, .2); color: #fff; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; overflow: hidden; min-height: 1.6em; }
+.ch135h { position: absolute; bottom: 0; color: #ffe066; font-weight: 700; animation: ch135up 1.2s ease-out forwards; pointer-events: none; }
+@keyframes ch135up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-28px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ch135h { animation: none; } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .cup131 canvas, .sh134 canvas, .wl135 canvas { width: auto; max-width: 100%; height: calc(100dvh - 190px); max-height: 260px; }
+}
 </style>
 
 <header>
@@ -1772,7 +1800,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.72.0";
+  const VER = "0.73.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6277,7 +6305,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.72.0";
+const CLIENT_VERSION = "0.73.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8355,6 +8383,16 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.73.0", date: "2026/11/10", title: "こもれび記念・村の大会・こもれびドロップ・水族館のショー", items: [
+    "年に1度の大レース「こもれび記念」：村の1年の最後（冬の7日目）の18:00のあとに走る。冬の6日目から馬主がどんぐりを登録できて、村のみんなのファン投票で6粒が出走。1着の賞金は1,000,000G",
+    "競どんぐりの主催レースに「特殊条件」：重馬場・長距離・短距離・ハンデ戦・新馬戦からえらべる",
+    "にわとりグランプリ：毎日21:00に、登録した村のにわとりが一斉に走る（1人2羽・12羽まで）。果たし状の画面から登録。日曜は賞金3倍",
+    "スマホの「大会」：村の人が賞金を出して、パズル大会（スマホのゲームのスコア）や釣り大会（えらんだ魚かランダムの魚を、いちばん先に釣った人の勝ち）を開ける",
+    "スマホのゲームに「こもれびドロップ」：2つずつ落ちてくる作物を4つつなげて消す。連鎖するほど大きな点に",
+    "みんなの水族館に「ショーのプール」：ペンギンショー（建ったら）とイルカショー（大水槽ができたら）。タイミングよく拍手すると盛り上がる",
+    "アイドル：ほかの人のライブを見て、コールで応援できるように（コールが届くとファンがふえる）。先輩アイドルのライブはいつでも見られる",
+    "職業のスキル：覚えたスキルは、いまの職業でなくても全部効くように（経験がたまるのは、いまの職業だけ）",
+  ] },
   { v: "0.72.0", date: "2026/11/10", title: "装備・みんなの水族館・こもれびブティック", items: [
     "スマホの「装備」：武器・防具・アクセサリー（2つ）を身につけられるように。身につけた物はホットバーから出るので、手に剣を持っていなくても魔物と戦える。旅の武具屋で、よろいや指輪・お守り・王者の冠を買える（騎士と竜うろこのよろいは遺跡の鍛冶師テツが作る）",
     "みなと町に「みんなの水族館」：村のみんなの募金で建てる（1億Gで建って、4億G・10億Gで展示がふえる）。建ったら釣った魚や海の幸を寄贈して、水槽をうめよう。はじめての種類には寄贈した人の名前が出る",
@@ -19465,7 +19503,7 @@ function openMenu92(id, note) {
     F92.render = () => {
       if (!body.isConnected) { F92.render = null; return; }
       const B = F92.board[id], T = F92.tab, o = g92()[id], rows = B ? B[T] : null, me = B ? B.me : null;
-      const extra = id === "tsu" ? `・いちばん長いつなぎ ${o.maxChain}つ・見つけた種 ${o.seedTot}個` : id === "mrg" ? `・いちばん育てた物 ${o.top ? MN92[o.top - 1] : "なし"}` : `・とびこえた柵 ${o.fences}本`;
+      const extra = id === "tsu" ? `・いちばん長いつなぎ ${o.maxChain}つ・見つけた種 ${o.seedTot}個` : id === "mrg" ? `・いちばん育てた物 ${o.top ? MN92[o.top - 1] : "なし"}` : id === "jmp" ? `・とびこえた柵 ${o.fences}本` : id === "puyo" ? `・いちばんの連鎖 ${o.maxChain}連鎖` : "";
       body.innerHTML = `<div class="gm92m">${note ? `<p class="mtext">${esc(note)}</p>` : ""}<p class="mtext">${esc(M.intro)}</p>
         <div class="row2"><button class="btn" type="button" id="gm92go">あそぶ</button><button class="btn light" type="button" id="gm92back">ゲームのえらびなおし</button></div>
         <p class="mtext small">自己ベスト <b>${fmt92(o.best)}${M.unit}</b>・あそんだ回数 ${o.plays}回${extra}</p>
@@ -23849,7 +23887,7 @@ F105.ready = true;
 // =================== v106: 職業ツリー（農家・料理人・漁師・大工・商人・冒険者） ===================
 var F106 = {};
 // 職業を1つえらぶ（スマホの「職業」）。その職業のことをすると職業の経験がたまって、Lv10まで上がる。
-// Lv2・6・10 はそのまま、Lv4 と Lv8 は2つのうち1つをえらぶ（ツリー）。効くのは、いまの職業のスキルだけ。
+// Lv2・6・10 はそのまま、Lv4 と Lv8 は2つのうち1つをえらぶ（ツリー）。覚えたスキルは、どの職業のものも効く（v0.73.0）。経験がたまるのは、いまの職業だけ。
 // 職業ごとの経験は残るので、もどればそのまま。2回目からの転職は5,000G。
 const JOB106 = {
   farmer: { name: "農家", icon: "tomato", c: "#5aa04a", how: "収穫・種まき・水やり", sk: [
@@ -23893,11 +23931,12 @@ const JOBLV106 = [0, 60, 160, 320, 560, 900, 1350, 1950, 2700, 3600];
 const job106 = () => { const j = world.job106 && typeof world.job106 === "object" ? world.job106 : (world.job106 = {}); j.xp = j.xp || {}; j.pick = j.pick || {}; return j; };
 const jlv106 = k => { const x = job106().xp[k] || 0; let l = 1; for (let i = 1; i < JOBLV106.length; i++) if (x >= JOBLV106[i]) l = i + 1; return l; };
 const curJob106 = () => { const c = job106().cur; return JOB106[c] ? c : null; };
-/** いまの職業で、そのスキルが使えるか */
+/** そのスキルを覚えているか（v0.73.0 から、いまの職業でなくても、覚えたスキルは全部効く） */
 function has106(id) {
-  const c = curJob106(); if (!c) return false;
-  const J = JOB106[c], L = jlv106(c), p = job106().pick[c] || {};
-  for (const [lv, s] of J.sk) { if (lv > L) continue; if (typeof s === "string") { if (s === id) return true; } else if (p[lv] === id && s.some(o => o[0] === id)) return true; }
+  for (const c in JOB106) {
+    const J = JOB106[c], L = jlv106(c), p = job106().pick[c] || {};
+    for (const [lv, s] of J.sk) { if (lv > L) continue; if (typeof s === "string") { if (s === id) return true; } else if (p[lv] === id && s.some(o => o[0] === id)) return true; }
+  }
   return false;
 }
 F106.has = has106; F106.lv = jlv106; F106.cur = curJob106;
@@ -24024,7 +24063,7 @@ function openJob106(sel, note) {
       <p class="mtext small">経験 ${Math.floor(x)}${nx == null ? "" : ` / 次のLvまで ${Math.ceil(nx - x)}`}。経験がたまること：${J.how}</p>
       ${treeHtml106(sel)}
       <div class="row2">${cur === sel ? `<span class="note">いまの職業です</span>` : `<button class="btn" type="button" id="jgo106">${J.name}になる${cur ? "（5,000G）" : ""}</button>`}</div>
-      <p class="note">効くのは、いまの職業のスキルだけ。職業を変えても、それぞれの職業の経験とえらんだ道は残ります。Lv10 になると称号がもらえるよ。</p>`;
+      <p class="note">覚えたスキルは、いまの職業でなくても全部効くよ。経験がたまるのは、いまの職業だけ。職業を変えても、それぞれの職業の経験とえらんだ道は残ります。Lv10 になると称号がもらえるよ。</p>`;
     body.querySelectorAll("[data-j106]").forEach(b => b.onclick = () => openJob106(b.dataset.j106));
     body.querySelector("#jgo106")?.addEventListener("click", () => {
       const fee = cur ? 5000 : 0;
@@ -24050,7 +24089,7 @@ for (const t of TTL106) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT
 GUIDE54.push(["職業", "s98_coin", `<p>スマホの「職業」で、<b>農家・料理人・漁師・大工・商人・冒険者</b>から1つえらべます（はじめては無料、2回目からは5,000G）。</p>
   <ul><li>その職業のことをすると経験がたまって、Lv10 まで上がります（農家＝収穫など、料理人＝料理、漁師＝釣り、大工＝クラフト・木を切る・岩をくだく、商人＝お店や市場で売る、冒険者＝魔物や討伐）</li>
   <li>Lv2・6・10 でスキルを覚えます。Lv4 と Lv8 は、2つの道から1つをえらびます（あとから変えるのは2,000G）</li>
-  <li>効くのは、いまの職業のスキルだけ。職業を変えても、経験とえらんだ道は残ります。Lv10 で称号</li></ul>`]);
+  <li>覚えたスキルは、いまの職業でなくても全部効く。経験がたまるのは、いまの職業だけ。職業を変えても、経験とえらんだ道は残ります。Lv10 で称号</li></ul>`]);
 F106.ready = true;
 
 // =================== v107: 競どんぐりの馬主（どんぐりを買って名前をつけ、レースで賞金） ===================
@@ -27646,7 +27685,9 @@ GUIDE54.push(["アイドルの活躍の場", "s13_latte30", `<ul>
 // 受付は3分。そのあとの最初のレースが主催レース（2粒そろわなければ取りやめ）。賞金は 1着60%・2着25%・3着15%。
 // 賞金のお金は、サーバーが OK を返してから画面で払う。もどってくる賞金（取りやめ・ふつうのどんぐりの入着分）は馬主の受けとり（claim）で入る。
 var F125 = {};
-const R125 = { st: null, wait: 0, msg: "", purse: 30000, title: "" };
+const R125 = { st: null, wait: 0, msg: "", purse: 30000, title: "", cond: "" };
+// 主催レースの特殊条件（v0.73.0・サーバーの RaceGame.CONDS とそろえる）
+const CONDS125 = [["", "ふつう", "いつもの決まり"], ["heavy", "重馬場", "足もとが悪くて、波乱が起きやすい"], ["long", "長距離", "長く走るぶん、強いどんぐりが有利"], ["sprint", "短距離", "あっというまに決着"], ["handi", "ハンデ戦", "みんな同じ強さで走る。運だめし"], ["debut", "新馬戦", "10戦より少ないどんぐりだけが出られる"]];
 const sendHost125 = (op, extra) => { if (!F8.connected) return false; send8({ type: "race", act: "host", op, ...(extra || {}) }); return true; };
 const _h125 = handle8;
 handle8 = m => {
@@ -27657,7 +27698,9 @@ handle8 = m => {
       if (m.op === "join" && m.ok) world.stats.hostJoin125 = (world.stats.hostJoin125 || 0) + 1;
       R125.wait = 0; R125.msg = m.msg || "";
       if (m.op === "cancel" && m.ok) setTimeout(() => send107("claim"), 400);
+      if (m.gvote !== undefined) R125.gvote = m.gvote; else if (m.op === "look" || m.op === "gvote") R125.gvote = m.gvote || "";
       if (modalOpen && $("mtitle").textContent === "主催レース") renderHost125();
+      if (modalOpen && $("mtitle").textContent === "こもれび記念" && typeof F130 !== "undefined" && F130 && F130.render) F130.render();
     } catch (e) { if (window.__komoErr) window.__komoErr(e, "v125"); }
     return;
   }
@@ -27672,12 +27715,13 @@ function renderHost125() {
   const st = R125.st || {}, H = st.host, me = onl.id, mine = R107.list || [];
   const left = H ? Math.max(0, Math.ceil((H.startIn - (performance.now() - (R125.at || performance.now()))) / 1000)) : 0;
   const ent = H ? H.entries || [] : [];
-  const runningNow = st.hosted ? `<p class="mtext"><b>いま走っている主催レース：「${esc(st.hosted.title)}」</b>（${esc(st.hosted.hostName)}さん主催・賞金 ${fmt(st.hosted.purse)}）</p>` : "";
+  const runningNow = st.hosted && !st.hosted.grand ? `<p class="mtext"><b>いま走っている主催レース：「${esc(st.hosted.title)}」</b>${st.hosted.condName ? `【${esc(st.hosted.condName)}】` : ""}（${esc(st.hosted.hostName)}さん主催・賞金 ${fmt(st.hosted.purse)}）</p>` : "";
   let html = `<p class="mtext">馬主が賞金を出して開く、村の馬主どうしのレース。受付は3分。そのあとのレースが主催レースになるよ。賞金は 1着60%・2着25%・3着15%。</p>${runningNow}
     ${R125.msg ? `<p class="mtext small"><b>${esc(R125.msg)}</b></p>` : ""}`;
   if (H) {
     const iAmHost = H.host === me;
     html += `<h3 class="lbl">受付中：「${esc(H.title)}」</h3>
+      ${H.condName ? `<p class="mtext small cond125">条件：<b>${esc(H.condName)}</b>　${esc((CONDS125.find(c => c[0] === H.cond) || [])[2] || "")}</p>` : ""}
       <p class="mtext small">${esc(H.hostName)}さん主催・賞金 <b>${fmt(H.purse)}</b>・出走 ${ent.length} / 6粒・あと<b id="hst125">${Math.floor(left / 60)}分${String(left % 60).padStart(2, "0")}秒</b>でしめきり（そのあとの最初のレース）</p>
       <div class="list">${ent.length ? ent.map(e => `<div class="li"><img src="${ASSETS.acorn_shiny || ""}" alt=""><span class="nm">${esc(e.name)}<span class="sub2">${esc(e.ownerName)}さん・走り ${e.s}</span></span><span class="acts">${e.owner === me ? `<button class="btn ghost" type="button" data-hl125="${esc(e.k)}">とりけす</button>` : ""}</span></div>`).join("") : `<p class="mtext">まだだれも出走していないよ。2粒そろうとレースになる。</p>`}</div>
       <h3 class="lbl">自分のどんぐりを出走させる（1人2粒まで）</h3>
@@ -27687,6 +27731,9 @@ function renderHost125() {
     html += `<h3 class="lbl">主催する</h3>
       <div class="row"><input id="ht125" maxlength="14" placeholder="レースの名前（例：こもれび記念）" value="${esc(R125.title)}" style="flex:1;min-width:10em"></div>
       <div class="mtabs">${PURSES125.map(p => `<button class="chip" type="button" data-hp125="${p}" aria-pressed="${R125.purse === p}">${fmt(p)}</button>`).join("")}</div>
+      <h3 class="lbl">特殊条件</h3>
+      <div class="mtabs">${CONDS125.map(c => `<button class="chip" type="button" data-hc125="${c[0]}" aria-pressed="${R125.cond === c[0]}">${c[1]}</button>`).join("")}</div>
+      <p class="mtext small">${esc((CONDS125.find(c => c[0] === R125.cond) || CONDS125[0])[2])}</p>
       <div class="row2"><button class="btn" type="button" id="hb125" ${world.money < R125.purse || R125.wait ? "disabled" : ""}>賞金 ${fmt(R125.purse)} で主催する</button></div>
       <p class="mtext small">所持金 <b>${fmt(world.money)}</b>。賞金は主催したときに払う。ふつうのどんぐりが入着した分と、2粒そろわなかったときは、主催した人にもどるよ。主催した人も、自分のどんぐりを出走させられる。</p>`;
   }
@@ -27695,12 +27742,13 @@ function renderHost125() {
   body.querySelectorAll("[data-hj125]").forEach(b => b.onclick = () => { R125.wait = Date.now(); sendHost125("join", { k: b.dataset.hj125 }); renderHost125(); });
   body.querySelectorAll("[data-hl125]").forEach(b => b.onclick = () => sendHost125("leave", { k: b.dataset.hl125 }));
   body.querySelectorAll("[data-hp125]").forEach(b => b.onclick = () => { R125.title = $("ht125")?.value || R125.title; R125.purse = +b.dataset.hp125; renderHost125(); });
+  body.querySelectorAll("[data-hc125]").forEach(b => b.onclick = () => { R125.title = $("ht125")?.value || R125.title; R125.cond = b.dataset.hc125; renderHost125(); });
   body.querySelector("#hc125")?.addEventListener("click", e => { const b = e.currentTarget; if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "本当にとりやめる？"; return; } sendHost125("cancel"); });
   body.querySelector("#hb125")?.addEventListener("click", () => {
     const t = String($("ht125").value || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim().slice(0, 14); R125.title = t;
     if (!t) { R125.msg = "レースの名前を入れてね"; renderHost125(); return; }
     if (world.money < R125.purse) { R125.msg = "所持金が足りないよ"; renderHost125(); return; }
-    R125.wait = Date.now(); R125.msg = "…"; sendHost125("book", { title: t, purse: R125.purse }); renderHost125();
+    R125.wait = Date.now(); R125.msg = "…"; sendHost125("book", { title: t, purse: R125.purse, cond: R125.cond }); renderHost125();
   });
   body.querySelector("#hk125")?.addEventListener("click", () => { closeModal(); K.openCasino && K.openCasino("race"); });
   body.querySelector("#hs125")?.addEventListener("click", () => { closeModal(); openStable107(); });
@@ -28440,6 +28488,755 @@ GUIDE54.push(["こもれびブティック", "coin", `<p>スマホの「ゲー�
   <li><b>お店を広げる</b>：棚・1日のお客さん・新しい服とお客さんがふえる。セレクトショップからは「今週のテーマ」。内装を入れると満足度が上がる</li>
   <li>1日（日本時間）に来るお客さんの数は、お店の大きさで決まる。前の仕立て屋（自分の服を作る）は「工房」から開ける</li></ul>`]);
 
+// =================== v130: 年に1度の「こもれび記念」（どんぐりの大レース・ファン投票） ===================
+// サーバー：RaceGame の grand。村の1年（28日）の冬の7日目、18:00 のあとの最初のレース。冬の6日目から登録（1人1粒・16粒まで）とファン投票（1人1票）。
+// 票の多い6粒が走る（同じなら賞金の多い順）。賞金は6着まで持ち主の unpaid（馬主の厩舎で受けとる）。
+// {type:"race",act:"host",op:"gjoin"|"gleave"|"gvote",k} → raceHost。いまのようすは race の state の grand。
+var F130 = {};
+const G130 = { seen: {}, open: false };
+const grandSt130 = () => (R125.st && R125.st.grand) || null;
+function renderGrand130(note) {
+  const body = $("mbody"); if (!body || !modalOpen || $("mtitle").textContent !== "こもれび記念") return;
+  const g = grandSt130(), me = onl.id, mine = R107.list || [];
+  if (!g) { body.innerHTML = `<p class="mtext">ようすを読みこんでいるよ…</p>`; return; }
+  const ent = (g.entries || []).slice().sort((a, b) => b.votes - a.votes || b.prize - a.prize);
+  const myEnt = ent.find(e => e.owner === me);
+  const prize = g.prize || [];
+  const left = Math.max(0, 28 - (g.inYear || 0));
+  let html = `<p class="mtext">村の1年の最後、<b>冬の7日目の18:00</b> のあとに走る、年に1度の大レース。冬の6日目と7日目に、馬主は自分のどんぐりを1粒登録できて、村のみんなはファン投票で1票入れられる。<b>票の多い6粒</b>が出走するよ。</p>
+    ${note || R125.msg ? `<p class="mtext small"><b>${esc(note || R125.msg)}</b></p>` : ""}
+    <div class="stat grand130s"><span>次の大レース</span><b>第${g.year}回 こもれび記念</b><span>いまは</span><b>${g.open ? "登録・投票の受付中" : `村の1年の${g.inYear || "?"}日目（受付まで あと${Math.max(0, left - 1)}日）`}</b>
+      <span>賞金</span><b>${prize.map((p, i) => `${i + 1}着 ${fmt(p)}`).join("・")}</b></div>`;
+  if (g.open) {
+    html += `<h3 class="lbl">登録しているどんぐり（${ent.length} / 16）</h3>
+      <div class="list">${ent.length ? ent.map((e, i) => `<div class="li"><img src="${ASSETS.acorn_shiny || ""}" alt=""><span class="nm">${i < 6 ? "<b>出走圏</b> " : ""}${esc(e.name)}<span class="sub2">${esc(e.ownerName)}さん・走り ${e.s}・賞金 ${fmt(e.prize)}・<b>${e.votes}票</b></span></span><span class="acts">${R125.gvote === e.k ? "投票ずみ" : `<button class="btn" type="button" data-gv130="${esc(e.k)}">1票入れる</button>`}${e.owner === me ? `<button class="btn ghost" type="button" data-gl130="${esc(e.k)}">とりけす</button>` : ""}</span></div>`).join("") : `<p class="mtext">まだ登録しているどんぐりはいないよ。登録がなければ、名馬たちだけで走るよ。</p>`}</div>`;
+    if (!myEnt) html += `<h3 class="lbl">自分のどんぐりを登録する（1人1粒）</h3>
+      <div class="list">${mine.length ? mine.map(a => `<div class="li"><img src="${ASSETS.acorn_shiny || ""}" alt=""><span class="nm">${esc(a.name)}<span class="sub2">走り ${a.s}・${a.runs}戦 ${a.wins}勝・賞金 ${fmt(a.prize)}</span></span><span class="acts"><button class="btn" type="button" data-gj130="${esc(a.k)}">登録する</button></span></div>`).join("") : `<p class="mtext">どんぐりを持っていないよ。馬主の厩舎で迎えられる。</p>`}</div>`;
+  }
+  const W = g.winners || [];
+  html += `<h3 class="lbl">歴代の勝ち馬</h3><div class="list">${W.length ? W.map(w => `<div class="li"><span class="nm">第${w.year}回　<b>${esc(w.name)}</b><span class="sub2">${w.ownerName ? `${esc(w.ownerName)}さんのどんぐり` : "村の名馬"}</span></span></div>`).join("") : `<p class="mtext">まだ一度も走っていないよ。</p>`}</div>
+    <div class="row2"><button class="btn light" type="button" id="gk130">競どんぐりにもどる</button><button class="btn light" type="button" id="gs130">馬主の厩舎</button></div>`;
+  body.innerHTML = html;
+  body.querySelectorAll("[data-gv130]").forEach(b => b.onclick = () => { R125.gvote = b.dataset.gv130; sendHost125("gvote", { k: b.dataset.gv130 }); world.stats.grandVote130 = (world.stats.grandVote130 || 0) + 1; saveWorld(); });
+  body.querySelectorAll("[data-gj130]").forEach(b => b.onclick = () => sendHost125("gjoin", { k: b.dataset.gj130 }));
+  body.querySelectorAll("[data-gl130]").forEach(b => b.onclick = () => sendHost125("gleave", { k: b.dataset.gl130 }));
+  body.querySelector("#gk130").onclick = () => { closeModal(); K.openCasino && K.openCasino("race"); };
+  body.querySelector("#gs130").onclick = () => { closeModal(); openStable107(); };
+}
+function openGrand130() {
+  if (!F8.connected) { openModal("こもれび記念", "", b => { b.innerHTML = `<p class="mtext">こもれび記念は、オンラインにつないでいるときだけ見られるよ。</p>`; }); return; }
+  R125.msg = ""; openModal("こもれび記念", "", () => renderGrand130()); send107("list"); sendHost125("look"); send8({ type: "race", act: "look" });
+}
+K.openGrand = () => openGrand130();
+F130.open = openGrand130; F130.render = renderGrand130;
+// 知らせ：受付がはじまった・大レースが走りはじめた・勝った
+{
+  const _h = handle8;
+  handle8 = m => {
+    _h(m);
+    try {
+      const st = m && (m.type === "race" ? m : m.type === "welcome" ? m.race : null); if (!st) return;
+      const g = st.grand;
+      if (g && g.open && !G130.open) { G130.open = true; if (m.type === "race") F7.notify(`「第${g.year}回 こもれび記念」の登録とファン投票がはじまった！ 競どんぐりの画面からどうぞ`, "acorn_shiny"); }
+      if (g && !g.open) G130.open = false;
+      const H = st.hosted;
+      if (H && H.grand && st.phase === "run" && !G130.seen["r" + st.id]) { G130.seen["r" + st.id] = 1; if (m.type === "race") F7.notify(`年に1度の大レース「${H.title}」がスタートした！`, "acorn_shiny"); }
+      if (H && H.grand && st.phase === "result" && Array.isArray(st.order) && !G130.seen["w" + st.id]) {
+        G130.seen["w" + st.id] = 1;
+        const w = st.runners && st.runners[st.order[0]];
+        if (w && w.owner === onl.id) { world.stats.grandWin130 = (world.stats.grandWin130 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { } F7.notify(`あなたの「${w.name}」が ${H.title} で優勝した！ 賞金は馬主の厩舎で受けとれるよ`, "acorn_shiny"); }
+        const mineIn = (st.runners || []).some(r => r.owner === onl.id);
+        if (mineIn) { world.stats.grandRun130 = (world.stats.grandRun130 || 0) + 1; saveWorld(); }
+      }
+      if (modalOpen && $("mtitle").textContent === "こもれび記念") renderGrand130();
+    } catch (e) { if (window.__komoErr) window.__komoErr(e, "v130"); }
+  };
+}
+const TTL130 = [["こもれび記念の覇者", "こもれび記念で、自分のどんぐりが優勝する", () => (world.stats.grandWin130 || 0) >= 1],
+  ["大舞台の馬主", "こもれび記念に、自分のどんぐりを出走させる", () => (world.stats.grandRun130 || 0) >= 1],
+  ["熱心なファン", "こもれび記念のファン投票をする", () => (world.stats.grandVote130 || 0) >= 1]];
+for (const t of TTL130) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["こもれび記念", "acorn_shiny", `<p>村の1年（春・夏・秋・冬の28日）の最後、<b>冬の7日目の18:00</b> のあとのレースは、年に1度の大レース「こもれび記念」です（オンライン）。</p>
+  <ul><li>冬の6日目と7日目に、馬主はどんぐりを1粒登録できます（16粒まで）</li><li>村のみんなはファン投票で1票（あとから変えられる）。票の多い6粒が出走。足りない分は村の名馬が走ります</li>
+  <li>賞金は6着まで（1着 1,000,000G）。馬主の厩舎で受けとれます。いつもより長い距離で、強いどんぐりが勝ちやすいよ</li></ul>
+  <p>主催レースには「特殊条件」（重馬場・長距離・短距離・ハンデ戦・新馬戦）もつけられます。</p>`]);
+
+// =================== v131: にわとりグランプリ（村のにわとりが一斉に走る大会・毎日21:00） ===================
+// サーバー：DuelHandler の cup（type "duel"）。{a:"cup",op:"look"|"join"|"leave",k,me:{k,n,ab,sk},st} → {a:"cup",cup:{day,hour,max,per,sun,prize,ent,last}}。
+// 21:00（日本時間）に、登録した子（1人2羽・12羽まで。6羽にたりない分は村のにわとり）が一斉に走る → 村に {ev:"cup",r}（r.n＝走った子・r.p＝毎歩の位置・r.rank＝着順・r.prize）。
+// 賞金は {ev:"pay",why:"cup",id,n,pos,cn}（いない人は次の welcome）。日曜は3倍。闘鶏ポイントは 1着30・2着20・3着10。
+// 状態：world.tori131 = { paid:{回のID:1}, seen:{回のID:1}, runs, wins, last:最後に見た結果 }
+var F131 = { cup: null, msg: "" };
+const tori131 = () => { const t = world.tori131 = world.tori131 && typeof world.tori131 === "object" ? world.tori131 : {}; t.paid = t.paid || {}; t.seen = t.seen || {}; t.runs = t.runs | 0; t.wins = t.wins | 0; return t; };
+const cupLook131 = () => { if (F8.connected && !WATCH88) send8({ type: "duel", a: "cup", op: "look" }); };
+const SK131 = { senko: "先手必勝", kaze: "風よみ", nobi: "最後のひと伸び", oikomi: "追いこみの鬼", nebari: "ねばり腰", saku: "柵ひとっとび", ochi: "落ちつき", kokoro: "こころの支え" };
+function paidCup131(p) {
+  const t = tori131(); if (!p || !p.id || t.paid[p.id + ":" + p.pos]) return;
+  const n = Math.max(0, Math.floor(+p.n || 0)); if (!n) return;
+  t.paid[p.id + ":" + p.pos] = 1; for (const k of Object.keys(t.paid).slice(0, -20)) delete t.paid[k];
+  addMoney(n); if (p.pos === 1) t.wins++;
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+  F7.notify(`にわとりグランプリで「${p.cn || ""}」が ${p.pos}着！ 賞金 ${fmt(n)}`, "egg");
+}
+function cupMine131(r) { const me = myId116(); return (r && Array.isArray(r.n) ? r.n : []).some(x => x.id === me); }
+function seenCup131(r, fromWelcome) {
+  if (!r || !Array.isArray(r.p) || !Array.isArray(r.rank)) return;
+  const t = tori131(); t.last = r;
+  if (t.seen[r.id]) return; t.seen[r.id] = 1; for (const k of Object.keys(t.seen).slice(0, -10)) delete t.seen[k];
+  if (cupMine131(r)) { t.runs++; saveWorld(); try { checkTitles42(); } catch (e) { } }
+  else saveWorld();
+  const me = cupMine131(r);
+  if (me || !fromWelcome) notice116("にわとりグランプリ", me ? (fromWelcome ? "留守のあいだに、にわとりグランプリが走ったよ。" : "にわとりグランプリがスタートした！ あなたの子も走っているよ。") : "にわとりグランプリがスタートした！ 村のにわとりが一斉に走るよ。", "レースを見る", () => playCup131(r));
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "duel") {
+      if (m.a === "cup") { F131.cup = m.cup || null; F131.msg = m.ng || m.msg || ""; if (m.msg) { world.stats.cupJoin131 = (world.stats.cupJoin131 || 0) + (/登録した/.test(m.msg) ? 1 : 0); saveWorld(); } if (modalOpen && $("mtitle").textContent === "にわとりグランプリ") renderCup131(); return; }
+      if (m.ev === "cup" && m.r) { seenCup131(m.r, false); cupLook131(); return; }
+      if (m.ev === "pay" && m.why === "cup") { paidCup131(m); return; }
+    }
+    _h(m);
+    if (m && m.type === "welcome" && !WATCH88) {
+      const d = m.duel || {};
+      if (d.cup) setTimeout(() => { try { seenCup131(d.cup, true); } catch (e) { } }, 3000);
+      const pays = (Array.isArray(d.pay) ? d.pay : []).filter(p => p.why === "cup");
+      if (pays.length) setTimeout(() => { for (const p of pays) try { paidCup131(p); } catch (e) { } }, 4200);
+    }
+  };
+}
+function renderCup131() {
+  const body = $("mbody"); if (!body || $("mtitle").textContent !== "にわとりグランプリ") return;
+  const c = F131.cup, on = F8.connected && !WATCH88, mine = mine116(), t = tori131();
+  if (!on) { body.innerHTML = `<p class="mtext">にわとりグランプリは、オンラインのときに登録できるよ。</p>${t.last ? `<div class="row2"><button class="btn" type="button" id="cl131">前の回のレースを見る</button></div>` : ""}`; body.querySelector("#cl131")?.addEventListener("click", () => playCup131(t.last)); return; }
+  if (!c) { body.innerHTML = `<p class="mtext">ようすを読みこんでいるよ…</p>`; return; }
+  const ent = c.ent || [], myEnt = ent.filter(e => e.me), [dy, dm, dd] = String(c.day).split("-");
+  body.innerHTML = `<p class="mtext">毎日 <b>${c.hour}:00</b>（日本時間）に、登録した村のにわとりが<b>一斉に走る</b>大会。1人 ${c.per} 羽・${c.max} 羽まで。6羽にたりないときは、村のにわとりも走るよ。作戦は、果たし状の画面で決めた作戦。</p>
+    ${F131.msg ? `<p class="mtext"><b>${esc(F131.msg)}</b></p>` : ""}
+    <div class="stat"><span>次の回</span><b>${+dm}月${+dd}日 ${c.hour}:00${c.sun ? "（日曜の大賞典・賞金3倍）" : ""}</b><span>賞金</span><b>${(c.prize || []).map((p, i) => `${i + 1}着 ${fmt(p)}`).join("・")}</b><span>闘鶏ポイント</span><b>1着 +30・2着 +20・3着 +10</b></div>
+    <h3 class="lbl">登録している子（${ent.length} / ${c.max}）</h3>
+    <div class="list">${ent.length ? ent.map(e => `<div class="li"><span class="nm">${e.me ? "<b>あなた</b> " : ""}${esc(e.o)}さんの「${esc(e.n)}」<span class="sub2">総合力 ${e.s | 0}・${esc(ST116[e.st]?.[0] || "")}</span></span><span class="acts">${e.me ? `<button class="btn ghost" type="button" data-cx131="${esc(e.k)}">とりけす</button>` : ""}</span></div>`).join("") : `<p class="mtext">まだだれも登録していないよ。</p>`}</div>
+    <h3 class="lbl">自分の子を登録する</h3>
+    <div class="list">${mine.length ? mine.map(x => { const inn = myEnt.some(e => e.k === x.k); return `<div class="li"><span class="nm">「${esc(x.n)}」<span class="sub2">総合力 ${duelTot116({ ab: x.ab })}・${esc(ST116[stOf116(x.id)]?.[0] || "")}${x.sk.length ? `・スキル ${x.sk.map(s => SK131[s] || s).join("・")}` : ""}</span></span><span class="acts">${inn ? "登録ずみ" : `<button class="btn" type="button" data-cj131="${esc(x.id)}" ${myEnt.length >= c.per ? "disabled" : ""}>登録する</button>`}</span></div>`; }).join("") : `<p class="mtext">牧場ににわとりがいないよ。こもれび牧場でたまごをかえせるよ。</p>`}</div>
+    ${c.last ? `<h3 class="lbl">前の回（${esc(String(c.last.day).slice(5).replace("-", "/"))}）</h3><div class="list">${(c.last.top || []).map(x => `<div class="li"><span class="nm">${x.pos}着　「${esc(x.n)}」<span class="sub2">${x.o === "村" ? "村のにわとり" : `${esc(x.o)}さん`}</span></span></div>`).join("")}</div>` : ""}
+    <div class="row2">${t.last ? `<button class="btn light" type="button" id="cl131">前の回のレースを見る</button>` : ""}<button class="btn light" type="button" id="cb131">果たし状にもどる</button></div>`;
+  body.querySelectorAll("[data-cj131]").forEach(b => b.onclick = () => { const x = mine116().find(y => y.id === b.dataset.cj131); if (!x) return; b.disabled = true; send8({ type: "duel", a: "cup", op: "join", me: { k: x.k, n: x.n, ab: x.ab, sk: x.sk }, st: stOf116(x.id) }); });
+  body.querySelectorAll("[data-cx131]").forEach(b => b.onclick = () => send8({ type: "duel", a: "cup", op: "leave", k: b.dataset.cx131 }));
+  body.querySelector("#cl131")?.addEventListener("click", () => playCup131(tori131().last));
+  body.querySelector("#cb131").onclick = () => { closeModal(); openDuel116(); };
+}
+function openCup131() { F131.msg = ""; openModal("にわとりグランプリ", "dark", () => renderCup131()); cupLook131(); }
+F131.open = openCup131;
+// 果たし状の画面に入口を足す
+{
+  const _dc = F116.decorate;
+  F116.decorate = body => {
+    if (_dc) _dc(body);
+    const box = body.querySelector(".ik115"); if (!box || box.querySelector(".cup131b")) return;
+    box.insertAdjacentHTML("afterbegin", `<div class="row2 cup131b"><button class="btn" type="button" id="cup131go">にわとりグランプリ（毎日21:00・みんなで一斉に走る）</button></div>`);
+    box.querySelector("#cup131go").onclick = () => { closeModal(); openCup131(); };
+  };
+}
+/** グランプリのレースを見せる（コース全体を1画面に・毎歩110ms） */
+function playCup131(r) {
+  if (!r || !Array.isArray(r.p) || !Array.isArray(r.n)) return;
+  const N = r.n.length, P = r.p, steps = Math.max(...P.map(a => a.length)) - 1, me = myId116();
+  const COLS = ["#e2404e", "#4a8ae0", "#f0c030", "#4aa860", "#a070e0", "#f08a3a", "#40c0c0", "#e070b0", "#8a6a3a", "#c0c0c0", "#3a3a8a", "#a0d040"];
+  const W = 320, LH = 16, H = 28 + N * LH, X0 = 18, X1 = 302, ev = (Array.isArray(r.e) ? r.e : []).slice().sort((a, b) => a[0] - b[0]);
+  let closed = false, raf = 0, t0 = 0, skip = false, evI = 0, done = false;
+  const pops = [];
+  openModal("にわとりグランプリのレース", "dark", body => {
+    body.innerHTML = `<div class="cup131"><p class="mtext small">${esc(String(r.day || "").slice(5).replace("-", "/"))}の回${r.sun ? "（日曜の大賞典）" : ""}・${N}羽</p><canvas id="cup131cv" width="${W}" height="${H}"></canvas><div id="cup131res"></div><div class="row2"><button class="btn light" type="button" id="cup131sk">とばす</button></div></div>`;
+    body.querySelector("#cup131sk").onclick = () => { skip = true; };
+  }, () => { closed = true; cancelAnimationFrame(raf); });
+  const cv = $("cup131cv"); if (!cv) return; const g = cv.getContext("2d");
+  const pos = (i, t) => { const a = P[i], k = Math.min(a.length - 1, Math.floor(t)), k2 = Math.min(a.length - 1, k + 1), f = t - Math.floor(t); return a[k] + (a[k2] - a[k]) * Math.max(0, Math.min(1, f)); };
+  const xs = v => X0 + (X1 - X0) * v / 1000;
+  const result = () => {
+    if (done) return; done = true;
+    const el = $("cup131res"); if (!el) return;
+    el.innerHTML = `<div class="list">${r.rank.map((i, pos) => { const x = r.n[i], pz = (r.prize || [])[pos] | 0; return `<div class="li ${x.id === me ? "me131" : ""}"><span class="nm"><b>${pos + 1}着</b>　「${esc(x.n)}」<span class="sub2">${x.id > 0 ? `${esc(x.o)}さん` : "村のにわとり"}・${esc(ST116[x.st]?.[0] || "")}${pz ? `・賞金 ${fmt(pz)}` : ""}</span></span></div>`; }).join("")}</div>${r.ph ? `<p class="mtext small">1着と2着は写真判定だった！</p>` : ""}`;
+    const sk = $("cup131sk"); if (sk) sk.textContent = "とじる", sk.onclick = () => closeModal();
+  };
+  const frame = ts => {
+    if (closed) return;
+    if (!t0) t0 = ts;
+    const t = skip ? steps : Math.min(steps, (ts - t0) / 110);
+    while (evI < ev.length && ev[evI][0] <= t) { const [, i, k] = ev[evI++]; if (SK131[k]) pops.push({ i, text: SK131[k], until: ts + 1400 }); }
+    g.fillStyle = "#3a6a32"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#c8a870"; g.fillRect(X0 - 6, 20, X1 - X0 + 12, N * LH + 4);
+    for (let i = 0; i <= N; i++) { g.fillStyle = "rgba(255,255,255,.35)"; g.fillRect(X0 - 6, 20 + i * LH, X1 - X0 + 12, 1); }
+    for (const h of [250, 500, 750]) { g.fillStyle = "#8a5a2a"; g.fillRect(xs(h) - 1, 20, 3, N * LH + 4); }
+    g.fillStyle = "#fff"; g.fillRect(xs(1000), 20, 2, N * LH + 4);
+    g.font = "9px sans-serif"; g.fillStyle = "#fff"; g.fillText("スタート", 2, 12); g.fillText("ゴール", W - 34, 12);
+    const lead = Math.max(...P.map((_, i) => pos(i, t)));
+    for (let i = 0; i < N; i++) {
+      const x = xs(pos(i, t)), y = 20 + i * LH + LH / 2 + 2, bob = Math.sin(t * 3 + i) * 1.5;
+      g.fillStyle = COLS[i % COLS.length]; g.beginPath(); g.arc(x, y + 4, 4, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#fff"; g.beginPath(); g.arc(x, y + bob, 5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = "#e23a3a"; g.fillRect(x - 1, y + bob - 7, 3, 3);
+      g.fillStyle = "#f0b030"; g.fillRect(x + 4, y + bob - 1, 3, 2);
+      if (r.n[i].id === me) { g.strokeStyle = "#ffe066"; g.lineWidth = 1.5; g.beginPath(); g.arc(x, y + bob, 7, 0, Math.PI * 2); g.stroke(); }
+    }
+    for (let k = pops.length - 1; k >= 0; k--) { const pp = pops[k]; if (ts > pp.until) { pops.splice(k, 1); continue; } const x = xs(pos(pp.i, t)), y = 20 + pp.i * LH + 4; g.font = "bold 9px sans-serif"; g.fillStyle = "#ffe066"; g.fillText(pp.text, Math.min(W - 60, x + 8), y); }
+    const ld = P.findIndex((_, i) => pos(i, t) === lead);
+    if (ld >= 0 && t < steps) { g.font = "bold 10px sans-serif"; g.fillStyle = "#fff"; g.fillText(`先頭：「${r.n[ld].n}」`, 70, 12); }
+    if (t >= steps) { result(); return; }
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+}
+F131.play = playCup131;
+const TTL131 = [["グランプリの出走者", "にわとりグランプリに自分の子を走らせる", () => tori131().runs >= 1], ["グランプリ王者", "にわとりグランプリで1着になる", () => tori131().wins >= 1]];
+for (const t of TTL131) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["にわとりグランプリ", "egg", `<p>オンラインでは、こもれび闘鶏の「果たし状」の画面から <b>にわとりグランプリ</b> に登録できます。</p>
+  <ul><li>毎日21:00（日本時間）に、登録した村のにわとりが一斉に走ります（1人2羽・12羽まで）</li><li>賞金は 1着200,000G・2着80,000G・3着40,000G（日曜は3倍）。闘鶏ポイントも入ります</li>
+  <li>留守のあいだに走っても、次につないだときに結果と賞金が届きます</li></ul>`]);
+
+// =================== v132: 村の大会（パズル大会・釣り大会。村の人も管理人も開ける） ===================
+// サーバー：jp.komorebi.tourney（type "tny"）。約束は TourneyService のコメント。mock.js も同じ（tnyHandle）。
+// パズル大会：参加してから、えらばれたゲームで出したスコア（F77.sendScore／F92.sendScore のとき）を送る。いちばんいいスコアで決まる。
+// 釣り大会：参加してから、えらばれた魚を釣ったら（F6.fishCaught）送る。いちばん先の人の勝ち。ランダムの魚は、サーバーがいまの季節のふつうの魚から決める。
+// 賞金は {ev:"pay"}。world.tny132.paid で2回受けとらない。開いたときの賞金は {ok:"host"} が来てから引く。
+var F132 = { cur: [], last: [], wait: 0, msg: "", tab: "cur", form: { kind: "puzzle", game: "blk", fish: "", mins: 30, purse: 100000, title: "" } };
+const tny132 = () => { const t = world.tny132 = world.tny132 && typeof world.tny132 === "object" ? world.tny132 : {}; t.paid = t.paid || {}; t.wins = t.wins | 0; t.joins = t.joins | 0; t.hosts = t.hosts | 0; return t; };
+const TGAME132 = { blk: "こもれびブロック", tsu: "こもれびつなぎ", mrg: "マージパズル", jmp: "にわとりジャンプ", puyo: "こもれびドロップ" };
+const TMINS132 = { puzzle: [10, 30, 60, 180], fish: [10, 30, 60] };
+const TPURSE132 = [10000, 50000, 100000, 500000, 1000000, 10000000];
+/** 釣り大会でえらべる魚：池と海の魚（借金・ヌシ・えさ・専用の竿・沖・島などの条件つきの魚は出さない） */
+const tFish132 = () => FISH6.filter(f => (f.at === "pond" || f.at === "sea") && !f.debt && !f.bait && !f.rod && !f.nushi && !f.bonus && !f.warm && (f.w || 0) >= 5).filter((f, i, a) => a.findIndex(x => x.n === f.n) === i);
+const tSend132 = (a, extra) => { if (!F8.connected || WATCH88) return false; send8({ type: "tny", a, ...(extra || {}) }); return true; };
+const tLeft132 = t => Math.max(0, Math.ceil((t.end - (Date.now() - (F132.skew || 0))) / 1000));
+const tTime132 = s => s >= 3600 ? `${Math.floor(s / 3600)}時間${Math.floor(s % 3600 / 60)}分` : `${Math.floor(s / 60)}分${String(s % 60).padStart(2, "0")}秒`;
+function tPay132(p) {
+  const T = tny132(), k = `${p.id}:${p.why}:${p.pos}`; if (!p || !p.id || T.paid[k]) return;
+  const n = Math.max(0, Math.floor(+p.n || 0)); if (!n) return;
+  T.paid[k] = 1; for (const x of Object.keys(T.paid).slice(0, -40)) delete T.paid[x];
+  addMoney(n); if (p.why === "win" && p.pos === 1) T.wins++;
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+  F7.notify(p.why === "refund" ? `大会「${p.title}」の賞金のうち ${fmt(n)} がもどってきた` : `大会「${p.title}」で ${p.pos}位！ 賞金 ${fmt(n)}`, "coin");
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "tny") {
+      try {
+        if (m.st) { F132.cur = m.st.cur || []; F132.last = m.st.last || []; if (m.st.now) F132.skew = Date.now() - m.st.now; }
+        if (m.ok === "host" && F132.wait) { F132.wait = 0; const n = Math.max(0, Math.floor(+m.purse || 0)); addMoney(-n); tny132().hosts++; saveWorld(); F132.msg = "大会を開いた！ 村のみんなに知らせが出たよ"; F132.tab = "cur"; tSend132("look"); try { checkTitles42(); } catch (e) { } }
+        if (m.ng) { F132.wait = 0; F132.msg = String(m.ng); }
+        if (m.ok === "join" && m.t) { F132.cur = F132.cur.filter(t => t.id !== m.t.id).concat([m.t]).sort((a, b) => a.id - b.id); tny132().joins++; saveWorld(); F132.msg = `「${m.t.title}」に参加した！`; }
+        if (m.ok === "score") { const t = F132.cur.find(x => x.id === m.id); if (t) t.best = m.best; }
+        if (m.ok === "cancel") { F132.msg = "大会をとりやめた"; tSend132("look"); }
+        if (m.ev === "new" && m.t) { if (!F132.cur.some(t => t.id === m.t.id)) F132.cur.push(m.t); if (m.t.host !== onl.id) F7.notify(`${m.t.hostName}さんが「${m.t.title}」を開いた！ スマホの「大会」から参加できるよ`, m.t.kind === "fish" ? "rod" : "coin"); }
+        if (m.ev === "end" && m.t) {
+          const was = F132.cur.find(t => t.id === m.t.id); F132.cur = F132.cur.filter(t => t.id !== m.t.id); F132.last = [m.t].concat(F132.last.filter(t => t.id !== m.t.id)).slice(0, 6);
+          const p = m.t.pay || [], top = p[0];
+          if (was && was.in) F7.notify(`大会「${m.t.title}」がおわった。${top ? `1位は ${top.n}さん` : "勝った人はいなかった"}`, "coin");
+        }
+        if (m.ev === "pay") tPay132(m);
+        if (modalOpen && $("mtitle").textContent === "村の大会") renderTny132();
+      } catch (e) { if (window.__komoErr) window.__komoErr(e, "v132"); }
+      return;
+    }
+    _h(m);
+    if (m && m.type === "welcome" && !WATCH88) {
+      const d = m.tny || {}; F132.cur = Array.isArray(d.cur) ? d.cur : []; F132.skew = 0;
+      const pays = Array.isArray(d.pay) ? d.pay : [];
+      if (pays.length) setTimeout(() => { for (const p of pays) try { tPay132(p); } catch (e) { } }, 4400);
+    }
+  };
+}
+// スコアと釣った魚を、参加している大会へ
+const tScore132 = (game, score) => { for (const t of F132.cur) if (t.kind === "puzzle" && t.in && t.game === game && tLeft132(t) > 0 && score > 0) tSend132("score", { id: t.id, s: Math.floor(score) }); };
+{ const _s = F77.sendScore; F77.sendScore = score => { try { tScore132("blk", +score || 0); } catch (e) { } return _s(score); }; }
+{ const _s = F92.sendScore; F92.sendScore = (id, score) => { try { tScore132(id, +score || 0); } catch (e) { } return _s(id, score); }; }
+{
+  const _fc = F6.fishCaught;
+  F6.fishCaught = got => {
+    const r = _fc(got);
+    try { for (const t of F132.cur) if (t.kind === "fish" && t.in && t.fish === got && tLeft132(t) > 0 && !t.sent) { t.sent = 1; tSend132("catch", { f: got }); toast("fish_" + got, `大会の魚「${got}」を釣った！`); } } catch (e) { }
+    return r;
+  };
+}
+const tPlay132 = g => { closeModal(); if (g === "blk") openBlkMenu77(); else openMenu92(g); };
+function tRow132(t, done) {
+  const left = tLeft132(t), fishF = t.kind === "fish" ? FISH6.find(f => f.n === t.fish) : null;
+  const what = t.kind === "puzzle" ? `${esc(t.gameName || TGAME132[t.game] || "")}のスコア` : `<b>${esc(t.fish)}</b>${t.rnd ? "（ランダムで決まった）" : ""}をいちばん先に釣る`;
+  const top = (t.top || []).slice(0, 5), pay = t.pay || [];
+  return `<div class="tny132">
+    <div class="li"><img src="${ASSETS[t.kind === "fish" ? (fishF ? "fish_" + t.fish : "rod") : "coin"] || ""}" alt=""><span class="nm">${esc(t.title)}<span class="sub2">${what}・${esc(t.hostName)}${t.host > 0 ? "さん" : ""}が開いた・賞金 ${fmt(t.purse)}・参加 ${t.n | 0}人</span></span></div>
+    ${done ? `<p class="mtext small">${pay.length ? pay.map(p => `${p.pos}位 ${esc(p.n)}${p.s ? `（${fmt92(p.s)}）` : ""} ${fmt(p.g)}`).join("・") : "勝った人はいなかった"}</p>`
+      : `<p class="mtext small">のこり <b data-tl132="${t.id}">${tTime132(left)}</b>${t.kind === "puzzle" ? "・賞金は 1位60%・2位25%・3位15%" : `・釣れる場所：${fishF ? esc(fishHint(fishF)) : "?"}`}</p>
+    ${t.kind === "puzzle" && top.length ? `<ol class="cr74l">${top.map((r, i) => `<li class="${r.me ? "me74" : ""}"><em>${i + 1}</em><span>${esc(r.n)}</span><b class="wi74">${fmt92(r.s)}</b></li>`).join("")}</ol>` : ""}
+    <div class="row2">${t.in ? (t.kind === "puzzle" ? `<span class="note">参加中・あなたのベスト ${fmt92(t.best | 0)}</span><button class="btn" type="button" data-tp132="${esc(t.game)}">あそぶ</button>` : `<span class="note">参加中。釣ってきてね</span>`) : `<button class="btn" type="button" data-tj132="${t.id}">参加する</button>`}
+      ${t.host === onl.id && (t.n | 0) <= 1 ? `<button class="btn ghost" type="button" data-tc132="${t.id}">とりやめる</button>` : ""}</div>`}</div>`;
+}
+function renderTny132() {
+  const body = $("mbody"); if (!body || $("mtitle").textContent !== "村の大会") return;
+  const on = F8.connected && !WATCH88, f = F132.form;
+  if (!on) { body.innerHTML = `<p class="mtext">大会は、オンラインのときに開いたり参加したりできるよ。</p>`; return; }
+  const tabs = `<div class="mtabs">${[["cur", "開催中"], ["host", "大会を開く"], ["last", "おわった大会"]].map(([k, l]) => `<button class="chip" type="button" data-tt132="${k}" aria-pressed="${F132.tab === k}">${l}${k === "cur" && F132.cur.length ? `（${F132.cur.length}）` : ""}</button>`).join("")}</div>`;
+  let html = `${tabs}${F132.msg ? `<p class="mtext"><b>${esc(F132.msg)}</b></p>` : ""}`;
+  if (F132.tab === "cur") html += F132.cur.length ? F132.cur.map(t => tRow132(t, false)).join("") : `<p class="mtext">いま開いている大会はないよ。「大会を開く」から、自分で開くこともできる。</p>`;
+  else if (F132.tab === "last") html += F132.last.length ? F132.last.map(t => tRow132(t, true)).join("") : `<p class="mtext">まだないよ。</p>`;
+  else {
+    const fl = tFish132();
+    html += `<p class="mtext small">賞金は開いたときに払うよ。パズル大会は 1位60%・2位25%・3位15%（3人そろわなければ、のこりはもどる）。釣り大会は、いちばん先に釣った人が賞金をぜんぶ（だれも釣れなければもどる）。</p>
+      <div class="mtabs">${[["puzzle", "パズル大会"], ["fish", "釣り大会"]].map(([k, l]) => `<button class="chip" type="button" data-tk132="${k}" aria-pressed="${f.kind === k}">${l}</button>`).join("")}</div>
+      ${f.kind === "puzzle" ? `<h3 class="lbl">ゲーム</h3><div class="mtabs">${Object.entries(TGAME132).map(([k, l]) => `<button class="chip" type="button" data-tg132="${k}" aria-pressed="${f.game === k}">${l}</button>`).join("")}</div>`
+        : `<h3 class="lbl">魚</h3><div class="row"><select id="tf132"><option value="" ${f.fish ? "" : "selected"}>ランダム（いまの季節のふつうの魚）</option>${fl.map(x => `<option value="${esc(x.n)}" ${f.fish === x.n ? "selected" : ""}>${esc(x.n)}（${esc(fishHint(x))}）</option>`).join("")}</select></div>
+        <p class="mtext small">ランダムにすると、時間・天気・えさ・借金などの条件がない魚から、サーバーが決めるよ。</p>`}
+      <h3 class="lbl">時間</h3><div class="mtabs">${TMINS132[f.kind].map(x => `<button class="chip" type="button" data-tm132="${x}" aria-pressed="${f.mins === x}">${x >= 60 ? `${x / 60}時間` : `${x}分`}</button>`).join("")}</div>
+      <h3 class="lbl">賞金</h3><div class="mtabs">${TPURSE132.map(x => `<button class="chip" type="button" data-tu132="${x}" aria-pressed="${f.purse === x}">${fmt(x)}</button>`).join("")}</div>
+      <div class="row"><input id="tt132" maxlength="16" placeholder="大会の名前（空なら自動）" value="${esc(f.title)}" style="flex:1;min-width:10em"></div>
+      <div class="row2"><button class="btn" type="button" id="th132" ${world.money < f.purse || F132.wait ? "disabled" : ""}>賞金 ${fmt(f.purse)} で開く</button></div>
+      <p class="mtext small">所持金 ${fmt(world.money)}。1人が開けるのは1つずつ・村で3つまで。</p>`;
+  }
+  body.innerHTML = html;
+  F132.msg = "";
+  const keepTitle = () => { const el = $("tt132"); if (el) f.title = el.value; const fs = $("tf132"); if (fs) f.fish = fs.value; };
+  body.querySelectorAll("[data-tt132]").forEach(b => b.onclick = () => { F132.tab = b.dataset.tt132; renderTny132(); if (F132.tab !== "host") tSend132("look"); });
+  body.querySelectorAll("[data-tk132]").forEach(b => b.onclick = () => { keepTitle(); f.kind = b.dataset.tk132; if (!TMINS132[f.kind].includes(f.mins)) f.mins = 30; renderTny132(); });
+  body.querySelectorAll("[data-tg132]").forEach(b => b.onclick = () => { keepTitle(); f.game = b.dataset.tg132; renderTny132(); });
+  body.querySelectorAll("[data-tm132]").forEach(b => b.onclick = () => { keepTitle(); f.mins = +b.dataset.tm132; renderTny132(); });
+  body.querySelectorAll("[data-tu132]").forEach(b => b.onclick = () => { keepTitle(); f.purse = +b.dataset.tu132; renderTny132(); });
+  body.querySelector("#tf132")?.addEventListener("change", e => { f.fish = e.target.value; });
+  body.querySelectorAll("[data-tj132]").forEach(b => b.onclick = () => { b.disabled = true; tSend132("join", { id: +b.dataset.tj132 }); });
+  body.querySelectorAll("[data-tc132]").forEach(b => b.onclick = () => tSend132("cancel", { id: +b.dataset.tc132 }));
+  body.querySelectorAll("[data-tp132]").forEach(b => b.onclick = () => tPlay132(b.dataset.tp132));
+  body.querySelector("#th132")?.addEventListener("click", () => {
+    keepTitle();
+    const title = String(f.title || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim().slice(0, 16);
+    if (world.money < f.purse) { F132.msg = "所持金が足りないよ"; renderTny132(); return; }
+    F132.wait = Date.now();
+    tSend132("host", { kind: f.kind, game: f.game, fish: f.fish, rnd: f.kind === "fish" && !f.fish, mins: f.mins, purse: f.purse, title, rid: String(Date.now() % 1e9) });
+    renderTny132();
+  });
+}
+function openTny132() { F132.msg = ""; openModal("村の大会", "dark", () => renderTny132()); tSend132("look"); }
+F132.open = openTny132;
+setInterval(() => { document.querySelectorAll("[data-tl132]").forEach(el => { const t = F132.cur.find(x => x.id === +el.dataset.tl132); if (t) el.textContent = tTime132(tLeft132(t)); }); }, 1000);
+ICON80.tny132 = `<path d="M10 4h12v6a6 6 0 0 1-12 0z"/><path d="M10 6H5v2a5 5 0 0 0 5 5M22 6h5v2a5 5 0 0 1-5 5M16 16v6M11 27h10M13 22h6v5h-6z"/>`;
+F76.add({ id: "tny132", name: "大会", ch: "大", c: "#c89a30", open: () => openTny132() });
+const TTL132 = [["大会の主催者", "村の大会を開く", () => tny132().hosts >= 1], ["大会の常連", "村の大会に10回参加する", () => tny132().joins >= 10], ["大会の覇者", "村の大会で1位になる", () => tny132().wins >= 1]];
+for (const t of TTL132) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["村の大会", "coin", `<p>スマホの「大会」で、村の大会に参加したり、自分で開いたりできます（オンライン）。</p>
+  <ul><li><b>パズル大会</b>：こもれびブロック・つなぎ・マージ・にわとりジャンプ・こもれびドロップのどれか。時間内のいちばんいいスコアで決まります（参加してから遊んだ分だけ）。賞金は 1位60%・2位25%・3位15%</li>
+  <li><b>釣り大会</b>：えらばれた魚を、いちばん先に釣った人の勝ち。ランダムのときは、条件のないふつうの魚から決まります</li>
+  <li>開くときに賞金を出します。だれも勝たなかった分はもどります。管理人が開く大会もあります</li></ul>`]);
+
+// =================== v133: スマホのゲーム「こもれびドロップ」（2つずつ落ちてくる作物を4つつなげて消す・連鎖） ===================
+// v92 のしくみ（GM92・g92・openMenu92・finish92・grank）にのせる。ゲーム名は "puyo"（ランキング・村の大会も同じ名前）。
+// 盤は 6×12。2つ1組（軸と子）で落ちてくる。同じ作物が4つ以上たて・よこにつながると消える。消えたあと落ちて、またそろうと連鎖。
+// 点＝消えた数×10×(連鎖ボーナス＋同時消しボーナス)。まんなかの列（左から3番目）の上がうまったらおしまい。
+var F133 = {};
+GM92.puyo = { name: "こもれびドロップ", unit: "点", intro: "2つずつ落ちてくる作物を、同じもの4つ以上つなげて消そう。消えたあとに落ちて、またそろうと連鎖。連鎖するほど大きな点になるよ。", howto: "そうさ：← → で動かす・A／↑で回す・↓で速く落とす・スペースで一気に落とす（スマホは下のボタン）。まんなかの列の上がうまったらおしまい。" };
+IDS92.push("puyo");
+const PUYO133 = [["tomato", "#e2404e"], ["carrot", "#f08a2a"], ["cabbage", "#5aa95a"], ["eggplant", "#8a5ac8"], ["corn", "#f0c830"]];
+const CHAIN133 = [0, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512];
+{
+  const _pl = F92.play;
+  F92.play = id => id === "puyo" ? playPuyo133() : _pl(id);
+}
+function playPuyo133() {
+  const CW = 6, CH = 12, S = 20, o = g92().puyo; o.plays++; saveWorld();
+  const B = Array.from({ length: CH }, () => Array(CW).fill(-1));
+  const colors = Math.min(PUYO133.length, 4);
+  const newPair = () => [rnd(colors), rnd(colors)];
+  let cur = null, next = newPair(), next2 = newPair(), score = 0, maxCh = 0, over = false, ended = false, stopped = false, last = performance.now(), fallT = 0, lock = 0, busy = false, pops = 0, msg = "", msgT = 0, level = 0, dropped = 0;
+  const W = CW * S + 64, H = CH * S;
+  openModal("こもれびドロップ", "ph76m", body => {
+    body.innerHTML = `<div class="pu133 ${wide92() ? "w92" : ""}"><canvas id="pu133cv" width="${W}" height="${H}"></canvas>
+      <div class="pu133k"><button class="btn light" type="button" data-pk="L">←</button><button class="btn light" type="button" data-pk="R">→</button><button class="btn" type="button" data-pk="A">回す</button><button class="btn light" type="button" data-pk="D">↓</button><button class="btn light" type="button" data-pk="H">一気に</button></div></div>`;
+  }, () => { stopped = true; removeEventListener("keydown", onKey, true); if (!ended) { ended = true; finish92("puyo", true, score, []); } });
+  const cv = $("pu133cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  // cur = {x, y, r}：軸 (x,y)、子は r（0上・1右・2下・3左）の向き
+  const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
+  const cells = c => [[c.x, c.y, c.p[0]], [c.x + DX[c.r], c.y + DY[c.r], c.p[1]]];
+  const free = (x, y) => x >= 0 && x < CW && y < CH && (y < 0 || B[y][x] < 0);
+  const fits = c => cells(c).every(([x, y]) => free(x, y));
+  const spawn = () => {
+    cur = { x: 2, y: 0, r: 0, p: next }; next = next2; next2 = newPair();
+    if (!fits(cur) || B[0][2] >= 0) { over = true; se13("miss"); setTimeout(end, 600); }
+  };
+  const move = dx => { if (!cur || busy) return; const c = { ...cur, x: cur.x + dx }; if (fits(c)) { cur = c; lock = 0; } };
+  const rotate = () => {
+    if (!cur || busy) return;
+    const r = (cur.r + 1) % 4;
+    for (const kx of [0, -DX[r], DX[r] ? -DX[r] : 1, -1]) { const c = { ...cur, r, x: cur.x + kx }; if (fits(c)) { cur = c; lock = 0; return; } }
+    const c = { ...cur, r, y: cur.y - 1 }; if (fits(c)) cur = c;
+  };
+  const place = () => {
+    for (const [x, y, k] of cells(cur)) if (y >= 0) B[y][x] = k; else { over = true; }
+    cur = null; dropped++;
+    if (over) { se13("miss"); setTimeout(end, 600); return; }
+    busy = true; resolve(0);
+  };
+  const gravity = () => { let moved = false; for (let x = 0; x < CW; x++) { let w = CH - 1; for (let y = CH - 1; y >= 0; y--) if (B[y][x] >= 0) { if (y !== w) { B[w][x] = B[y][x]; B[y][x] = -1; moved = true; } w--; } } return moved; };
+  const findPops = () => {
+    const seen = Array.from({ length: CH }, () => Array(CW).fill(false)), out = [];
+    for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) {
+      if (B[y][x] < 0 || seen[y][x]) continue;
+      const k = B[y][x], grp = [], st = [[x, y]]; seen[y][x] = true;
+      while (st.length) { const [a, b] = st.pop(); grp.push([a, b]); for (let d = 0; d < 4; d++) { const nx = a + DX[d], ny = b + DY[d]; if (nx >= 0 && nx < CW && ny >= 0 && ny < CH && !seen[ny][nx] && B[ny][nx] === k) { seen[ny][nx] = true; st.push([nx, ny]); } } }
+      if (grp.length >= 4) out.push(grp);
+    }
+    return out;
+  };
+  let flash = null;
+  function resolve(chain) {
+    gravity();
+    const groups = findPops();
+    if (!groups.length) { busy = false; if (chain >= 2) { msg = `${chain}連鎖！`; msgT = 1.6; } spawn(); return; }
+    chain++;
+    const n = groups.reduce((a, gp) => a + gp.length, 0), kinds = new Set(groups.map(gp => B[gp[0][1]][gp[0][0]])).size;
+    const bonus = Math.max(1, CHAIN133[Math.min(chain - 1, CHAIN133.length - 1)] + groups.reduce((a, gp) => a + Math.min(10, Math.max(0, gp.length - 4) + (gp.length >= 11 ? 3 : 0)), 0) + [0, 0, 3, 6, 12, 24][kinds]);
+    score += n * 10 * bonus; pops += n; maxCh = Math.max(maxCh, chain);
+    flash = { cells: groups.flat(), t: .35 };
+    se13(chain >= 3 ? "win" : "harvest");
+    if (chain >= 2) { msg = `${chain}連鎖`; msgT = 1.2; }
+    setTimeout(() => { if (stopped) return; for (const [x, y] of flash.cells) B[y][x] = -1; flash = null; setTimeout(() => { if (!stopped) resolve(chain); }, 160); }, 350);
+  }
+  function end() {
+    if (ended) return; ended = true; stopped = true; removeEventListener("keydown", onKey, true);
+    if (maxCh > o.maxChain) o.maxChain = maxCh;
+    if (maxCh >= 5) world.stats.puyo5_133 = (world.stats.puyo5_133 || 0) + 1;
+    finish92("puyo", false, score, [`いちばんの連鎖 ${maxCh}連鎖`, `消した作物 ${pops}こ`]);
+  }
+  const hard = () => { if (!cur || busy) return; while (fits({ ...cur, y: cur.y + 1 })) { cur.y++; score += 1; } place(); };
+  const soft = () => { if (!cur || busy) return; if (fits({ ...cur, y: cur.y + 1 })) { cur.y++; fallT = 0; score += 1; } else place(); };
+  const key = k => { if (over || ended) return; if (k === "L") move(-1); else if (k === "R") move(1); else if (k === "A") rotate(); else if (k === "D") soft(); else if (k === "H") hard(); };
+  const onKey = e => {
+    if (/INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    const m = { ArrowLeft: "L", ArrowRight: "R", ArrowUp: "A", x: "A", X: "A", z: "A", Z: "A", ArrowDown: "D", " ": "H" }[e.key];
+    if (!m) return; e.preventDefault(); e.stopPropagation(); if (m === "H" && e.repeat) return; key(m);
+  };
+  addEventListener("keydown", onKey, true);
+  document.querySelectorAll(".pu133k [data-pk]").forEach(b => b.addEventListener("pointerdown", e => { e.preventDefault(); key(b.dataset.pk); }));
+  // スワイプ（キャンバスの上）：よこ＝動かす・下＝一気に・タップ＝回す
+  let sx = 0, sy = 0, st0 = 0;
+  cv.addEventListener("pointerdown", e => { sx = e.clientX; sy = e.clientY; st0 = performance.now(); });
+  cv.addEventListener("pointerup", e => { const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) < 12 && Math.abs(dy) < 12) key("A"); else if (Math.abs(dx) > Math.abs(dy)) { for (let i = 0; i < Math.min(5, Math.round(Math.abs(dx) / 24)); i++) key(dx > 0 ? "R" : "L"); } else if (dy > 30) key("H"); });
+  const drawCell = (x, y, k, a) => {
+    const px = x * S, py = y * S, [ic, col] = PUYO133[k];
+    g.globalAlpha = a == null ? 1 : a;
+    g.fillStyle = col; g.beginPath(); g.arc(px + S / 2, py + S / 2, S / 2 - 1, 0, Math.PI * 2); g.fill();
+    if (IMG[ic]) g.drawImage(IMG[ic], px + 2, py + 2, S - 4, S - 4);
+    g.globalAlpha = 1;
+  };
+  spawn();
+  const loop = now => {
+    if (stopped) return;
+    if (!cv.isConnected) { stopped = true; removeEventListener("keydown", onKey, true); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    level = Math.min(10, Math.floor(dropped / 15));
+    const fall = Math.max(.12, .8 - level * .065);
+    if (cur && !busy && !over) {
+      fallT += dt;
+      if (fallT >= fall) { fallT = 0; const c = { ...cur, y: cur.y + 1 }; if (fits(c)) { cur = c; lock = 0; } else { lock += fall; if (lock >= .45) place(); } }
+    }
+    msgT = Math.max(0, msgT - dt);
+    g.fillStyle = "#24302a"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#2e3e34"; g.fillRect(0, 0, CW * S, H);
+    g.fillStyle = "rgba(255,80,80,.25)"; g.fillRect(2 * S, 0, S, S);
+    for (let y = 0; y < CH; y++) for (let x = 0; x < CW; x++) if (B[y][x] >= 0) { const fl = flash && flash.cells.some(([a, b]) => a === x && b === y); drawCell(x, y, B[y][x], fl ? (Math.floor(now / 70) % 2 ? .3 : 1) : 1); }
+    if (cur) {
+      // 落ちる場所の影
+      let gy = 0; while (fits({ ...cur, y: cur.y + gy + 1 })) gy++;
+      for (const [x, y, k] of cells({ ...cur, y: cur.y + gy })) if (y >= 0) drawCell(x, y, k, .25);
+      for (const [x, y, k] of cells(cur)) if (y >= 0) drawCell(x, y, k);
+    }
+    const nx = CW * S + 8;
+    g.fillStyle = "#fff"; g.font = "10px sans-serif"; g.fillText("つぎ", nx, 12);
+    const mini = (p, y0) => p.forEach((k, i) => { const [ic, col] = PUYO133[k]; g.fillStyle = col; g.beginPath(); g.arc(nx + 12, y0 + (1 - i) * 18 + 9, 8, 0, Math.PI * 2); g.fill(); if (IMG[ic]) g.drawImage(IMG[ic], nx + 5, y0 + (1 - i) * 18 + 2, 14, 14); });
+    mini(next, 18); mini(next2, 64);
+    g.fillStyle = "#fff"; g.fillText("点", nx, 120); g.font = "bold 11px sans-serif"; g.fillText(fmt92(score), nx, 134);
+    g.font = "10px sans-serif"; g.fillText(`Lv ${level + 1}`, nx, 154); g.fillText(`最高 ${maxCh}連鎖`, nx, 170);
+    if (msgT > 0) { g.font = "bold 18px sans-serif"; g.fillStyle = "#ffe066"; g.textAlign = "center"; g.fillText(msg, CW * S / 2, H / 2); g.textAlign = "left"; }
+    if (over) { g.fillStyle = "rgba(0,0,0,.5)"; g.fillRect(0, 0, CW * S, H); g.fillStyle = "#fff"; g.font = "bold 14px sans-serif"; g.fillText("おしまい", 30, H / 2); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+F133.play = playPuyo133;
+const TTL133 = [["連鎖の名人", "こもれびドロップで5連鎖する", () => (world.stats.puyo5_133 || 0) >= 1], ["ドロップの達人", "こもれびドロップで30,000点", () => g92().puyo.best >= 30000]];
+for (const t of TTL133) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
+// =================== v134: みんなの水族館のショー（ペンギンショー・イルカショー） ===================
+// 水族館の中（v128）の (13,9) に「ショーのプール」。ペンギンショーは建ったら（lv1）、イルカショーは大水槽ができたら（lv2）。
+// ショーは25秒ほどの絵。とちゅう5回「いまだ！」が出たときに拍手をすると、盛り上がりがたまる。見ると1日1回（ゲームの日）ずつ評判+1、ぜんぶ合わせると称号。
+// 状態：world.show134 = { pen, dol（見た回数）, day:{pen,dol}（評判をもらった日）, best:{pen,dol}（いちばんの盛り上がり 0〜5） }
+var F134 = {};
+const show134 = () => { const s = world.show134 = world.show134 && typeof world.show134 === "object" ? world.show134 : {}; s.pen = s.pen | 0; s.dol = s.dol | 0; s.day = s.day || {}; s.best = s.best || {}; return s; };
+addSpr17("s134_pool", (s, r, e) => { r(0, 6, 16, 10, C17("#c8d8e0")); r(1, 7, 14, 8, C17("#3a9ad8")); r(1, 7, 14, 2, C17("#7ad0f0")); for (const x of [3, 8, 12]) s(x, 10, C17("#c8f0ff")); r(5, 1, 6, 5, C17("#f0e0a0")); r(6, 2, 4, 3, C17("#e2404e")); s(7, 3, C17("#fff")); s(8, 3, C17("#fff")); r(7, 5, 2, 2, C17("#8a6a3a")); });
+{
+  const _mk = makeAqua128;
+  makeAqua128 = function () {
+    const m = _mk.apply(this, arguments);
+    try {
+      m.objs.push({ img: "s134_pool", x: 13 * TS, y: 10 * TS - IMG.s134_pool.height, sortY: 10 * TS - 1 });
+      m.base[9][13] = true; m.interact["13,9"] = () => openShow134();
+      m.labels.push({ x: 13.5 * TS, y: 9 * TS - 2, text: "ショー" });
+    } catch (e) { if (window.__komoErr) window.__komoErr(e, "v134"); }
+    return m;
+  };
+}
+F134.make = () => makeAqua128();
+function openShow134(note) {
+  const L = lv128(), s = show134();
+  openModal("水族館のショー", "shop", body => {
+    body.innerHTML = `<p class="mtext">プールでショーが見られるよ。とちゅうで「いまだ！」が出たら、拍手のボタンをおすと、ショーが盛り上がる。</p>${note ? `<p class="mtext"><b>${esc(note)}</b></p>` : ""}
+      <div class="list">
+        <div class="li"><span class="nm">ペンギンショー<span class="sub2">よちよち行進・おなかすべり・とびこみ。見た回数 ${s.pen}回・いちばんの盛り上がり ${s.best.pen | 0}/5</span></span><span class="acts"><button class="btn" type="button" data-sh134="pen" ${L >= 1 ? "" : "disabled"}>見る</button></span></div>
+        <div class="li"><span class="nm">イルカショー<span class="sub2">${L >= 2 ? `大ジャンプ・輪くぐり・ボール。見た回数 ${s.dol}回・いちばんの盛り上がり ${s.best.dol | 0}/5` : "大水槽ができる（募金4億G）と始まるよ"}</span></span><span class="acts"><button class="btn" type="button" data-sh134="dol" ${L >= 2 ? "" : "disabled"}>見る</button></span></div>
+      </div>`;
+    body.querySelectorAll("[data-sh134]").forEach(b => b.onclick = () => { closeModal(); playShow134(b.dataset.sh134); });
+  });
+}
+F134.open = openShow134;
+function playShow134(kind) {
+  const W = 320, H = 180, WL = 118, DUR = kind === "dol" ? 26 : 24;
+  const CH = kind === "dol" ? [4.2, 8.6, 13.4, 18.2, 23] : [3.6, 8, 12.4, 16.8, 21.2];
+  const hit = Array(5).fill(false);
+  let t0 = 0, raf = 0, closed = false, claps = [], splash = [], done = false;
+  openModal(kind === "dol" ? "イルカショー" : "ペンギンショー", "shop", body => {
+    body.innerHTML = `<div class="sh134"><canvas id="sh134cv" width="${W}" height="${H}"></canvas><div class="row2"><button class="btn" type="button" id="sh134c">拍手</button></div><p class="mtext small" id="sh134m">ショーがはじまるよ…</p></div>`;
+  }, () => { closed = true; cancelAnimationFrame(raf); });
+  const cv = $("sh134cv"); if (!cv) return; const g = cv.getContext("2d");
+  const clap = () => {
+    if (done) return;
+    const t = (performance.now() - t0) / 1000;
+    claps.push({ x: 30 + Math.random() * 260, y: 168, t: 1 });
+    const i = CH.findIndex(c => t >= c && t <= c + 1.3);
+    if (i >= 0 && !hit[i]) { hit[i] = true; se13("small"); $("sh134m").textContent = `盛り上がってきた！（${hit.filter(Boolean).length}/5）`; }
+  };
+  $("sh134c").addEventListener("pointerdown", e => { e.preventDefault(); clap(); });
+  const penguin = (x, y, flip, slide) => {
+    g.save(); g.translate(x, y); if (flip) g.scale(-1, 1);
+    if (slide) { g.fillStyle = "#1a1a2a"; g.beginPath(); g.ellipse(0, 0, 10, 5, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.ellipse(0, 2, 7, 3, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = "#f0a030"; g.fillRect(9, -1, 4, 2); }
+    else { g.fillStyle = "#1a1a2a"; g.beginPath(); g.ellipse(0, -8, 6, 9, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.ellipse(1, -6, 4, 7, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = "#f0a030"; g.fillRect(4, -13, 4, 2); g.fillRect(-3, 0, 3, 2); g.fillRect(1, 0, 3, 2); g.fillStyle = "#000"; g.fillRect(2, -14, 1, 1); }
+    g.restore();
+  };
+  const dolphin = (x, y, ang) => {
+    g.save(); g.translate(x, y); g.rotate(ang);
+    g.fillStyle = "#6a8ab0"; g.beginPath(); g.ellipse(0, 0, 18, 6, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#d8e4f0"; g.beginPath(); g.ellipse(2, 2, 12, 3, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#6a8ab0"; g.beginPath(); g.moveTo(-2, -5); g.lineTo(3, -12); g.lineTo(6, -5); g.fill(); g.beginPath(); g.moveTo(-16, 0); g.lineTo(-24, -6); g.lineTo(-22, 0); g.lineTo(-24, 6); g.fill();
+    g.fillRect(17, -1, 5, 3); g.fillStyle = "#000"; g.fillRect(12, -2, 1, 1);
+    g.restore();
+  };
+  const trainer = (x, y) => { g.fillStyle = "#2a5a9a"; g.fillRect(x - 4, y - 18, 8, 10); g.fillStyle = "#f2d0b0"; g.fillRect(x - 3, y - 25, 6, 6); g.fillStyle = "#3a2a1a"; g.fillRect(x - 3, y - 26, 6, 2); g.fillStyle = "#1a2a4a"; g.fillRect(x - 4, y - 8, 3, 8); g.fillRect(x + 1, y - 8, 3, 8); };
+  const end = () => {
+    if (done) return; done = true;
+    const n = hit.filter(Boolean).length, s = show134(), d = world.day;
+    s[kind]++; s.best[kind] = Math.max(s.best[kind] | 0, n);
+    const rep = s.day[kind] !== d; if (rep) { s.day[kind] = d; addRep(1); }
+    if (n >= 5) world.stats.showFull134 = (world.stats.showFull134 || 0) + 1;
+    saveWorld(); try { checkTitles42(); } catch (e) { }
+    const el = $("sh134m"); if (el) el.innerHTML = `<b>${n >= 5 ? "大成功！ 会場がわれんばかりの拍手" : n >= 3 ? "いいショーだった！" : "おしまい。また見に来てね"}</b>（盛り上がり ${n}/5）${rep ? "・村の評判 +1" : ""}`;
+    const b = $("sh134c"); if (b) { const b2 = b.cloneNode(true); b2.textContent = "もう一回見る"; b.replaceWith(b2); b2.onclick = () => { closeModal(); playShow134(kind); }; }
+  };
+  const frame = ts => {
+    if (closed) return; if (!t0) t0 = ts;
+    const t = (ts - t0) / 1000;
+    // 背景：観客席・ステージ・プール
+    g.fillStyle = "#cfe8f4"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#e8e0d0"; g.fillRect(0, 60, WL, 60);
+    g.fillStyle = "#2a8ad0"; g.fillRect(WL, 70, W - WL, 90); g.fillStyle = "#7ad0f0"; g.fillRect(WL, 70, W - WL, 6);
+    for (let x = WL; x < W; x += 16) { g.fillStyle = "rgba(255,255,255,.4)"; g.fillRect(x + (Math.sin(t * 2 + x) * 3), 90 + (x % 30), 6, 1); }
+    g.fillStyle = "#8a6a4a"; g.fillRect(0, 150, W, 30);
+    for (let x = 6; x < W; x += 14) { g.fillStyle = ["#e2404e", "#4a8ae0", "#f0c030", "#4aa860"][x % 4]; g.beginPath(); g.arc(x, 160 + Math.sin(t * 6 + x) * (hit.some(Boolean) ? 1.5 : .5), 5, 0, Math.PI * 2); g.fill(); g.fillStyle = "#f2d0b0"; g.beginPath(); g.arc(x, 153, 3, 0, Math.PI * 2); g.fill(); }
+    trainer(60, 118);
+    if (kind === "pen") {
+      // ペンギン4羽：0-6s 行進、6-10s おなかすべり、10-15 とびこみと浮上、15-20 魚をキャッチ、20- おじぎ
+      for (let i = 0; i < 4; i++) {
+        const delay = i * .5;
+        if (t < 6) { const x = Math.min(100, -20 + (t - delay) * 24) - i * 18; if (x > -20) penguin(x, 118, false, false); }
+        else if (t < 10) { const x = 82 - i * 18 + (t - 6) * 22; penguin(Math.min(WL - 6, x), 118, false, true); }
+        else if (t < 15) { const k = (t - 10 - delay) / 1.4; const x = 140 + i * 40, y = k < 0 ? 116 : k < 1 ? 116 - Math.sin(k * Math.PI) * 40 : 100 + Math.sin(t * 3 + i) * 2; penguin(x, y, false, k >= 1); if (k >= 1 && k < 1.2) splash.push({ x, y: 72, t: .5 }); }
+        else if (t < 20) { const x = 140 + i * 40, y = 100 + Math.sin(t * 3 + i) * 2, up = (t * 1.3 + i) % 2 < .5; penguin(x, up ? y - 20 : y, false, !up); if (up) { g.fillStyle = "#a8b8c8"; g.fillRect(x + 6, y - 32, 6, 3); } }
+        else { const x = 40 + i * 20, bow = Math.sin(t * 4 + i) > 0; penguin(x, bow ? 120 : 118, false, false); }
+      }
+    } else {
+      // イルカ2頭：ジャンプ・輪くぐり・ボール・しっぽで水しぶき・ダブルジャンプ
+      for (let i = 0; i < 2; i++) {
+        const ph = t + i * 1.6, base = 140 + i * 70;
+        let x = WL + 20 + ((ph * 40) % (W - WL - 20)), y = 120 + Math.sin(ph * 2) * 4, a = 0;
+        const jump = (c, h) => { const k = (t - c) / 1.6; if (k >= 0 && k <= 1) { x = base + (k - .5) * 80; y = 74 - Math.sin(k * Math.PI) * h; a = (k - .5) * 1.6; if (k > .95) splash.push({ x, y: 72, t: .6 }); return true; } return false; };
+        if (t < 3) { y = 110 + Math.sin(ph * 3) * 6; }
+        else if (jump(CH[0] - .3 + i * .4, 70)) { }
+        else if (jump(CH[1] - .3, 85)) { if (i === 0) { g.strokeStyle = "#f0c030"; g.lineWidth = 3; g.beginPath(); g.ellipse(base, 22, 10, 16, 0, 0, Math.PI * 2); g.stroke(); } }
+        else if (t >= CH[2] - .4 && t < CH[2] + 2) { x = base; y = 66; a = -1.2; if (i === 0) { g.fillStyle = "#e2404e"; g.beginPath(); g.arc(base + 18, 40 - Math.abs(Math.sin(t * 6)) * 14, 6, 0, Math.PI * 2); g.fill(); } }
+        else if (t >= CH[3] - .4 && t < CH[3] + 1.5) { x = base; y = 80; a = .9; if (Math.random() < .3) splash.push({ x: base - 20, y: 74, t: .8, big: true }); }
+        else if (jump(CH[4] - .5 + i * .2, 100)) { }
+        dolphin(x, y, a);
+      }
+    }
+    // 水しぶき
+    for (let k = splash.length - 1; k >= 0; k--) { const p = splash[k]; p.t -= 1 / 60; if (p.t <= 0) { splash.splice(k, 1); continue; } g.fillStyle = `rgba(255,255,255,${p.t})`; for (let j = 0; j < (p.big ? 8 : 4); j++) g.fillRect(p.x + Math.sin(j * 2.1) * (p.big ? 30 : 12) * (1 - p.t), p.y - (1 - p.t) * (p.big ? 40 : 18) - j * 2, 2, 2); }
+    // 拍手の手
+    for (let k = claps.length - 1; k >= 0; k--) { const c = claps[k]; c.t -= 1 / 60; if (c.t <= 0) { claps.splice(k, 1); continue; } g.fillStyle = `rgba(240,200,80,${c.t})`; g.font = "bold 10px sans-serif"; g.fillText("パチパチ", c.x, c.y - (1 - c.t) * 20); }
+    // いまだ！
+    const ci = CH.findIndex(c => t >= c && t <= c + 1.3);
+    if (ci >= 0 && !hit[ci]) { g.fillStyle = "rgba(255,255,255,.85)"; g.fillRect(100, 6, 120, 22); g.fillStyle = "#e2404e"; g.font = "bold 14px sans-serif"; g.textAlign = "center"; g.fillText("いまだ！ 拍手", 160, 22); g.textAlign = "left"; }
+    g.fillStyle = "#2a3a4a"; g.font = "10px sans-serif"; g.fillText(`盛り上がり ${"★".repeat(hit.filter(Boolean).length)}${"☆".repeat(5 - hit.filter(Boolean).length)}`, 6, 14);
+    if (t >= DUR) { end(); return; }
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+}
+F134.play = playShow134;
+const TTL134 = [["ショーの常連", "水族館のショーを10回見る", () => show134().pen + show134().dol >= 10], ["拍手の名人", "水族館のショーで盛り上がり5/5", () => (world.stats.showFull134 || 0) >= 1]];
+for (const t of TTL134) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
+// =================== v135: アイドルのライブを見る側に（ほかの人のライブで応援コール・先輩アイドルのライブ） ===================
+// ・プロデュースの画面に「ライブを見る・応援する」。いま野外ステージでライブ中の人（cfg.idl が "l"）か、いつでも見られる「先輩アイドルのライブ」をえらぶ
+// ・見ているあいだ、3つのコール（ハイ！・フッフー・♡）が流れてくる。線にかさなったときに同じボタンを押すと「コール成功」
+// ・ほかの人のライブでコールが成功すると、サーバー（jp.komorebi.idol.CheerHandler・type "cheer"）がライブ中の人に {type:"cheer",from,name,k} を届ける
+// ・ライブ中の人の画面：届いたコールがハートで出て、1回の本番で30回までファン+1ずつ
+// 状態：world.idol102.a135 = { watched（見た回数）, calls（コール成功の合計）, day（評判をもらった村の日）, got（もらったコールの合計） }
+var F135 = { recv: 0, recvAt: 0, names: new Set() };
+F135.cheer = (to, k) => { if (F8.connected && !WATCH88) send8({ type: "cheer", to, k }); };
+const id135 = () => { const d = idol102(); const o = d.a135 = d.a135 && typeof d.a135 === "object" ? d.a135 : {}; for (const k of ["watched", "calls", "day", "got"]) o[k] = o[k] | 0; return o; };
+const CALL135 = [["ハイ！", "#ffe066"], ["フッフー", "#7ad0f0"], ["♡", "#ff8ac8"]];
+// 先輩アイドル（だれのライブもないときでも見られる）
+const SENPAI135 = [{ name: "ミライ", cfg: { hair: "ロング", hairc: "ピンク" in CHAR.HAIRC ? "ピンク" : "茶", top: "ロリータドレス", topc: "ピンク", bottom: "スカート", bottomc: "白" } },
+  { name: "ソラ", cfg: { hair: "ショート", hairc: "青" in CHAR.HAIRC ? "青" : "黒", top: "セーラー服", topc: "青", bottom: "スカート", bottomc: "青" } }];
+function liveOthers135() {
+  const L = [];
+  for (const e of remotes.values()) { const x = parseIdl124(e.cfg && e.cfg.idl); if (x && x.mode === "l") L.push({ id: e.rid, owner: e.name, x }); }
+  return L;
+}
+function openWatch135() {
+  const L = liveOthers135(), o = id135();
+  openModal("ライブを見る", "dark", body => {
+    body.innerHTML = `<p class="mtext">ライブを見ながら、流れてくるコールにあわせてボタンを押そう。ほかの人のライブなら、あなたのコールがその人のアイドルに届いて、ファンがふえるよ。</p>
+      <h4>いま野外ステージでライブ中</h4>
+      <div class="list">${L.length ? L.map(l => `<div class="li"><span class="nm">${esc(l.owner)}さんのアイドル「${esc(IDOLS102[l.x.pick].name)}」<span class="sub2">${esc((SONG102[l.x.song] || SONG102[0])[0])}</span></span><span class="acts"><button class="btn" type="button" data-w135="${l.id}">見る・応援する</button></span></div>`).join("") : `<p class="mtext small">いまはだれもライブをしていないよ。${F8.connected ? "" : "（ほかの人のライブは、オンラインのときに見られる）"}</p>`}</div>
+      <h4>先輩アイドルのライブ（いつでも）</h4>
+      <div class="list">${SENPAI135.map((s, i) => `<div class="li"><span class="nm">${esc(s.name)}<span class="sub2">村のアイドルの先輩。コールの練習にもどうぞ</span></span><span class="acts"><button class="btn light" type="button" data-s135="${i}">見る</button></span></div>`).join("")}</div>
+      <p class="mtext small">見た回数 ${o.watched}回・コール成功 ${fmt92(o.calls)}回・あなたのアイドルがもらったコール ${fmt92(o.got)}回</p>`;
+    body.querySelectorAll("[data-w135]").forEach(b => b.onclick = () => { const l = liveOthers135().find(y => y.id === +b.dataset.w135); closeModal(); if (l) watchLive135({ id: l.id, owner: l.owner, look: lookOf124(l.x), name: IDOLS102[l.x.pick].name, song: l.x.song }); else openWatch135(); });
+    body.querySelectorAll("[data-s135]").forEach(b => b.onclick = () => { const s = SENPAI135[+b.dataset.s135]; closeModal(); watchLive135({ id: 0, owner: "", look: { ...DEFAULT, ...s.cfg }, name: s.name, song: rnd(SONG102.length) }); });
+  });
+}
+F135.open = openWatch135;
+/** ライブを見る（30秒）。who.id が 0 でなければ、成功したコールをその人へ送る */
+function watchLive135(who) {
+  const W = 300, H = 170, LINE = 236, DUR = 30, SPD = 120;
+  const notes = []; let t0 = 0, raf = 0, closed = false, ok = 0, miss = 0, done = false, combo = 0, fx = [];
+  { let t = 1.6; while (t < DUR - 1.5) { notes.push({ t, k: rnd(3), hit: false, gone: false }); t += [.5, .7, .9, 1.1][rnd(4)]; } }
+  openModal(`${who.name}のライブ`, "dark", body => {
+    body.innerHTML = `<div class="wl135"><canvas id="wl135cv" width="${W}" height="${H}"></canvas>
+      <div class="row2 wl135k">${CALL135.map(([n, c], i) => `<button class="btn" type="button" data-c135="${i}" style="background:${c};color:#222">${n}</button>`).join("")}</div>
+      <p class="mtext small" id="wl135m">${who.id ? `${esc(who.owner)}さんのアイドル。コールが届くよ` : "先輩アイドルのライブ"}</p></div>`;
+  }, () => { closed = true; cancelAnimationFrame(raf); if (!done) finish(); });
+  const cv = $("wl135cv"); if (!cv) return; const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const tap = k => {
+    if (done || !t0) return;
+    const t = (performance.now() - t0) / 1000;
+    let best = null, bd = 1e9;
+    for (const n of notes) { if (n.hit || n.gone || n.k !== k) continue; const d = Math.abs(n.t - t) * SPD; if (d < bd) { bd = d; best = n; } }
+    if (best && bd <= 22) {
+      best.hit = true; ok++; combo++; se13("small"); fx.push({ k, t: 1, x: 60 + Math.random() * 120 });
+      if (who.id) F135.cheer(who.id, k);
+    } else { combo = 0; }
+  };
+  document.querySelectorAll("[data-c135]").forEach(b => b.addEventListener("pointerdown", e => { e.preventDefault(); tap(+b.dataset.c135); }));
+  const onKey = e => { const k = { "1": 0, "2": 1, "3": 2, j: 0, k: 1, l: 2 }[e.key]; if (k == null || /INPUT|TEXTAREA/.test(e.target.tagName)) return; e.preventDefault(); e.stopPropagation(); if (!e.repeat) tap(k); };
+  addEventListener("keydown", onKey, true);
+  function finish() {
+    if (done) return; done = true; removeEventListener("keydown", onKey, true);
+    const o = id135(); o.watched++; o.calls += ok;
+    const rep = who.id && ok >= 5 && o.day !== world.day; if (rep) { o.day = world.day; addRep(1); }
+    if (who.id) world.stats.cheerOthers135 = (world.stats.cheerOthers135 || 0) + 1;
+    saveWorld(); try { checkTitles42(); } catch (e) { }
+    const el = $("wl135m"); if (el) el.innerHTML = `<b>おしまい！</b> コール成功 ${ok}回${who.id ? `（${esc(who.owner)}さんのアイドルに届いた）` : ""}${rep ? "・村の評判 +1" : ""}`;
+    const k = document.querySelector(".wl135k"); if (k) k.innerHTML = `<button class="btn light" type="button" id="wl135back">ライブをえらぶ</button>`;
+    $("wl135back")?.addEventListener("click", () => { closeModal(); openWatch135(); });
+  }
+  const frame = ts => {
+    if (closed) return; if (!t0) t0 = ts;
+    const t = (ts - t0) / 1000;
+    g.fillStyle = "#1a1030"; g.fillRect(0, 0, W, H);
+    for (let k = 0; k < 4; k++) { g.fillStyle = `hsla(${(ts / 15 + k * 90) % 360},90%,65%,.18)`; g.beginPath(); g.moveTo(20 + k * 30, 0); g.lineTo(60 + k * 20 + Math.sin(ts / 500 + k) * 20, 110); g.lineTo(90 + k * 20 + Math.sin(ts / 500 + k) * 20, 110); g.fill(); }
+    g.fillStyle = "#3a2a50"; g.fillRect(0, 108, 170, 10);
+    const dir = ["down", "left", "down", "right"][Math.floor(t * 1.6) % 4];
+    g.drawImage(charImg118(who.look, dir, Math.floor(t * 6) % 3), 62, 44 - (Math.floor(t * 4) % 2) * 2, 64, 64);
+    for (let i = 0; i < 9; i++) { const x = 8 + i * 18, up = Math.sin(t * 8 + i) > .3; g.fillStyle = ["#e2404e", "#4a8ae0", "#f0c030", "#ff8ac8"][i % 4]; g.fillRect(x + 4, up ? 122 : 128, 2, 10); g.fillStyle = "#f2d0b0"; g.beginPath(); g.arc(x + 5, 145, 6, 0, Math.PI * 2); g.fill(); }
+    // コールのレーン（右）
+    g.fillStyle = "rgba(255,255,255,.08)"; g.fillRect(180, 0, 120, H);
+    g.fillStyle = "#fff"; g.fillRect(180, LINE - 100, 120, 2);
+    for (const n of notes) {
+      if (n.hit || n.gone) continue;
+      const y = LINE - 100 - (n.t - t) * SPD; if (y < -20) continue;
+      if (y > LINE - 100 + 24) { n.gone = true; miss++; combo = 0; continue; }
+      const [lab, col] = CALL135[n.k], x = 196 + n.k * 36;
+      g.fillStyle = col; g.beginPath(); g.arc(x, y, 12, 0, Math.PI * 2); g.fill(); g.fillStyle = "#222"; g.font = "bold 8px sans-serif"; g.textAlign = "center"; g.fillText(lab, x, y + 3); g.textAlign = "left";
+    }
+    for (let i = fx.length - 1; i >= 0; i--) { const f = fx[i]; f.t -= 1 / 60; if (f.t <= 0) { fx.splice(i, 1); continue; } g.fillStyle = CALL135[f.k][1]; g.font = "bold 12px sans-serif"; g.fillText(CALL135[f.k][0], f.x, 120 - (1 - f.t) * 40); }
+    g.fillStyle = "#fff"; g.font = "10px sans-serif"; g.fillText(`コール ${ok}${combo >= 5 ? `　${combo}コンボ！` : ""}`, 6, 14);
+    g.fillText(`のこり ${Math.max(0, Math.ceil(DUR - t))}秒`, 6, 28);
+    if (t >= DUR) { finish(); return; }
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+}
+F135.watch = watchLive135;
+// ライブ中の人：届いたコール
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "cheer") {
+      try {
+        const live = Date.now() < live124 || (modalOpen && ($("lv102cv") || $("lv102end")));
+        if (!live) return;
+        const o = id135(); o.got++;
+        if (F135.recvAt < Date.now() - 90000) { F135.recv = 0; F135.names = new Set(); }
+        F135.recvAt = Date.now();
+        F135.names.add(String(m.name || ""));
+        if (F135.recv < 30) { F135.recv++; idol102().fans++; }
+        saveWorld();
+        const box = $("mbody"); if (box && $("lv102cv")) {
+          let el = $("ch135"); if (!el) { box.insertAdjacentHTML("afterbegin", `<div id="ch135" class="ch135"></div>`); el = $("ch135"); }
+          el.innerHTML = `<b>応援コール ${F135.recv}回</b>（${[...F135.names].slice(0, 3).map(esc).join("・")}さん）`;
+          const h = document.createElement("span"); h.className = "ch135h"; h.textContent = CALL135[Math.max(0, Math.min(2, m.k | 0))][0]; h.style.left = (10 + Math.random() * 80) + "%"; el.appendChild(h); setTimeout(() => h.remove(), 1200);
+        }
+      } catch (e) { }
+      return;
+    }
+    _h(m);
+  };
+}
+// 本番がおわったら、もらったコールのお知らせ
+{ const _l = live102; live102 = function () { F135.recv = 0; F135.names = new Set(); F135.recvAt = Date.now(); const r = _l.apply(this, arguments); return r; }; }
+setInterval(() => { try { if (F135.recv && !(modalOpen && ($("lv102cv") || $("lv102end"))) && Date.now() - F135.recvAt > 1500) { toast(null, `ライブで応援コールを ${F135.recv}回もらった（ファン +${F135.recv}）`); F135.recv = 0; } } catch (e) { } }, 1000);
+// プロデュースの画面に入口
+setInterval(() => {
+  try {
+    if (!modalOpen || !$("id102cv") || $("wl135b")) return;
+    const l = document.querySelector("#mbody .id102l"); if (!l) return;
+    l.insertAdjacentHTML("beforeend", `<button class="btn light" type="button" id="wl135b">ライブを見る・応援する</button>`);
+    $("wl135b").onclick = () => { closeModal(); openWatch135(); };
+  } catch (e) { }
+}, 300);
+// ほかの人のライブのお知らせに「応援しに行く」
+{
+  const seen = new Map();
+  setInterval(() => {
+    try {
+      if (!F8.connected || WATCH88) return;
+      for (const e of remotes.values()) {
+        const x = parseIdl124(e.cfg && e.cfg.idl), live = !!(x && x.mode === "l"), was = seen.get(e.rid);
+        if (live && !was) { const id = e.rid, owner = e.name; F7.pending.push({ kind: "custom", show: () => openModal("ライブ中！", "dark", body => { body.innerHTML = `<p class="mtext">${esc(owner)}さんのアイドル「${esc(IDOLS102[x.pick].name)}」が、野外ステージでライブ中！ 見に行って、コールで応援する？</p><div class="row2"><button class="btn" type="button" id="lv135go">応援する</button><button class="btn light" type="button" id="lv135no">あとで</button></div>`; body.querySelector("#lv135go").onclick = () => { closeModal(); const c = remotes.get(id); const xx = c && parseIdl124(c.cfg && c.cfg.idl); if (xx && xx.mode === "l") watchLive135({ id, owner, look: lookOf124(xx), name: IDOLS102[xx.pick].name, song: xx.song }); else openWatch135(); }; body.querySelector("#lv135no").onclick = () => closeModal(); }) }); }
+        seen.set(e.rid, live);
+      }
+    } catch (err) { }
+  }, 1000);
+}
+const TTL135 = [["推し活", "ほかの人のアイドルのライブで10回応援する", () => (world.stats.cheerOthers135 || 0) >= 10], ["コールの名人", "ライブのコールを300回成功させる", () => id135().calls >= 300]];
+for (const t of TTL135) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -28900,7 +29697,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>
@@ -29677,11 +30474,14 @@ function renderRaceBody(cb, body, st) {
   const last = RC.lastRes && (RC.lastRes.id === st.id || st.phase === "bet") ? `<div class="result ${RC.lastRes.paid ? "win" : ""}">${RC.lastRes.paid ? `当たり！ 払い戻し +${fmt(RC.lastRes.paid)}` : "はずれ…"}</div>` : "";
   const others = !st.local && (st.bets || []).length ? `<p class="mtext small">みんなの賭け：${st.bets.slice(-6).map(b => `${esc(b.name)}が${b.runner + 1}番に${fmt(b.amount)}`).join("、")}</p>` : "";
   const hist = (st.hist || []).length ? `<p class="mtext small">これまでの1着：${st.hist.slice(0, 6).map(h => `${esc((h.names || [])[0] || "")}（${h.winOdds}倍）`).join("・")}</p>` : "";
-  const hostNote = !st.local && st.hosted ? `<p class="mtext host125"><b>主催レース「${esc(st.hosted.title)}」</b>（${esc(st.hosted.hostName)}さん主催・賞金 ${fmt(st.hosted.purse)}）</p>` : !st.local && st.host ? `<p class="mtext small host125">「${esc(st.host.title)}」の出走受付中（${esc(st.host.hostName)}さん主催・賞金 ${fmt(st.host.purse)}・${(st.host.entries || []).length}粒）</p>` : "";
-  el.innerHTML = `<p class="mtext small">レース ${st.id}　${st.phase === "bet" ? "受付中" : st.phase === "run" ? "レース中" : "結果"}</p>${hostNote}
+  const hostNote = !st.local && st.hosted && st.hosted.grand ? `<p class="mtext host125 grand130"><b>【大レース】${esc(st.hosted.title)}</b>（年に1度の大レース・1着の賞金 ${fmt((st.hosted.prize || [0])[0])}）</p>`
+    : !st.local && st.hosted ? `<p class="mtext host125"><b>主催レース「${esc(st.hosted.title)}」</b>${st.hosted.condName ? `【${esc(st.hosted.condName)}】` : ""}（${esc(st.hosted.hostName)}さん主催・賞金 ${fmt(st.hosted.purse)}）</p>`
+    : !st.local && st.host ? `<p class="mtext small host125">「${esc(st.host.title)}」${st.host.condName ? `【${esc(st.host.condName)}】` : ""}の出走受付中（${esc(st.host.hostName)}さん主催・賞金 ${fmt(st.host.purse)}・${(st.host.entries || []).length}粒）</p>` : "";
+  const grandNote = !st.local && st.grand && st.grand.open ? `<p class="mtext small grand130">「第${st.grand.year}回 こもれび記念」の登録とファン投票の受付中（冬の7日目の18:00のあとのレース）</p>` : "";
+  el.innerHTML = `<p class="mtext small">レース ${st.id}　${st.phase === "bet" ? "受付中" : st.phase === "run" ? "レース中" : "結果"}</p>${hostNote}${grandNote}
     ${open ? betRow("rbet", "賭け金", Math.max(10, Math.min(S.lastBet || 100, K.world.money || 10))) : ""}
     <div class="rlist">${rows}</div>${myList}${RC.ui && RC.ui.msg ? `<p class="mtext small">${esc(RC.ui.msg)}</p>` : ""}${last}${others}${hist}
-    ${!st.local && K.openStable ? `<div class="row2"><button class="btn light" type="button" id="rStable">馬主の厩舎（自分のどんぐりを走らせる）</button>${K.openHost ? `<button class="btn light" type="button" id="rHost">主催レース</button>` : ""}</div>` : ""}
+    ${!st.local && K.openStable ? `<div class="row2"><button class="btn light" type="button" id="rStable">馬主の厩舎（自分のどんぐりを走らせる）</button>${K.openHost ? `<button class="btn light" type="button" id="rHost">主催レース</button>` : ""}${K.openGrand ? `<button class="btn light" type="button" id="rGrand">こもれび記念</button>` : ""}</div>` : ""}
     ${st.local ? `<div class="row2">${st.phase === "bet" ? `<button class="btn" type="button" id="rGo">出走！</button>` : st.phase === "result" ? `<button class="btn" type="button" id="rNext">次のレースへ</button>` : ""}</div>` : ""}`;
   wireBets(el);
   if (keepBet && el.querySelector("#rbet")) el.querySelector("#rbet").value = keepBet;
@@ -29697,6 +30497,7 @@ function renderRaceBody(cb, body, st) {
   });
   const stb = el.querySelector("#rStable"); if (stb) stb.onclick = () => K.openStable();
   const hst = el.querySelector("#rHost"); if (hst) hst.onclick = () => K.openHost();
+  const grd = el.querySelector("#rGrand"); if (grd) grd.onclick = () => K.openGrand();
   const go = el.querySelector("#rGo"); if (go) go.onclick = () => { if (st.phase !== "bet") return; localRun(st); RC.ui.dirty = true; if (typeof SFX !== "undefined" && SFX.lever) SFX.lever(); };
   const nx = el.querySelector("#rNext"); if (nx) nx.onclick = () => { RC.local = localRace(st.id + 1); RC.lastRes = null; RC.ui.msg = ""; RC.ui.dirty = true; };
 }

@@ -1674,6 +1674,35 @@ button.jn106.lock { opacity: .45; }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) {
   .cup131 canvas, .sh134 canvas, .wl135 canvas { width: auto; max-width: 100%; height: calc(100dvh - 190px); max-height: 260px; }
 }
+
+/* ===== v0.74.0：通話 ===== */
+.vc136 { position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; white-space: nowrap; transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; background: rgba(20, 40, 30, .88); color: #fff; font-size: .82rem; box-shadow: 0 2px 8px rgba(0, 0, 0, .3); }
+.vc136 button { border: 0; border-radius: 999px; padding: 4px 10px; background: rgba(255, 255, 255, .16); color: #fff; font: inherit; cursor: pointer; }
+.vc136 button.off { background: #c0392b; }
+.vc136 button.hang { background: #e2404e; }
+@media (max-width: 700px) { .vc136 { top: calc(96px + env(safe-area-inset-top)); } }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) { .vc136 { top: calc(44px + env(safe-area-inset-top)); } }
+.vc136s { width: 10px; height: 10px; border-radius: 50%; background: #6a7a70; }
+.vc136s.on { background: #4ade80; box-shadow: 0 0 0 3px rgba(74, 222, 128, .35); }
+.vc136av { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #3a5a4a; color: #fff; font-weight: 700; vertical-align: middle; transition: box-shadow .1s; }
+.vc136av.on { box-shadow: 0 0 0 3px #4ade80, 0 0 10px #4ade80; }
+.vc136ms { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 6px 0; }
+.vc136m { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 64px; }
+.vc136m .vc136av { width: 48px; height: 48px; font-size: 1.2rem; }
+.vc136ctl { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 8px 0 4px; }
+.vc136b { border: 0; border-radius: 999px; padding: 10px 16px; background: rgba(255, 255, 255, .16); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.vc136b.off { background: #6a6a6a; }
+.vc136b.hang { background: #e2404e; }
+.vc136vol { display: flex; align-items: center; gap: 8px; color: inherit; }
+.vc136vol input { flex: 1; }
+.vcring136 { position: fixed; left: 50%; top: 16%; transform: translateX(-50%); z-index: 90; width: min(320px, calc(100vw - 32px)); padding: 18px 16px; border-radius: 18px; background: rgba(18, 26, 22, .95); color: #fff; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 8px 30px rgba(0, 0, 0, .45); }
+.vr136a { width: 64px; height: 64px; border-radius: 50%; background: #3a5a4a; display: grid; place-items: center; font-size: 1.6rem; font-weight: 700; animation: vr136p 1.2s ease-in-out infinite; }
+@keyframes vr136p { 50% { box-shadow: 0 0 0 10px rgba(74, 222, 128, .25); } }
+@media (prefers-reduced-motion: reduce) { .vr136a { animation: none; } }
+.vr136b { display: flex; gap: 24px; margin-top: 8px; }
+.vr136b button { border: 0; border-radius: 999px; padding: 12px 22px; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.vr136no { background: #e2404e; }
+.vr136ok { background: #3aa86a; }
 </style>
 
 <header>
@@ -1800,7 +1829,7 @@ button.jn106.lock { opacity: .45; }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.73.0";
+  const VER = "0.74.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6305,7 +6334,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.73.0";
+const CLIENT_VERSION = "0.74.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8383,6 +8412,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.74.0", date: "2026/11/10", title: "声で話せるように（近くの声・通話アプリ）", items: [
+    "スマホに「通話」アプリ：同じ村でつないでいる人に電話できる。通話中に「呼ぶ」で、6人までのグループ通話に",
+    "近くの声：「通話」で ON にした人どうしが近く（10マス以内）にいると、声がつながる。はなれるほど小さく聞こえる",
+    "マイクのミュート・スピーカーの ON/OFF・音量・人ごとの「聞かない」をえらべる。話している人には、名前のまわりと頭の上に印が出る",
+    "声はサーバーを通らず、録音もしないよ。イヤホンを使うと聞きやすい",
+  ] },
   { v: "0.73.0", date: "2026/11/10", title: "こもれび記念・村の大会・こもれびドロップ・水族館のショー", items: [
     "年に1度の大レース「こもれび記念」：村の1年の最後（冬の7日目）の18:00のあとに走る。冬の6日目から馬主がどんぐりを登録できて、村のみんなのファン投票で6粒が出走。1着の賞金は1,000,000G",
     "競どんぐりの主催レースに「特殊条件」：重馬場・長距離・短距離・ハンデ戦・新馬戦からえらべる",
@@ -29237,6 +29272,264 @@ setInterval(() => {
 const TTL135 = [["推し活", "ほかの人のアイドルのライブで10回応援する", () => (world.stats.cheerOthers135 || 0) >= 10], ["コールの名人", "ライブのコールを300回成功させる", () => id135().calls >= 300]];
 for (const t of TTL135) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 
+// =================== v136: 声の通話（近くの人と話す・スマホの「通話」アプリで電話とグループ通話・ミュート・話している表示） ===================
+// 声は画面どうしが直接やりとりする（WebRTC）。サーバーは「つなぎ方」を受けわたすだけ（jp.komorebi.voice：type "rtc" と "call"。mock.js も同じ）。録音はしない。
+// ・近くの声：設定で ON にした人どうし（cfg.vc＝"1"）が、同じ場所で10マス以内に来るとつながる。はなれるほど小さく聞こえ、13マスより遠くなると切れる
+// ・通話アプリ：同じ村でつないでいる人に電話する（部屋に呼ぶ）。部屋は6人まで。1対1もグループも同じ
+// ・つなぎはじめるのは、番号の小さいほう（両方からつなごうとしてぶつからないように）
+// ・ミュート：自分のマイク・スピーカー（ぜんぶ）・人ごとの「この人の声を聞かない」（world.vc136.block）
+// ・話している表示：声の大きさ（AnalyserNode）で、通話の画面の名前のまわりと、村の中の頭の上に出す
+// 状態：world.vc136 = { prox:近くの声, vol:音量 0〜1, block:[聞かない人のID] }（マイクは毎回たずねる）
+var F136 = {};
+const VC = { mic: null, micAsk: null, muted: false, spk: true, room: "", members: [], peers: new Map(), ac: null, me: { an: null, buf: null, lv: 0, on: false, t: 0 }, ring: null, ringTm: 0, err: "" };
+const vc136 = () => { const o = world.vc136 = world.vc136 && typeof world.vc136 === "object" ? world.vc136 : {}; o.prox = !!o.prox; o.vol = Number.isFinite(+o.vol) ? Math.max(0, Math.min(1, +o.vol)) : 1; o.block = Array.isArray(o.block) ? o.block.filter(n => Number.isInteger(n)).slice(0, 50) : []; return o; };
+const ICE136 = [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }];
+const canVoice136 = () => !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && F8.connected && !WATCH88;
+const myId136 = () => (F8.myId ? F8.myId() : 0);
+const rtcSend136 = (to, k, d) => { if (F8.connected && !WATCH88) send8({ type: "rtc", to, k, ...(d !== undefined ? { d } : {}) }); };
+const acOf136 = () => { if (!VC.ac) { try { VC.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { VC.ac = null; } } if (VC.ac && VC.ac.state === "suspended") VC.ac.resume().catch(() => { }); return VC.ac; };
+async function getMic136() {
+  if (VC.mic) return VC.mic;
+  if (VC.micAsk) return VC.micAsk;
+  VC.micAsk = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(s => {
+    VC.mic = s; VC.err = ""; s.getAudioTracks().forEach(t => t.enabled = !VC.muted);
+    const ac = acOf136(); if (ac) { const src = ac.createMediaStreamSource(s), an = ac.createAnalyser(); an.fftSize = 512; src.connect(an); VC.me.an = an; VC.me.buf = new Float32Array(an.fftSize); }
+    for (const p of VC.peers.values()) addTrack136(p);
+    return s;
+  }).catch(e => { VC.err = "マイクを使えなかった（ブラウザの設定でマイクを許可してね）"; toast(null, VC.err); return null; }).finally(() => { VC.micAsk = null; });
+  return VC.micAsk;
+}
+function dropMic136() { if (VC.mic) { VC.mic.getTracks().forEach(t => t.stop()); VC.mic = null; VC.me.an = null; VC.me.on = false; } }
+function addTrack136(p) {
+  if (!VC.mic || p.sent) return;
+  const t = VC.mic.getAudioTracks()[0]; if (!t) return;
+  try { if (p.tx && p.tx.sender) { p.tx.sender.replaceTrack(t); p.tx.direction = "sendrecv"; } else p.pc.addTrack(t, VC.mic); p.sent = true; } catch (e) { }
+}
+function makePeer136(id, initiator) {
+  const pc = new RTCPeerConnection({ iceServers: ICE136 });
+  const p = { id, pc, init: initiator, sent: false, ice: [], audio: null, gain: null, an: null, buf: null, lv: 0, on: false, t: 0, vol: 0, made: Date.now() };
+  VC.peers.set(id, p);
+  // つなぎはじめる側だけ、ここで音の通り道を作る（受ける側は、相手の申しこみを読んでから声をのせる）
+  if (initiator) { if (VC.mic) addTrack136(p); else p.tx = pc.addTransceiver("audio", { direction: "recvonly" }); }
+  pc.onicecandidate = e => { if (e.candidate) rtcSend136(id, "ice", e.candidate.toJSON ? e.candidate.toJSON() : e.candidate); };
+  pc.ontrack = e => {
+    const st = e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]);
+    if (!p.audio) { p.audio = new Audio(); p.audio.autoplay = true; p.audio.playsInline = true; }
+    p.audio.srcObject = st;
+    const ac = acOf136();
+    if (ac) {
+      p.audio.muted = true;
+      try { const src = ac.createMediaStreamSource(st), g = ac.createGain(), an = ac.createAnalyser(); an.fftSize = 512; src.connect(an); src.connect(g); g.connect(ac.destination); p.gain = g; p.an = an; p.buf = new Float32Array(an.fftSize); } catch (err) { p.audio.muted = false; }
+    }
+    p.audio.play().catch(() => { });
+    applyVol136(p);
+  };
+  pc.onconnectionstatechange = () => { if (pc.connectionState === "failed") { closePeer136(id, true); } };
+  // 「ていねいな」つなぎ方（perfect negotiation）：番号の大きいほうがゆずる
+  p.polite = myId136() > id; p.making = false;
+  pc.onnegotiationneeded = async () => {
+    try { p.making = true; await pc.setLocalDescription(); const d = pc.localDescription; rtcSend136(id, "offer", { type: d.type, sdp: d.sdp }); } catch (e) { } finally { p.making = false; }
+  };
+  return p;
+}
+function closePeer136(id, tell) {
+  const p = VC.peers.get(id); if (!p) return;
+  VC.peers.delete(id);
+  try { p.pc.close(); } catch (e) { }
+  try { if (p.audio) { p.audio.srcObject = null; } if (p.gain) p.gain.disconnect(); } catch (e) { }
+  if (tell) rtcSend136(id, "bye");
+}
+async function onRtc136(m) {
+  const id = +m.from; if (!id || vc136().block.includes(id)) return;
+  if (m.k === "bye") { closePeer136(id, false); return; }
+  let p = VC.peers.get(id);
+  if (m.k === "offer") {
+    if (!wantSet136().has(id)) { rtcSend136(id, "bye"); return; }
+    if (!p) p = makePeer136(id, false);
+    const collide = p.making || p.pc.signalingState !== "stable";
+    if (collide && !p.polite) return;
+    try {
+      await p.pc.setRemoteDescription(m.d);
+      for (const c of p.ice.splice(0)) await p.pc.addIceCandidate(c).catch(() => { });
+      if (!VC.mic && (VC.room || vc136().prox)) await getMic136();
+      if (VC.mic) addTrack136(p);
+      await p.pc.setLocalDescription(); const d = p.pc.localDescription; rtcSend136(id, "answer", { type: d.type, sdp: d.sdp });
+    } catch (e) { }
+  } else if (m.k === "answer" && p) {
+    try { await p.pc.setRemoteDescription(m.d); for (const c of p.ice.splice(0)) await p.pc.addIceCandidate(c).catch(() => { }); } catch (e) { }
+  } else if (m.k === "ice" && p) {
+    if (!p.pc.remoteDescription) p.ice.push(m.d); else p.pc.addIceCandidate(m.d).catch(() => { });
+  }
+}
+// ---- だれとつなぐか（0.5秒ごと） ----
+const tileOf136 = e => [Math.round(e.px / TS), Math.round(e.py / TS)];
+function distTo136(e) { const [a, b] = tileOf136(player), [c, d] = tileOf136(e); return Math.hypot(a - c, b - d); }
+function wantSet136() {
+  const W = new Set(), me = myId136(), V = vc136();
+  if (!canVoice136() || !me) return W;
+  for (const x of VC.members) if (x.id !== me && !V.block.includes(x.id)) W.add(x.id);
+  if (V.prox && VC.mic) {
+    const k = mapKey();
+    for (const e of remotes.values()) {
+      if (V.block.includes(e.rid) || e.rmap !== k || !e.cfg || e.cfg.vc !== "1") continue;
+      if (distTo136(e) <= (VC.peers.has(e.rid) ? 13 : 10)) W.add(e.rid);
+    }
+  }
+  return W;
+}
+function applyVol136(p) {
+  const V = vc136(), inRoom = VC.members.some(x => x.id === p.id);
+  let v = inRoom ? 1 : 0;
+  if (!inRoom) { const e = remotes.get(p.id); if (e && e.rmap === mapKey()) v = Math.max(.08, Math.min(1, 1 - (distTo136(e) - 3) / 9)); }
+  v *= V.vol * (VC.spk ? 1 : 0);
+  p.vol = v;
+  if (p.gain) p.gain.gain.value = v; else if (p.audio) { try { p.audio.volume = v; } catch (e) { } }
+}
+let tick136 = 0;
+setInterval(() => {
+  try {
+    const W = wantSet136(), me = myId136();
+    const needMic = canVoice136() && (!!VC.room || vc136().prox);
+    if (needMic && !VC.mic && !VC.micAsk && !VC.err) getMic136();
+    if (!needMic && VC.mic && !VC.peers.size) dropMic136();
+    for (const id of W) if (!VC.peers.has(id) && me && me < id) makePeer136(id, true);
+    for (const [id, p] of VC.peers) { if (!W.has(id) && Date.now() - p.made > 1500) closePeer136(id, true); else applyVol136(p); }
+    // 見た目の設定：近くの声を ON にしていて、マイクがあるとき
+    const want = vc136().prox && VC.mic && canVoice136() ? "1" : null;
+    if ((cfg.vc || null) !== want) { if (want) cfg.vc = want; else delete cfg.vc; if (typeof sendCfgSoon === "function") sendCfgSoon(); }
+    if (++tick136 % 2 === 0) hud136();
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v136"); }
+}, 500);
+{ const _clean = cleanCfg; cleanCfg = function (c) { const o = _clean(c); if (c && c.vc === "1") o.vc = "1"; return o; }; }
+// ---- 話している表示（声の大きさ） ----
+const level136 = (an, buf) => { if (!an || !buf) return 0; an.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i]; return Math.sqrt(s / buf.length); };
+setInterval(() => {
+  try {
+    const now = Date.now();
+    const upd = (o, lv) => { o.lv = lv; if (lv > .03) { o.on = true; o.t = now; } else if (now - o.t > 350) o.on = false; };
+    upd(VC.me, VC.mic && !VC.muted ? level136(VC.me.an, VC.me.buf) : 0);
+    for (const p of VC.peers.values()) upd(p, p.vol > 0 ? level136(p.an, p.buf) : 0);
+    document.querySelectorAll("[data-vs136]").forEach(el => { const id = +el.dataset.vs136, o = id === myId136() ? VC.me : VC.peers.get(id); el.classList.toggle("on", !!(o && o.on)); });
+  } catch (e) { }
+}, 100);
+F136.speaking = id => { const o = id === myId136() ? VC.me : VC.peers.get(id); return !!(o && o.on); };
+{
+  const _de = drawEnt;
+  drawEnt = function (e) {
+    const r = _de.apply(this, arguments);
+    try {
+      const o = e === player ? (VC.mic ? VC.me : null) : e && e.kind === "remote" ? VC.peers.get(e.rid) : null;
+      if (o && o.on) {
+        const x = Math.round(e.px) + 7, y = Math.round(e.py) - 9, ph = Math.floor(performance.now() / 160) % 3;
+        ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.fillRect(x - 5, y - 3, 11, 7);
+        ctx.fillStyle = "#3aa86a"; for (let i = 0; i < 3; i++) { const h = [2, 4, 3][(i + ph) % 3]; ctx.fillRect(x - 3 + i * 3, y + 1 - h / 2, 2, h); }
+      }
+    } catch (err) { }
+    return r;
+  };
+}
+// ---- 通話アプリの部屋 ----
+async function ring136(to) {
+  if (!canVoice136()) { toast(null, "通話はオンラインのときだけ使えるよ"); return; }
+  acOf136(); if (!await getMic136()) return;
+  send8({ type: "call", a: "ring", to });
+}
+async function accept136() {
+  const r = VC.ring; if (!r) return; ringStop136();
+  acOf136(); await getMic136();
+  send8({ type: "call", a: "join", room: r.room });
+}
+function decline136() { const r = VC.ring; if (!r) return; ringStop136(); send8({ type: "call", a: "decline", room: r.room }); }
+function hang136() { if (VC.room) send8({ type: "call", a: "leave" }); VC.room = ""; VC.members = []; for (const id of [...VC.peers.keys()]) if (!wantSet136().has(id)) closePeer136(id, true); refresh136(); }
+function ringStop136() { VC.ring = null; clearInterval(VC.ringTm); VC.ringTm = 0; const el = $("vcring136"); if (el) el.remove(); }
+function showRing136(m) {
+  if (VC.ring) return;
+  if (vc136().block.includes(+m.from)) { send8({ type: "call", a: "decline", room: m.room }); return; }
+  VC.ring = { room: m.room, from: m.from, name: m.name, at: Date.now() };
+  const others = (m.members || []).filter(x => x.id !== m.from).map(x => x.name);
+  document.body.insertAdjacentHTML("beforeend", `<div id="vcring136" class="vcring136" role="dialog" aria-label="着信"><div class="vr136a">${esc(String(m.name || "?").slice(0, 1))}</div><b>${esc(m.name)}さん</b><span>${others.length ? `グループ通話（${others.map(esc).join("・")}さんも）` : "からの着信"}</span>
+    <div class="vr136b"><button type="button" class="vr136no" id="vr136no">断る</button><button type="button" class="vr136ok" id="vr136ok">出る</button></div></div>`);
+  $("vr136ok").onclick = () => accept136(); $("vr136no").onclick = () => decline136();
+  let n = 0; VC.ringTm = setInterval(() => { if (!VC.ring || ++n > 40) { if (VC.ring) decline136(); return; } if (n % 2) se13("small"); }, 1000);
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "rtc") { if (!WATCH88) onRtc136(m); return; }
+    if (m && m.type === "call") {
+      try {
+        if (m.ng) { toast(null, String(m.ng)); }
+        if (m.ok === "ring") { const p = remotes.get(m.to); toast(null, `${p ? p.name : ""}さんを呼んでいるよ…`); }
+        if (m.ev === "ring") showRing136(m);
+        if (m.ev === "declined") toast(null, `${m.name}さんは、いまは出られないみたい`);
+        if (m.ev === "room") {
+          const was = VC.room; VC.room = m.room || ""; VC.members = Array.isArray(m.members) ? m.members : [];
+          if (VC.room && !was) { world.stats.calls136 = (world.stats.calls136 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { } }
+          if (!VC.members.some(x => x.id === myId136())) { VC.room = ""; VC.members = []; }
+          if (VC.members.length >= 3) { world.stats.group136 = (world.stats.group136 || 0) + 1; }
+        }
+        refresh136();
+      } catch (e) { if (window.__komoErr) window.__komoErr(e, "v136"); }
+      return;
+    }
+    _h(m);
+    if (m && m.type === "leave" && m.id) { closePeer136(+m.id, false); VC.members = VC.members.filter(x => x.id !== +m.id); }
+    if (m && m.type === "welcome") { for (const id of [...VC.peers.keys()]) closePeer136(id, false); VC.room = ""; VC.members = []; ringStop136(); }
+  };
+}
+// ---- 画面の上の小さな帯（通話中・近くの声） ----
+function hud136() {
+  let el = $("vc136");
+  const on = canVoice136() && (VC.room || (vc136().prox && VC.mic));
+  if (!on) { if (el) el.remove(); return; }
+  if (!el) { document.body.insertAdjacentHTML("beforeend", `<div id="vc136" class="vc136"></div>`); el = $("vc136"); }
+  const n = VC.members.length, prox = [...VC.peers.keys()].filter(id => !VC.members.some(x => x.id === id)).length;
+  const sig = `${VC.room}|${n}|${prox}|${VC.muted}|${VC.spk}`; if (el.dataset.sig === sig) return; el.dataset.sig = sig;
+  el.innerHTML = `<span class="vc136s" data-vs136="${myId136()}"></span><button type="button" id="vc136o">${VC.room ? `通話中 ${n}人` : `近くの声${prox ? ` ${prox}人` : ""}`}</button>
+    <button type="button" id="vc136m" class="${VC.muted ? "off" : ""}" aria-label="マイク">${VC.muted ? "ミュート中" : "マイク"}</button>${VC.room ? `<button type="button" id="vc136h" class="hang" aria-label="切る">切る</button>` : ""}`;
+  $("vc136o").onclick = () => openCall136(); $("vc136m").onclick = () => setMute136(!VC.muted); const h = $("vc136h"); if (h) h.onclick = () => hang136();
+}
+function setMute136(v) { VC.muted = v; if (VC.mic) VC.mic.getAudioTracks().forEach(t => t.enabled = !v); refresh136(); }
+function refresh136() { const el = $("vc136"); if (el) el.dataset.sig = ""; hud136(); if (modalOpen && $("mtitle").textContent === "通話") renderCall136(); }
+// ---- 通話アプリ ----
+function renderCall136() {
+  const body = $("mbody"); if (!body || $("mtitle").textContent !== "通話") return;
+  const V = vc136(), me = myId136(), ok = canVoice136();
+  const people = [...remotes.values()].filter(e => e.rid > 0).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const av = (id, name) => `<span class="vc136av" data-vs136="${id}"><i>${esc(String(name || "?").slice(0, 1))}</i></span>`;
+  body.innerHTML = `${!ok ? `<p class="mtext">${!F8.connected ? "通話は、オンラインのときだけ使えるよ。" : "この端末（ブラウザ）では、通話が使えないみたい。"}</p>` : ""}
+    ${VC.err ? `<p class="mtext"><b>${esc(VC.err)}</b></p>` : ""}
+    ${VC.room ? `<h3 class="lbl">通話中（${VC.members.length}人）</h3><div class="vc136ms">${VC.members.map(x => `<div class="vc136m">${av(x.id, x.name)}<span>${esc(x.name)}${x.id === me ? "（あなた）" : ""}</span></div>`).join("")}</div>
+      <div class="vc136ctl"><button type="button" class="vc136b ${VC.muted ? "off" : ""}" id="cm136">${VC.muted ? "ミュート中" : "マイク ON"}</button><button type="button" class="vc136b ${VC.spk ? "" : "off"}" id="cs136">${VC.spk ? "スピーカー ON" : "スピーカー OFF"}</button><button type="button" class="vc136b hang" id="ch136">切る</button></div>` : ""}
+    <h3 class="lbl">近くの人と話す</h3>
+    <div class="row2"><button class="chip" type="button" id="cp136" aria-pressed="${V.prox}" ${ok ? "" : "disabled"}>近くの声（${V.prox ? "ON" : "OFF"}）</button>${!VC.room && V.prox ? `<button class="chip" type="button" id="cm136b" aria-pressed="${!VC.muted}">マイク（${VC.muted ? "ミュート中" : "ON"}）</button>` : ""}</div>
+    <p class="mtext small">ON にした人どうしが、同じ場所で近く（10マス以内）にいると、声がつながるよ。はなれるほど小さく聞こえる。</p>
+    <label class="vc136vol">音量 <input type="range" id="cv136" min="0" max="100" value="${Math.round(V.vol * 100)}"></label>
+    <h3 class="lbl">電話をかける${VC.room ? "（この通話に呼ぶ）" : ""}</h3>
+    <div class="list">${people.length ? people.map(e => { const blk = V.block.includes(e.rid), inCall = VC.members.some(x => x.id === e.rid); return `<div class="li"><span class="nm">${av(e.rid, e.name)} ${esc(e.name)}${blk ? `<span class="sub2">声を聞かない人</span>` : ""}</span><span class="acts">${inCall ? "通話中" : `<button class="btn" type="button" data-cr136="${e.rid}" ${ok && !blk ? "" : "disabled"}>${VC.room ? "呼ぶ" : "電話する"}</button>`}<button class="btn ghost" type="button" data-cb136="${e.rid}">${blk ? "聞く" : "聞かない"}</button></span></div>`; }).join("") : `<p class="mtext small">いま同じ村でつないでいる人はいないよ。</p>`}</div>
+    <p class="mtext small">通話は6人まで。グループ通話は、通話中に「呼ぶ」で人をふやせるよ。声はサーバーを通らず、録音もしない。イヤホンを使うと、声がはねかえらなくて聞きやすいよ。「聞かない」にした人とは、つながらない。</p>`;
+  body.querySelector("#cm136")?.addEventListener("click", () => setMute136(!VC.muted));
+  body.querySelector("#cm136b")?.addEventListener("click", () => setMute136(!VC.muted));
+  body.querySelector("#cs136")?.addEventListener("click", () => { VC.spk = !VC.spk; for (const p of VC.peers.values()) applyVol136(p); refresh136(); });
+  body.querySelector("#ch136")?.addEventListener("click", () => hang136());
+  body.querySelector("#cp136")?.addEventListener("click", async () => { const v = !vc136().prox; vc136().prox = v; saveWorld(); if (v) { VC.err = ""; acOf136(); await getMic136(); world.stats.prox136 = 1; } refresh136(); });
+  body.querySelector("#cv136")?.addEventListener("input", e => { vc136().vol = Math.max(0, Math.min(1, +e.target.value / 100)); for (const p of VC.peers.values()) applyVol136(p); });
+  body.querySelector("#cv136")?.addEventListener("change", () => saveWorld());
+  body.querySelectorAll("[data-cr136]").forEach(b => b.onclick = () => { b.disabled = true; ring136(+b.dataset.cr136); });
+  body.querySelectorAll("[data-cb136]").forEach(b => b.onclick = () => { const id = +b.dataset.cb136, L = vc136().block, i = L.indexOf(id); if (i >= 0) L.splice(i, 1); else { L.push(id); closePeer136(id, true); } saveWorld(); renderCall136(); });
+}
+function openCall136() { openModal("通話", "dark", () => renderCall136()); if (F8.connected && !WATCH88) send8({ type: "call", a: "look" }); }
+F136.open = openCall136; F136.state = VC; F136.ring = ring136; F136.accept = accept136; F136.hang = hang136; F136.mute = setMute136;
+ICON80.call136 = `<path d="M8 4h5l2 6-3 2a14 14 0 0 0 8 8l2-3 6 2v5c0 1-1 2-2 2C14 26 6 18 6 6c0-1 1-2 2-2z"/>`;
+F76.add({ id: "call136", name: "通話", ch: "話", c: "#3aa86a", open: () => openCall136() });
+const TTL136 = [["もしもし", "通話アプリでだれかと話す", () => (world.stats.calls136 || 0) >= 1], ["にぎやかな通話", "3人以上でグループ通話をする", () => (world.stats.group136 || 0) >= 1]];
+for (const t of TTL136) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["通話", "letter", `<p>オンラインでは、声で話せます（声はサーバーを通らず、録音もしません）。</p>
+  <ul><li><b>近くの声</b>：スマホの「通話」で ON にした人どうしが、近く（10マス以内）にいると声がつながります。はなれるほど小さく聞こえます</li>
+  <li><b>電話・グループ通話</b>：スマホの「通話」から、同じ村でつないでいる人に電話できます。通話中に「呼ぶ」で6人まで</li>
+  <li>マイクのミュート・スピーカーの ON/OFF・人ごとの「聞かない」が選べます。話している人には、名前のまわりと頭の上に印が出ます</li>
+  <li>イヤホンを使うと聞きやすいよ。ネットワークによっては、つながらないことがあります</li></ul>`]);
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -29697,7 +29990,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

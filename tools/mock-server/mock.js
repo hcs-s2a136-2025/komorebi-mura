@@ -251,6 +251,26 @@ function tnyHandle(s, m) {
   if (a === "cancel") { if (!t || t.host !== me) return send({ ng: "とりやめられる大会はないよ", rid }); if (Object.keys(t.ent).some(id => +id !== me)) return send({ ng: "もう参加している人がいるので、とりやめられないよ", rid }); t.cancel = true; t.end = 0; tnyTick(V, Date.now()); return send({ ok: "cancel", id: t.id, rid }); }
 }
 function tnyWelcome(pl) { const d = tnyOf(vOf(pl)), w = { cur: d.cur.map(t => tnyView(t, pl.id)) }; if (d.pend[pl.id] && d.pend[pl.id].length) { w.pay = d.pend[pl.id]; delete d.pend[pl.id]; } return w.cur.length || w.pay ? { tny: w } : {}; }
+// 通話アプリの部屋（本物は jp.komorebi.voice.CallHandler。6人まで・村ごと・メモリだけ）
+const callRooms = new Map(), callWhere = new Map(); let callSeq = 0;
+const callOn = (id, V) => [...sessions].some(x => x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V);
+const callTo = (id, o) => { for (const x of sessions) if (x.pl && x.pl.id === id && !x.watch) x.send(JSON.stringify({ type: "call", ...o })); };
+const callMembers = r => [...r.members].map(id => ({ id, name: r.names[id] || "" }));
+const callRoomSend = r => { for (const id of r.members) callTo(id, { ev: "room", room: r.id, members: callMembers(r) }); };
+function callLeave(me) { const r = callRooms.get(callWhere.get(me)); callWhere.delete(me); if (!r) return; r.members.delete(me); if (!r.members.size) callRooms.delete(r.id); else callRoomSend(r); }
+function callHandle(s, m) {
+  if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), a = String(m.a || ""), send = o => s.send(JSON.stringify({ type: "call", ...o }));
+  if (a === "ring") { const to = Math.floor(+m.to || 0); if (!(to > 0) || to === me || !callOn(to, V)) return send({ ng: "その人は、いまつないでいないみたい" });
+    let r = callRooms.get(callWhere.get(me)); if (!r) { callLeave(me); r = { id: "c" + (++callSeq), v: V, members: new Set([me]), names: { [me]: s.pl.name }, invited: {} }; callRooms.set(r.id, r); callWhere.set(me, r.id); callRoomSend(r); }
+    if (r.members.has(to)) return; if (r.members.size >= 6) return send({ ng: "通話は 6 人までだよ" });
+    r.invited[to] = Date.now(); callTo(to, { ev: "ring", room: r.id, from: me, name: s.pl.name, members: callMembers(r) }); return send({ ok: "ring", to, room: r.id }); }
+  if (a === "join") { const r = callRooms.get(String(m.room)); const inv = r && r.invited[me]; if (!r || !inv || Date.now() - inv > 45000 || r.v !== V) return send({ ng: "その通話は、もうおわったみたい" }); delete r.invited[me];
+    if (r.members.size >= 6) return send({ ng: "通話は 6 人までだよ" }); if (callWhere.get(me) !== r.id) callLeave(me); r.members.add(me); r.names[me] = s.pl.name; callWhere.set(me, r.id); return callRoomSend(r); }
+  if (a === "decline") { const r = callRooms.get(String(m.room)); if (!r || !r.invited[me]) return; delete r.invited[me]; for (const id of r.members) callTo(id, { ev: "declined", room: r.id, id: me, name: s.pl.name }); return; }
+  if (a === "leave") return callLeave(me);
+  if (a === "look") { const r = callRooms.get(callWhere.get(me)); return r ? callRoomSend(r) : send({ ev: "room", room: "", members: [] }); }
+}
+setInterval(() => { for (const r of [...callRooms.values()]) for (const id of [...r.members]) if (!callOn(id, r.v)) { callWhere.set(id, r.id); callLeave(id); } }, 3000);
 function duelWelcome(pl) { const d = duelOf(vOf(pl)), id = pl.id, w = { in: d.box.filter(c => c.t === id), out: d.box.filter(c => c.f === id), live: d.live.map(L => duelView(L, id)) };
   if (d.res[id] && d.res[id].length) { w.res = d.res[id]; delete d.res[id]; } if (d.pay[id] && d.pay[id].length) { w.pay = d.pay[id]; delete d.pay[id]; }
   if (d.cres && d.cres[id]) { if (d.cup && d.cup.last && d.cup.last.id === d.cres[id]) w.cup = d.cup.last.r; delete d.cres[id]; }
@@ -676,6 +696,8 @@ wss.on("connection", s => {
       return; }
     // みんなの水族館（本物は aqua/AquaHandler.java）
     if (m.type === "tny") return tnyHandle(s, m);
+    if (m.type === "rtc") { if (s.watch || !(s.pl.id > 0)) return; const to = Math.floor(+m.to || 0), k = String(m.k || ""); if (!(to > 0) || to === s.pl.id || !["offer", "answer", "ice", "bye"].includes(k) || JSON.stringify(m.d || null).length > 16000) return; for (const x of sessions) if (x.pl && x.pl.id === to && !x.watch && vOf(x.pl) === vOf(s.pl)) x.send(JSON.stringify({ type: "rtc", from: s.pl.id, name: s.pl.name, k, ...(m.d !== undefined ? { d: m.d } : {}) })); return; }
+    if (m.type === "call") return callHandle(s, m);
     if (m.type === "cheer") { if (s.watch || !(s.pl.id > 0)) return; const to = Math.floor(+m.to || 0), k = Math.floor(+m.k); if (!(to > 0) || to === s.pl.id || !(k >= 0 && k <= 3)) return; const n = Date.now(); s.cr = s.cr && n - s.cr.t < 1000 ? s.cr : { t: n, c: 0 }; if (++s.cr.c > 4) return; for (const x of sessions) if (x.pl && x.pl.id === to && !x.watch && vOf(x.pl) === vOf(s.pl)) x.send(JSON.stringify({ type: "cheer", from: s.pl.id, name: s.pl.name, k })); return; }
     if (m.type === "aqua") { if (s.watch || !(s.pl.id > 0)) return; const v = vOf(s.pl), d = aquaOf(v), rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "aqua", ...o })), others = o => { const t = JSON.stringify({ type: "aqua", ...o }); for (const x of sessions) if (x !== s && x.pl && vOf(x.pl) === v) x.send(t); };
       if (m.a === "look") { send({ st: aquaSt(d) }); return; }

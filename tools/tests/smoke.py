@@ -38,6 +38,7 @@ STEPS = [
     ("武具屋", f"window.KOMO.closeModal(); {G}.F127.open('shop')"),
     ("水族館の受付", f"window.KOMO.closeModal(); {G}.F128.open('give')"),
     ("アイドルのイメチェン", f"window.KOMO.closeModal(); {G}.F102.state().pick = 1; {G}.F126.face()"),
+    ("通話", f"window.KOMO.closeModal(); {G}.F136.open()"),
     ("こもれびドロップ", f"window.KOMO.closeModal(); {G}.F133.play()"),
     ("村の大会", f"window.KOMO.closeModal(); {G}.F132.open()"),
     ("にわとりグランプリ", f"window.KOMO.closeModal(); {G}.F131.open()"),

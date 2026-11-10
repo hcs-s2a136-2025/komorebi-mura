@@ -193,6 +193,21 @@ public class SharedWorldService implements WelcomeContributor {
         return layers().deepCopy();
     }
 
+    /** 保存の大きさ（管理人室の「村の一覧」に出す）：total＝いまの文字数、max＝保存できる上限、top＝大きい順の名前と文字数 */
+    public record Usage(int total, int max, List<Map.Entry<String, Integer>> top) { }
+
+    public Usage usageIn(long village) {
+        return Villages.in(village, () -> {
+            synchronized (this) {
+                ObjectNode layers = layers();
+                List<Map.Entry<String, Integer>> all = new java.util.ArrayList<>();
+                layers.fieldNames().forEachRemaining(f -> all.add(Map.entry(f, layers.get(f).toString().length())));
+                all.sort((x, y) -> y.getValue() - x.getValue());
+                return new Usage(layers.toString().length(), MAX_DOC, List.copyOf(all.subList(0, Math.min(3, all.size()))));
+            }
+        });
+    }
+
     public synchronized Map<String, Integer> stats() {
         Map<String, Integer> m = new LinkedHashMap<>();
         ObjectNode layers = layers();

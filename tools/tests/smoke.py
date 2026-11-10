@@ -1,7 +1,7 @@
 """ひとり用の1ファイル版を開いて、主な場所と画面をひととおり回り、エラーが出ないか確かめる。
 ゲームの中でつかまえて続けたエラー（絵のエラーなど。画面は止まらないが、毎フレーム出る）も window.__komoErr で拾う。
 使い方: python3 game-src/build.py && python3 tools/tests/smoke.py   （PC・スマホ縦・スマホ横の3つで回す）
-新しい場所や画面を足したら、STEPS に1行足す。"""
+新しい場所や画面を足したら、STEPS に1行足す。モーダルの中身が画面の右にはみ出していないかも、毎回見る。"""
 import asyncio, pathlib, sys
 from playwright.async_api import async_playwright
 HTML = (pathlib.Path(__file__).resolve().parents[2] / "game-src" / "komorebi.html").as_uri()
@@ -124,8 +124,27 @@ STEPS = [
     ("馬主の厩舎", f"window.KOMO.closeModal(); {G}.F107.open()"),
     ("討伐", f"window.KOMO.closeModal(); {G}.F111.open()"),
     ("天気（空の予報）", f"window.KOMO.closeModal(); {G}.F98.forecast()"),
+    ("水族館の中", f"window.KOMO.closeModal(); {G}.F128.enter()"),
     ("村にもどる（最後）", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down')"),
+    # メニュー（着せ替え・建築・クラフト・村・記録・設定）
+    ("メニューの着せ替え", "window.KOMO.closeModal(); document.body.classList.add('menu'); document.getElementById('tab-dress').click()"),
+    ("メニューの建築", "document.getElementById('tab-build').click()"),
+    ("メニューのクラフト", "document.getElementById('tab-craft').click()"),
+    ("メニューの村", "document.getElementById('tab-village').click()"),
+    ("メニューの記録", "document.getElementById('tab-log').click()"),
+    ("メニューの設定", "document.getElementById('tab-settings').click()"),
+    # 設定の「効果音 OFF」を押したら、本当に切れる・「ON」でもどる（押せなくなっていたら、ここで落ちる）
+    ("効果音を切る", "document.querySelector('#settingsBody [data-se=\"0\"]').click(); if (SFX.on) throw new Error('効果音が OFF にならない')"),
+    ("効果音をもどす", "document.querySelector('#settingsBody [data-se=\"1\"]').click(); if (!SFX.on) throw new Error('効果音が ON にもどらない')"),
+    ("メニューを閉じる", "document.body.classList.remove('menu')"),
 ]
+# モーダルの中身が、画面の右にはみ出していないか（スクロールできる枠・切りとる枠の中は数えない）
+WIDE = r"""(() => { const W = innerWidth, out = [];
+  for (const el of document.querySelectorAll('#mbox *')) { const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2 || r.right <= W + 3 || r.left >= W || r.bottom < 0 || r.top > innerHeight) continue;
+    if (getComputedStyle(el).visibility === 'hidden') continue; let clip = false;
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { if (/(auto|scroll|hidden)/.test(getComputedStyle(p).overflowX) && p.getBoundingClientRect().right <= W + 3) { clip = true; break; } }
+    if (!clip) { out.push(el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/)[0] : '') + ' +' + Math.round(r.right - W) + 'px'); if (out.length >= 3) break; } }
+  return out; })()"""
 async def main():
     bad = 0
     async with async_playwright() as p:
@@ -143,6 +162,8 @@ async def main():
                 await pg.wait_for_timeout(500)
                 k = await pg.evaluate("[...new Set(window.__errs.filter(x => x !== '[undefined] null'))]")
                 if k: errs.append(f"{label}: " + " / ".join(k[:3])); await pg.evaluate("window.__errs = []")
+                wide = await pg.evaluate(WIDE)
+                if wide: errs.append(f"{label}: 画面の右にはみ出している " + " / ".join(wide))
             print(name, "OK" if not errs else "NG"); [print("  ", e) for e in errs]; bad += len(errs)
             await ctx.close()
         await b.close()

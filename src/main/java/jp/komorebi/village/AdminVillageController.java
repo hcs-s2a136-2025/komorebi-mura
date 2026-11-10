@@ -23,14 +23,16 @@ import jp.komorebi.ws.GameSocketHandler;
 @RequestMapping("/admin/villages")
 public class AdminVillageController {
 
-    public record Row(long id, String name, String code, String owner, int players, int online, Instant lastSeen, Instant createdAt, boolean main) { }
+    public record Row(long id, String name, String code, String owner, int players, int online, Instant lastSeen, Instant createdAt, boolean main, String size, String sizeTop, boolean sizeWarn) { }
 
     private final VillageService villages;
     private final WatchService watch;
     private final GameSocketHandler socket;
     private final JdbcTemplate jdbc;
+    private final jp.komorebi.world.SharedWorldService shared;
 
-    public AdminVillageController(VillageService villages, WatchService watch, GameSocketHandler socket, JdbcTemplate jdbc) {
+    public AdminVillageController(VillageService villages, WatchService watch, GameSocketHandler socket, JdbcTemplate jdbc, jp.komorebi.world.SharedWorldService shared) {
+        this.shared = shared;
         this.villages = villages;
         this.watch = watch;
         this.socket = socket;
@@ -47,8 +49,16 @@ public class AdminVillageController {
         });
         Map<Long, String> names = new HashMap<>();
         jdbc.query("SELECT v.id, p.name FROM village v JOIN player p ON p.id = v.owner_id", rs -> { names.put(rs.getLong(1), rs.getString(2)); });
-        List<Row> rows = villages.list().stream().map(v -> new Row(v.id(), v.name(), v.main() ? "" : v.code(), names.getOrDefault(v.id(), v.main() ? "（はじまりの村）" : "-"),
-            counts.getOrDefault(v.id(), new int[] { 0 })[0], socket.onlineCount(v.id()), last.get(v.id()), v.createdAt(), v.main())).toList();
+        List<Row> rows = villages.list().stream().map(v -> {
+            // 共有の村の保存の大きさ（上限に近づくと保存できなくなるので、先に気づけるように）
+            var u = shared.usageIn(v.id());
+            int pct = (int) Math.round(u.total() * 100.0 / u.max());
+            String size = String.format("%,d字（上限の %d%%）", u.total(), pct);
+            String top = u.top().stream().map(e -> String.format("%s %,d字", e.getKey(), e.getValue())).collect(java.util.stream.Collectors.joining("・"));
+            return new Row(v.id(), v.name(), v.main() ? "" : v.code(), names.getOrDefault(v.id(), v.main() ? "（はじまりの村）" : "-"),
+                counts.getOrDefault(v.id(), new int[] { 0 })[0], socket.onlineCount(v.id()), last.get(v.id()), v.createdAt(), v.main(), size, top, pct >= 70);
+        }).toList();
+        model.addAttribute("sizeMax", String.format("%,d", rows.isEmpty() ? 0 : shared.usageIn(rows.get(0).id()).max()));
         model.addAttribute("rows", rows);
         model.addAttribute("max", VillageService.MAX_EXTRA);
         model.addAttribute("extra", rows.stream().filter(r -> !r.main()).count());

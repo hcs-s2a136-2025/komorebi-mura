@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.76.0";
+const CLIENT_VERSION = "0.77.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6023,6 +6023,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.77.0", date: "2026/11/10", title: "音量ボタンが効かないのを直した・文字を見やすく", items: [
+    "近くの声を ON にしていると、スマホの音量ボタンやマナーモードがゲームの音に効かなくなるのを直した。マイクを使うのは、近くに話す相手がいるあいだと通話中だけに（相手がはなれると、8秒ほどでマイクを休ませる）",
+    "明るい画面で読みにくかった文字の色を濃くした（花札の「あそびかた」・メニューのタブ・足りない材料の赤い字・スマホコインの数・VIPの卓・スマホのアプリの数字のしるし など）",
+    "村の大会：大会に入ってからの時間にしては高すぎる点は、記録されないようにした",
+  ] },
   { v: "0.76.0", date: "2026/11/10", title: "おばけ調査隊が毎回ちがう屋敷に・不具合の修正", items: [
     "おばけ調査隊：屋敷の間取りも、おばけも、入るたびにランダムに。同じ村の人が同じ難易度で調査中なら、その屋敷に入って一緒に調べられる（8人まで）",
     "おばけ調査隊：答えられるのは1つの屋敷で1回。答えずに出たら、10分のあいだは同じ屋敷にもどれる",
@@ -26385,7 +26390,7 @@ function tPay132(p) {
       try {
         if (m.st) { F132.cur = m.st.cur || []; F132.last = m.st.last || []; if (m.st.now) F132.skew = Date.now() - m.st.now; }
         if (m.ok === "host" && F132.rid && String(m.rid || "") === F132.rid) { F132.wait = 0; F132.rid = ""; const n = Math.max(0, Math.floor(+m.purse || 0)); addMoney(-n); tny132().hosts++; saveWorld(); F132.msg = "大会を開いた！ 村のみんなに知らせが出たよ"; F132.tab = "cur"; tSend132("look"); try { checkTitles42(); } catch (e) { } }
-        if (m.ng) { if (!F132.rid || String(m.rid || "") === F132.rid) { F132.wait = 0; F132.rid = ""; } F132.msg = String(m.ng); }
+        if (m.ng) { if (!F132.rid || String(m.rid || "") === F132.rid) { F132.wait = 0; F132.rid = ""; } F132.msg = String(m.ng); if (!(modalOpen && $("mtitle").textContent === "村の大会")) toast(null, F132.msg); }
         if (m.ok === "join" && m.t) { F132.cur = F132.cur.filter(t => t.id !== m.t.id).concat([m.t]).sort((a, b) => a.id - b.id); tny132().joins++; saveWorld(); F132.msg = `「${m.t.title}」に参加した！`; }
         if (m.ok === "score") { const t = F132.cur.find(x => x.id === m.id); if (t) t.best = m.best; }
         if (m.ok === "cancel") { F132.msg = "大会をとりやめた"; tSend132("look"); }
@@ -26998,6 +27003,13 @@ async function onRtc136(m) {
 // ---- だれとつなぐか（0.5秒ごと） ----
 const tileOf136 = e => [Math.round(e.px / TS), Math.round(e.py / TS)];
 function distTo136(e) { const [a, b] = tileOf136(player), [c, d] = tileOf136(e); return Math.hypot(a - c, b - d); }
+// 近くの声：話せる相手（同じ場所・14マス以内で、近くの声を ON にしている人）がいるか
+function nearAny136() {
+  const V = vc136(); if (!V.prox) return false;
+  const k = mapKey();
+  for (const e of remotes.values()) { if (V.block.includes(e.rid) || e.rmap !== k || !e.cfg || e.cfg.vc !== "1") continue; if (distTo136(e) <= 14) return true; }
+  return false;
+}
 function wantSet136() {
   const W = new Set(), me = myId136(), V = vc136();
   if (!canVoice136() || !me) return W;
@@ -27023,13 +27035,17 @@ let tick136 = 0;
 setInterval(() => {
   try {
     const W = wantSet136(), me = myId136();
-    const needMic = canVoice136() && (!!VC.room || vc136().prox);
+    // マイクは、話す相手がいるあいだだけ使う（通話中か、近くの声で相手が近くにいるとき）。
+    // マイクを使っているあいだ、スマホは「通話モード」になって、本体の音量ボタンやマナーモードがゲームの音に効かなくなる（とくに iPhone）。
+    // 近くの声を ON にしているだけで、ずっと通話モードのままにしない（v0.77.0）
+    const needMic = canVoice136() && (!!VC.room || VC.peers.size > 0 || nearAny136());
+    if (needMic) VC.idleAt = 0; else if (!VC.idleAt) VC.idleAt = Date.now();
     if (needMic && !VC.mic && !VC.micAsk && !VC.err) getMic136();
-    if (!needMic && VC.mic && !VC.peers.size) dropMic136();
+    if (!needMic && VC.mic && Date.now() - VC.idleAt > 8000) dropMic136();
     for (const id of W) if (!VC.peers.has(id) && me && me < id) makePeer136(id, true);
     for (const [id, p] of VC.peers) { if (!W.has(id) && Date.now() - p.made > 1500) closePeer136(id, true); else applyVol136(p); }
     // 見た目の設定：近くの声を ON にしていて、マイクがあるとき
-    const want = vc136().prox && VC.mic && canVoice136() ? "1" : null;
+    const want = vc136().prox && !VC.err && canVoice136() ? "1" : null;
     if ((cfg.vc || null) !== want) { if (want) cfg.vc = want; else delete cfg.vc; if (typeof sendCfgSoon === "function") sendCfgSoon(); }
     if (++tick136 % 2 === 0) hud136();
   } catch (e) { if (window.__komoErr) window.__komoErr(e, "v136"); }
@@ -27119,11 +27135,11 @@ function showRing136(m) {
 // ---- 画面の上の小さな帯（通話中・近くの声） ----
 function hud136() {
   let el = $("vc136");
-  const on = canVoice136() && (VC.room || (vc136().prox && VC.mic));
+  const on = canVoice136() && (VC.room || vc136().prox);
   if (!on) { if (el) el.remove(); return; }
   if (!el) { document.body.insertAdjacentHTML("beforeend", `<div id="vc136" class="vc136"></div>`); el = $("vc136"); }
   const n = VC.members.length, prox = [...VC.peers.keys()].filter(id => !VC.members.some(x => x.id === id)).length;
-  const sig = `${VC.room}|${n}|${prox}|${VC.muted}|${VC.spk}`; if (el.dataset.sig === sig) return; el.dataset.sig = sig;
+  const sig = `${VC.room}|${n}|${prox}|${VC.muted}|${VC.spk}|${VC.mic ? 1 : 0}`; if (el.dataset.sig === sig) return; el.dataset.sig = sig;
   el.innerHTML = `<span class="vc136s" data-vs136="${myId136()}"></span><button type="button" id="vc136o">${VC.room ? `通話中 ${n}人` : `近くの声${prox ? ` ${prox}人` : ""}`}</button>
     <button type="button" id="vc136m" class="${VC.muted ? "off" : ""}" aria-label="マイク">${VC.muted ? "ミュート中" : "マイク"}</button>${VC.room ? `<button type="button" id="vc136h" class="hang" aria-label="切る">切る</button>` : ""}`;
   $("vc136o").onclick = () => openCall136(); $("vc136m").onclick = () => setMute136(!VC.muted); const h = $("vc136h"); if (h) h.onclick = () => hang136();
@@ -27143,6 +27159,7 @@ function renderCall136() {
     <h3 class="lbl">近くの人と話す</h3>
     <div class="row2"><button class="chip" type="button" id="cp136" aria-pressed="${V.prox}" ${ok ? "" : "disabled"}>近くの声（${V.prox ? "ON" : "OFF"}）</button>${!VC.room && V.prox ? `<button class="chip" type="button" id="cm136b" aria-pressed="${!VC.muted}">マイク（${VC.muted ? "ミュート中" : "ON"}）</button>` : ""}</div>
     <p class="mtext small">ON にした人どうしが、同じ場所で近く（10マス以内）にいると、声がつながるよ。はなれるほど小さく聞こえる。</p>
+    <p class="mtext small">マイクを使うのは、近くに話す相手がいるあいだと通話中だけ。そのあいだ、スマホは通話モードになって、本体の音量ボタンやマナーモードがゲームの音に効きにくくなるよ（とくに iPhone）。ゲームの音は、BGM の音量と、設定の効果音の音量で小さくできる。</p>
     <label class="vc136vol">音量 <input type="range" id="cv136" min="0" max="100" value="${Math.round(V.vol * 100)}"></label>
     <h3 class="lbl">電話をかける${VC.room ? "（この通話に呼ぶ）" : ""}</h3>
     <div class="list">${people.length ? people.map(e => { const blk = V.block.includes(e.rid), inCall = VC.members.some(x => x.id === e.rid); return `<div class="li"><span class="nm">${av(e.rid, e.name)} ${esc(e.name)}${blk ? `<span class="sub2">声を聞かない人</span>` : ""}</span><span class="acts">${inCall ? "通話中" : `<button class="btn" type="button" data-cr136="${e.rid}" ${ok && !blk ? "" : "disabled"}>${VC.room ? "呼ぶ" : "電話する"}</button>`}<button class="btn ghost" type="button" data-cb136="${e.rid}">${blk ? "聞く" : "聞かない"}</button></span></div>`; }).join("") : `<p class="mtext small">いま同じ村でつないでいる人はいないよ。</p>`}</div>

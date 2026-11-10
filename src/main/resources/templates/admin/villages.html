@@ -18,9 +18,10 @@
     <h2>村（<span th:text="${extra}">0</span> / <span th:text="${max}">10</span>こ ＋ こもれび村）</h2>
     <p class="muted">プレイヤーは参加画面の「新しい村を作る」で村を作れます（こもれび村のほかに <span th:text="${max}">10</span>こまで）。村の合言葉を知っている人だけが、その村に入れます。<br>
       「えらぶ」を押すと、管理人室のほかの画面（お金の調整・物のプレゼント・お知らせ・リセット・イベント・運動会など）が、その村の分になります。<br>
-      「見学する」は、ゲームを見学モードで開きます（村の人には見えない・何もさわれない・セーブしない。10分以内に開いてください）。</p>
+      「見学する」は、ゲームを見学モードで開きます（村の人には見えない・何もさわれない・セーブしない。10分以内に開いてください）。<br>
+      「保存の大きさ」は、村ごとの共有のデータ（家・畑・伝言・大会など）の文字数です。<span th:text="${sizeMax}">990,000</span>字をこえると保存できなくなるので、7割をこえたら赤く出ます。</p>
     <table class="players">
-      <tr><th>村</th><th>村長</th><th>人</th><th>合言葉</th><th>最後に遊ばれた</th><th></th></tr>
+      <tr><th>村</th><th>村長</th><th>人</th><th>合言葉</th><th>最後に遊ばれた</th><th>保存の大きさ</th><th></th></tr>
       <tr th:each="r : ${rows}">
         <td><b th:text="${r.name()}">村</b><br><span class="muted" th:text="|${r.id()}番・${@fmt.time(r.createdAt())} にできた|">1番</span></td>
         <td th:text="${r.owner()}">村長</td>
@@ -28,6 +29,7 @@
         <td><code th:text="${r.main()} ? 'いらない' : ${r.code()}">ABC123</code>
           <form th:unless="${r.main()}" method="post" th:action="@{/admin/villages/{id}/code(id=${r.id()})}" onsubmit="return confirm('合言葉を作り直すと、前の合言葉では入れなくなります。いいですか？')"><button class="btn ghost" type="submit">作り直す</button></form></td>
         <td th:text="${r.lastSeen() != null} ? ${@fmt.time(r.lastSeen())} : '-'">-</td>
+        <td><b th:if="${r.sizeWarn()}" style="color:#b3261e">そろそろ大きい：</b><span th:text="${r.size()}">0字</span><br><span class="muted" th:text="|大きい順：${r.sizeTop()}|">大きい順</span></td>
         <td>
           <div class="row">
             <a class="btn" th:href="@{/admin(village=${r.id()})}">えらぶ</a>

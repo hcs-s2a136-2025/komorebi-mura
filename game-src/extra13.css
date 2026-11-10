@@ -1255,3 +1255,16 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
   body.ghin137 .vc136 { top: calc(96px + env(safe-area-inset-top)); }
 }
 @media (max-height: 560px) and (min-aspect-ratio: 4/3) { .gh137 { top: calc(44px + env(safe-area-inset-top)); } body.ghin137 .vc136 { top: auto; bottom: 64px; } }
+
+/* ---- v0.77.0 文字色の見やすさ：明るい背景の上の文字を、コントラスト比 4.5 以上に（tools/tests/look.py で測った） ---- */
+.mbox details.paytable summary { color: #7a4f0c; }
+.mbox.dark details.paytable summary, .mbox.yami details.paytable summary, .mbox.ph76m details.paytable summary { color: var(--lantern); }
+.vd90 em { color: #7f5a0e; }
+.cn98 .cn98b { color: #1b6b7d; }
+.ph76app i em { background: #d42a3e; }
+.rc91.z { background: #157a38; }
+.need.lack, .cost.lack { color: #b5382e; }
+.mbox.dark .need.lack, .mbox.dark .cost.lack, .mbox.yami .need.lack, .mbox.yami .cost.lack, .mbox.ph76m .need.lack, .mbox.ph76m .cost.lack { color: #ff9a8f; }
+.bk77pad button.wide77 { background: #a9532d; }
+.tab { color: #5c4838; }
+.tab[aria-selected="true"] { color: var(--ink); }

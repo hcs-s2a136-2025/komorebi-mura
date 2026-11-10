@@ -223,10 +223,27 @@ public class TourneyService implements WelcomeContributor {
         String k = String.valueOf(from.playerId());
         if (!ent.has(k)) {
             if (ent.size() >= MAX_ENT) { ng(from, hub, "参加は " + MAX_ENT + " 人まで。もういっぱいだよ", rid); return; }
-            ent.putObject(k).put("n", from.name() == null ? "" : from.name()).put("s", 0).put("at", System.currentTimeMillis());
+            ent.putObject(k).put("n", from.name() == null ? "" : from.name()).put("s", 0).put("at", System.currentTimeMillis()).put("j", System.currentTimeMillis());
             save(d);
         }
         hub.send(from, (ObjectNode) out().put("ok", "join").put("id", id).put("rid", rid).set("t", view(t, from.playerId())));
+    }
+
+    /**
+     * 大会に入ってから sec 秒で、そのゲームで出せる点の上限（{はじめの分, 1秒あたり, 1秒あたり（2乗）, いちばん上}）。
+     * とても上手な人の2倍くらいまでは通す、ゆるい見はり。ありえない点（書きかえた値）をはじく。mock.js の TNY_LIMIT と同じ数にする。
+     */
+    static final Map<String, long[]> LIMIT = Map.of(
+        "blk", new long[] { 3_000, 800, 10, 30_000_000 },    // こもれびブロック：レベルが上がるほど1列の点がふえる
+        "tsu", new long[] { 1_500, 700, 0, 80_000 },          // こもれびつなぎ：1回は90秒まで
+        "mrg", new long[] { 2_000, 1_200, 0, 5_000_000 },     // マージパズル
+        "jmp", new long[] { 30, 20, 0, 500_000 },             // にわとりジャンプ：走った距離（m）。いちばん速くて1秒17m
+        "puyo", new long[] { 5_000, 4_000, 0, 20_000_000 });  // こもれびドロップ
+    static long maxScore(String game, long sec) {
+        long[] L = LIMIT.get(game);
+        if (L == null) return 99_999_999L;
+        sec = Math.min(sec, 4 * 3600);
+        return Math.min(L[3], L[0] + L[1] * sec + L[2] * sec * sec);
     }
 
     private synchronized void score(PlayerSession from, int id, long s, String rid, GameSocketHandler hub) {
@@ -236,6 +253,9 @@ public class TourneyService implements WelcomeContributor {
         JsonNode e = t.path("ent").path(String.valueOf(from.playerId()));
         if (!(e instanceof ObjectNode me)) return;
         s = Math.max(0, Math.min(99_999_999L, s));
+        // 画面が送ってくる点を、そのままは信じない：大会に入ってからの時間で出せる点より多いものは、受けとらない
+        long sec = Math.max(0, (System.currentTimeMillis() - me.path("j").asLong(t.path("start").asLong())) / 1000);
+        if (s > maxScore(t.path("game").asText(""), sec)) { ng(from, hub, "大会に入ってからの時間にしては、点が高すぎるみたい。この点は記録できなかった", rid); return; }
         if (s > me.path("s").asLong()) { me.put("s", s).put("at", System.currentTimeMillis()); save(d); }
         hub.send(from, out().put("ok", "score").put("id", id).put("best", me.path("s").asLong()).put("rid", rid));
     }

@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.74.0";
+const CLIENT_VERSION = "0.75.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6023,6 +6023,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.75.0", date: "2026/11/10", title: "おばけ調査隊", items: [
+    "スマホに「調査隊」：古い洋館に出るおばけの正体を、道具で調べて当てるゲーム。おばけは8種類で、毎日かわる",
+    "道具は温度計・EMF・霊の声（ことばを入れて話しかける）・カメラ・粉（足あと）。おばけの好きな部屋で使うと証拠が出ることがある。証拠を3つ集めて、帰るときに正体を答えよう",
+    "狩りの時間は、押入れ・ベッドの下・戸棚などにかくれてやりすごす。つかまると気絶して外へ",
+    "難易度は やさしい・ふつう・むずかしい。同じ村・同じ難易度なら8人まで一緒に調査できて、人数が多いほど狩りが長く、おばけが速くなる。ひとりでも遊べるよ",
+  ] },
   { v: "0.74.0", date: "2026/11/10", title: "声で話せるように（近くの声・通話アプリ）", items: [
     "スマホに「通話」アプリ：同じ村でつないでいる人に電話できる。通話中に「呼ぶ」で、6人までのグループ通話に",
     "近くの声：「通話」で ON にした人どうしが近く（10マス以内）にいると、声がつながる。はなれるほど小さく聞こえる",
@@ -27141,6 +27147,320 @@ GUIDE54.push(["通話", "letter", `<p>オンラインでは、声で話せます
   <li>マイクのミュート・スピーカーの ON/OFF・人ごとの「聞かない」が選べます。話している人には、名前のまわりと頭の上に印が出ます</li>
   <li>イヤホンを使うと聞きやすいよ。ネットワークによっては、つながらないことがあります</li></ul>`]);
 
+// =================== v137: おばけ調査隊（古い洋館で、日替わりのおばけの正体を道具で調べて当てる・8人まで・難易度） ===================
+// サーバー変更なし。屋敷は難易度ごとに1つ（マップキー int:ghost137_easy|normal|hard）。同じ難易度をえらんだ同じ村の人は、同じ屋敷にいる（8人まで）。
+// おばけの種類・好きな部屋・歩く道すじ・狩りの時間は、日本時間の日・村・難易度から決まる（だれの画面でも同じ。サーバーはいらない）。
+// 道具：温度計・EMF・霊の声（ことばを入れる）・カメラ・粉（足あと）。おばけの好きな部屋で使うと、そのおばけの持つ証拠が出ることがある。証拠は3つ。
+// 狩りの時間：屋敷の時計で決まった時刻に、おばけが見えるようになって速く動く。押入れ・ベッドの下・戸棚にかくれてやりすごす（Ⓐ）。つかまると気絶して外へ。
+// 人数がふえるほど、狩りが長く・おばけが速くなる。帰る（出口）ときに正体を答える。ごほうびは日本時間の1日に1回ずつ（難易度ごと）。
+// 状態：world.gh137 = { day（日本時間）, paid:{diff:1}, ok, ng, caught, ev:{diff:{証拠:1|-1}}, powder:{} }
+var F137 = {};
+const GD137 = { easy: { name: "やさしい", p: .9, period: 150, hunt: 12, hop: 2.4, pay: 30000 }, normal: { name: "ふつう", p: .65, period: 100, hunt: 16, hop: 1.8, pay: 80000 }, hard: { name: "むずかしい", p: .45, period: 70, hunt: 20, hop: 1.35, pay: 200000 } };
+const EV137 = { cold: "寒さ（温度計）", emf: "EMF レベル5", voice: "霊の声", photo: "写真に写る", dots: "足あと（粉）" };
+const GH137 = [
+  { n: "ユキオンナ", ev: ["cold", "voice", "photo"], tip: "部屋がしんと冷える。返事はささやき声", say: ["さむい…", "ここにいるわ", "ゆき…"] },
+  { n: "ザシキワラシ", ev: ["voice", "photo", "dots"], tip: "子どもの声で返事をする。狩りが少ない", slow: 1.3, say: ["あそぼ", "ここだよ", "みつけて"] },
+  { n: "ヒトダマ", ev: ["cold", "emf", "photo"], tip: "ふわふわ光る。写真によく写る", say: [] },
+  { n: "ノッペラボウ", ev: ["emf", "voice", "dots"], tip: "顔がない。写真には写らない", say: ["……", "かお…", "うしろ"] },
+  { n: "カッパ", ev: ["cold", "emf", "dots"], tip: "水が好き。足あとがぬれている", say: [] },
+  { n: "テング", ev: ["emf", "voice", "photo"], tip: "狩りのとき、とても速い", fast: 1.25, say: ["かえれ", "やまへ", "ふふふ"] },
+  { n: "ロクロクビ", ev: ["cold", "photo", "dots"], tip: "首が長い。声は出さない", say: [] },
+  { n: "ツクモガミ", ev: ["emf", "photo", "dots"], tip: "古い道具に宿る。狩りが多い", often: .75, say: [] },
+];
+// 部屋（床のマス・名前）。0〜5 がおばけの好きな部屋の候補
+const ROOM137 = [
+  { n: "台所", r: [1, 2, 6, 6] }, { n: "書斎", r: [8, 2, 14, 6] }, { n: "寝室", r: [16, 2, 22, 6] },
+  { n: "子ども部屋", r: [1, 11, 8, 14] }, { n: "浴室", r: [15, 11, 17, 14] }, { n: "物置", r: [19, 11, 22, 14] },
+  { n: "廊下", r: [1, 8, 22, 9] }, { n: "玄関", r: [10, 11, 13, 14] },
+];
+const HIDE137 = [[1, 2, "戸棚"], [16, 2, "押入れ"], [21, 3, "ベッドの下"], [1, 11, "押入れ"], [22, 14, "物置の箱"], [8, 2, "本棚のかげ"]];
+const gh137 = () => { const o = world.gh137 = world.gh137 && typeof world.gh137 === "object" ? world.gh137 : {}; const d = jstDay137(); if (o.day !== d) { o.day = d; o.paid = {}; o.ev = {}; } o.paid = o.paid || {}; o.ev = o.ev || {}; o.ok = o.ok | 0; o.ng = o.ng | 0; o.caught = o.caught | 0; return o; };
+const jstDay137 = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const hash137 = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+const rng137 = (a, b) => (hash137(a + ":" + b) % 100000) / 100000;
+const G137 = { diff: null, back: null, hide: null, enterAt: 0, caught: false, cool: 0, powder: {}, warned: 0, flick: 0, near: 0 };
+const vil137 = () => (typeof F88 !== "undefined" && F88.v && F88.v.id) || 1;
+function today137(diff) {
+  const seed = hash137(jstDay137() + "|" + vil137() + "|" + diff);
+  return { seed, g: GH137[seed % GH137.length], fav: (seed >>> 4) % 6 };
+}
+const inRoom137 = (x, y) => ROOM137.findIndex(R => x >= R.r[0] && x <= R.r[2] && y >= R.r[1] && y <= R.r[3]);
+const center137 = i => { const r = ROOM137[i].r; return [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2]; };
+const people137 = () => { if (!G137.diff) return 1; const k = "int:ghost137_" + G137.diff; let n = 1; for (const e of remotes.values()) if (e.rmap === k) n++; return Math.min(8, n); };
+/** いまの狩りのようす：{on, warn, left} */
+function hunt137(diff, t) {
+  const D = GD137[diff], T = today137(diff), n = people137();
+  const period = D.period * (T.g.slow || 1) * (T.g.often || 1), len = D.hunt + (n - 1);
+  const ph = ((t / 1000) + (T.seed % 997)) % period;
+  return { on: ph < len, warn: ph >= period - 4, left: Math.ceil(len - ph) };
+}
+/** おばけのいる場所（マスの座標・小数） */
+function ghostPos137(diff, t) {
+  const D = GD137[diff], T = today137(diff), H = hunt137(diff, t), n = people137();
+  const hop = (H.on ? D.hop / (T.g.fast || 1) / (1 + .05 * (n - 1)) : 6) * 1000;
+  const k = Math.floor(t / hop), f = (t % hop) / hop;
+  const at = j => { const r = rng137(T.seed, j); if (!H.on && r < .65) return T.fav; return Math.floor(rng137(T.seed + 7, j) * 6); };
+  const jit = (j, s) => (rng137(T.seed + s, j) - .5) * 2.4;
+  const a = center137(at(k)), b = center137(at(k + 1));
+  const ax = a[0] + jit(k, 1), ay = a[1] + jit(k, 2), bx = b[0] + jit(k + 1, 1), by = b[1] + jit(k + 1, 2);
+  const e = f < .5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+  return [ax + (bx - ax) * e, ay + (by - ay) * e];
+}
+F137.today = today137; F137.ghostAt = ghostPos137; F137.hunt = hunt137;
+// ---- 屋敷の絵 ----
+TILE105["@gfloor137"] = R => { R("#3a2a22", 0, 0, 16, 16); R("#45322a", 0, 0, 16, 1); R("#45322a", 0, 8, 16, 1); R("#2e211a", 7, 1, 1, 7); R("#2e211a", 12, 9, 1, 7); };
+TILE105["@gwall137"] = R => { R("#2a2236", 0, 0, 16, 16); R("#3a3048", 0, 0, 16, 3); for (const x of [2, 8, 13]) R("#4a3e5a", x, 5, 2, 9); R("#1a1424", 0, 14, 16, 2); };
+addSpr17("g137_closet", (s, r) => { r(2, 1, 12, 14, C17("#5a3e2a")); r(3, 2, 5, 12, C17("#6e4e36")); r(8, 2, 5, 12, C17("#6e4e36")); s(7, 8, C17("#d0b070")); s(8, 8, C17("#d0b070")); r(2, 15, 12, 1, C17("#2a1a10")); });
+addSpr17("g137_bed", (s, r) => { r(1, 5, 14, 9, C17("#4a3a5a")); r(1, 5, 4, 4, C17("#e8e0d0")); r(5, 6, 10, 7, C17("#7a4a6a")); r(1, 13, 1, 3, C17("#2a1a20")); r(14, 13, 1, 3, C17("#2a1a20")); });
+addSpr17("g137_shelf", (s, r) => { r(2, 1, 12, 15, C17("#4a321e")); for (const y of [3, 7, 11]) { r(3, y, 10, 3, C17("#2a1a10")); for (let x = 3; x < 13; x += 2) r(x, y, 1, 3, C17(["#a83a3a", "#3a6aa8", "#c8a040"][(x + y) % 3])); } });
+addSpr17("g137_van", (s, r, e) => { r(1, 5, 14, 8, C17("#e8e0d0")); r(10, 3, 5, 5, C17("#e8e0d0")); r(11, 4, 3, 3, C17("#7ab8d8")); r(2, 7, 7, 3, C17("#3a3a4a")); s(4, 8, C17("#7ae0a0")); e(4, 13, 2, 2, C17("#222")); e(12, 13, 2, 2, C17("#222")); });
+function makeMansion137(diff) {
+  const w = 24, h = 16, m = blankMap(w, h, `おばけ屋敷（${GD137[diff].name}）`);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { m.ground[y][x] = "@gwall137"; solidRect(m, x, y, 1, 1); }
+  const carve = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { m.ground[y][x] = "@gfloor137"; m.base[y][x] = false; } };
+  for (const R of ROOM137) carve(...R.r);
+  for (const [x, y] of [[3, 7], [11, 7], [19, 7], [4, 10], [11, 10], [12, 10], [16, 10], [20, 10]]) carve(x, y, x, y);
+  m.isInterior = true; m.kind = "ghost137"; m.diff137 = diff; m.floorT = "@gfloor137"; m.statics = []; m.interact = {}; m.labels = []; m.music = "dark";
+  m.exit = [11, 15]; m.exits = { "11,15": true, "12,15": true }; m.ground[15][11] = "@exit"; m.ground[15][12] = "@exit"; m.base[15][11] = false; m.base[15][12] = false;
+  for (const [x, y, nm] of HIDE137) {
+    const img = nm === "ベッドの下" ? "g137_bed" : nm === "本棚のかげ" ? "g137_shelf" : "g137_closet";
+    m.objs.push({ img, x: x * TS, y: (y + 1) * TS - IMG[img].height, sortY: (y + 1) * TS - 1 }); m.base[y][x] = true;
+    m.interact[x + "," + y] = () => toggleHide137(x, y, nm);
+  }
+  for (const R of ROOM137.slice(0, 6)) m.labels.push({ x: (R.r[0] + R.r[2] + 1) / 2 * TS, y: R.r[1] * TS + 4, text: R.n });
+  return m;
+}
+F137.make = makeMansion137;
+const ghostMap137 = () => map && map.kind === "ghost137";
+function enterMansion137(diff) {
+  if (map !== village) { toast(null, "村にいるときに出発できるよ"); return; }
+  const others = (() => { const k = "int:ghost137_" + diff; let n = 0; for (const e of remotes.values()) if (e.rmap === k) n++; return n; })();
+  if (others >= 8) { toast(null, "この屋敷はもう8人で調査中。ほかの難易度をえらんでね"); return; }
+  G137.diff = diff; G137.back = [player.x, player.y]; G137.hide = null; G137.enterAt = Date.now(); G137.caught = false; G137.powder = {};
+  const m = makeMansion137(diff); interior = m; rebuildSolid(); enter(m, 11, 14, "up");
+  world.stats.ghostIn137 = (world.stats.ghostIn137 || 0) + 1; saveWorld();
+  document.body.classList.add("ghin137"); hud137();
+  toast(null, `おばけ屋敷に入った。道具でおばけの好きな部屋をさがして、証拠を3つ集めよう`);
+}
+function leaveMansion137(caught) {
+  const diff = G137.diff, back = G137.back || [32, 20];
+  G137.hide = null; document.body.classList.remove("ghin137"); const el = $("gh137"); if (el) el.remove();
+  interior = null; rebuildSolid(); enter(village, back[0], back[1], "down"); G137.diff = null;
+  if (diff) setTimeout(() => answer137(diff, caught), 200);
+}
+{
+  const _tm = tryMove;
+  tryMove = function (dir) {
+    if (ghostMap137()) {
+      if (G137.hide) { toast(null, "かくれているよ（Ⓐで出る）"); return; }
+      if (map.exits[player.x + "," + player.y] && dir === "down") { leaveMansion137(false); return; }
+    }
+    return _tm.apply(this, arguments);
+  };
+  const _mk = mapKey;
+  mapKey = function () { if (ghostMap137()) return "int:ghost137_" + map.diff137; return _mk.apply(this, arguments); };
+  const _de = drawEnt;
+  drawEnt = function (e) { if (e === player && G137.hide && ghostMap137()) return; return _de.apply(this, arguments); };
+}
+function toggleHide137(x, y, nm) {
+  if (G137.hide) { G137.hide = null; toast(null, `${nm}から出た`); hud137(); return; }
+  if (Math.abs(player.x - x) + Math.abs(player.y - y) > 1) return;
+  G137.hide = { x, y, nm }; se13("small"); toast(null, `${nm}にかくれた（Ⓐで出る）`); hud137();
+  world.stats.ghostHide137 = (world.stats.ghostHide137 || 0) + 1;
+}
+// ---- 道具 ----
+const room137 = () => inRoom137(player.x, player.y);
+function tool137(k) {
+  if (!ghostMap137() || G137.hide) return;
+  if (Date.now() < G137.cool) { toast(null, "少し待ってね"); return; }
+  G137.cool = Date.now() + 1500;
+  const diff = G137.diff, T = today137(diff), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes(k), D = GD137[diff];
+  const lucky = rng137(T.seed + Math.floor(Date.now() / 6000), k.length + ri) < D.p;
+  const rn = ri >= 0 ? ROOM137[ri].n : "ここ";
+  let text = "", found = false;
+  if (k === "cold") {
+    if (inFav && has && lucky) { text = `${rn}：-2℃。息が白い！`; found = true; }
+    else text = `${rn}：${inFav ? 6 + (Date.now() % 3) : 10 + (Date.now() % 5)}℃${inFav ? "。少しひんやりする…" : ""}`;
+  } else if (k === "emf") {
+    if (inFav && has && lucky) { text = `${rn}：EMF レベル5！ 針がふりきれた`; found = true; }
+    else text = `${rn}：EMF レベル${inFav ? 2 + (Date.now() % 2) : 1}`;
+  } else if (k === "dots") {
+    const p = G137.powder[ri];
+    if (!p) { G137.powder[ri] = Date.now(); text = `${rn}の床に粉をまいた。しばらくしてから、もう一度しらべよう`; }
+    else if (Date.now() - p < 15000) text = `まだ足あとはない…（あと${Math.ceil((15000 - (Date.now() - p)) / 1000)}秒）`;
+    else { delete G137.powder[ri]; if (inFav && has && lucky) { text = `${rn}の粉に、小さな足あとが…！`; found = true; } else text = `${rn}の粉には、なにもついていない`; }
+  }
+  if (text) say137(text, found ? k : null);
+}
+function say137(text, ev) {
+  toast(null, text);
+  if (ev) {
+    const E = gh137().ev[G137.diff] = gh137().ev[G137.diff] || {};
+    if (E[ev] !== 1) { E[ev] = 1; saveWorld(); se13("win"); F7.notify(`証拠を見つけた：${EV137[ev]}`, null); }
+  }
+  hud137();
+}
+function voice137() {
+  if (!ghostMap137() || G137.hide) return;
+  openModal("霊の声", "dark", body => {
+    body.innerHTML = `<p class="mtext">おばけに話しかけてみよう。おばけの好きな部屋で、返事が聞こえることがあるよ。</p>
+      <div class="row2">${["だれかいる？", "どこにいるの？", "なにがほしい？", "名前を教えて"].map(q => `<button class="chip" type="button" data-q137="${q}">${q}</button>`).join("")}</div>
+      <div class="row"><input id="vq137" maxlength="30" placeholder="ことばを入れる" style="flex:1"><button class="btn" type="button" id="vq137go">話しかける</button></div><p class="mtext" id="vq137a"></p>`;
+    const ask = q => {
+      q = String(q || "").trim(); if (!q) return;
+      if (Date.now() < G137.cool) return; G137.cool = Date.now() + 2000;
+      const T = today137(G137.diff), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes("voice") && T.g.say.length;
+      const lucky = rng137(T.seed + Math.floor(Date.now() / 5000), q.length) < GD137[G137.diff].p;
+      const a = $("vq137a"); if (!a) return;
+      a.textContent = "ザー……ザザ……";
+      setTimeout(() => {
+        if (!$("vq137a")) return;
+        if (inFav && has && lucky) { const line = T.g.say[hash137(q + Date.now()) % T.g.say.length]; $("vq137a").innerHTML = `<b>「${esc(line)}」</b>（返事が聞こえた！）`; say137(`霊の声：「${line}」`, "voice"); }
+        else $("vq137a").textContent = "ザー……（返事はない）";
+      }, 1400);
+    };
+    body.querySelectorAll("[data-q137]").forEach(b => b.onclick = () => ask(b.dataset.q137));
+    body.querySelector("#vq137go").onclick = () => ask($("vq137").value);
+    $("vq137").addEventListener("keydown", e => { if (e.key === "Enter") ask(e.target.value); });
+  });
+}
+function photo137() {
+  if (!ghostMap137() || G137.hide) return;
+  if (Date.now() < G137.cool) return; G137.cool = Date.now() + 2500;
+  const T = today137(G137.diff), ri = room137(), inFav = ri === T.fav, has = T.g.ev.includes("photo");
+  const lucky = rng137(T.seed + Math.floor(Date.now() / 7000), 77 + ri) < GD137[G137.diff].p, hit = inFav && has && lucky;
+  se13("small");
+  openModal("カメラ", "dark", body => {
+    body.innerHTML = `<canvas id="ph137" width="240" height="150" style="width:100%;max-width:360px;display:block;margin:0 auto;border:6px solid #eee;background:#000"></canvas><p class="mtext">${hit ? "<b>なにか写っている…！</b>" : "なにも写っていないみたい"}</p>`;
+    const g = $("ph137").getContext("2d");
+    g.fillStyle = "#1a1418"; g.fillRect(0, 0, 240, 150); g.fillStyle = "#2a2028"; g.fillRect(0, 100, 240, 50);
+    g.fillStyle = "#3a2a22"; for (let x = 0; x < 240; x += 30) g.fillRect(x, 100, 2, 50);
+    g.fillStyle = "rgba(255,240,200,.08)"; g.beginPath(); g.arc(120, 75, 90, 0, Math.PI * 2); g.fill();
+    if (hit) { g.fillStyle = "rgba(220,230,255,.5)"; g.beginPath(); g.ellipse(150, 70, 18, 30, 0, 0, Math.PI * 2); g.fill(); g.fillRect(132, 70, 36, 30); g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(143, 60, 4, 6); g.fillRect(154, 60, 4, 6); }
+    g.fillStyle = "#fff"; g.font = "9px sans-serif"; g.fillText(`${ri >= 0 ? ROOM137[ri].n : ""} ${new Date().toTimeString().slice(0, 5)}`, 8, 142);
+  });
+  if (hit) say137("カメラ：写真に、白いかげが写った！", "photo"); else toast(null, "写真には、なにも写らなかった");
+}
+// ---- ノート（推理） ----
+function note137() {
+  const diff = G137.diff || "normal", E = gh137().ev[diff] = gh137().ev[diff] || {};
+  openModal("調査ノート", "dark", body => {
+    const draw = () => {
+      const got = Object.keys(EV137).filter(k => E[k] === 1), no = Object.keys(EV137).filter(k => E[k] === -1);
+      const cand = GH137.filter(g => got.every(k => g.ev.includes(k)) && !no.some(k => g.ev.includes(k)));
+      body.innerHTML = `<p class="mtext small">見つけた証拠に○、ないと思う証拠に×をつけると、おばけの候補がしぼられるよ（${GD137[diff].name}の屋敷）。</p>
+        <div class="list">${Object.entries(EV137).map(([k, n]) => `<div class="li"><span class="nm">${n}</span><span class="acts"><button class="chip" type="button" data-e137="${k}" data-v="1" aria-pressed="${E[k] === 1}">○</button><button class="chip" type="button" data-e137="${k}" data-v="-1" aria-pressed="${E[k] === -1}">×</button></span></div>`).join("")}</div>
+        <h4>候補（${cand.length}）</h4><div class="list">${cand.map(g => `<div class="li"><span class="nm">${g.n}<span class="sub2">${g.ev.map(k => EV137[k]).join("・")}　${esc(g.tip)}</span></span></div>`).join("") || `<p class="mtext small">当てはまるおばけがいないよ。証拠を見なおしてみて</p>`}</div>
+        <div class="row2"><button class="btn light" type="button" id="nt137s" ${F8.connected && got.length ? "" : "disabled"}>見つけた証拠をチャットで伝える</button></div>`;
+      body.querySelectorAll("[data-e137]").forEach(b => b.onclick = () => { const k = b.dataset.e137, v = +b.dataset.v; E[k] = E[k] === v ? 0 : v; saveWorld(); draw(); });
+      body.querySelector("#nt137s").onclick = () => { const t = `【調査】${got.map(k => EV137[k]).join("・")} を見つけた${room137() >= 0 ? `（いま${ROOM137[room137()].n}）` : ""}`; closeModal(); $("chatIn").value = t.slice(0, 80); $("chatbar11").requestSubmit(); };
+    };
+    draw();
+  });
+}
+function answer137(diff, caught) {
+  const T = today137(diff), O = gh137(), paid = O.paid[diff];
+  openModal("おばけの正体は？", "dark", body => {
+    body.innerHTML = `<p class="mtext">${caught ? "気絶して、調査車にもどってきた。" : "屋敷から出てきた。"}調べたことから、おばけの正体を答えよう。${paid ? "（今日のごほうびは、もうもらったよ）" : `当たると ${fmt(GD137[diff].pay * (caught ? .5 : 1))}`}</p>
+      <div class="list">${GH137.map((g, i) => `<div class="li"><span class="nm">${g.n}<span class="sub2">${g.ev.map(k => EV137[k]).join("・")}</span></span><span class="acts"><button class="btn" type="button" data-a137="${i}">これだ</button></span></div>`).join("")}</div>
+      <div class="row2"><button class="btn light" type="button" id="an137n">まだ答えない（また入れる）</button><button class="btn light" type="button" id="an137b">ノート</button></div>`;
+    body.querySelectorAll("[data-a137]").forEach(b => b.onclick = () => {
+      const g = GH137[+b.dataset.a137], ok = g === T.g;
+      if (ok) { O.ok++; if (!O.paid[diff]) { O.paid[diff] = 1; const n = Math.round(GD137[diff].pay * (caught ? .5 : 1)); addMoney(n); if (diff === "hard") world.stats.ghostHard137 = (world.stats.ghostHard137 || 0) + 1; } se13("win"); }
+      else { O.ng++; se13("miss"); }
+      O.ev[diff] = {}; saveWorld(); try { checkTitles42(); } catch (e) { }
+      body.innerHTML = `<p class="mtext"><b>${ok ? "大正解！" : "ざんねん…"}</b> 今日の${GD137[diff].name}の屋敷のおばけは「${T.g.n}」（好きな部屋は${ROOM137[T.fav].n}）だった。</p><p class="mtext small">${ok && !paid ? `ごほうび ${fmt(Math.round(GD137[diff].pay * (caught ? .5 : 1)))}` : ""}　明日はちがうおばけが出るよ。</p>`;
+    });
+    body.querySelector("#an137n").onclick = () => closeModal();
+    body.querySelector("#an137b").onclick = () => { closeModal(); G137.diff = G137.diff || diff; note137(); };
+  });
+}
+// ---- 出発の画面（スマホの「調査隊」） ----
+function openGhost137() {
+  const O = gh137();
+  openModal("おばけ調査隊", "dark", body => {
+    const cnt = d => { const k = "int:ghost137_" + d; let n = 0; for (const e of remotes.values()) if (e.rmap === k) n++; return n; };
+    body.innerHTML = `<p class="mtext">古い洋館に出るおばけの正体を、道具で調べて当てよう。おばけは毎日かわるよ（同じ村の、同じ難易度の屋敷はみんな同じおばけ）。8人まで一緒に調査できる。人数が多いほど、狩りの時間が長く、おばけが速くなる。</p>
+      <div class="list">${Object.entries(GD137).map(([k, D]) => `<div class="li"><span class="nm">${D.name}<span class="sub2">証拠の出やすさ ${Math.round(D.p * 100)}%・狩りはだいたい${D.period}秒ごと・当たると ${fmt(D.pay)}${O.paid[k] ? "（今日はもらった）" : ""}${F8.connected ? `・いま ${cnt(k)}人` : ""}</span></span><span class="acts"><button class="btn" type="button" data-g137="${k}">出発</button></span></div>`).join("")}</div>
+      <p class="mtext small">道具：温度計・EMF・霊の声・カメラ・粉。おばけの好きな部屋で使うと、証拠が出ることがある（好きな部屋は、ひんやりしたり、EMF が少し動いたりする）。狩りの時間（画面がちらついて「狩りがはじまる」）は、押入れ・ベッドの下・戸棚などでⒶでかくれよう。帰るときに正体を答える。</p>
+      <p class="mtext small">これまで：当てた ${O.ok}回・はずれ ${O.ng}回・気絶 ${O.caught}回</p>`;
+    body.querySelectorAll("[data-g137]").forEach(b => b.onclick = () => { closeModal(); enterMansion137(b.dataset.g137); });
+  });
+}
+F137.open = openGhost137; F137.enter = enterMansion137; F137.leave = leaveMansion137; F137.tool = tool137; F137.state = G137;
+// ---- 屋敷の中の道具の帯 ----
+function hud137() {
+  let el = $("gh137");
+  if (!ghostMap137()) { if (el) el.remove(); return; }
+  if (!el) { document.body.insertAdjacentHTML("beforeend", `<div id="gh137" class="gh137"></div>`); el = $("gh137"); }
+  const E = gh137().ev[G137.diff] || {}, n = Object.values(E).filter(v => v === 1).length;
+  el.innerHTML = `${[["cold", "温度"], ["emf", "EMF"], ["voice", "声"], ["photo", "写真"], ["dots", "粉"]].map(([k, l]) => `<button type="button" data-t137="${k}" ${G137.hide ? "disabled" : ""}>${l}</button>`).join("")}<button type="button" data-t137="note">ノート ${n}/3</button>${G137.hide ? `<button type="button" data-t137="out" class="hl">出る</button>` : ""}`;
+  el.querySelectorAll("[data-t137]").forEach(b => b.onclick = () => { const k = b.dataset.t137; if (k === "voice") voice137(); else if (k === "photo") photo137(); else if (k === "note") note137(); else if (k === "out") { const h = G137.hide; if (h) toggleHide137(h.x, h.y, h.nm); } else tool137(k); });
+}
+// ---- 狩りの時間・つかまる・暗さ ----
+setInterval(() => {
+  try {
+    if (!ghostMap137()) { if ($("gh137")) { $("gh137").remove(); document.body.classList.remove("ghin137"); } return; }
+    const t = Date.now(), H = hunt137(G137.diff, t);
+    if (H.warn && t - G137.warned > 6000) { G137.warned = t; toast(null, "電気がちらつく…狩りがはじまる！ かくれる場所へ！"); se13("miss"); }
+    if (H.on && !G137.hide && !G137.caught && t - G137.enterAt > 10000) {
+      const [gx, gy] = ghostPos137(G137.diff, t), d = Math.hypot(gx - player.px / TS, gy - player.py / TS);
+      G137.near = d;
+      if (d < .85) {
+        G137.caught = true; gh137().caught++; saveWorld(); se13("miss");
+        F7.notify("おばけにつかまって、気絶してしまった…", null);
+        setTimeout(() => { if (ghostMap137()) leaveMansion137(true); }, 600);
+      }
+    } else G137.near = 99;
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v137"); }
+}, 100);
+{
+  const _ov = F6.drawOverlay;
+  F6.drawOverlay = (now, k, camX, camY) => {
+    _ov(now, k, camX, camY);
+    try {
+      if (!ghostMap137()) return;
+      const t = Date.now(), H = hunt137(G137.diff, t), [gx, gy] = ghostPos137(G137.diff, t);
+      ctx.save();
+      // おばけ（狩りのときは見える・ふだんは、ときどきうすく）
+      const faint = !H.on && (Math.floor(t / 900) % 11 === 0) ? .25 : 0;
+      if (H.on || faint) {
+        ctx.setTransform(k, 0, 0, k, -camX * k, -camY * k);
+        const x = gx * TS + 8, y = gy * TS + 6 + Math.sin(t / 200) * 2;
+        ctx.globalAlpha = H.on ? .92 : faint;
+        ctx.fillStyle = H.on ? "#f0e8ff" : "#d8d8f0"; ctx.beginPath(); ctx.arc(x, y, 7, Math.PI, 0); ctx.lineTo(x + 7, y + 9);
+        for (let i = 0; i < 4; i++) ctx.lineTo(x + 7 - (i + .5) * 3.5, y + (i % 2 ? 9 : 6)); ctx.lineTo(x - 7, y + 9); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = H.on ? "#e2404e" : "#222"; ctx.fillRect(x - 3, y - 2, 2, 2); ctx.fillRect(x + 1, y - 2, 2, 2);
+        ctx.globalAlpha = 1;
+      }
+      // 暗さ（懐中電灯）
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const W = cv.width, Hh = cv.height, px = (player.px + 8 - camX) * k, py = (player.py + 8 - camY) * k, R = TS * k * (G137.hide ? 1.4 : 3.6);
+      const flick = H.warn || H.on ? (Math.random() < .12 ? .25 : 0) : 0;
+      const gr = ctx.createRadialGradient(px, py, R * .25, px, py, R);
+      gr.addColorStop(0, `rgba(0,0,0,${flick})`); gr.addColorStop(1, `rgba(4,2,10,${.93 - flick * .3})`);
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, Hh);
+      if (H.on) { ctx.fillStyle = `rgba(200,20,40,${.08 + (G137.near < 4 ? (4 - G137.near) * .06 : 0) * (1 + Math.sin(t / 120))})`; ctx.fillRect(0, 0, W, Hh); }
+      ctx.restore();
+    } catch (e) { }
+  };
+}
+// 画面の上の文字（狩り・かくれ中）
+setInterval(() => { try { if (ghostMap137()) { const H = hunt137(G137.diff, Date.now()), el = $("gh137"); if (el) { el.dataset.h = H.on ? `狩りの時間！ あと${H.left}秒` : G137.hide ? "かくれている" : ""; el.hidden = !!modalOpen; } } } catch (e) { } }, 300);
+// Ⓐでかくれ場所を出る（かくれているときは、どこを向いていても）
+{ const _act = act; act = function () { if (ghostMap137() && G137.hide) { const h = G137.hide; toggleHide137(h.x, h.y, h.nm); return; } return _act.apply(this, arguments); }; }
+// 読みこみ直しで屋敷の中から始まったときは村へ
+{ const _h = handle8; handle8 = m => { _h(m); if (m && m.type === "welcome" && ghostMap137()) { G137.diff = G137.diff || map.diff137; } }; }
+ICON80.ghost137 = `<path d="M8 28V14a8 8 0 0 1 16 0v14l-3-2-2.5 2-2.5-2-2.5 2-2.5-2z"/><path d="M13 14h.01M19 14h.01"/>`;
+F76.add({ id: "ghost137", name: "調査隊", ch: "霊", c: "#6a5aa0", open: () => openGhost137() });
+const TTL137 = [["新米調査員", "おばけの正体を当てる", () => gh137().ok >= 1], ["ベテラン調査員", "おばけの正体を10回当てる", () => gh137().ok >= 10], ["こわいもの知らず", "むずかしい屋敷で正体を当てる", () => (world.stats.ghostHard137 || 0) >= 1], ["かくれんぼ名人", "おばけ屋敷で20回かくれる", () => (world.stats.ghostHide137 || 0) >= 20]];
+for (const t of TTL137) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["おばけ調査隊", "letter", `<p>スマホの「調査隊」から、村にいるときにおばけ屋敷へ出発できます（やさしい・ふつう・むずかしい）。</p>
+  <ul><li>おばけは8種類。毎日かわります。同じ村・同じ難易度の屋敷は、みんな同じおばけ（8人まで一緒に）</li>
+  <li>道具：温度計・EMF・霊の声（ことばを入れて話しかける）・カメラ・粉（まいて15秒たってから調べる）。おばけの好きな部屋で使うと証拠が出ることがあります。証拠は3つ</li>
+  <li>狩りの時間は、押入れ・ベッドの下・戸棚などでⒶでかくれよう。つかまると気絶して外へ（ごほうびは半分）</li>
+  <li>屋敷から出るときに正体を答えます。ノートで候補をしぼれるよ。見つけた証拠はチャットで仲間に伝えられます</li></ul>`]);
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -27601,5 +27921,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

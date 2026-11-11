@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.77.0";
+const CLIENT_VERSION = "0.77.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -5562,6 +5562,9 @@ async function cloudLoad14() {
     let obj = null; try { obj = JSON.parse(s.doc); } catch (e) {}
     if (obj && obj.world && Array.isArray(obj.world.inv)) {
       loadSave(obj, "サーバーのセーブを読む前（この端末）");
+      // loadSave は「みんなの家の前」に立たせるので、読んだセーブにのこっている「前回いた場所」へもどす（v0.77.1。
+      // 画面を閉じるときに送ったセーブは、返事を待てずにこの端末の rev が古いままになる → 次に開くと毎回ここを通る）
+      try { if (!world.labor && typeof F53 !== "undefined" && F53.restorePos) F53.restorePos(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "restorePos"); }
       if (onl.name && nameEl.value !== onl.name) { nameEl.value = onl.name; changed(); }
       cloud14 = { id: onl.id, rev: s.rev || 0 }; store.set(CL_KEY, cloud14);
       cloudLast14 = cloudKey14(); cloudReady14 = true;
@@ -6023,6 +6026,9 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.77.1", date: "2026/11/11", title: "前回やめた場所から始まらないのを直した", items: [
+    "オンラインで遊んでいて、次に開いたとき「みんなの家の前」から始まることがあったのを直した。前回やめた場所（村・お店・カジノの中）から始まる",
+  ] },
   { v: "0.77.0", date: "2026/11/10", title: "音量ボタンが効かないのを直した・文字を見やすく", items: [
     "近くの声を ON にしていると、スマホの音量ボタンやマナーモードがゲームの音に効かなくなるのを直した。マイクを使うのは、近くに話す相手がいるあいだと通話中だけに（相手がはなれると、8秒ほどでマイクを休ませる）",
     "明るい画面で読みにくかった文字の色を濃くした（花札の「あそびかた」・メニューのタブ・足りない材料の赤い字・スマホコインの数・VIPの卓・スマホのアプリの数字のしるし など）",

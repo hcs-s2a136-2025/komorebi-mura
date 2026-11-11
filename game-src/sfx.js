@@ -16,7 +16,8 @@ const SFX = (() => {
       inst = ac.createGain(); inst.gain.value = 1.6; inst.connect(comp);
       noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
-    if (ac.state === "suspended") ac.resume();
+    // iPhone では、マイクを使いはじめた・やめたとき（通話）や、ほかの音のあとに "interrupted" で止まることがある。suspended だけでなく、止まっていたらもどす
+    if (ac.state !== "running" && ac.state !== "closed") { try { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
     return ac;
   }
   const hz = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -81,6 +82,8 @@ const SFX = (() => {
     },
     fishMiss() { if (!ctx()) return; const t = ac.currentTime; tone(t, 420, .22, { type: "triangle", vol: .08, f2: 240 }); },
     // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
+    // 音の出口が止まっていたら、もどす（さわったときと2秒ごとに game.js の wake112 が呼ぶ）
+    wake() { if (ac && ac.state !== "running" && ac.state !== "closed") { try { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } } },
     audio(force) {
       if (!ctx(force)) return null;
       if (!force) return { ac, out, tone, noise, hz };

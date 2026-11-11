@@ -1856,7 +1856,7 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.78.0";
+  const VER = "0.78.1";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -2239,7 +2239,8 @@ const SFX = (() => {
       inst = ac.createGain(); inst.gain.value = 1.6; inst.connect(comp);
       noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
-    if (ac.state === "suspended") ac.resume();
+    // iPhone では、マイクを使いはじめた・やめたとき（通話）や、ほかの音のあとに "interrupted" で止まることがある。suspended だけでなく、止まっていたらもどす
+    if (ac.state !== "running" && ac.state !== "closed") { try { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
     return ac;
   }
   const hz = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -2304,6 +2305,8 @@ const SFX = (() => {
     },
     fishMiss() { if (!ctx()) return; const t = ac.currentTime; tone(t, 420, .22, { type: "triangle", vol: .08, f2: 240 }); },
     // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
+    // 音の出口が止まっていたら、もどす（さわったときと2秒ごとに game.js の wake112 が呼ぶ）
+    wake() { if (ac && ac.state !== "running" && ac.state !== "closed") { try { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } } },
     audio(force) {
       if (!ctx(force)) return null;
       if (!force) return { ac, out, tone, noise, hz };
@@ -6361,7 +6364,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.78.0";
+const CLIENT_VERSION = "0.78.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8445,6 +8448,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.78.1", date: "2026/11/11", title: "通話のあと音が出なくなるのを直した", items: [
+    "iPhone で、マイクを使いはじめたあと・やめたあとに、効果音や通話の声が出なくなることがあったのを直した（画面をさわると、音の出口がもどる）",
+    "マイクが使えないときに、理由と直し方を通話アプリに出すようにした（許可されていない・LINE などのアプリの中で開いている・ほかのアプリがマイクを使っている）",
+  ] },
   { v: "0.77.1", date: "2026/11/11", title: "前回やめた場所から始まらないのを直した", items: [
     "オンラインで遊んでいて、次に開いたとき「みんなの家の前」から始まることがあったのを直した。前回やめた場所（村・お店・カジノの中）から始まる",
   ] },
@@ -25258,7 +25265,12 @@ handle8 = m => {
 // ---------- BGM：音が止まったままにならないように ----------
 // スマホ（とくに iPhone）では、着替えの画面を開いたり、ほかの音が鳴ったりしたときに、音の出口が止まる（suspended / interrupted）ことがある。
 // 止まっていたら、次にさわったときにもう一度鳴らす
-const wake112 = () => { try { if (typeof BGM !== "undefined" && BGM.wake) BGM.wake(); } catch (e) { } };
+const wake112 = () => {
+  try { if (typeof BGM !== "undefined" && BGM.wake) BGM.wake(); } catch (e) { }
+  // 効果音と、通話の声の出口も（v0.78.1。iPhone はマイクを使いはじめる・やめるときに、ほかの音の出口を止めることがある）
+  try { if (typeof SFX !== "undefined" && SFX.wake) SFX.wake(); } catch (e) { }
+  try { if (typeof F136 !== "undefined" && F136.wake) F136.wake(); } catch (e) { }
+};
 for (const ev of ["pointerdown", "touchend", "keydown", "click"]) addEventListener(ev, wake112, true);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) wake112(); });
 setInterval(wake112, 2000);
@@ -29345,7 +29357,18 @@ const ICE136 = [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.
 const canVoice136 = () => !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && F8.connected && !WATCH88;
 const myId136 = () => (F8.myId ? F8.myId() : 0);
 const rtcSend136 = (to, k, d) => { if (F8.connected && !WATCH88) send8({ type: "rtc", to, k, ...(d !== undefined ? { d } : {}) }); };
-const acOf136 = () => { if (!VC.ac) { try { VC.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { VC.ac = null; } } if (VC.ac && VC.ac.state === "suspended") VC.ac.resume().catch(() => { }); return VC.ac; };
+const acOf136 = () => { if (!VC.ac) { try { VC.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { VC.ac = null; } } wakeAc136(); return VC.ac; };
+// 声の出口が止まっていたら、もどす。iPhone は、さわっていないときに作った出口（読み込み直したあと、近くに人が来てつながったとき）を止めたままにする
+const wakeAc136 = () => { const ac = VC.ac; if (ac && ac.state !== "running" && ac.state !== "closed") { try { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } } };
+// マイクがそもそも使えない開き方か（LINE などのアプリの中の画面・古い iPhone）
+const micApi136 = () => !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+const micWhy136 = e => {
+  const n = String(e && e.name || "");
+  if (n === "NotAllowedError" || n === "SecurityError") return "マイクが許可されていないみたい。アドレスバーの「ぁあ」→「Webサイトの設定」→ マイクを「許可」にして、読み込み直してね（LINE などのアプリの中で開いているときは、Safari で開きなおしてね）";
+  if (n === "NotFoundError" || n === "OverconstrainedError") return "マイクが見つからなかった。イヤホンやマイクのつなぎ方をたしかめてね";
+  if (n === "NotReadableError" || n === "AbortError") return "ほかのアプリ（電話・通話アプリなど）がマイクを使っているみたい。そちらを終わらせてから、もう一度 ON にしてね";
+  return "マイクを使えなかった（ブラウザの設定でマイクを許可してね）";
+};
 async function getMic136() {
   if (VC.mic) return VC.mic;
   if (VC.micAsk) return VC.micAsk;
@@ -29354,7 +29377,7 @@ async function getMic136() {
     const ac = acOf136(); if (ac) { const src = ac.createMediaStreamSource(s), an = ac.createAnalyser(); an.fftSize = 512; src.connect(an); VC.me.an = an; VC.me.buf = new Float32Array(an.fftSize); }
     for (const p of VC.peers.values()) addTrack136(p);
     return s;
-  }).catch(e => { VC.err = "マイクを使えなかった（ブラウザの設定でマイクを許可してね）"; toast(null, VC.err); return null; }).finally(() => { VC.micAsk = null; });
+  }).catch(e => { VC.err = micWhy136(e); toast(null, VC.err); return null; }).finally(() => { VC.micAsk = null; });
   return VC.micAsk;
 }
 function dropMic136() { if (VC.mic) { VC.mic.getTracks().forEach(t => t.stop()); VC.mic = null; VC.me.an = null; VC.me.on = false; } }
@@ -29577,7 +29600,7 @@ function renderCall136() {
   const V = vc136(), me = myId136(), ok = canVoice136();
   const people = [...remotes.values()].filter(e => e.rid > 0).sort((a, b) => String(a.name).localeCompare(String(b.name)));
   const av = (id, name) => `<span class="vc136av" data-vs136="${id}"><i>${esc(String(name || "?").slice(0, 1))}</i></span>`;
-  body.innerHTML = `${!ok ? `<p class="mtext">${!F8.connected ? "通話は、オンラインのときだけ使えるよ。" : "この端末（ブラウザ）では、通話が使えないみたい。"}</p>` : ""}
+  body.innerHTML = `${!ok ? `<p class="mtext">${!F8.connected ? "通話は、オンラインのときだけ使えるよ。" : micApi136() ? "いまは通話が使えないみたい。" : "この開き方では、マイクが使えないみたい。LINE などのアプリの中で開いているときは、右下や右上のメニューから「Safari で開く」をえらんでね。"}</p>` : ""}
     ${VC.err ? `<p class="mtext"><b>${esc(VC.err)}</b></p>` : ""}
     ${VC.room ? `<h3 class="lbl">通話中（${VC.members.length}人）</h3><div class="vc136ms">${VC.members.map(x => `<div class="vc136m">${av(x.id, x.name)}<span>${esc(x.name)}${x.id === me ? "（あなた）" : ""}</span></div>`).join("")}</div>
       <div class="vc136ctl"><button type="button" class="vc136b ${VC.muted ? "off" : ""}" id="cm136">${VC.muted ? "ミュート中" : "マイク ON"}</button><button type="button" class="vc136b ${VC.spk ? "" : "off"}" id="cs136">${VC.spk ? "スピーカー ON" : "スピーカー OFF"}</button><button type="button" class="vc136b hang" id="ch136">切る</button></div>` : ""}
@@ -29600,7 +29623,7 @@ function renderCall136() {
   body.querySelectorAll("[data-cb136]").forEach(b => b.onclick = () => { const id = +b.dataset.cb136, L = vc136().block, i = L.indexOf(id); if (i >= 0) L.splice(i, 1); else { L.push(id); closePeer136(id, true); } saveWorld(); renderCall136(); });
 }
 function openCall136() { openModal("通話", "dark", () => renderCall136()); if (F8.connected && !WATCH88) send8({ type: "call", a: "look" }); }
-F136.open = openCall136; F136.state = VC; F136.ring = ring136; F136.accept = accept136; F136.hang = hang136; F136.mute = setMute136;
+F136.wake = wakeAc136; F136.open = openCall136; F136.state = VC; F136.ring = ring136; F136.accept = accept136; F136.hang = hang136; F136.mute = setMute136;
 ICON80.call136 = `<path d="M8 4h5l2 6-3 2a14 14 0 0 0 8 8l2-3 6 2v5c0 1-1 2-2 2C14 26 6 18 6 6c0-1 1-2 2-2z"/>`;
 F76.add({ id: "call136", name: "通話", ch: "話", c: "#3aa86a", open: () => openCall136() });
 const TTL136 = [["もしもし", "通話アプリでだれかと話す", () => (world.stats.calls136 || 0) >= 1], ["にぎやかな通話", "3人以上でグループ通話をする", () => (world.stats.group136 || 0) >= 1]];

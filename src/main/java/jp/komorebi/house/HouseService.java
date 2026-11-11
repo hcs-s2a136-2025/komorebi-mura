@@ -182,37 +182,6 @@ public class HouseService {
         if (up == 0) jdbc.update("INSERT INTO house_room (house_key, doc, updated_at) VALUES (?, ?, ?)", dbKey(key), json, now);
     }
 
-    /**
-     * 共有の村をリセットしたとき、家の中身も消す。共有の村のリセットより先に呼ぶこと（持ち主を houses レイヤーで調べるため）。
-     * 箱（みんなの収納箱・鍵つきの箱）に入っていた物は、持ち主ごとにまとめて取っておき、次につないだときに返す。
-     */
-    public void resetAll() {
-        Map<Long, Map<String, Long>> add = new LinkedHashMap<>();
-        for (String key : book().keys()) {
-            if (!HouseBook.builtKey(key)) continue;
-            JsonNode h = world.layerValue("houses", key);
-            long owner = h == null ? -1 : h.path("ownerId").asLong(-1);
-            HouseBook.Room r = book().copy(key);
-            if (owner <= 0 || r == null) continue;
-            Map<String, Long> to = add.computeIfAbsent(owner, k -> new LinkedHashMap<>());
-            r.shared().forEach((id, n) -> to.merge(id, n, Long::sum));
-            r.priv().forEach((id, n) -> to.merge(id, n, Long::sum));
-        }
-        // みんなの家と、ひとりずつの箱は村のリセットでは消さない
-        for (String key : book().keys()) if (HouseBook.builtKey(key)) book().remove(key);
-        long v = Villages.current();
-        if (v == Villages.MAIN) jdbc.update("DELETE FROM house_room WHERE house_key LIKE '%,%' AND house_key NOT LIKE 'v%|%'");
-        else jdbc.update("DELETE FROM house_room WHERE house_key LIKE ?", "v" + v + "|%,%");
-        synchronized (returns) {
-            add.forEach((owner, items) -> {
-                if (items.isEmpty()) return;
-                Map<String, Long> to = returns.computeIfAbsent(owner, k -> new LinkedHashMap<>());
-                items.forEach((id, n) -> to.merge(id, n, (a, b) -> Math.min(HouseBook.MAX_COUNT, a + b)));
-                saveReturns(owner, to);
-            });
-        }
-    }
-
     /** リセットで返す物があれば受け取る（受け取ったら消える）。無ければ空 */
     public Map<String, Long> takeReturns(long owner) {
         Map<String, Long> items;

@@ -1856,7 +1856,7 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.77.1";
+  const VER = "0.78.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6361,7 +6361,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.77.1";
+const CLIENT_VERSION = "0.78.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -7891,16 +7891,19 @@ var F14 = {};
 K.loanRoom = k => Math.max(0, LENDERS[k].max - world.loans.filter(l => l.lender === k).reduce((a, l) => a + l.principal, 0));
 
 // ---------- 共同プロジェクトをオンラインの仲間と共有（共有の村の meta に "proj:名前" で入れる） ----------
+// 鍵は、村を新しくした回数（世代・v138）が 0 なら "proj:名前"、N なら "pjN:名前"。古い世代の鍵は読まない・送らない
+const PJ14 = () => world.sharedGen138 > 0 ? "pj" + world.sharedGen138 + ":" : "proj:";
+const pjId14 = k => { const p = PJ14(); return typeof k === "string" && k.startsWith(p) ? k.slice(p.length) : null; };
 function projToMeta14() {
   if (!world.sharedMeta) return;
   for (const [id, p] of Object.entries(world.projects || {})) {
     const v = { need: p.need, have: p.have || {}, done: !!p.done };
-    world.sharedMeta["proj:" + id] = v;
+    world.sharedMeta[PJ14() + id] = v;
   }
 }
 function metaToProj14(k, v) {
-  if (!k.startsWith("proj:") || !v || typeof v !== "object") return;
-  const id = k.slice(5); if (!/^[a-z0-9_]{1,16}$/.test(id)) return;
+  const id = pjId14(k); if (id == null || !v || typeof v !== "object") return;
+  if (!/^[a-z0-9_]{1,16}$/.test(id)) return;
   const p = world.projects[id] || (world.projects[id] = { need: v.need || {}, have: {}, done: false });
   for (const [it, n] of Object.entries(v.have || {})) if (typeof n === "number") p.have[it] = Math.max(p.have[it] || 0, n);
   if (v.done && !p.done) { p.done = true; F14.projChanged = true; if (PROJECTS[id]) F7.notify(`仲間と力を合わせて「${PROJECTS[id][0]}」が完成した！`, null); }
@@ -8005,7 +8008,7 @@ async function cloudPush14(force) {
   cloudBusy14 = false;
 }
 F14.push = cloudPush14; F14.load = cloudLoad14;
-const SHARED_KEYS14 = ["terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths", "stakes", "tilled", "houses", "quarry", "sharedMeta", "sharedJoined", "sharedEpoch"];
+const SHARED_KEYS14 = ["terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths", "stakes", "tilled", "houses", "quarry", "sharedMeta", "sharedJoined", "sharedEpoch", "sharedGen138"];
 F14.keepShared = (from, to) => { for (const k of SHARED_KEYS14) if (from[k] !== undefined) to[k] = from[k]; if (to.tilled) for (const k in to.tilled) to.tilled[k] = { wet: false }; };
 setInterval(() => cloudPush14(false), 15000);
 document.addEventListener("visibilitychange", () => { if (document.hidden) cloudPush14(false); });
@@ -11243,11 +11246,11 @@ rebuildSolid = function () {
 };
 // オンライン：場所（at）も一緒に共有する
 const _projToMeta35 = projToMeta14;
-projToMeta14 = function () { _projToMeta35(); if (!world.sharedMeta) return; for (const id of ORDER35) { const p = world.projects?.[id]; if (p && world.sharedMeta["proj:" + id] && Array.isArray(p.at)) world.sharedMeta["proj:" + id].at = p.at; } };
+projToMeta14 = function () { _projToMeta35(); if (!world.sharedMeta) return; for (const id of ORDER35) { const p = world.projects?.[id]; if (p && world.sharedMeta[PJ14() + id] && Array.isArray(p.at)) world.sharedMeta[PJ14() + id].at = p.at; } };
 const _metaToProj35 = metaToProj14;
 metaToProj14 = function (k, v) {
   _metaToProj35(k, v);
-  if (!k.startsWith("proj:") || !v) return; const id = k.slice(5), p = world.projects?.[id];
+  const id = pjId14(k); if (id == null || !v) return; const p = world.projects?.[id];
   if (p && PROJ35[id] && Array.isArray(v.at) && v.at.length === 2 && v.at.every(n => Number.isInteger(n) && n >= 0 && n < 100) && (p.at?.[0] !== v.at[0] || p.at?.[1] !== v.at[1])) { p.at = v.at; rebuildSolid(); }
 };
 // 描く
@@ -29986,6 +29989,64 @@ GUIDE54.push(["おばけ調査隊", "letter", `<p>スマホの「調査隊」か
   <li>屋敷から出るときに正体を答えます（1つの屋敷で1回だけ）。答えずに出たら、10分のあいだは同じ屋敷にもどれます。ノートで候補をしぼれるよ</li>
   <li>ごほうびは、道具で証拠を2つ以上見つけて当てたとき。難易度ごとに、その日の1回目は満額・2回目からは1割</li></ul>`]);
 
+// =================== v138: 村を新しくする（共同プロジェクト・木・岩・採石場・水族館だけ最初から） ===================
+var F138 = {};
+// 管理人が「村を新しくする」と、サーバーは世代（worldGen）を1つ進めて、共同プロジェクト・木・苗木・岩・採石場・水族館だけを消す。
+// 建てた家と中身・地形・柵・道・畑・飾りと設備・持ち物・お金はそのまま（前の「最初からにする」＝freshShared18 は、もう呼ばれない）。
+// 画面は、世代がちがうと自分のセーブの共同プロジェクトを最初にもどす（共同プロジェクトは、画面どうしで「多いほう」を合わせるので、消さないと送り返してしまう）。
+function renew138(gen) {
+  gen = Math.max(0, Math.floor(+gen || 0)); if (!gen || (world.sharedGen138 || 0) === gen) return false;
+  pushBackup("村が新しくなる前");
+  // はじめの4つ（ensureV6 と v7 の時計塔と同じ数）。そのあとの共同プロジェクトは、ぜんぶ完成するたびに ensureChain35 が1つずつ貼り出す
+  world.projects = { fountain: { need: { stone: 40, ore: 5 }, have: {}, done: false }, lamps: { need: { wood: 20, ore: 4 }, have: {}, done: false },
+    beds: { need: { wood: 12, seed_tomato: 3 }, have: {}, done: false }, clock: { need: { stone: 60, wood: 40, ore: 10, gem: 2 }, have: {}, done: false } };
+  world.projRep = {};
+  world.trees = {}; world.saplings = {}; world.rocks = {}; world.quarry = { level: 1, m: { 1: 0, 2: 0, 3: 0 } };
+  for (const k of Object.keys(world.sharedMeta || {})) if (/^(proj:|pj\d+:)/.test(k)) delete world.sharedMeta[k];
+  world.sharedGen138 = gen; saveWorld();
+  try { rebuildSolid(); } catch (e) { }
+  F7.notify("村が新しくなったよ。共同プロジェクト・木・岩・採石場・水族館が最初からになった。建てた家や畑、持ち物・お金はそのままだから安心してね", null);
+  return true;
+}
+// 木と岩を、最初の場所へ生やしなおす。家・柵・道・畑・橋・飾りなどでふさがっている場所と、入口の前には生やさない
+function regrow138(gen) {
+  if (WATCH88 || !F8.connected || !F11.synced) return false;
+  if (!Object.keys(world.trees || {}).length && !Object.keys(world.rocks || {}).length) {
+    rebuildSolid();
+    const S = village.solid, G = guard104(), cf = Object.values(world.cfarm || {});
+    const busy = (x, y) => {
+      const k = x + "," + y;
+      if (!S[y] || S[y][x] || G.has(k)) return true;
+      if (world.paths[k] || world.tilled[k] || world.crops[k] || world.bridges[k] || world.fences[k] || (world.stakes || {})[k] || (world.terrain || {})[k] != null || (world.ccrops || {})[k]) return true;
+      return cf.some(a => a && x >= a.x && x < a.x + a.w && y >= a.y && y < a.y + a.h);
+    };
+    for (const [x, y] of [...CHOP_TREES, ...NEW_TREES]) if (!busy(x, y)) world.trees[x + "," + y] = { hp: 3, cut: 0 };
+    // 岩の種類は場所と世代から決める（何人かが同時に生やしても、同じ村になるように）
+    ROCK_SPOTS.forEach(([x, y]) => { if (!busy(x, y) && !world.trees[x + "," + y]) world.rocks[x + "," + y] = { type: (x * 31 + y * 17 + gen * 7) % 10 < 3 ? "ore" : "rock", hp: 3 }; });
+    sendEdits(diffShared()); refreshShared(true);
+  }
+  send8({ type: "regrow", gen });
+  return true;
+}
+F138.renew = renew138; F138.regrow = regrow138;
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "worldRenew") {
+      // つないでいるあいだに新しくなった：自分の分を片付けて、つなぎ直して村をもらいなおす
+      try { renew138(m.gen); } catch (e) { if (window.__komoErr) window.__komoErr(e, "renew138"); }
+      F11.synced = false; shLast = {};
+      toast(null, "管理人が村を新しくしました。つなぎ直します"); if (ws8) ws8.close();
+      return;
+    }
+    // つないでいなかったあいだに新しくなった：村をもらう前に、自分の分を片付ける
+    if (m && m.type === "welcome" && !m.watch) { try { if (renew138(m.worldGen)) { F11.synced = false; shLast = {}; } } catch (e) { if (window.__komoErr) window.__komoErr(e, "renew138"); } }
+    _h(m);
+    if (m && m.type === "welcome" && !m.watch && m.regrow > 0) setTimeout(() => { try { regrow138(+m.regrow); } catch (e) { if (window.__komoErr) window.__komoErr(e, "regrow138"); } }, 1200);
+  };
+}
+F138.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -30446,7 +30507,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

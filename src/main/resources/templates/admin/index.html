@@ -98,10 +98,12 @@
     <ul class="online" th:unless="${#maps.isEmpty(worldStats)}">
       <li th:each="e : ${worldStats}"><span th:text="${e.key}">trees</span>：<b th:text="${e.value}">0</b> 件</li>
     </ul>
-    <p class="muted">村（地形・木・岩・柵・道・建てた家・みんなのプロジェクト）を最初からにします。キャラクター（持ち物・お金・見た目・図鑑・自分の家）はそのまま。建てた家の家具と箱の中身は、持ち主が次につないだときに自分の家の収納箱へ戻ります。</p>
+    <p class="muted"><b>最初からになるもの</b>：共同プロジェクト（完成した建物も）・木と苗木・岩・採石場・みんなの水族館（募金と寄贈した魚）。<br>
+      <b>そのまま残るもの</b>：建てた家と家の中身・地形・橋・柵・道・畑と作物・共同農園・置いた飾りと設備、キャラクター（持ち物・お金・現金・称号・図鑑・見た目・自分の家）、スマホコインとガチャ・闘鶏（果たし状・ポイント・賭け・グランプリ）・村の大会・馬主の厩舎とこもれび記念・リサイクル品・お手紙とひそひそチャット・討伐の予定・新聞・ランキング。<br>
+      木と岩は、家や柵・道・飾りでふさがっていない場所にだけ、次にだれかがつないだときに生えなおします。</p>
     <form class="row" method="post" th:action="@{/admin/world/reset}">
       <input name="confirm" placeholder="確認のため「リセット」と入力" autocomplete="off">
-      <button class="btn ghost" type="submit">この村を最初からにする</button>
+      <button class="btn ghost" type="submit">この村を新しくする</button>
     </form>
   </section>
 

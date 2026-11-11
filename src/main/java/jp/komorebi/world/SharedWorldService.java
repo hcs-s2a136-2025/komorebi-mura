@@ -95,6 +95,7 @@ public class SharedWorldService implements WelcomeContributor {
             if (++n > 300) break;
             String l = e.path("l").asText(""), k = e.path("k").asText("");
             if (!LAYERS.contains(l) || !KEY.matcher(k).matches()) continue;
+            if ("meta".equals(l) && staleProj(k)) continue;   // 村を新しくする前の共同プロジェクトは、古い画面が送ってきても受けとらない
             JsonNode v = e.get("v");
             ObjectNode layers = layers();
             JsonNode node = layers.get(l);
@@ -216,24 +217,54 @@ public class SharedWorldService implements WelcomeContributor {
     }
 
     /**
-     * 共有の村を最初からにする。村の時計とジャックポットは残す。
-     * 「村の代」（_epoch）を1つ進めるので、リセットのときにつないでいなかった人の端末に残っている古い村も、次につないだときに片付けられる。
+     * 村を新しくする（v0.78.0）。最初からになるのは、共同プロジェクト（meta の proj: / pjN:）・木・苗木・岩・採石場・みんなの水族館（_aqua）だけ。
+     * 地形・橋・柵・道・畑・建てた家（と家の中身）・飾りと設備・共同農園、それに、サーバーだけが持つ帳簿（スマホコイン・闘鶏・大会・厩舎・リサイクル品・お手紙・討伐・新聞など）は残す。
+     * 「村の世代」（_gen）を1つ進める。画面は世代がちがうと、自分のセーブの共同プロジェクトを最初にもどす（古い世代のプロジェクトを送り返さない）。
+     * 木と岩は、サーバーが村の地図を知らないので、_regrow を立てておいて、次につないだ画面に「ふさがっていない場所へ生やしなおす」のを頼む。
      */
-    public void reset() {
+    public void renew() {
         synchronized (this) {
-            ObjectNode old = layers();
-            long next = epoch() + 1;
-            ObjectNode fresh = om.createObjectNode();
-            // 村の時計・ジャックポット・まだ渡していない精算やプレゼント・ランキング・偽札の出回りは残す
-            for (String k : List.of("_clock", "_jackpot", "_mjpay", "_adminpay", "_admingift", "_casinorank", "_gamerank", "_cash")) {
-                JsonNode v = old.get(k);
-                if (v != null) fresh.set(k, v);
+            ObjectNode layers = layers();
+            for (String k : List.of("trees", "saplings", "rocks", "quarry", "_aqua")) layers.remove(k);
+            if (layers.get("meta") instanceof ObjectNode meta) {
+                List<String> del = new java.util.ArrayList<>();
+                meta.fieldNames().forEachRemaining(k -> { if (projKey(k)) del.add(k); });
+                del.forEach(meta::remove);
             }
-            fresh.put("_epoch", next);
-            docs.put(Villages.current(), fresh);
+            long next = gen() + 1;
+            layers.put("_gen", next);
+            layers.put("_regrow", next);
             touch();
         }
         persist();
+    }
+
+    private static final Pattern PJ = Pattern.compile("pj(\\d{1,6}):.*");
+    static boolean projKey(String k) {
+        return k.startsWith("proj:") || PJ.matcher(k).matches();
+    }
+
+    /** いまの世代のものではない共同プロジェクトの鍵か（世代0は proj:名前、世代Nは pjN:名前） */
+    private boolean staleProj(String k) {
+        long g = gen();
+        if (k.startsWith("proj:")) return g > 0;
+        var m = PJ.matcher(k);
+        return m.matches() && Long.parseLong(m.group(1)) != g;
+    }
+
+    /** 村を新しくした回数（村の世代）。0 から始まる */
+    public synchronized long gen() {
+        return layers().path("_gen").asLong(0);
+    }
+
+    /** 木と岩を生やしなおすのを、まだだれもしていない世代（なければ 0） */
+    public synchronized long regrowPending() {
+        return layers().path("_regrow").asLong(0);
+    }
+
+    /** 画面が木と岩を生やしなおしたら呼ぶ */
+    public synchronized void regrowDone(long g) {
+        if (g > 0 && layers().path("_regrow").asLong(0) == g) { layers().remove("_regrow"); touch(); }
     }
 
     /** 共有の村が何回リセットされたか（村の代）。0 から始まる */
@@ -285,5 +316,7 @@ public class SharedWorldService implements WelcomeContributor {
     public void contribute(PlayerSession session, ObjectNode welcome) {
         welcome.set("world", clientSnapshot());
         welcome.put("worldEpoch", epoch());
+        welcome.put("worldGen", gen());
+        if (regrowPending() > 0) welcome.put("regrow", regrowPending());
     }
 }

@@ -123,10 +123,9 @@ public class AdminController {
             ra.addFlashAttribute("msg", "確認の欄に「リセット」と入力してください");
             return "redirect:/admin";
         }
-        houses.resetAll();
-        world.reset();
-        socket.broadcast(socket.json().createObjectNode().put("type", "worldReset"), null);
-        ra.addFlashAttribute("msg", "共有の村を最初からにしました。キャラクター（持ち物・お金・見た目・自分の家）はそのままです。建てた家の家具と箱の中身は、持ち主が次につないだときに自分の家の収納箱へ戻ります");
+        world.renew();
+        socket.broadcast(socket.json().createObjectNode().put("type", "worldRenew").put("gen", world.gen()), null);
+        ra.addFlashAttribute("msg", "村を新しくしました。共同プロジェクト・木・岩・採石場・水族館が最初からになりました。建てた家・地形・柵・道・畑・飾りと設備、持ち物・お金・称号、スマホコイン・闘鶏・大会・厩舎などはそのままです");
         return "redirect:/admin";
     }
 

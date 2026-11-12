@@ -1856,7 +1856,7 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.78.1";
+  const VER = "0.79.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -3025,7 +3025,7 @@ function decorAct(tx, ty) {
 function openStorage() {
   const R = room.data;
   K.openModal("収納箱（この部屋の倉庫）", "", body => {
-    const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => !ITEMS[id].tool);
+    const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id]);
     body.innerHTML = `<p class="mtext">しまった物はこの部屋に残ります。オンラインで建てた家では、家に入れる人みんなで使える箱になります。</p>
       <h3 class="lbl">収納の中（${R.storage.reduce((a, s) => a + s.n, 0)}個）</h3>
       <div class="list">${R.storage.length ? R.storage.map((s, i) => itemLi(s.id, `${s.n}個`, `<button class="btn light" type="button" data-out="${i}" data-n="1">1個</button><button class="btn" type="button" data-out="${i}" data-n="all">全部</button>`)).join("") : `<p class="mtext">空っぽです。</p>`}</div>
@@ -6364,7 +6364,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.78.1";
+const CLIENT_VERSION = "0.79.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8314,7 +8314,7 @@ function openBox17(which, local) {
     const desc = which === "priv" ? (local ? "あなただけの箱。" : home ? "みんなの家の鍵つきの箱は、ひとりずつ別の箱です。中身はあなたにしか見えません。" : "持ち主だけが開けられる箱。中身はサーバーに保存されて、どの端末からでも同じです。")
       : local ? "しまった物はこの部屋に残ります。" : home ? "みんなの家の箱。だれでも出し入れできます。" : `${esc(owner)}の家の箱。家に入れる人ならだれでも入れられて、出せるのは持ち主と同居人だけです。`;
     openModal(title, "", body => {
-      const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && !ITEMS[id].tool);
+      const inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id]);
       body.innerHTML = `<p class="mtext">${desc}</p>
         <p class="mtext small dndhint21">${matchMedia("(pointer: coarse)").matches ? "長押ししてから指を動かすと、箱と持ち物の間で動かせるよ" : "ドラッグでも、箱と持ち物の間で動かせるよ"}</p>
         <h3 class="lbl">箱の中（${list.reduce((a, s) => a + s.n, 0)}個${local ? "" : `・${list.length}/${kindsCap86(key, which)}種類`}）</h3>
@@ -8365,7 +8365,7 @@ function openBox17(which, local) {
       body.querySelectorAll("[data-bo]").forEach(b => { if (b.dataset.n !== "1") { const li = b.closest(".li"); if (li) { li.dataset.dragId = b.dataset.bo; li.dataset.dragN = b.dataset.n; li.dataset.dragFrom = "box"; } } });
       body.querySelectorAll("[data-bi]").forEach(b => { if (b.dataset.n === "all") { const li = b.closest(".li"); if (li) { li.dataset.dragId = b.dataset.bi; li.dataset.dragN = count(b.dataset.bi); li.dataset.dragFrom = "inv"; } } });
       F7.boxDrop = {
-        put: (id, n) => { if (!ITEMS[id] || ITEMS[id].tool) { msg.textContent = "道具はしまえないよ"; return; } n = Math.min(n, count(id), 9999); if (n > 0) go("put", id, n); },
+        put: (id, n) => { if (!ITEMS[id]) return; n = Math.min(n, count(id), 9999); if (n > 0) go("put", id, n); },
         take: (id, n, slot) => { const s = list.find(x => x.id === id); if (s) go("take", id, Math.min(n, s.n, 9999), slot); },
       };
     }, () => { F17.boxOpen = null; F7.boxDrop = null; });
@@ -8448,6 +8448,15 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.79.0", date: "2026/11/12", title: "村の博物館・オークション・銅像", items: [
+    "みなと町に「村の博物館」。魚・虫・化石・料理・家具を1種類につき1つ寄贈できて、展示に寄贈した人の名前がのこる",
+    "化石：村の草の上に毎日3か所「ひび」が出る（つるはしで掘る）。岩を割っても、たまに出てくる。12種類",
+    "虫とり：よろず屋の「虫あみ」を持って村を歩くと、虫が出てくる。季節・時間・天気で変わる20種類",
+    "週1回のオークション（スマホの「オークション」）：毎週1つだけの限定品（金の家具・体のまわりに光がまうオーラ）を競り合う。しめきりは金曜の21時。上回られたら全額返ってくる",
+    "銅像（掲示板の「共同プロジェクト」）：1億Gで自分の銅像を作って、村の好きな場所に置ける。ポーズと一言をえらべる",
+    "みんなで建てた建物（温泉・風車・花時計の公園など）の場所を変えられる（同じ画面・1回 30,000G）",
+    "道具も、収納箱にしまえるようになった",
+  ] },
   { v: "0.78.1", date: "2026/11/11", title: "通話のあと音が出なくなるのを直した", items: [
     "iPhone で、マイクを使いはじめたあと・やめたあとに、効果音や通話の声が出なくなることがあったのを直した（画面をさわると、音の出口がもどる）",
     "マイクが使えないときに、理由と直し方を通話アプリに出すようにした（許可されていない・LINE などのアプリの中で開いている・ほかのアプリがマイクを使っている）",
@@ -10079,7 +10088,7 @@ act = function () {
       const D = DECOR27[item.decor];
       if (D.limit === "event" && F26.event() !== D.event) { toast(D.img, `${D.name}は${EVENT_NAME27[D.event]}の間だけ飾れるよ`); return; }
       if (!decorFree27(tx, ty)) { toast(null, "ここには飾れないよ"); return; }
-      world.decor[k] = { id: item.decor, o: F8.connected ? F8.myId() : 0, n: myName() };
+      world.decor[k] = { id: item.decor, o: F8.connected ? F8.myId() : 0, n: myName(), ...((typeof F139 !== "undefined" && F139.decorExtra && F139.decorExtra(item.decor)) || {}) };
       removeItem(sel.id, 1); rebuildSolid(); saveWorld(); SFX.small();
       world.stats.decor = (world.stats.decor || 0) + 1;
       dust(tx, ty, [230, 220, 200], 6);
@@ -17386,7 +17395,7 @@ addItem = function (id, n = 1, quiet) {
 function openCart80() {
   openModal("台車", "", body => {
     const draw = () => {
-      const C = cartS80(), inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && !ITEMS[id].tool);
+      const C = cartS80(), inv = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id]);
       body.innerHTML = `<p class="mtext">台車を引いているあいだ、持ち物がいっぱいになったら、拾った物は台車の荷台に積まれます（${CARTMAX80}種類まで）。荷台の出し入れは、外にいるときにできます。</p>
         <h3 class="lbl">荷台（${C.goods.length}/${CARTMAX80}種類・${C.goods.reduce((a, g) => a + g.n, 0)}個）</h3>
         <div class="list">${C.goods.length ? C.goods.map((g, i) => itemLi(g.id, `${g.n}個`, `<button class="btn light" type="button" data-c80out="${i}" data-n="1">1個</button><button class="btn" type="button" data-c80out="${i}" data-n="all">全部</button>`)).join("") : `<p class="mtext">からっぽ</p>`}</div>
@@ -30070,6 +30079,568 @@ F138.renew = renew138; F138.regrow = regrow138;
 }
 F138.ready = true;
 
+// =================== v139: 村の博物館（化石・虫）・週1回のオークション・銅像・みんなの建物の移動 ===================
+var F139 = {};
+const m139 = () => {
+  const d = world.m139 = world.m139 && typeof world.m139 === "object" ? world.m139 : {};
+  d.bugs = d.bugs || {}; d.fos = d.fos || {}; d.paid = Array.isArray(d.paid) ? d.paid : []; d.aura = Array.isArray(d.aura) ? d.aura : []; d.dug = Array.isArray(d.dug) ? d.dug : [];
+  d.given = d.given || 0; d.wins = d.wins || 0;
+  return d;
+};
+const rid139 = () => Math.random().toString(36).slice(2, 10);
+
+// ---------- みんなで建てた建物（温泉・風車・花時計の公園など）の場所を変える ----------
+// 村の人ならだれでも。いたずらよけに、1回 MOVE_COST139。場所は「自分の立っている所のすぐ上」
+const MOVE_COST139 = 30000;
+function canPutProj139(id, ax, ay) {
+  const P = PROJ35[id]; if (!P) return false;
+  const S = village.solid, mine = world.projects?.[id]?.at, self = mine ? foot35(id, mine) : null;
+  if (ay - P.h + 1 < 2 || ay > VH0 - 3 || ax < 1 || ax + P.w > village.w - 1) return false;
+  for (let y = ay - P.h + 1; y <= ay; y++) for (let x = ax; x < ax + P.w; x++) {
+    const k = x + "," + y;
+    if (!/^(grass|flower)/.test(village.ground[y][x]) || village.noBuild.has(k) || world.tilled[k] || world.crops[k] || world.paths[k] || (world.decor || {})[k]) return false;
+    if (S[y][x] && !(self && x >= self.x0 && x <= self.x1 && y >= self.y0 && y <= self.y1)) return false;
+    if (typeof inGH65 === "function" && inGH65(x, y)) return false;
+  }
+  return projFits104(id, ax, ay, guard104());
+}
+function moveProj139(id) {
+  const P = PROJ35[id], p = world.projects?.[id];
+  if (!P || !p || !p.done || !Array.isArray(p.at)) return "その建物は、まだ動かせないよ";
+  if (map !== village) return "村の中で、建物を置きたい場所のすぐ下に立ってね";
+  if (world.money < MOVE_COST139) return `お金が足りない（${fmt(MOVE_COST139)}）`;
+  const ax = player.x - Math.floor(P.w / 2), ay = player.y - 1;
+  if (ax === p.at[0] && ay === p.at[1]) return "もう、ここに建っているよ";
+  if (!canPutProj139(id, ax, ay)) return "ここには置けないみたい（家・畑・道・飾り・水辺と重なるか、村のはしに近い）。草の上の広い所で、もう一度ためしてね";
+  p.at = [ax, ay]; addMoney(-MOVE_COST139); rebuildSolid(); saveWorld();
+  try { if (F8.connected && F11.synced) sendEdits(diffShared()); } catch (e) { }
+  world.stats.projMove139 = (world.stats.projMove139 || 0) + 1;
+  return null;
+}
+F139.moveProj = moveProj139; F139.canPutProj = canPutProj139;
+
+// ---------- 銅像（1億G・1人1体・買った人が好きな場所に置く） ----------
+const STATUE_COST139 = 100000000, POSE139 = ["正面", "左向き", "右向き", "歩くポーズ"];
+const ST_KEYS139 = ["skin", "hair", "hairc", "top", "topc", "bottom", "bottomc", "hat", "acc", "shoesc", "bangs", "eyes", "eyec", "hatc"];
+IMG.d139_statue = pix13(16, 28, (s, r) => { const a = C13["#b8b4aa"], b = C13["#8e8a80"], c = C13["#d8d4ca"], g = C13["#c8a048"];
+  r(2, 19, 12, 3, c); r(2, 19, 12, 1, C13["#ece8de"]); r(3, 22, 10, 4, a); r(3, 25, 10, 1, b); r(1, 26, 14, 2, b); r(1, 26, 14, 1, a); r(5, 23, 6, 2, g); });
+ASSETS.d139_statue = IMG.d139_statue.toDataURL();
+DECOR27.statue139 = { name: "銅像", price: 0, solid: true, tall: true, img: "d139_statue" };
+ITEMS.deco_statue139 = { name: "銅像（自分の像）", icon: "d139_statue", price: 0, place: "decor", decor: "statue139" };
+function statueData139() {
+  const c = {}; for (const k of ST_KEYS139) if (typeof cfg[k] === "string" && cfg[k].length <= 20) c[k] = cfg[k];
+  return { p: Math.max(0, Math.min(3, m139().pose | 0)), w: String(m139().word || "").slice(0, 20), c };
+}
+F139.decorExtra = id => id === "statue139" ? { st: statueData139() } : null;
+const stCache139 = new Map();
+function statueImg139(st) {
+  const sig = JSON.stringify(st || {}); let cv = stCache139.get(sig); if (cv) return cv;
+  const p = (st && st.p) | 0, dir = ["down", "left", "right", "down"][p] || "down", frame = p === 3 ? 1 : 0;
+  let src = null;
+  try { src = charImg118({ ...DEFAULT, ...((st && st.c) || {}) }, dir, frame); } catch (e) { src = null; }
+  if (!src) { try { src = charImg118({ ...DEFAULT }, "down", 0); } catch (e) { return null; } }
+  cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height;
+  const g = cv.getContext("2d"); g.drawImage(src, 0, 0);
+  try {
+    const im = g.getImageData(0, 0, cv.width, cv.height), d = im.data, ramp = [[58, 38, 20], [110, 74, 36], [164, 116, 56], [214, 168, 92], [240, 214, 150]];
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 40) continue; const L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, c = ramp[Math.min(4, Math.floor(L * 5))]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; }
+    g.putImageData(im, 0, 0);
+  } catch (e) { }
+  if (stCache139.size > 60) stCache139.clear();
+  stCache139.set(sig, cv); return cv;
+}
+{
+  const _atl = F7.addToList;
+  F7.addToList = (list, now) => {
+    _atl(list, now);
+    if (map !== village) return;
+    for (const k in (world.decor || {})) {
+      const d = world.decor[k]; if (!d || d.id !== "statue139") continue;
+      const [x, y] = k.split(",").map(Number);
+      list.push({ s: (y + 1) * TS + .5, d: () => { const im = statueImg139(d.st); if (im) ctx.drawImage(im, x * TS, (y + 1) * TS - 9 - 16, 16, 16); } });
+    }
+  };
+  // 人の銅像に向かってⒶ：だれの像かと、一言
+  const _act = act;
+  act = function () {
+    if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+      const [tx, ty] = front(), d = (world.decor || {})[tx + "," + ty];
+      if (d && d.id === "statue139" && !myDecor27(d)) { toast("d139_statue", `${d.n || "だれか"}さんの銅像${d.st && d.st.w ? `「${d.st.w}」` : ""}`); return; }
+    }
+    return _act.apply(this, arguments);
+  };
+}
+const myStatueKey139 = () => Object.keys(world.decor || {}).find(k => world.decor[k] && world.decor[k].id === "statue139" && myDecor27(world.decor[k]) && (!F8.connected || world.decor[k].o === F8.myId()));
+function buyStatue139() {
+  const M = m139();
+  if (M.statue) return "銅像は、1人1体までだよ";
+  if (world.money < STATUE_COST139) return `お金が足りない（${fmt(STATUE_COST139)}）`;
+  addMoney(-STATUE_COST139); M.statue = 1; giveItem91("deco_statue139", 1); world.stats.statue139 = 1; saveWorld();
+  try { checkTitles42(); } catch (e) { }
+  return null;
+}
+function restyleStatue139() {
+  const k = myStatueKey139(); if (!k) return false;
+  world.decor[k] = { ...world.decor[k], st: statueData139() }; saveWorld();
+  try { if (F8.connected && F11.synced) sendEdits(diffShared()); } catch (e) { }
+  return true;
+}
+F139.buyStatue = buyStatue139; F139.statueImg = statueImg139;
+
+// ---------- 掲示板の「共同プロジェクト」に、建物の移動と銅像を足す ----------
+{
+  const _ob = openBoard;
+  openBoard = function (tab) {
+    const r = _ob.apply(this, arguments);
+    if (tab === "project") { try { boardExtra139(); } catch (e) { if (window.__komoErr) window.__komoErr(e, "boardExtra139"); } }
+    return r;
+  };
+}
+function boardExtra139(msg) {
+  const body = $("mbody"); if (!body) return;
+  let box = body.querySelector("#bx139"); if (!box) { box = document.createElement("div"); box.id = "bx139"; body.appendChild(box); }
+  const done = doneProj35(), M = m139();
+  box.innerHTML = `<h3 class="lbl">建物の場所を変える</h3>
+    <p class="mtext small">みんなで建てた建物を、動かせるよ（1回 ${fmt(MOVE_COST139)}）。村の中で、置きたい場所の<b>すぐ下</b>に立ってから押してね。建物は、自分の立っている所の上に建つ。噴水・街灯・ベンチ・時計塔は動かせない。</p>
+    ${msg ? `<p class="mtext"><b>${esc(msg)}</b></p>` : ""}
+    <div class="list">${done.length ? done.map(id => `<div class="li"><img src="${ASSETS["p35_" + id]}" alt=""><span class="nm">${esc(PROJ35[id].name)}</span><span class="acts"><button class="btn" type="button" data-mv139="${id}">ここへ移す</button></span></div>`).join("") : `<p class="mtext small">動かせる建物は、まだないよ。</p>`}</div>
+    <h3 class="lbl">銅像を建てる</h3>
+    <p class="mtext small">${fmt(STATUE_COST139)} で、自分の銅像を作れる（1人1体）。できた銅像は、飾りと同じように、村の好きな場所に置ける（向いてⒶで片付け）。</p>
+    <div class="row">${POSE139.map((n, i) => `<button class="chip" type="button" data-ps139="${i}" aria-pressed="${(M.pose | 0) === i}">${n}</button>`).join("")}</div>
+    <div class="row"><input id="sw139" style="width:100%;box-sizing:border-box;padding:8px 10px;border:2px solid #8a6a48;border-radius:8px;background:#fffaf0;color:#3a2a1c;font:inherit" maxlength="20" placeholder="台座に入れる一言（20文字まで）" value="${esc(String(M.word || ""))}" autocomplete="off"></div>
+    <div class="row2">${M.statue ? `<button class="btn" type="button" id="sr139">ポーズと一言を変える</button>` : `<button class="btn" type="button" id="sb139">銅像を作る（${fmt(STATUE_COST139)}）</button>`}</div>`;
+  box.querySelectorAll("[data-mv139]").forEach(b => b.onclick = () => { const e = moveProj139(b.dataset.mv139); if (!e) { closeModal(); toast("p35_" + b.dataset.mv139, `${PROJ35[b.dataset.mv139].name}を、ここへ移した`); } else boardExtra139(e); });
+  const word = () => { M.word = String(box.querySelector("#sw139").value || "").replace(/[<>&"'\\\u0000-\u001f]/g, "").slice(0, 20); };
+  box.querySelectorAll("[data-ps139]").forEach(b => b.onclick = () => { word(); M.pose = +b.dataset.ps139; saveWorld(); boardExtra139(); });
+  const sb = box.querySelector("#sb139"); if (sb) sb.onclick = () => { word(); const e = buyStatue139(); boardExtra139(e || "銅像ができた。持ち物に入れたよ。村の好きな場所に置いてね"); };
+  const sr = box.querySelector("#sr139"); if (sr) sr.onclick = () => { word(); saveWorld(); boardExtra139(restyleStatue139() ? "置いてある銅像を、新しいポーズと一言にした" : "つぎに置くときから、このポーズと一言になるよ"); };
+}
+
+// ---------- 週1回のオークション（金曜21時しめきり・サーバー：auc） ----------
+// 品物の名前は、サーバーの AuctionService.ITEMS と同じにする
+const GFURN139 = {
+  gthrone139: { name: "金の玉座", w: 1, h: 1, oy: -10, spr: (s, r) => { const g = C13["#e8b838"], l = C13["#fff0a0"], d = C13["#a87818"], v = C13["#b82848"];
+    r(3, 0, 10, 16, g); r(3, 0, 10, 2, l); r(5, 3, 6, 9, v); s(8, 1, C13["#ff6080"]); r(2, 14, 12, 6, g); r(2, 14, 12, 1, l); r(4, 15, 8, 3, v); r(1, 12, 2, 10, d); r(13, 12, 2, 10, d); r(2, 20, 2, 5, d); r(12, 20, 2, 5, d); } },
+  gpiano139: { name: "金のグランドピアノ", w: 2, h: 1, oy: -8, spr: (s, r) => { const g = C13["#e8b838"], l = C13["#fff0a0"], d = C13["#a87818"];
+    r(2, 2, 28, 10, g); r(2, 2, 28, 2, l); r(4, 12, 24, 4, C13["#fffaf0"]); for (let x = 5; x < 28; x += 3) r(x, 12, 1, 2, C13["#2a2a2a"]); r(2, 16, 28, 2, d); r(3, 18, 2, 6, d); r(27, 18, 2, 6, d); r(14, 18, 4, 5, d); } },
+  gfount139: { name: "金の噴水（お部屋用）", w: 1, h: 1, oy: -10, spr: (s, r) => { const g = C13["#e8b838"], l = C13["#fff0a0"], d = C13["#a87818"], w = C13["#a8e4f0"];
+    r(7, 2, 2, 12, g); ell13(s, 8, 8, 4, 2, g); ell13(s, 8, 7, 3, 1, w); ell13(s, 8, 18, 7, 4, d); ell13(s, 8, 17, 7, 4, g); ell13(s, 8, 17, 5, 2.4, w); s(8, 1, l); s(5, 4, w); s(11, 4, w); s(4, 7, w); s(12, 7, w); r(6, 22, 4, 3, d); } },
+  gbed139: { name: "金の天蓋ベッド", w: 1, h: 2, oy: -8, spr: (s, r) => { const g = C13["#e8b838"], l = C13["#fff0a0"], d = C13["#a87818"], w = C13["#fffaf0"], v = C13["#b82848"];
+    r(1, 0, 14, 3, g); r(1, 0, 14, 1, l); r(1, 3, 1, 34, d); r(14, 3, 1, 34, d); r(2, 3, 12, 4, v); r(2, 8, 12, 7, w); r(4, 9, 8, 4, C13["#f4ecdc"]); r(2, 15, 12, 20, v); r(2, 15, 12, 2, C13["#e05070"]); for (let y = 20; y < 34; y += 5) for (let x = 4; x < 13; x += 4) s(x, y, l); r(1, 36, 14, 3, g); } },
+  gstatue139: { name: "金のこもれび像", w: 1, h: 1, oy: -10, spr: (s, r) => { const g = C13["#e8b838"], l = C13["#fff0a0"], d = C13["#a87818"];
+    ell13(s, 8, 5, 4, 4, g); r(6, 3, 1, 1, l); r(5, 9, 6, 8, g); r(3, 10, 2, 5, g); r(11, 10, 2, 5, g); r(6, 17, 2, 4, g); r(8, 17, 2, 4, g); r(5, 9, 6, 1, l); ell13(s, 8, 2, 3, 1.4, C13["#5aa85a"]); r(3, 21, 10, 4, d); r(3, 21, 10, 1, g); } },
+};
+for (const [k, f] of Object.entries(GFURN139)) {
+  const key = "s139_" + k;
+  IMG[key] = pix13(f.w * 16, f.h * 16 - f.oy, f.spr); ASSETS[key] = IMG[key].toDataURL();
+  FURN[k] = { name: f.name, img: key, w: f.w, h: f.h, oy: f.oy, price: 0 };
+  ITEMS["f_" + k] = { name: f.name, icon: key, furn: k, price: 0 };
+}
+{ const _hf = F7.hideFurn; F7.hideFurn = k => k in GFURN139 || _hf(k); }
+const AURA139 = { g: { name: "金のきらめきのオーラ", item: "aura_gold139", cols: ["#fff0a0", "#f2c84a", "#ffffff"] },
+  r: { name: "虹のオーラ", item: "aura_rainbow139", cols: ["#ff6a6a", "#ffd24a", "#6ad08a", "#6ab0ff", "#c08aff"] },
+  s: { name: "桜吹雪のオーラ", item: "aura_sakura139", cols: ["#ffc0d8", "#ff9ac0", "#ffe6f0"] } };
+for (const [k, a] of Object.entries(AURA139)) {
+  const key = "s139_aura_" + k;
+  IMG[key] = pix13(16, 16, (s, r) => { const c = a.cols.map(h => C13[h]); for (let i = 0; i < 9; i++) { const t = i / 9 * 6.283, x = Math.round(8 + Math.cos(t) * 5), y = Math.round(8 + Math.sin(t) * 5); s(x, y, c[i % c.length]); if (i % 3 === 0) { s(x + 1, y, c[i % c.length]); s(x, y + 1, c[i % c.length]); } } s(8, 8, c[0]); s(7, 8, c[0]); s(9, 8, c[0]); s(8, 7, c[0]); s(8, 9, c[0]); }, false);
+  ASSETS[key] = IMG[key].toDataURL();
+  ITEMS[a.item] = { name: a.name, icon: key, price: 0 };
+}
+const AUC139 = { ...Object.fromEntries(Object.keys(GFURN139).map(k => ["f_" + k, { name: GFURN139[k].name, icon: "s139_" + k, desc: "金でできた家具。オークションでしか手に入らない" }])),
+  ...Object.fromEntries(Object.entries(AURA139).map(([k, a]) => [a.item, { name: a.name, icon: "s139_aura_" + k, aura: k, desc: "体のまわりに光がまう。ほかの人にも見える（オークションの画面でつけ外し）" }])) };
+const A139 = { st: null, off: 0, msg: "", wait: "", waitAt: 0 };
+F139.aucState = A139;
+const aucNow139 = () => Date.now() + A139.off;
+function aucSend139(a, o) { if (WATCH88 || !F8.connected) return false; send8({ type: "auc", a, ...(o || {}) }); return true; }
+function aucSt139(st) { if (!st) return; A139.st = st; if (st.now) A139.off = st.now - Date.now(); }
+// 返金・落札を受けとる（同じ pid は1回だけ）。受けとったら、すぐセーブをサーバーへ送ってから、受けとったと知らせる
+function aucPay139(list) {
+  if (!Array.isArray(list) || !list.length) return;
+  const M = m139(), pids = [];
+  for (const p of list.slice(0, 40)) {
+    const pid = String(p && p.pid || ""); if (!pid) continue; pids.push(pid);
+    if (M.paid.includes(pid)) continue;
+    M.paid.push(pid); while (M.paid.length > 80) M.paid.shift();
+    const g = Math.max(0, Math.floor(+p.g || 0)), it = AUC139[p.item];
+    if (p.why === "refund") { addMoney(g); F7.notify(`オークション：${it ? it.name : "品物"}で、ほかの人がもっと高く入れた。預けていた ${fmt(g)} が返ってきたよ`, null); }
+    else if (p.why === "win" && it) {
+      if (it.aura) { if (!M.aura.includes(it.aura)) M.aura.push(it.aura); } else giveItem91(p.item, 1);
+      M.wins++; world.stats.aucWin139 = (world.stats.aucWin139 || 0) + 1;
+      F7.notify(`オークション：${it.name}を ${fmt(g)} で落札したよ！${it.aura ? "スマホの「オークション」でつけられる" : "持ち物（いっぱいなら家の箱）に入れた"}`, null);
+      try { checkTitles42(); } catch (e) { }
+    }
+  }
+  saveWorld();
+  try { if (typeof cloudPush14 === "function") cloudPush14(true); } catch (e) { }
+  if (pids.length) aucSend139("ack", { pids });
+  if (modalOpen && $("mtitle").textContent === "オークション") renderAuc139();
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "auc") {
+      if (m.st) aucSt139(m.st);
+      if (m.ok === "bid" && m.rid === A139.wait) { A139.wait = ""; addMoney(-Math.max(0, Math.floor((+m.g || 0) - (+m.back || 0)))); world.stats.aucBid139 = (world.stats.aucBid139 || 0) + 1; A139.msg = `${fmt(m.g)} で入札した。上回られたら、全額返ってくるよ`; SFX.coin && SFX.coin(); saveWorld(); }
+      if (m.ng && (!m.rid || m.rid === A139.wait)) { A139.wait = ""; A139.msg = String(m.ng); }
+      if (m.ev === "pay") aucPay139(m.pay);
+      if (m.ev === "bid") toast(null, `オークション：${m.n}さんが ${fmt(m.g)} で入札した`);
+      if (m.ev === "end") { const it = AUC139[m.item]; F7.notify(`オークション：${it ? it.name : "品物"}は、${m.n}さんが ${fmt(m.g)} で落札したよ。次の品が出た`, null); }
+      if (modalOpen && $("mtitle").textContent === "オークション") renderAuc139();
+      return;
+    }
+    _h(m);
+    // つないだとき：クラウドのセーブを読みおわってから受けとる
+    if (m && m.type === "welcome" && !m.watch) { A139.wait = ""; const pay = m.auc && m.auc.pay; if (pay) setTimeout(() => { try { aucPay139(pay); } catch (e) { if (window.__komoErr) window.__komoErr(e, "aucPay139"); } }, 4500); }
+  };
+}
+const left139 = ms => { const s = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), mi = Math.floor(s % 3600 / 60); return d ? `${d}日${h}時間` : h ? `${h}時間${mi}分` : mi ? `${mi}分${s % 60}秒` : `${s}秒`; };
+function setAura139(k) {
+  if (k && !m139().aura.includes(k)) return;
+  if (k) cfg.aura = k; else delete cfg.aura;
+  m139().on = k || ""; saveWorld();
+  if (typeof sendCfgSoon === "function") sendCfgSoon();
+}
+function renderAuc139() {
+  const body = $("mbody"); if (!body) return;
+  const st = A139.st, c = st && st.cur, it = c && AUC139[c.item], me = F8.connected ? F8.myId() : 0, M = m139();
+  const mineTop = c && c.top && c.top.u === me;
+  body.innerHTML = `${!F8.connected ? `<p class="mtext">オークションは、オンラインのときだけ参加できるよ。</p>` : !c ? `<p class="mtext">品物を準備中…</p>` : `
+    <div class="li"><img src="${ASSETS[it ? it.icon : "d139_statue"]}" alt=""><span class="nm">${esc(it ? it.name : c.item)}<span class="sub2">${esc(it ? it.desc : "")}</span></span></div>
+    <p class="mtext">しめきりまで <b id="al139">${left139(c.end - aucNow139())}</b>（毎週 金曜 21:00）<br>
+      ${c.top ? `いまいちばん高いのは <b>${esc(c.top.n)}</b>さんの <b>${fmt(c.top.g)}</b>${mineTop ? "（あなた）" : ""}・入札 ${c.k}回` : "まだ、だれも入れていない"}<br>
+      つぎに入れられるのは <b>${fmt(c.min)}</b> から（1万G きざみ）。所持金 ${fmt(world.money)}</p>
+    <p class="mtext small">入札すると、その額を預かるよ。ほかの人に上回られたら全額返ってくる。しめきりのとき、いちばん高い人が品物をもらえて、その額は返らない。</p>
+    ${A139.msg ? `<p class="mtext"><b>${esc(A139.msg)}</b></p>` : ""}
+    <div class="row"><input id="ab139" type="number" inputmode="numeric" min="${c.min}" step="10000" value="${c.min}" style="width:12em;box-sizing:border-box;padding:8px 10px;border:2px solid #8a6a48;border-radius:8px;background:#fffaf0;color:#3a2a1c;font:inherit"> G</div>
+    <div class="row2"><button class="btn" type="button" id="ag139" ${A139.wait ? "disabled" : ""}>この額で入札する</button></div>`}
+    ${M.aura.length ? `<h3 class="lbl">持っているオーラ</h3><div class="row"><button class="chip" type="button" data-au139="" aria-pressed="${!cfg.aura}">つけない</button>${M.aura.map(k => AURA139[k] ? `<button class="chip" type="button" data-au139="${k}" aria-pressed="${cfg.aura === k}">${esc(AURA139[k].name)}</button>` : "").join("")}</div>` : ""}
+    ${st && st.last && st.last.length ? `<h3 class="lbl">これまでの落札</h3><div class="list">${st.last.map(x => `<div class="li"><img src="${ASSETS[(AUC139[x.item] || {}).icon || "d139_statue"]}" alt=""><span class="nm">${esc((AUC139[x.item] || {}).name || x.item)}<span class="sub2">${esc(x.n)}さん・${fmt(x.g)}</span></span></div>`).join("")}</div>` : ""}`;
+  const go = body.querySelector("#ag139");
+  if (go) go.onclick = () => {
+    const g = Math.floor(+body.querySelector("#ab139").value || 0), need = g - (mineTop ? c.top.g : 0);
+    if (g < c.min) { A139.msg = `いまは ${fmt(c.min)} から入れられるよ`; return renderAuc139(); }
+    if (g % 10000) { A139.msg = "入札は 1万G きざみでね"; return renderAuc139(); }
+    if (world.money < need) { A139.msg = `お金が足りない（あと ${fmt(need - world.money)}）`; return renderAuc139(); }
+    A139.wait = rid139(); A139.waitAt = Date.now(); A139.msg = "";
+    if (!aucSend139("bid", { g, rid: A139.wait })) { A139.wait = ""; A139.msg = "いまは送れなかった"; }
+    renderAuc139();
+  };
+  body.querySelectorAll("[data-au139]").forEach(b => b.onclick = () => { setAura139(b.dataset.au139 || null); renderAuc139(); });
+}
+function openAuc139() { A139.msg = ""; openModal("オークション", "", () => renderAuc139()); aucSend139("look"); }
+setInterval(() => {
+  if (A139.wait && Date.now() - A139.waitAt > 12000) { A139.wait = ""; A139.msg = "返事が来なかった。お金は引いていないよ。もう一度ためしてね"; }
+  if (!modalOpen || $("mtitle").textContent !== "オークション") return;
+  const el = $("al139"), c = A139.st && A139.st.cur; if (el && c) el.textContent = left139(c.end - aucNow139());
+}, 1000);
+F139.auc = openAuc139; F139.aucPay = aucPay139;
+F76.add({ id: "auc139", name: "オークション", ch: "競", c: "#c8a030", open: () => openAuc139() });
+// オーラ：見た目の設定の aura（g・r・s）にのせて、ほかの人にも見せる
+{
+  const _cc = cleanCfg;
+  cleanCfg = function (c) { const o = _cc(c); if (c && AURA139[c.aura]) o.aura = c.aura; return o; };
+  const _de = drawEnt;
+  drawEnt = function (e) {
+    const r = _de.apply(this, arguments);
+    try {
+      const k = e === player ? cfg.aura : e && e.kind === "remote" && e.cfg ? e.cfg.aura : null, A = k && AURA139[k];
+      if (A && !e.hidden) {
+        const t = performance.now() / 1000, cx = e.px + 8, cy = e.py + 6;
+        for (let i = 0; i < 6; i++) {
+          const a = t * (k === "s" ? .9 : 1.6) + i * 1.047, rx = 9 + Math.sin(t * 2 + i) * 2, y = k === "s" ? ((t * 9 + i * 5) % 22) - 12 : Math.sin(a) * 5 + Math.sin(t * 3 + i) * 2;
+          ctx.globalAlpha = .55 + Math.sin(t * 5 + i * 2) * .35; ctx.fillStyle = A.cols[i % A.cols.length];
+          ctx.fillRect(Math.round(cx + Math.cos(a) * rx), Math.round(cy + y), i % 2 ? 1 : 2, i % 2 ? 2 : 1);
+        }
+        ctx.globalAlpha = 1;
+      }
+    } catch (err) { ctx.globalAlpha = 1; }
+    return r;
+  };
+}
+// 起動したとき・セーブを読んだあと：持っていないオーラはつけない
+setInterval(() => { try { if (cfg.aura && !m139().aura.includes(cfg.aura)) { delete cfg.aura; if (typeof sendCfgSoon === "function") sendCfgSoon(); } else if (!cfg.aura && m139().on && m139().aura.includes(m139().on)) { cfg.aura = m139().on; if (typeof sendCfgSoon === "function") sendCfgSoon(); } } catch (e) { } }, 3000);
+
+// ---------- 化石と虫 ----------
+// 化石 [id, 名前, 売値, 出やすさ, 絵]
+const FOS139 = [
+  ["ammo", "アンモナイト", 3000, 10, (s, r, c) => { ell13(s, 8, 8, 6, 6, c[1]); ell13(s, 8, 8, 4, 4, c[0]); ell13(s, 9, 8, 2, 2, c[1]); s(9, 8, c[2]); for (let i = 0; i < 6; i++) s(Math.round(8 + Math.cos(i) * 5), Math.round(8 + Math.sin(i) * 5), c[2]); }],
+  ["tri", "三葉虫", 3500, 10, (s, r, c) => { ell13(s, 8, 8, 4, 6, c[1]); r(8, 3, 1, 11, c[2]); for (let y = 5; y < 13; y += 2) r(5, y, 7, 1, c[0]); ell13(s, 8, 4, 3, 2, c[0]); }],
+  ["leaf", "葉っぱの化石", 2500, 12, (s, r, c) => { r(2, 3, 12, 10, c[2]); ell13(s, 8, 8, 4, 3.4, c[0]); r(4, 8, 9, 1, c[1]); for (let x = 6; x < 12; x += 2) { s(x, 7, c[1]); s(x, 9, c[1]); } }],
+  ["shell", "貝の化石", 2500, 12, (s, r, c) => { ell13(s, 8, 9, 6, 5, c[1]); for (let x = 4; x < 13; x += 2) r(x, 6, 1, 7, c[0]); r(6, 12, 5, 2, c[2]); }],
+  ["tooth", "サメの歯", 5000, 8, (s, r, c) => { for (let y = 3; y < 14; y++) { const w = Math.max(1, Math.round((14 - y) * .5)); r(8 - w, y, w * 2, 1, y < 6 ? c[2] : c[0]); } r(5, 3, 6, 2, c[2]); }],
+  ["foot", "あしあとの化石", 6000, 7, (s, r, c) => { r(2, 2, 12, 12, c[2]); ell13(s, 8, 10, 3, 3, c[1]); for (const [x, y] of [[4, 5], [8, 3], [12, 5]]) ell13(s, x, y + 1, 1.4, 2, c[1]); }],
+  ["amber", "こはく", 8000, 6, (s, r, c) => { ell13(s, 8, 8, 5, 6, C13["#e8a030"]); ell13(s, 7, 7, 3, 4, C13["#f8c860"]); s(8, 9, C13["#5a3a10"]); s(9, 9, C13["#5a3a10"]); s(6, 5, C13["#fff0c0"]); }],
+  ["egg", "恐竜のたまご", 12000, 4, (s, r, c) => { ell13(s, 8, 8, 5, 6.4, c[0]); for (const [x, y] of [[6, 5], [10, 7], [7, 10], [9, 12], [5, 8]]) s(x, y, c[2]); ell13(s, 6, 6, 1.4, 2, c[1]); }],
+  ["claw", "恐竜のツメ", 15000, 4, (s, r, c) => { for (let i = 0; i < 11; i++) { const x = 3 + i, y = Math.round(12 - Math.sin(i / 10 * 2.6) * 8); r(x, y, 2, Math.max(1, 4 - Math.floor(i / 3)), i < 3 ? c[2] : c[0]); } }],
+  ["bone", "大きなホネ", 18000, 3, (s, r, c) => { for (let i = 0; i < 10; i++) r(3 + i, 12 - i, 2, 2, c[0]); ell13(s, 3, 12, 2, 2, c[0]); ell13(s, 5, 14, 2, 2, c[0]); ell13(s, 12, 2, 2, 2, c[0]); ell13(s, 14, 4, 2, 2, c[0]); }],
+  ["skull", "恐竜の頭のホネ", 30000, 2, (s, r, c) => { ell13(s, 7, 6, 5, 4, c[0]); r(8, 7, 7, 4, c[0]); r(9, 11, 6, 1, c[1]); for (let x = 9; x < 15; x += 2) s(x, 12, c[0]); ell13(s, 6, 6, 1.6, 1.6, c[2]); s(13, 8, c[2]); r(4, 10, 5, 3, c[1]); }],
+  ["wing", "始祖鳥の羽", 30000, 2, (s, r, c) => { r(1, 2, 14, 12, c[2]); for (let i = 0; i < 9; i++) { r(3 + i, 11 - i, 1, 1, c[1]); r(3 + i, 12 - i, Math.min(4, i + 1), 1, c[0]); } r(3, 12, 2, 1, c[1]); }],
+].map(([k, name, price, w, spr]) => ({ id: "fossil_" + k, name, price, w, spr }));
+for (const f of FOS139) {
+  const key = "s139_" + f.id;
+  IMG[key] = pix13(16, 16, (s, r) => f.spr(s, r, [C13["#e4dcc8"], C13["#b4a888"], C13["#7a6e58"]])); ASSETS[key] = IMG[key].toDataURL();
+  ITEMS[f.id] = { name: f.name, icon: key, price: f.price };
+}
+function rollFossil139() { let t = FOS139.reduce((a, f) => a + f.w, 0), r = Math.random() * t; for (const f of FOS139) { r -= f.w; if (r <= 0) return f; } return FOS139[0]; }
+function gotFossil139(why) {
+  const f = rollFossil139(), M = m139(), first = !M.fos[f.id];
+  M.fos[f.id] = (M.fos[f.id] || 0) + 1; giveItem91(f.id, 1); world.stats.fossil139 = (world.stats.fossil139 || 0) + 1; saveWorld();
+  toast("s139_" + f.id, `${why}「${f.name}」が出てきた！${first ? "（はじめて）" : ""}博物館に寄贈できるよ`); SFX.small && SFX.small();
+  try { checkTitles42(); } catch (e) { }
+  return f;
+}
+// 岩を割ると、たまに化石
+{ const _ev = F7.ev; F7.ev = (name, a, b) => { const r = _ev(name, a, b); try { if (name === "mine" && Math.random() < .08) gotFossil139("岩の中から"); } catch (e) { } return r; }; }
+// 毎日3か所、村の草の上に「ひび」（村の日にちで決まるので、みんな同じ場所。1人1日1回ずつ・つるはしで掘る）
+IMG.s139_crack = pix13(16, 16, (s, r) => { const d = C13["#6a5a40"], l = C13["#a89870"]; for (const [x, y] of [[4, 9], [5, 10], [6, 10], [7, 9], [8, 10], [9, 11], [10, 10], [11, 9], [7, 11], [6, 12], [9, 8]]) s(x, y, d); s(5, 9, l); s(8, 9, l); s(10, 11, l); s(3, 10, d); s(12, 10, d); }, false);
+ASSETS.s139_crack = IMG.s139_crack.toDataURL();
+let digCache139 = null;
+function digSpots139() {
+  const day = world.day | 0, sig = day + "|" + Object.keys(world.houses || {}).length + "|" + Object.keys(world.decor || {}).length;
+  if (digCache139 && digCache139.sig === sig) return digCache139.L;
+  const L = []; let h = (day * 2654435761) >>> 0;
+  const S = village.solid;
+  for (let i = 0; i < 400 && L.length < 3; i++) {
+    h = (h * 1664525 + 1013904223) >>> 0; const x = 3 + (h >>> 8) % (village.w - 6); h = (h * 1664525 + 1013904223) >>> 0; const y = 4 + (h >>> 8) % (VH0 - 8), k = x + "," + y;
+    if (!S || !S[y] || S[y][x] || !/^grass/.test(village.ground[y][x]) || world.tilled[k] || world.crops[k] || world.paths[k] || (world.decor || {})[k] || village.noBuild.has(k)) continue;
+    if (L.some(p => Math.abs(p[0] - x) + Math.abs(p[1] - y) < 8)) continue;
+    L.push([x, y]);
+  }
+  digCache139 = { sig, L }; return L;
+}
+const dugToday139 = i => { const M = m139(); if (M.dday !== (world.day | 0)) { M.dday = world.day | 0; M.dug = []; } return M.dug.includes(i); };
+{
+  const _atl = F7.addToList;
+  F7.addToList = (list, now) => {
+    _atl(list, now);
+    if (map !== village) return;
+    try {
+      digSpots139().forEach(([x, y], i) => { if (dugToday139(i)) return; list.push({ s: y * TS + 1, d: () => { ctx.drawImage(IMG.s139_crack, x * TS, y * TS); if (Math.floor(now / 400 + i) % 3 === 0) { ctx.fillStyle = "#fff8d0"; ctx.fillRect(x * TS + 4 + (i * 3) % 7, y * TS + 5, 1, 1); } } }); });
+      for (const b of BUGNOW139) { const B = BUGS139[b.k]; if (!B) continue; const bob = Math.round(Math.sin(now / 180 + b.ph) * 1.5), dx = Math.round(Math.sin(now / 700 + b.ph) * 2); list.push({ s: (b.y + 1) * TS + 2, d: () => ctx.drawImage(IMG["s139_bug_" + b.k], b.x * TS + 3 + dx, b.y * TS + 2 + bob) }); }
+    } catch (e) { }
+  };
+}
+// 虫 {名前, 売値, 季節(春0夏1秋2冬3), 時間 [から,まで]（分）, 雨の日, 形, 色, めずらしさ}
+const BUGS139 = {
+  mon: { name: "モンシロチョウ", price: 200, se: [0, 1], t: [360, 1020], shape: "fly", col: ["#ffffff", "#d8d8d8"], w: 10 },
+  age: { name: "アゲハチョウ", price: 600, se: [0, 1], t: [420, 1020], shape: "fly", col: ["#f8e060", "#2a2a2a"], w: 6 },
+  ten: { name: "テントウムシ", price: 300, se: [0, 1, 2], t: [360, 1080], shape: "beetle", col: ["#e03a3a", "#2a2a2a"], w: 9 },
+  hachi: { name: "ミツバチ", price: 400, se: [0, 1], t: [420, 1020], shape: "beetle", col: ["#f2c030", "#3a2a10"], w: 7 },
+  semi: { name: "アブラゼミ", price: 500, se: [1], t: [360, 1080], shape: "beetle", col: ["#8a5a30", "#c8a070"], w: 8 },
+  kabuto: { name: "カブトムシ", price: 3000, se: [1], t: [1140, 1560], shape: "horn", col: ["#5a3418", "#3a2010"], w: 3 },
+  kuwa: { name: "ノコギリクワガタ", price: 4000, se: [1], t: [1140, 1560], shape: "horn", col: ["#8a3a20", "#4a1c10"], w: 2 },
+  hotaru: { name: "ホタル", price: 1500, se: [1], t: [1140, 1500], shape: "glow", col: ["#3a3a3a", "#d8ff70"], w: 5 },
+  tonbo: { name: "シオカラトンボ", price: 500, se: [1, 2], t: [420, 1080], shape: "dragon", col: ["#8ab8e0", "#e8f4ff"], w: 7 },
+  aka: { name: "アカトンボ", price: 600, se: [2], t: [420, 1080], shape: "dragon", col: ["#e04a3a", "#ffe8e0"], w: 8 },
+  koorogi: { name: "コオロギ", price: 400, se: [2], t: [1080, 1560], shape: "beetle", col: ["#4a3a2a", "#7a6a50"], w: 8 },
+  suzu: { name: "スズムシ", price: 900, se: [2], t: [1140, 1560], shape: "beetle", col: ["#2a2a2a", "#a8a8a8"], w: 5 },
+  batta: { name: "トノサマバッタ", price: 500, se: [1, 2], t: [420, 1020], shape: "hopper", col: ["#6aa83a", "#3a6a20"], w: 7 },
+  kama: { name: "オオカマキリ", price: 1200, se: [1, 2], t: [480, 1080], shape: "hopper", col: ["#5ab04a", "#d8e8a0"], w: 4 },
+  dango: { name: "ダンゴムシ", price: 100, se: [0, 1, 2, 3], t: [0, 1440], shape: "beetle", col: ["#6a6a78", "#9a9aa8"], rain: 2, w: 8 },
+  katatsu: { name: "カタツムリ", price: 300, se: [0, 1, 2], t: [0, 1440], shape: "snail", col: ["#c8a070", "#f0e0c0"], rain: 1, w: 9 },
+  fuyu: { name: "フユシャク", price: 2500, se: [3], t: [960, 1560], shape: "fly", col: ["#c8c0b0", "#8a8478"], w: 5 },
+  yuki: { name: "ユキムシ", price: 2000, se: [3], t: [420, 1020], shape: "glow", col: ["#d8e8f8", "#ffffff"], w: 6 },
+  oo: { name: "オオムラサキ", price: 8000, se: [1], t: [480, 960], shape: "fly", col: ["#6a4ad0", "#f0e060"], w: 1 },
+  gin: { name: "ギンヤンマ", price: 6000, se: [1, 2], t: [960, 1140], shape: "dragon", col: ["#3aa85a", "#70c0f0"], w: 1 },
+};
+for (const [k, B] of Object.entries(BUGS139)) {
+  const a = C13[B.col[0]], b = C13[B.col[1]], key = "s139_bug_" + k;
+  IMG[key] = pix13(10, 10, (s, r) => {
+    if (B.shape === "fly") { r(1, 2, 3, 3, a); r(6, 2, 3, 3, a); r(2, 5, 2, 2, a); r(6, 5, 2, 2, a); s(2, 3, b); s(7, 3, b); r(4, 2, 2, 6, b); }
+    else if (B.shape === "dragon") { r(4, 1, 2, 8, a); r(0, 3, 4, 1, b); r(6, 3, 4, 1, b); r(1, 5, 3, 1, b); r(6, 5, 3, 1, b); s(4, 1, C13["#2a2a2a"]); s(5, 1, C13["#2a2a2a"]); }
+    else if (B.shape === "horn") { ell13(s, 5, 6, 3, 3, a); r(4, 3, 2, 2, b); r(4, 0, 1, 3, b); s(5, 1, b); s(6, 0, b); s(2, 8, b); s(8, 8, b); s(1, 5, b); s(8, 5, b); }
+    else if (B.shape === "glow") { ell13(s, 5, 4, 2, 2.4, a); ell13(s, 5, 7, 2, 1.6, b); s(3, 2, a); s(7, 2, a); }
+    else if (B.shape === "hopper") { r(2, 4, 6, 2, a); r(1, 3, 2, 2, a); s(1, 3, C13["#2a2a2a"]); r(6, 2, 1, 3, b); r(7, 1, 1, 2, b); r(8, 3, 1, 4, b); r(3, 6, 1, 2, b); }
+    else if (B.shape === "snail") { ell13(s, 6, 5, 3, 3, a); ell13(s, 6, 5, 1.4, 1.4, b); r(1, 7, 8, 2, b); r(1, 5, 1, 2, b); s(1, 4, C13["#2a2a2a"]); }
+    else { ell13(s, 5, 5, 3, 2.6, a); r(5, 3, 1, 5, b); s(3, 4, b); s(7, 6, b); s(2, 5, C13["#2a2a2a"]); }
+  });
+  ASSETS[key] = IMG[key].toDataURL();
+  ITEMS["bug_" + k] = { name: B.name, icon: key, price: B.price };
+}
+IMG.net139 = pix13(16, 16, (s, r) => { const w = C13["#b0824a"], n = C13["#f4f4f4"], d = C13["#c8c8c8"]; for (let i = 0; i < 9; i++) s(3 + i, 14 - i, w); ell13(s, 11, 4, 4, 3.4, n); ell13(s, 11, 5, 2.6, 2.2, d); s(10, 4, n); s(12, 6, n); });
+ASSETS.net139 = IMG.net139.toDataURL();
+ITEMS.net139 = { name: "虫あみ", icon: "net139", price: 2000, tool: true };
+SHOP_STOCK.push("net139"); SHOP_BASE.push("net139");
+const BUGNOW139 = [];
+F139.bugs = BUGNOW139;
+function bugPool139() {
+  const se = Math.floor(((world.day | 0) - 1) / 7) % 4, t = world.time < 360 ? world.time + 1440 : world.time, wet = typeof rainy === "function" && rainy();
+  return Object.entries(BUGS139).filter(([k, B]) => B.se.includes(se) && ((t >= B.t[0] && t <= B.t[1]) || (t - 1440 >= B.t[0] && t - 1440 <= B.t[1])) && (B.rain === 1 ? wet : B.rain === 2 ? true : !wet));
+}
+function spawnBug139() {
+  if (map !== village || !village.solid || BUGNOW139.length >= 4) return;
+  const pool = bugPool139(); if (!pool.length) return;
+  let t = pool.reduce((a, [, B]) => a + B.w, 0), r = Math.random() * t, pick = pool[0]; for (const p of pool) { r -= p[1].w; if (r <= 0) { pick = p; break; } }
+  for (let i = 0; i < 30; i++) {
+    const x = player.x + rnd(19) - 9, y = player.y + rnd(15) - 7, k = x + "," + y;
+    if (x < 1 || y < 2 || x >= village.w - 1 || y >= village.h - 1 || village.solid[y][x] || !/^(grass|flower)/.test(village.ground[y][x]) || world.crops[k] || world.paths[k]) continue;
+    if (Math.abs(x - player.x) + Math.abs(y - player.y) < 3 || BUGNOW139.some(b => b.x === x && b.y === y)) continue;
+    BUGNOW139.push({ k: pick[0], x, y, ph: Math.random() * 6, until: Date.now() + 50000 + rnd(40000) }); return;
+  }
+}
+setInterval(() => {
+  try {
+    const now = Date.now();
+    for (let i = BUGNOW139.length - 1; i >= 0; i--) if (map !== village || BUGNOW139[i].until < now || Math.abs(BUGNOW139[i].x - player.x) > 14 || Math.abs(BUGNOW139[i].y - player.y) > 11) BUGNOW139.splice(i, 1);
+    if (!modalOpen && document.visibilityState !== "hidden" && Math.random() < .55) spawnBug139();
+  } catch (e) { }
+}, 4000);
+function catchBug139(b) {
+  const B = BUGS139[b.k], M = m139(), i = BUGNOW139.indexOf(b); if (i >= 0) BUGNOW139.splice(i, 1);
+  if (Math.random() > (B.w <= 2 ? .55 : B.w <= 5 ? .7 : .85)) { toast("net139", `${B.name}に、にげられた…`); return false; }
+  const first = !M.bugs[b.k]; M.bugs[b.k] = (M.bugs[b.k] || 0) + 1; giveItem91("bug_" + b.k, 1); world.stats.bug139 = (world.stats.bug139 || 0) + 1; saveWorld();
+  toast("s139_bug_" + b.k, `${B.name}をつかまえた！${first ? "（はじめて）" : ""}`); SFX.small && SFX.small();
+  try { checkTitles42(); } catch (e) { }
+  return true;
+}
+F139.catchBug = catchBug139; F139.spawnBug = spawnBug139; F139.digSpots = digSpots139;
+{
+  const _act = act;
+  act = function () {
+    if (!modalOpen && !placing && !fish && !busy && !player.moving && map === village) {
+      const [tx, ty] = front(), sel = world.inv[world.sel];
+      // 化石のひび（上に立つか、向いてⒶ）
+      const spots = digSpots139(), di = spots.findIndex(([x, y]) => (x === tx && y === ty) || (x === player.x && y === player.y));
+      if (di >= 0 && !dugToday139(di)) {
+        if (!count("pick")) { toast("s139_crack", "地面にひびが入っている。つるはしがあれば掘れそう"); return; }
+        m139().dug.push(di); gotFossil139("地面のひびから"); return;
+      }
+      if (sel && sel.id === "net139") {
+        const b = BUGNOW139.find(b => Math.abs(b.x - tx) + Math.abs(b.y - ty) <= 1) || BUGNOW139.find(b => Math.abs(b.x - player.x) + Math.abs(b.y - player.y) <= 1);
+        if (b) { catchBug139(b); return; }
+        // 虫がとなりにいないときは、ふつうのⒶ（話す・入る など）をじゃましない。草の上で空ぶりしたときだけ、ひとこと
+        if (!village.solid[ty]?.[tx] && !(village.interact || {})[tx + "," + ty] && /^(grass|flower)/.test(village.ground[ty]?.[tx] || "")) { toast("net139", BUGNOW139.length ? "もう少し近づいてから、ふってみよう" : "近くに虫がいないみたい。花や草のあるところを歩いてみよう"); return; }
+      }
+    }
+    return _act.apply(this, arguments);
+  };
+}
+
+// ---------- 村の博物館（みなと町・サーバー：museum） ----------
+IMG.s139_museum = pix13(80, 64, (s, r) => { const w = C13["#f2eee4"], d = C13["#cfc8b8"], dd = C13["#a8a090"], rf = C13["#7a8aa8"], rl = C13["#9aaac8"], g = C13["#c8a048"];
+  for (let y = 4; y < 20; y++) { const hw = Math.round((y - 4) * 2.3) + 3; r(40 - hw, y, hw * 2, 1, y < 6 ? rl : rf); } r(2, 20, 76, 3, d); r(2, 20, 76, 1, w);
+  r(4, 23, 72, 37, w); for (const x of [8, 20, 56, 68]) { r(x, 24, 5, 34, C13["#fffdf6"]); r(x, 24, 1, 34, d); r(x - 1, 23, 7, 2, d); r(x - 1, 57, 7, 2, d); }
+  r(30, 34, 20, 26, C13["#5a4a3a"]); r(32, 36, 7, 24, C13["#7a6650"]); r(41, 36, 7, 24, C13["#7a6650"]); s(38, 48, g); s(42, 48, g); r(28, 32, 24, 2, d);
+  r(32, 11, 16, 6, w); for (let x = 34; x < 47; x += 3) s(x, 14, g); r(2, 60, 76, 4, dd); r(2, 60, 76, 1, d); });
+ASSETS.s139_museum = IMG.s139_museum.toDataURL();
+IMG.s139_case = pix13(32, 26, (s, r) => { const w = C13["#8a6a48"], l = C13["#b08a5c"], gl = C13["#cfe8f4"], gd = C13["#a8cce0"];
+  r(1, 2, 30, 14, gl); r(1, 2, 30, 1, C13["#ffffff"]); r(1, 15, 30, 1, gd); r(5, 4, 2, 10, C13["#e8f6fc"]); r(0, 16, 32, 3, l); r(0, 16, 32, 1, C13["#c8a070"]); r(1, 19, 30, 6, w); r(2, 24, 3, 2, C13["#5a4630"]); r(27, 24, 3, 2, C13["#5a4630"]); });
+ASSETS.s139_case = IMG.s139_case.toDataURL();
+IMG.s139_desk = pix13(32, 20, (s, r) => { const w = C13["#8a6a48"], l = C13["#b08a5c"]; r(0, 4, 32, 4, l); r(0, 4, 32, 1, C13["#c8a070"]); r(1, 8, 30, 11, w); r(12, 0, 8, 4, C13["#f4f0e4"]); r(14, 1, 4, 1, C13["#7a6a58"]); });
+ASSETS.s139_desk = IMG.s139_desk.toDataURL();
+const MUS_DOOR139 = [16, 3];
+const MCATS139 = [["fish", "魚と海の生きもの", id => /^(fish_|sea_)/.test(id)], ["bug", "虫", id => /^bug_/.test(id)], ["fossil", "化石", id => /^fossil_/.test(id)], ["dish", "料理", id => /^dish_/.test(id)], ["furn", "家具", id => /^f_/.test(id) && ITEMS[id].furn]];
+const catList139 = k => { const c = MCATS139.find(x => x[0] === k); return c ? Object.keys(ITEMS).filter(id => c[2](id)) : []; };
+const U139 = { st: null, msg: "", wait: "", waitId: "" };
+F139.mus = U139;
+const musIt139 = () => (U139.st && U139.st.it) || {};
+function musSend139(a, o) { if (WATCH88 || !F8.connected) return false; send8({ type: "museum", a, ...(o || {}) }); return true; }
+{
+  const _mp = makePort;
+  makePort = function () {
+    const m = _mp.apply(this, arguments);
+    m.objs.push({ img: "s139_museum", x: 14 * TS, y: 0, sortY: 4 * TS - 1 });
+    for (let y = 1; y <= 3; y++) for (let x = 14; x <= 18; x++) m.base[y][x] = true;
+    for (const x of [15, 16, 17]) m.interact[x + "," + 3] = () => enterMuseum139();
+    m.labels.push({ x: 16 * TS + 8, y: 6, text: "村の博物館" });
+    return m;
+  };
+}
+function makeMuseum139() {
+  const w = 16, h = 11, mid = 8, m = blankMap(w, h, "村の博物館");
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m.ground[y][x] = y < 2 ? "@mwall" : "@marble";
+  solidRect(m, 0, 0, w, 2);
+  m.isInterior = true; m.kind = "museum139"; m.floorT = "@marble"; m.statics = []; m.interact = {}; m.labels = [];
+  m.exit = [mid, h - 1]; m.exits = { [mid + "," + (h - 1)]: true }; m.ground[h - 1][mid] = "@exit";
+  const obj = (img, x, y, n, fn, label) => { m.objs.push({ img, x: x * TS, y: (y + 1) * TS - IMG[img].height, sortY: (y + 1) * TS - 1 }); for (let a = x; a < x + n; a++) { m.base[y][a] = true; m.interact[a + "," + y] = fn; } m.labels.push({ x: (x + n / 2) * TS, y: (y + 1) * TS - IMG[img].height - 2, text: label }); };
+  const at = [[1, 3], [4, 3], [10, 3], [13, 3], [1, 7]];
+  MCATS139.forEach(([k, name], i) => obj("s139_case", at[i][0], at[i][1], 2, () => openCase139(k), name));
+  obj("s139_desk", 7, 5, 2, () => openMuseum139(), "受付（寄贈）");
+  return m;
+}
+function enterMuseum139() {
+  const m = makeMuseum139(); interior = m; rebuildSolid(); enter(m, m.exit[0], m.exit[1] - 1, "up");
+  world.stats.musVisit139 = (world.stats.musVisit139 || 0) + 1;
+  musSend139("look");
+  toast(null, F8.connected ? "村の博物館。みんなの寄贈で、展示がふえていくよ" : "村の博物館。オフラインでは、寄贈と展示は見られないよ");
+}
+F139.enter = enterMuseum139;
+{
+  const _tm = tryMove;
+  tryMove = function (dir) {
+    if (map && map.kind === "museum139" && map.exits[player.x + "," + player.y] && dir === "down") { port = port || makePort(); rebuildSolid(); enter(port, MUS_DOOR139[0], MUS_DOOR139[1] + 1, "down"); return; }
+    return _tm.apply(this, arguments);
+  };
+  const _mk = mapKey;
+  mapKey = function () { if (map && map.kind === "museum139") return "int:museum139"; return _mk.apply(this, arguments); };
+}
+function openCase139(k) {
+  const c = MCATS139.find(x => x[0] === k), list = catList139(k);
+  openModal(`展示：${c[1]}`, "shop", body => {
+    const It = musIt139(), have = list.filter(id => It[id] != null);
+    body.innerHTML = `<p class="mtext">${F8.connected ? `展示されているもの ${have.length} / ${list.length}` : "オフラインでは、展示は見られないよ"}</p>
+      <div class="dex aq128">${list.map(id => It[id] != null ? `<div><img src="${ASSETS[ITEMS[id].icon]}" alt="">${esc(ITEMS[id].name)}<br><small>寄贈 ${esc(It[id] || "")}さん</small></div>` : `<div class="no"><img src="${ASSETS[ITEMS[id].icon]}" alt="">？？？<br><small>まだない</small></div>`).join("")}</div>
+      <div class="row2"><button class="btn" type="button" id="mc139g">受付で寄贈する</button><button class="btn light" type="button" id="mc139c">とじる</button></div>`;
+    body.querySelector("#mc139g").onclick = () => { closeModal(); openMuseum139(); };
+    body.querySelector("#mc139c").onclick = () => closeModal();
+  });
+  musSend139("look");
+}
+const THANKS139 = id => /^fossil_/.test(id) ? 2000 : /^bug_/.test(id) ? 500 : 300;
+function renderMuseum139() {
+  const body = $("mbody"); if (!body) return;
+  const It = musIt139(), st = U139.st, total = MCATS139.reduce((a, c) => a + catList139(c[0]).length, 0);
+  const mine = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id] && MCATS139.some(c => c[2](id)) && It[id] == null);
+  body.innerHTML = `${!F8.connected ? `<p class="mtext">寄贈は、オンラインのときだけできるよ。</p>` : `
+    <p class="mtext">展示 <b>${st ? st.n : 0}</b> / ${total} 種類。まだ展示されていない種類を1つ寄贈すると、あなたの名前が展示にのこるよ（お礼：化石 2,000G・虫 500G・ほか 300G と、村の評判）。</p>
+    ${MCATS139.map(c => { const L = catList139(c[0]); return `<span class="chip" style="pointer-events:none">${c[1]} ${L.filter(id => It[id] != null).length}/${L.length}</span>`; }).join(" ")}
+    ${U139.msg ? `<p class="mtext"><b>${esc(U139.msg)}</b></p>` : ""}
+    <h3 class="lbl">寄贈できる持ち物</h3>
+    <div class="list">${mine.length ? mine.map(id => `<div class="li"><img src="${ASSETS[ITEMS[id].icon]}" alt=""><span class="nm">${esc(ITEMS[id].name)}<span class="sub2">${count(id)}個持っている</span></span><span class="acts"><button class="btn" type="button" data-mg139="${id}" ${U139.wait ? "disabled" : ""}>寄贈する</button></span></div>`).join("") : `<p class="mtext small">いまの持ち物に、まだ展示されていない種類はないよ。化石は岩や地面のひびから、虫は虫あみ（よろず屋）でつかまえられる。</p>`}</div>
+    ${st && st.top && st.top.length ? `<h3 class="lbl">たくさん寄贈した人</h3><div class="list">${st.top.map((x, i) => `<div class="li"><span class="nm">${i + 1}. ${esc(x.n)}<span class="sub2">${x.c}種類</span></span></div>`).join("")}</div>` : ""}`}`;
+  body.querySelectorAll("[data-mg139]").forEach(b => b.onclick = () => {
+    const id = b.dataset.mg139; if (!count(id)) return;
+    U139.wait = rid139(); U139.waitId = id; U139.waitAt = Date.now(); U139.msg = "";
+    if (!musSend139("give", { id, rid: U139.wait })) { U139.wait = ""; U139.msg = "いまは送れなかった"; }
+    renderMuseum139();
+  });
+}
+function openMuseum139() { U139.msg = ""; openModal("村の博物館", "shop", () => renderMuseum139()); musSend139("look"); }
+F139.open = openMuseum139; F139.openCase = openCase139;
+setInterval(() => { if (U139.wait && Date.now() - (U139.waitAt || 0) > 10000) { U139.wait = ""; U139.msg = "返事が来なかった。もう一度ためしてね"; if (modalOpen && $("mtitle").textContent === "村の博物館") renderMuseum139(); } }, 2000);
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "museum") {
+      if (m.st) U139.st = m.st;
+      if (m.ok === "give" && m.rid === U139.wait) {
+        const id = U139.waitId; U139.wait = "";
+        if (count(id)) { removeItem(id, 1); addMoney(THANKS139(id)); try { addRep(1); } catch (e) { } m139().given++; world.stats.musGive139 = (world.stats.musGive139 || 0) + 1; saveWorld(); U139.msg = `${ITEMS[id].name}を寄贈した。ありがとう！（お礼 ${fmt(THANKS139(id))}）`; try { checkTitles42(); } catch (e) { } }
+      }
+      if (m.ng && (!m.rid || m.rid === U139.wait)) { U139.wait = ""; U139.msg = String(m.ng); }
+      if (m.ev === "give" && U139.st && U139.st.it) { U139.st.it[m.id] = m.by; U139.st.n = Object.keys(U139.st.it).length; if (ITEMS[m.id]) toast(ITEMS[m.id].icon, `${m.by}さんが、博物館に${ITEMS[m.id].name}を寄贈した`); }
+      if (modalOpen && $("mtitle").textContent === "村の博物館") renderMuseum139();
+      return;
+    }
+    _h(m);
+    if (m && m.type === "welcome") { U139.wait = ""; }
+  };
+}
+
+// ---------- 称号・てびき ----------
+const TTL139 = [["博物館の友", "博物館に10種類を寄贈する", () => (world.stats.musGive139 || 0) >= 10], ["学芸員", "博物館に50種類を寄贈する", () => (world.stats.musGive139 || 0) >= 50],
+  ["化石ハンター", "化石を12種類ぜんぶ見つける", () => FOS139.every(f => m139().fos[f.id])], ["虫はかせ", "虫を20種類ぜんぶつかまえる", () => Object.keys(BUGS139).every(k => m139().bugs[k])],
+  ["落札者", "オークションで品物を落札する", () => (world.stats.aucWin139 || 0) >= 1], ["銅像の人", "自分の銅像を作る", () => (world.stats.statue139 || 0) >= 1]];
+for (const [n, d, f] of TTL139) { GTITLES42.push([n, d, f]); TITLES.push([n, d, () => gotT42().includes(n) || f()]); }
+GUIDE54.push(["博物館・化石・虫", "s139_fossil_ammo", `<p>みなと町に「村の博物館」があるよ。魚・虫・化石・料理・家具を、<b>1種類につき1つ</b>寄贈できて、展示には寄贈した人の名前がのこる。</p>
+  <p><b>化石</b>：村の草の上に、毎日3か所「ひび」が出る。つるはしを持って、上に立つか向いてⒶで掘れる（1か所1日1回）。岩を割っても、たまに出てくる。</p>
+  <p><b>虫</b>：よろず屋の「虫あみ」を手に持って、村を歩くと虫が出てくる。近づいてⒶ。季節・時間・天気で、出る虫が変わる（夜の夏はカブトムシ、雨の日はカタツムリ…）。</p>`]);
+GUIDE54.push(["オークションと銅像", "s139_gthrone139", `<p><b>オークション</b>（スマホの「オークション」）：毎週1つだけの限定品を、村のみんなで競り合う。しめきりは<b>金曜の21時</b>。入札するとその額を預かって、だれかに上回られたら全額返ってくる。いちばん高い人が品物をもらえる。</p>
+  <p><b>銅像</b>（掲示板の「共同プロジェクト」）：1億Gで、自分の銅像を作れる。飾りと同じように、村の好きな場所に置ける。</p>
+  <p><b>建物の移動</b>（同じ画面）：みんなで建てた建物を、置きたい場所のすぐ下に立って「ここへ移す」。1回 30,000G。</p>`]);
+F139.board = () => openBoard("project");
+F139.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -30530,7 +31101,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

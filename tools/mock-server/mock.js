@@ -42,6 +42,53 @@ let mj = null; const mjPending = new Map(), adminPending = new Map(), giftPendin
 const dmPend = new Map(); // 留守の人へのひそひそ
 const recycleBy = new Map(); // 村ごとのリサイクル品の棚
 // みんなの水族館（本物は aqua/AquaHandler.java）。村ごとに {fund, fish:{id:{n,by}}, don:{id:{n,g,f}}}
+// 週1回のオークション（本物は jp.komorebi.auction の AuctionService・村ごと・同じ約束）。AUC_MS（環境変数・ミリ秒）で、しめきりまでを短くできる。/mock/auc?v=村・/mock/aucend?v=村
+const AUC_ITEMS = ["f_gthrone139", "aura_gold139", "f_gpiano139", "aura_rainbow139", "f_gfount139", "aura_sakura139", "f_gbed139", "f_gstatue139"], AUC_MIN = 1000000, AUC_MAX = 5000000000, AUC_STEP = 10000;
+const aucBy = new Map(), aucOf = v => aucBy.get(v) || (aucBy.set(v, { seq: 0, n: 0, pseq: 0, cur: null, last: [], pend: {} }), aucBy.get(v));
+const aucNextEnd = now => { if (process.env.AUC_MS) return now + +process.env.AUC_MS; const t = new Date(now + 9 * 3600e3); const add = (5 - t.getUTCDay() + 7) % 7; let e = Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() + add, 21) - 9 * 3600e3; if (e - now < 6 * 3600e3) e += 7 * 86400e3; return e; };
+const aucMin = c => { const top = c.top ? c.top.g : 0; if (top <= 0) return AUC_MIN; return Math.max(Math.ceil(top * 1.05 / AUC_STEP) * AUC_STEP, top + AUC_STEP); };
+const aucOpen = (d, item, now) => { d.seq++; d.cur = { id: d.seq, item: item || AUC_ITEMS[d.n % AUC_ITEMS.length], start: now, end: aucNextEnd(now), k: 0, top: null }; if (!item) d.n++; };
+const aucSt = d => ({ now: Date.now(), ...(d.cur ? { cur: { id: d.cur.id, item: d.cur.item, end: d.cur.end, k: d.cur.k, min: aucMin(d.cur), ...(d.cur.top ? { top: { n: d.cur.top.n, g: d.cur.top.g, u: d.cur.top.u } } : {}) } } : {}), last: d.last });
+const aucPay = (d, v, to, why, g, item, id) => { const p = { pid: "a" + (++d.pseq), why, g, item, id }; (d.pend[to] = d.pend[to] || []).push(p); while (d.pend[to].length > 20) d.pend[to].shift(); for (const x of sessions) if (x.pl && x.pl.id === to && vOf(x.pl) === v) x.send(JSON.stringify({ type: "auc", ev: "pay", pay: [p] })); };
+function aucTick() {
+  for (const v of new Set([...[...sessions].filter(x => x.pl && !x.watch).map(x => vOf(x.pl)), ...aucBy.keys()])) {
+    const d = aucOf(v), now = Date.now(), all = o => { const t = JSON.stringify({ type: "auc", ...o }); for (const x of sessions) if (x.pl && !x.watch && vOf(x.pl) === v) x.send(t); };
+    if (!d.cur) { aucOpen(d, null, now); continue; }
+    if (now < d.cur.end) continue;
+    const c = d.cur;
+    if (c.top) { aucPay(d, v, c.top.u, "win", c.top.g, c.item, c.id); d.last.unshift({ id: c.id, item: c.item, n: c.top.n, g: c.top.g, at: now }); d.last.length = Math.min(d.last.length, 6); aucOpen(d, null, now); all({ ev: "end", item: c.item, n: c.top.n, g: c.top.g, st: aucSt(d) }); }
+    else aucOpen(d, c.item, now);
+  }
+}
+setInterval(aucTick, 500);
+function aucHandle(s, m) {
+  if (s.watch || !(s.pl.id > 0)) return; const v = vOf(s.pl), d = aucOf(v), me = s.pl.id, rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "auc", ...o }));
+  if (m.a === "look") return send({ st: aucSt(d) });
+  if (m.a === "ack") { const got = new Set((Array.isArray(m.pids) ? m.pids : []).slice(0, 40).map(String)); if (d.pend[me]) { d.pend[me] = d.pend[me].filter(p => !got.has(p.pid)); if (!d.pend[me].length) delete d.pend[me]; } return; }
+  if (m.a !== "bid") return;
+  const now = Date.now(), g = Math.floor(+m.g || 0), c = d.cur;
+  if (!c || now >= c.end) return send({ ng: "いまは入札できないよ（しめきったところ）", rid });
+  const min = aucMin(c);
+  if (g < min || g > AUC_MAX || g % AUC_STEP) return send({ ng: g > AUC_MAX ? "入札は 50億G までだよ" : g % AUC_STEP ? "入札は 1万G きざみでね" : `いまは ${min.toLocaleString()}G から入れられるよ`, rid, st: aucSt(d) });
+  let back = 0;
+  if (c.top) { if (c.top.u === me) back = c.top.g; else aucPay(d, v, c.top.u, "refund", c.top.g, c.item, c.id); }
+  c.top = { u: me, n: s.pl.name, g }; c.k++; if (c.end - now < 60000 && !process.env.AUC_MS) c.end = now + 60000;
+  send({ ok: "bid", rid, g, back, st: aucSt(d) });
+  const t = JSON.stringify({ type: "auc", ev: "bid", n: s.pl.name, g, st: aucSt(d) }); for (const x of sessions) if (x !== s && x.pl && !x.watch && vOf(x.pl) === v) x.send(t);
+}
+// 村の博物館（本物は jp.komorebi.museum の MuseumHandler・村ごと・同じ約束）。/mock/museum?v=村
+const musBy = new Map(), musOf = v => musBy.get(v) || (musBy.set(v, { it: {}, don: {} }), musBy.get(v));
+const musSt = d => ({ it: Object.fromEntries(Object.entries(d.it).map(([k, x]) => [k, x[0]])), n: Object.keys(d.it).length, top: Object.values(d.don).sort((a, b) => b.c - a.c).slice(0, 10).map(x => ({ n: x.n, c: x.c })) });
+function musHandle(s, m) {
+  if (s.watch || !(s.pl.id > 0)) return; const v = vOf(s.pl), d = musOf(v), rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "museum", ...o }));
+  if (m.a === "look") return send({ st: musSt(d) });
+  if (m.a !== "give") return;
+  const id = String(m.id || ""), ng = !/^(fish|sea|bug|fossil|dish|f)_[^\u0000-\u001f<>&"'\\\s]{1,28}$/.test(id) ? "これは寄贈できないみたい" : d.it[id] ? "それは、もう展示されているよ" : Object.keys(d.it).length >= 1500 ? "展示がいっぱいみたい" : null;
+  if (ng) return send({ ng, rid });
+  d.it[id] = [s.pl.name, s.pl.id]; const me = d.don[s.pl.id] = d.don[s.pl.id] || { n: s.pl.name, c: 0 }; me.n = s.pl.name; me.c++;
+  send({ ok: "give", rid, id, st: musSt(d) });
+  const t = JSON.stringify({ type: "museum", ev: "give", id, by: s.pl.name }); for (const x of sessions) if (x !== s && x.pl && !x.watch && vOf(x.pl) === v) x.send(t);
+}
 const aquaBy = new Map(), AQUA_GOALS = (process.env.AQUA_GOALS || "100000000,400000000,1000000000").split(",").map(Number);
 const aquaOf = v => aquaBy.get(v) || (aquaBy.set(v, { fund: 0, fish: {}, don: {} }), aquaBy.get(v));
 const aquaLv = f => AQUA_GOALS.filter(g => f >= g).length;
@@ -496,6 +543,9 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/rooms") return json(res, 200, Object.fromEntries([...rooms].map(([k, r]) => [k, r])));
   // 村を新しくする（本物の SharedWorldService.renew と同じ）：共同プロジェクト・木・苗木・岩・採石場・水族館だけ最初から。家・地形・柵・道・飾り・帳簿は残す
   if (p === "/mock/renew") { const v = +u.searchParams.get("v") || 1; useV(v); for (const k of ["trees", "saplings", "rocks", "quarry"]) delete shared[k]; for (const k of Object.keys(shared.meta || {})) if (/^(proj:|pj\d+:)/.test(k)) delete shared.meta[k]; aquaBy.delete(v); const g = (genBy.get(v) || 0) + 1; genBy.set(v, g); regrowBy.set(v, g); for (const s of sessions) s.pl && vOf(s.pl) === v && s.send(JSON.stringify({ type: "worldRenew", gen: g })); return json(res, 200, { gen: g }); }
+  if (p === "/mock/auc") return json(res, 200, aucOf(+u.searchParams.get("v") || 1));
+  if (p === "/mock/aucend") { const d = aucOf(+u.searchParams.get("v") || 1); if (d.cur) d.cur.end = Date.now() - 1; aucTick(); return json(res, 200, d); }
+  if (p === "/mock/museum") return json(res, 200, musOf(+u.searchParams.get("v") || 1));
   if (p === "/mock/gen") { const v = +u.searchParams.get("v") || 1; return json(res, 200, { gen: genBy.get(v) || 0, regrow: regrowBy.get(v) || 0 }); }
   if (p === "/mock/reset") { for (const [k, r] of rooms) { if (!/,/.test(k)) continue; const o = (houseOf(k) || {}).ownerId; if (!(o > 0)) continue; const to = returns.get(o) || {}; for (const [id, n] of [...Object.entries(r.shared), ...Object.entries(r.priv)]) to[id] = (to[id] || 0) + n; returns.set(o, to); } shared = {}; for (const k of [...rooms.keys()]) if (/,/.test(k)) rooms.delete(k); epoch++; for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "worldReset" })); return json(res, 200, {}); }
   if (p === "/mock/notice") { for (const s of sessions) s.pl && s.send(JSON.stringify({ type: "notice", text: u.searchParams.get("t") })); return json(res, 200, {}); }
@@ -558,7 +608,7 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, worldGen: genBy.get(vOf(pl)) || 0, ...(regrowBy.get(vOf(pl)) ? { regrow: regrowBy.get(vOf(pl)) } : {}), ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...tnyWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, worldGen: genBy.get(vOf(pl)) || 0, ...((aucOf(vOf(pl)).pend[pl.id] || []).length ? { auc: { pay: aucOf(vOf(pl)).pend[pl.id] } } : {}), ...(regrowBy.get(vOf(pl)) ? { regrow: regrowBy.get(vOf(pl)) } : {}), ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...tnyWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -572,7 +622,7 @@ wss.on("connection", s => {
     if (m.type === "edits") { const out = [], back = []; for (const e of (m.list || []).slice(0, 300)) { if (!e || typeof e.k !== "string") continue; if (e.l === "meta" && staleProj(e.k, vOf(s.pl))) continue; shared[e.l] = shared[e.l] || {};
       if (e.l === "cfarm") { const cur = shared.cfarm?.[e.k]; const o = cur ? +(cur.o || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const v = e.v; if (!(v.w >= 2 && v.h >= 2 && v.w <= 12 && v.h <= 12 && v.x >= 0 && v.y >= 0)) continue; e.v = { x: v.x | 0, y: v.y | 0, w: v.w | 0, h: v.h | 0, o: o > 0 ? o : s.pl.id, n: s.pl.name }; } }
       if (e.l === "houses") { const cur = shared.houses?.[e.k]; const o = cur ? +(cur.ownerId || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { if (typeof e.v !== "object") continue; e.v = { ...e.v, ownerId: o > 0 ? o : s.pl.id }; } }
-      if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const sh = Array.isArray(e.v.s) ? [...new Set(e.v.s.map(x => Math.floor(+x)).filter(x => x > 0 && x !== s.pl.id))].slice(0, 8) : []; e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name, ...(sh.length ? { s: sh } : {}) }; } } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
+      if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const sh = Array.isArray(e.v.s) ? [...new Set(e.v.s.map(x => Math.floor(+x)).filter(x => x > 0 && x !== s.pl.id))].slice(0, 8) : []; const stIn = e.v.id === "statue139" && e.v.st && typeof e.v.st === "object" ? e.v.st : null, bad = /[\u0000-\u001f<>&"'\\]/; const st = stIn ? { p: Math.max(0, Math.min(3, Math.floor(+stIn.p || 0))), w: [...String(stIn.w || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim()].slice(0, 20).join(""), c: Object.fromEntries(Object.entries(stIn.c && typeof stIn.c === "object" ? stIn.c : {}).filter(([k, v]) => /^[A-Za-z0-9]{1,12}$/.test(k) && typeof v === "string" && v.length <= 20 && !bad.test(v)).slice(0, 16)) } : null; e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name, ...(sh.length ? { s: sh } : {}), ...(st ? { st } : {}) }; } } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
     if (m.type === "job") return jobHandle(s, m);
     if (m.type === "coin") return coinHandle(s, m);
     if (m.type === "duel") return duelHandle(s, m);
@@ -710,6 +760,8 @@ wss.on("connection", s => {
     if (m.type === "rtc") { if (s.watch || !(s.pl.id > 0)) return; const to = Math.floor(+m.to || 0), k = String(m.k || ""); if (!(to > 0) || to === s.pl.id || !["offer", "answer", "ice", "bye"].includes(k) || JSON.stringify(m.d || null).length > 16000) return; for (const x of sessions) if (x.pl && x.pl.id === to && !x.watch && vOf(x.pl) === vOf(s.pl)) x.send(JSON.stringify({ type: "rtc", from: s.pl.id, name: s.pl.name, k, ...(m.d !== undefined ? { d: m.d } : {}) })); return; }
     if (m.type === "call") return callHandle(s, m);
     if (m.type === "cheer") { if (s.watch || !(s.pl.id > 0)) return; const to = Math.floor(+m.to || 0), k = Math.floor(+m.k); if (!(to > 0) || to === s.pl.id || !(k >= 0 && k <= 3)) return; const n = Date.now(); s.cr = s.cr && n - s.cr.t < 1000 ? s.cr : { t: n, c: 0 }; if (++s.cr.c > 4) return; for (const x of sessions) if (x.pl && x.pl.id === to && !x.watch && vOf(x.pl) === vOf(s.pl)) x.send(JSON.stringify({ type: "cheer", from: s.pl.id, name: s.pl.name, k })); return; }
+    if (m.type === "auc") return aucHandle(s, m);
+    if (m.type === "museum") return musHandle(s, m);
     if (m.type === "aqua") { if (s.watch || !(s.pl.id > 0)) return; const v = vOf(s.pl), d = aquaOf(v), rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "aqua", ...o })), others = o => { const t = JSON.stringify({ type: "aqua", ...o }); for (const x of sessions) if (x !== s && x.pl && vOf(x.pl) === v) x.send(t); };
       if (m.a === "look") { send({ st: aquaSt(d) }); return; }
       const now = Date.now(); if (s.aq128 && now - s.aq128 < 300) { send({ ng: "少し待ってからもう一度", rid }); return; } s.aq128 = now;

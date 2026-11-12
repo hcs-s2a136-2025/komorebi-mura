@@ -39,6 +39,10 @@
             <input name="name" maxlength="10" th:placeholder="${r.name()}" size="10" required autocomplete="off">
             <button class="btn ghost" type="submit">名前を変える</button>
           </form>
+          <form th:unless="${r.main()}" method="post" th:action="@{/admin/villages/{id}/delete(id=${r.id()})}" class="row" onsubmit="return confirm('この村と、住んでいるキャラをぜんぶ消します。元にはもどせません。よろしいですか？')">
+            <input name="confirm" maxlength="10" placeholder="消すなら村の名前を入力" size="14" required autocomplete="off">
+            <button class="btn ghost" type="submit" style="color:#b3261e">村を消す</button>
+          </form>
         </td>
       </tr>
     </table>

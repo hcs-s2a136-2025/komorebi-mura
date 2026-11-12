@@ -115,6 +115,8 @@ public class SharedWorldService implements WelcomeContributor {
                             for (JsonNode x : v.path("s")) { long sid = x.asLong(0); if (sid > 0 && sid != playerId && share.size() < 8) share.add(sid); }
                             if (!share.isEmpty()) { var arr = nv.putArray("s"); share.forEach(arr::add); }
                         }
+                        // 銅像（v0.79.0）：ポーズ・一言・建てたときの見た目（短い字だけ・16項目まで）
+                        if ("statue139".equals(id) && v.path("st").isObject()) nv.set("st", statue(v.path("st")));
                         v = nv; // 置いた人は、サーバーが知っている本人にする
                     }
                 }
@@ -239,6 +241,33 @@ public class SharedWorldService implements WelcomeContributor {
         persist();
     }
 
+    private static final Pattern ST_KEY = Pattern.compile("[A-Za-z0-9]{1,12}"), ST_VAL = Pattern.compile("[^\\p{Cntrl}<>&\"'\\\\]{0,20}");
+    private ObjectNode statue(JsonNode in) {
+        ObjectNode o = om.createObjectNode();
+        o.put("p", Math.max(0, Math.min(3, in.path("p").asInt(0))));
+        String w = in.path("w").asText("").replaceAll("[\\p{Cntrl}<>&\"'\\\\]", "").strip();
+        if (w.codePointCount(0, w.length()) > 20) w = w.substring(0, w.offsetByCodePoints(0, 20));
+        o.put("w", w);
+        ObjectNode c = o.putObject("c");
+        if (in.path("c").isObject()) {
+            var f = in.path("c").fields();
+            while (f.hasNext() && c.size() < 16) {
+                var e = f.next();
+                if (!e.getValue().isTextual() || !ST_KEY.matcher(e.getKey()).matches() || !ST_VAL.matcher(e.getValue().asText()).matches()) continue;
+                c.put(e.getKey(), e.getValue().asText());
+            }
+        }
+        return o;
+    }
+
+    /** 村を削除したとき：その村の分を忘れて、もう保存しない */
+    public synchronized void forgetVillage(long village) {
+        gone.add(village);
+        docs.remove(village);
+        dirty.remove(village);
+    }
+    private final java.util.Set<Long> gone = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     private static final Pattern PJ = Pattern.compile("pj(\\d{1,6}):.*");
     static boolean projKey(String k) {
         return k.startsWith("proj:") || PJ.matcher(k).matches();
@@ -288,6 +317,7 @@ public class SharedWorldService implements WelcomeContributor {
             String json;
             synchronized (this) {
                 if (!dirty.remove(v)) continue;
+                if (gone.contains(v)) { docs.remove(v); continue; }   // 削除した村は、もう保存しない
                 ObjectNode d = docs.get(v);
                 if (d == null) continue;
                 json = d.toString();

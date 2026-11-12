@@ -92,6 +92,22 @@ public class VillageService {
         return list().stream().filter(v -> v.code().equals(code)).findFirst().orElseThrow();
     }
 
+    /**
+     * 村を消す（管理人室だけ・v0.79.0）。こもれび村（1番）は消せない。住んでいるキャラは、呼ぶ側が先に消しておく。
+     * その村の共有の村・麻雀の卓・伝言板・イベント・建てた家の中身（v番号| で始まる鍵）も消す。
+     */
+    public synchronized void delete(long village) {
+        if (village == Villages.MAIN) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "こもれび村は消せません");
+        if (find(village).isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "その村は見つからなかった");
+        jdbc.update("DELETE FROM house_room WHERE house_key LIKE ?", "v" + village + "|%");
+        jdbc.update("DELETE FROM board_post WHERE village_id = ?", village);
+        jdbc.update("DELETE FROM game_event WHERE village_id = ?", village);
+        jdbc.update("DELETE FROM mj_state WHERE id = ?", village);
+        jdbc.update("DELETE FROM shared_world WHERE id = ?", village);
+        jdbc.update("DELETE FROM village WHERE id = ?", village);
+        cache = null;
+    }
+
     public synchronized void setOwner(long village, long playerId) {
         jdbc.update("UPDATE village SET owner_id = ? WHERE id = ?", playerId, village);
         cache = null;

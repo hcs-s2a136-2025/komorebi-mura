@@ -30,8 +30,15 @@ public class AdminVillageController {
     private final GameSocketHandler socket;
     private final JdbcTemplate jdbc;
     private final jp.komorebi.world.SharedWorldService shared;
+    private final jp.komorebi.player.PlayerService players;
+    private final jp.komorebi.save.SaveService saves;
+    private final jp.komorebi.farm.FarmService farms;
 
-    public AdminVillageController(VillageService villages, WatchService watch, GameSocketHandler socket, JdbcTemplate jdbc, jp.komorebi.world.SharedWorldService shared) {
+    public AdminVillageController(VillageService villages, WatchService watch, GameSocketHandler socket, JdbcTemplate jdbc, jp.komorebi.world.SharedWorldService shared,
+            jp.komorebi.player.PlayerService players, jp.komorebi.save.SaveService saves, jp.komorebi.farm.FarmService farms) {
+        this.players = players;
+        this.saves = saves;
+        this.farms = farms;
         this.shared = shared;
         this.villages = villages;
         this.watch = watch;
@@ -90,6 +97,40 @@ public class AdminVillageController {
             villages.newCode(id);
             socket.villageChanged(id);
             ra.addFlashAttribute("msg", "村の合言葉を作り直しました。前の合言葉では、もう入れません（住んでいる人はそのまま）");
+        } catch (ResponseStatusException e) {
+            ra.addFlashAttribute("msg", e.getReason());
+        }
+        return "redirect:/admin/villages";
+    }
+
+    /**
+     * 村を消す。確認の欄に、その村の名前を入れたときだけ。住んでいるキャラ（セーブ・畑のようす・自分だけの箱）も消して、つないでいる人は切る。
+     * こもれび村は消せない。元にはもどせない。
+     */
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable long id, @RequestParam(required = false) String confirm, RedirectAttributes ra) {
+        var v = villages.find(id).orElse(null);
+        if (v == null || v.main()) {
+            ra.addFlashAttribute("msg", v == null ? "その村は見つからなかった" : "こもれび村は消せません");
+            return "redirect:/admin/villages";
+        }
+        if (confirm == null || !v.name().equals(confirm.strip())) {
+            ra.addFlashAttribute("msg", "村を消すときは、確認の欄にその村の名前（" + v.name() + "）を入力してください");
+            return "redirect:/admin/villages";
+        }
+        List<Long> ids = jdbc.queryForList("SELECT id FROM player WHERE village_id = ?", Long.class, id);
+        int n = 0;
+        for (Long pid : ids) {
+            if (players.delete(pid)) n++;
+            saves.delete(pid);
+            farms.forget(pid);
+            jdbc.update("DELETE FROM house_room WHERE house_key IN (?, ?)", "me:" + pid, "ret:" + pid);
+            socket.kickDeleted(pid);
+        }
+        try {
+            villages.delete(id);
+            shared.forgetVillage(id);
+            ra.addFlashAttribute("msg", "村「" + v.name() + "」を消しました（キャラ " + n + "人ぶんも消しました）。元にはもどせません");
         } catch (ResponseStatusException e) {
             ra.addFlashAttribute("msg", e.getReason());
         }

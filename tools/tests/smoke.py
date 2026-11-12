@@ -125,6 +125,16 @@ STEPS = [
     ("討伐", f"window.KOMO.closeModal(); {G}.F111.open()"),
     ("天気（空の予報）", f"window.KOMO.closeModal(); {G}.F98.forecast()"),
     ("水族館の中", f"window.KOMO.closeModal(); {G}.F128.enter()"),
+    # v139：博物館（中・展示・受付）・オークション・掲示板の建物の移動と銅像・化石のひび・虫
+    ("博物館の中", f"window.KOMO.closeModal(); {G}.F139.enter()"),
+    ("博物館の展示（化石）", f"{G}.F139.openCase('fossil')"),
+    ("博物館の展示（家具）", f"{G}.F139.openCase('furn')"),
+    ("博物館の受付", f"{G}.F139.open()"),
+    ("オークション", f"window.KOMO.closeModal(); {G}.F139.auc()"),
+    ("オークション（品物つき）", f"(() => {{ const g = {G}; g.F139.aucState.st = {{ now: Date.now(), cur: {{ id: 1, item: 'aura_rainbow139', end: Date.now() + 3 * 86400e3, k: 2, min: 1050000, top: {{ n: 'ぬん', g: 1000000, u: 3 }} }}, last: [{{ id: 0, item: 'f_gthrone139', n: 'みゆ', g: 5000000, at: 1 }}] }}; g.world.m139 = {{ aura: ['g', 's'] }}; g.F139.auc(); }})()"),
+    ("村にもどる（v139）", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down')"),
+    ("掲示板の建物の移動と銅像", f"(() => {{ const g = {G}; g.world.projects.onsen35 = {{ need: {{}}, have: {{}}, done: true, at: [41, 20] }}; g.F139.board(); }})()"),
+    ("銅像を置く・虫・ひび", f"(() => {{ const g = {G}; window.KOMO.closeModal(); g.world.decor = g.world.decor || {{}}; g.world.decor['22,10'] = {{ id: 'statue139', o: 0, n: 'てすと', st: {{ p: 1, w: 'やったね', c: {{ hair: 'ロング', hat: 'なし' }} }} }}; g.F139.bugs.push({{ k: 'kabuto', x: 21, y: 11, ph: 0, until: Date.now() + 60000 }}); g.F139.digSpots(); }})()"),
     ("村にもどる（最後）", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down')"),
     # メニュー（着せ替え・建築・クラフト・村・記録・設定）
     ("メニューの着せ替え", "window.KOMO.closeModal(); document.body.classList.add('menu'); document.getElementById('tab-dress').click()"),

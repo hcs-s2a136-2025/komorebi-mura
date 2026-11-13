@@ -1268,3 +1268,8 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
 .bk77pad button.wide77 { background: #a9532d; }
 .tab { color: #5c4838; }
 .tab[aria-selected="true"] { color: var(--ink); }
+
+/* v0.80.0：銅像のプレビュー */
+.stpv139 { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; }
+.stpv139 canvas { flex: 0 0 auto; width: 108px; height: 158px; image-rendering: pixelated; border: 2px solid #8a6a48; border-radius: 8px; }
+.stpv139 > div { flex: 1 1 auto; min-width: 0; }

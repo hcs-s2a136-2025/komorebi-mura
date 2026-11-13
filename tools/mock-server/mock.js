@@ -90,9 +90,12 @@ function musHandle(s, m) {
   const t = JSON.stringify({ type: "museum", ev: "give", id, by: s.pl.name }); for (const x of sessions) if (x !== s && x.pl && !x.watch && vOf(x.pl) === v) x.send(t);
 }
 const aquaBy = new Map(), AQUA_GOALS = (process.env.AQUA_GOALS || "100000000,400000000,1000000000").split(",").map(Number);
-const aquaOf = v => aquaBy.get(v) || (aquaBy.set(v, { fund: 0, fish: {}, don: {} }), aquaBy.get(v));
+const aquaOf = v => aquaBy.get(v) || (aquaBy.set(v, { fund: 0, fish: {}, don: {}, gave: {} }), aquaBy.get(v));
+const aquaLoose = (d, id) => Math.max(0, ((d.fish[id] || {}).n || 0) - Object.values(d.gave).reduce((a, g) => a + (g[id] || 0), 0));
+const aquaQuota = (d, pid) => Math.max(0, ((d.don[pid] || {}).f || 0) - Object.values(d.gave[pid] || {}).reduce((a, n) => a + n, 0));
+const aquaMy = (d, pid) => { const q = aquaQuota(d, pid), u = {}; if (q > 0) for (const id in d.fish) { const n = aquaLoose(d, id); if (n > 0) u[id] = n; } return { q, g: { ...(d.gave[pid] || {}) }, u }; };
 const aquaLv = f => AQUA_GOALS.filter(g => f >= g).length;
-const aquaSt = d => ({ fund: d.fund, lv: aquaLv(d.fund), goals: AQUA_GOALS, fish: Object.fromEntries(Object.entries(d.fish).map(([k, f]) => [k, [f.n, f.by]])), top: Object.values(d.don).filter(x => x.g > 0 || x.f > 0).sort((a, b) => b.g - a.g).slice(0, 10).map(x => ({ n: x.n, g: x.g, f: x.f })) });
+const aquaSt = d => ({ fund: d.fund, lv: aquaLv(d.fund), goals: AQUA_GOALS, fish: Object.fromEntries(Object.entries(d.fish).filter(([, f]) => f.n > 0).map(([k, f]) => [k, [f.n, f.by]])), top: Object.values(d.don).filter(x => x.g > 0 || x.f > 0).sort((a, b) => b.g - a.g).slice(0, 10).map(x => ({ n: x.n, g: x.g, f: x.f })) });
 const rankHidden = new Set(); // ランキングに出さない人（本物は GameRankService の _gamerankHidden。本人には出る）
 const grank = {}, cashLed = new Map(), cashPend = new Map(); let cashPool = 0;
 function cashDeliver(to, ev) { const on = [...sessions].filter(o => o.pl && o.pl.id === to); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "cash77", ev }))); else { const l = cashPend.get(to) || []; l.push(ev); cashPend.set(to, l); } }
@@ -533,6 +536,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/event/start") { const q = u.searchParams; ev = { id: evNext++, name: q.get("name") || "テスト大会", kind: q.get("kind") || "fishing", scoring: q.get("scoring") || "points", rules: q.get("rules") || "", startsAt: Date.now(), endsAt: Date.now() + (+q.get("secs") || 60) * 1000, joinFee: +q.get("fee") || 0, minLevel: +q.get("lv") || 0, rewards: { r1: q.get("r1") || "", r2: q.get("r2") || "", r3: q.get("r3") || "", all: q.get("all") || "", goal: q.get("goal") || "", goalScore: q.get("goalScore") || "0" }, scores: new Map() };
     for (const o of sessions) if (o.pl) o.send(JSON.stringify({ type: "evState", event: evNode(ev, -1) })); return json(res, 200, { id: ev.id }); }
   if (p === "/mock/event/end") { evFinish(); return json(res, 200, {}); }
+  if (p === "/mock/aquaforget") { aquaOf(+u.searchParams.get("v") || 1).gave = {}; return json(res, 200, { ok: true }); }
   if (p === "/mock/aqua") { const v = +u.searchParams.get("v") || 1, d = aquaOf(v); if (u.searchParams.has("fund")) d.fund = +u.searchParams.get("fund"); return json(res, 200, aquaSt(d)); }
   if (p === "/mock/adminpay") { const id = +u.searchParams.get("id"), money = +u.searchParams.get("money") || 0, cash = +u.searchParams.get("cash") || 0, text = u.searchParams.get("text") || ""; const on = [...sessions].filter(o => o.pl && o.pl.id === id); if (on.length) on.forEach(o => o.send(JSON.stringify({ type: "adminPay", money, cash, text }))); else { const e = adminPending.get(id) || { money: 0, cash: 0 }; e.money += money; e.cash = (e.cash || 0) + cash; if (text) e.text = text; adminPending.set(id, e); } return json(res, 200, { now: on.length > 0 }); }
   if (p === "/mock/cash") { if (u.searchParams.has("pool")) cashPool = +u.searchParams.get("pool"); return json(res, 200, { pool: cashPool, led: Object.fromEntries(cashLed), pend: Object.fromEntries(cashPend), grank }); }
@@ -622,7 +626,7 @@ wss.on("connection", s => {
     if (m.type === "edits") { const out = [], back = []; for (const e of (m.list || []).slice(0, 300)) { if (!e || typeof e.k !== "string") continue; if (e.l === "meta" && staleProj(e.k, vOf(s.pl))) continue; shared[e.l] = shared[e.l] || {};
       if (e.l === "cfarm") { const cur = shared.cfarm?.[e.k]; const o = cur ? +(cur.o || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const v = e.v; if (!(v.w >= 2 && v.h >= 2 && v.w <= 12 && v.h <= 12 && v.x >= 0 && v.y >= 0)) continue; e.v = { x: v.x | 0, y: v.y | 0, w: v.w | 0, h: v.h | 0, o: o > 0 ? o : s.pl.id, n: s.pl.name }; } }
       if (e.l === "houses") { const cur = shared.houses?.[e.k]; const o = cur ? +(cur.ownerId || 0) : 0; if (o > 0 && o !== s.pl.id) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { if (typeof e.v !== "object") continue; e.v = { ...e.v, ownerId: o > 0 ? o : s.pl.id }; } }
-      if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const sh = Array.isArray(e.v.s) ? [...new Set(e.v.s.map(x => Math.floor(+x)).filter(x => x > 0 && x !== s.pl.id))].slice(0, 8) : []; const stIn = e.v.id === "statue139" && e.v.st && typeof e.v.st === "object" ? e.v.st : null, bad = /[\u0000-\u001f<>&"'\\]/; const st = stIn ? { p: Math.max(0, Math.min(3, Math.floor(+stIn.p || 0))), w: [...String(stIn.w || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim()].slice(0, 20).join(""), c: Object.fromEntries(Object.entries(stIn.c && typeof stIn.c === "object" ? stIn.c : {}).filter(([k, v]) => /^[A-Za-z0-9]{1,12}$/.test(k) && typeof v === "string" && v.length <= 20 && !bad.test(v)).slice(0, 16)) } : null; e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name, ...(sh.length ? { s: sh } : {}), ...(st ? { st } : {}) }; } } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
+      if (e.l === "decor") { const cur = shared.decor[e.k]; const ok = !cur || !cur.o || cur.o === s.pl.id; if (!ok || (e.v != null && !/^[a-z0-9_]{1,32}$/.test(String(e.v.id || "")))) { back.push({ l: e.l, k: e.k, v: cur ?? null }); continue; } if (e.v != null) { const sh = Array.isArray(e.v.s) ? [...new Set(e.v.s.map(x => Math.floor(+x)).filter(x => x > 0 && x !== s.pl.id))].slice(0, 8) : []; const stIn = e.v.id === "statue139" && e.v.st && typeof e.v.st === "object" ? e.v.st : null, bad = /[\u0000-\u001f<>&"'\\]/; const st = stIn ? { p: Math.max(0, Math.min(15, Math.floor(+stIn.p || 0))), w: [...String(stIn.w || "").replace(/[\u0000-\u001f<>&"'\\]/g, "").trim()].slice(0, 20).join(""), c: Object.fromEntries(Object.entries(stIn.c && typeof stIn.c === "object" ? stIn.c : {}).filter(([k, v]) => /^[A-Za-z0-9]{1,12}$/.test(k) && typeof v === "string" && v.length <= 20 && !bad.test(v)).slice(0, 16)) } : null; e.v = { id: e.v.id, o: s.pl.id, n: s.pl.name, ...(sh.length ? { s: sh } : {}), ...(st ? { st } : {}) }; } } if (e.v == null) { if (!(e.k in shared[e.l])) continue; delete shared[e.l][e.k]; } else shared[e.l][e.k] = e.v; out.push({ l: e.l, k: e.k, v: e.v == null ? null : e.v }); } if (back.length) s.send(JSON.stringify({ type: "edits", by: 0, list: back })); if (out.length) bc({ type: "edits", by: s.pl.id, list: out }, s); }
     if (m.type === "job") return jobHandle(s, m);
     if (m.type === "coin") return coinHandle(s, m);
     if (m.type === "duel") return duelHandle(s, m);
@@ -763,7 +767,7 @@ wss.on("connection", s => {
     if (m.type === "auc") return aucHandle(s, m);
     if (m.type === "museum") return musHandle(s, m);
     if (m.type === "aqua") { if (s.watch || !(s.pl.id > 0)) return; const v = vOf(s.pl), d = aquaOf(v), rid = String(m.rid || "").slice(0, 16), send = o => s.send(JSON.stringify({ type: "aqua", ...o })), others = o => { const t = JSON.stringify({ type: "aqua", ...o }); for (const x of sessions) if (x !== s && x.pl && vOf(x.pl) === v) x.send(t); };
-      if (m.a === "look") { send({ st: aquaSt(d) }); return; }
+      if (m.a === "look") { send({ st: aquaSt(d), my: aquaMy(d, String(s.pl.id)) }); return; }
       const now = Date.now(); if (s.aq128 && now - s.aq128 < 300) { send({ ng: "少し待ってからもう一度", rid }); return; } s.aq128 = now;
       const me = () => { const k = String(s.pl.id); d.don[k] = d.don[k] || { n: s.pl.name, g: 0, f: 0 }; d.don[k].n = s.pl.name; return d.don[k]; };
       if (m.a === "give") { const g = Math.floor(+m.g || 0); if (!(g >= 1 && g <= 1e9)) { send({ ng: "募金は 1〜1,000,000,000G で", rid }); return; }
@@ -771,7 +775,14 @@ wss.on("connection", s => {
         if (lv1 > lv0) { const t = JSON.stringify({ type: "aqua", up: lv1, by: s.pl.name, st: aquaSt(d) }); for (const x of sessions) if (x.pl && vOf(x.pl) === v) x.send(t); } else others({ st: aquaSt(d) }); return; }
       if (m.a === "fish") { if (aquaLv(d.fund) < 1) { send({ ng: "水族館がまだ建っていないよ", rid }); return; } const id = String(m.id || ""), n = Math.floor(+m.n || 0);
         if (!/^(fish|sea)_[^\u0000-\u001f<>&"'\\\s]{1,24}$/.test(id) || !(n >= 1 && n <= 99)) { send({ ng: "その魚は寄贈できないよ", rid }); return; }
-        const first = !d.fish[id]; d.fish[id] = d.fish[id] || { n: 0, by: s.pl.name }; d.fish[id].n += n; me().f += n; send({ ok: "fish", rid, id, n, first, st: aquaSt(d) }); others({ st: aquaSt(d) }); return; }
+        const first = !d.fish[id]; d.fish[id] = d.fish[id] || { n: 0, by: s.pl.name }; d.fish[id].n += n; me().f += n; { const k = String(s.pl.id); d.gave[k] = d.gave[k] || {}; d.gave[k][id] = (d.gave[k][id] || 0) + n; } send({ ok: "fish", rid, id, n, first, st: aquaSt(d), my: aquaMy(d, String(s.pl.id)) }); others({ st: aquaSt(d) }); return; }
+      if (m.a === "back") { const id = String(m.id || ""), n = Math.floor(+m.n || 0), k = String(s.pl.id), f = d.fish[id];
+        if (!f || !(n >= 1 && n <= 99)) { send({ ng: "その魚は引きとれないよ", rid }); return; }
+        const own = (d.gave[k] || {})[id] || 0, k1 = Math.min(n, own, f.n), k2 = Math.min(n - k1, aquaQuota(d, k), aquaLoose(d, id)), got = k1 + k2;
+        if (got < 1) { send({ ng: "引きとれる分がないよ", rid, st: aquaSt(d), my: aquaMy(d, k) }); return; }
+        f.n = Math.max(0, f.n - got); if (k1 > 0) { if (own - k1 > 0) d.gave[k][id] = own - k1; else delete d.gave[k][id]; if (!Object.keys(d.gave[k]).length) delete d.gave[k]; }
+        if (d.don[k]) d.don[k].f = Math.max(0, d.don[k].f - got);
+        send({ ok: "back", rid, id, n: got, st: aquaSt(d), my: aquaMy(d, k) }); others({ st: aquaSt(d) }); return; }
       return; }
     // ひとりあてのチャット（本物は ws/DmHandler.java）
     if (m.type === "dm") { const t = String(m.text || "").replace(/[\u0000-\u001f]/g, "").slice(0, 60).trim(), to = Math.floor(+m.to || 0); if (!t || !to || to === s.pl.id || s.pl.id <= 0) return;

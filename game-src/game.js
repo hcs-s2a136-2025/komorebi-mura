@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.79.1";
+const CLIENT_VERSION = "0.80.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6029,6 +6029,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.80.0", date: "2026/11/13", title: "銅像のポーズ・水族館の魚を引きとる", items: [
+    "銅像のポーズが12種類に：遠くを指さす・ばんざい・手をふる・すわる・剣をかかげる・くわを持つ・釣り竿を持つ・つるはしをかつぐ",
+    "銅像を作る画面に、プレビュー。いまの見た目とポーズで、どんな像になるか先に見られる（掲示板の「共同プロジェクト」）",
+    "みんなの水族館：寄贈した魚を、受付の「魚を引きとる」で持ち物にもどせる",
+  ] },
   { v: "0.79.0", date: "2026/11/12", title: "村の博物館・オークション・銅像", items: [
     "みなと町に「村の博物館」。魚・虫・化石・料理・家具を1種類につき1つ寄贈できて、展示に寄贈した人の名前がのこる",
     "化石：村の草の上に毎日3か所「ひび」が出る（つるはしで掘る）。岩を割っても、たまに出てくる。12種類",
@@ -25729,7 +25734,12 @@ const sendAqua128 = (a, o) => { if (!F8.connected) return null; const rid = Math
     if (m && m.type === "aqua") {
       try {
         if (m.st && typeof m.st === "object") A128.st = m.st;
+        if (m.my && typeof m.my === "object") A128.my = m.my;
         const p = m.rid && A128.pend[m.rid]; if (p) delete A128.pend[m.rid];
+        if (m.ok === "back" && p && p.a === "back") {
+          const n = Math.max(0, Math.min(p.n, Math.floor(+m.n || 0))), id = p.id;
+          if (n > 0 && ITEMS[id]) { giveItem91(id, n); world.stats.aquaF128 = Math.max(0, (world.stats.aquaF128 || 0) - n); saveWorld(); se13("small"); A128.msg = `${ITEMS[id].name}を${n}ひき引きとった`; }
+        }
         if (m.ok === "give" && p && p.a === "give") {
           const g = Math.min(p.g, Math.floor(+m.g || 0)); addMoney(-g); world.stats.aquaG128 = (world.stats.aquaG128 || 0) + g; saveWorld(); se13("small");
           A128.msg = `${fmt(g)} を募金した。ありがとう！`;
@@ -25749,7 +25759,7 @@ const sendAqua128 = (a, o) => { if (!F8.connected) return null; const rid = Math
       return;
     }
     _h(m);
-    if (m && m.type === "welcome") { A128.st = m.aqua && typeof m.aqua === "object" ? m.aqua : { fund: 0, lv: 0, goals: [100000000, 400000000, 1000000000], fish: {} }; refreshPort128(); }
+    if (m && m.type === "welcome") { A128.my = null; A128.st = m.aqua && typeof m.aqua === "object" ? m.aqua : { fund: 0, lv: 0, goals: [100000000, 400000000, 1000000000], fish: {} }; refreshPort128(); }
   };
 }
 // 持ち物から、ふつうの物を先に、レアは最後に減らす
@@ -25904,7 +25914,7 @@ function renderAqua128() {
     L ? "ようこそ、みんなの水族館へ。村のみんなが寄贈してくれた魚たちが泳いでいます。新しい魚も、いつでも受けつけていますよ" : "ここに、村のみんなで水族館を建てる計画なんです。募金が集まったら工事を始めますね")
     + `<div class="aq128bar"><div class="mtext small">${L >= goals.length ? `ぜんぶの展示ができた！（募金の合計 ${fmt(st.fund)}）` : `次は「${AQ_GOAL_NAMES128[L]}」まで：${fmt(st.fund)} / ${fmt(next)}`}</div><i><b style="width:${pct.toFixed(1)}%"></b></i>
       <div class="mtext small">いまの展示：${L ? `${Object.keys(F).length} / ${cat.length} 種類` : "まだ建っていない"}${L >= 2 ? "・大水槽" : ""}${L >= 3 ? "・深海の間" : ""}</div></div>
-    <div class="mtabs">${[["give", "募金する"], ["fish", "魚を寄贈する"], ["who", "寄付した人"]].map(([k, n]) => `<button class="chip" type="button" data-aq128t="${k}" aria-pressed="${tab === k}">${n}</button>`).join("")}</div>
+    <div class="mtabs">${[["give", "募金する"], ["fish", "魚を寄贈する"], ["back", "魚を引きとる"], ["who", "寄付した人"]].map(([k, n]) => `<button class="chip" type="button" data-aq128t="${k}" aria-pressed="${tab === k}">${n}</button>`).join("")}</div>
     ${A128.msg ? `<p class="mtext"><b>${esc(A128.msg)}</b></p>` : ""}${F8.connected ? "" : `<p class="mtext"><b>水族館への募金と寄贈は、オンラインにつないでいるときだけできるよ。</b></p>`}`;
   if (tab === "give") {
     const P = [10000, 100000, 1000000, 10000000, 100000000];
@@ -25917,6 +25927,14 @@ function renderAqua128() {
     html += L ? `<p class="mtext">持っている魚と海の幸を寄贈できるよ。<b>★はじめて</b>の種類を寄贈すると、水槽にあなたの名前が出て、評判が上がる。</p>
       <div class="list">${mine.length ? mine.map(id => itemLi(id, `${count(id)}ぴき持っている${F[id] ? `・展示中 ${fmt92(F[id][0])}ぴき` : "・<b>★はじめて</b>"}`, `<button class="btn" type="button" data-aq128f="${id}" data-n="1" ${F8.connected ? "" : "disabled"}>1ぴき</button><button class="btn light" type="button" data-aq128f="${id}" data-n="all" ${F8.connected && count(id) > 1 ? "" : "disabled"}>ぜんぶ</button>`)).join("") : `<p class="mtext">寄贈できる魚を持っていないよ。釣りや素潜りでつかまえてこよう。</p>`}</div>
       <p class="mtext small">まだいない種類：${cat.filter(id => !F[id]).length}種類</p>` : `<p class="mtext">水族館が建ったら、魚を寄贈できるようになるよ。まずはみんなで募金しよう。</p>`;
+  } else if (tab === "back") {
+    // 寄贈した魚を引きとる。自分が入れたと記録のある分（my.g）と、記録をつける前の分（寄贈した数 my.q まで・記録のない魚 my.u から）
+    const my = A128.my || { q: 0, g: {}, u: {} }, q = Math.max(0, my.q | 0), G = my.g || {}, U = my.u || {};
+    const can = id => Math.min((F[id] ? F[id][0] : 0), (G[id] | 0) + Math.min(q, U[id] | 0));
+    const ids = Object.keys(F).filter(id => ITEMS[id] && can(id) > 0).sort((a, b) => (G[b] | 0) - (G[a] | 0) || cat.indexOf(a) - cat.indexOf(b));
+    html += `<p class="mtext">あなたが寄贈した魚を、持ち物にもどせるよ（持ち物がいっぱいなら、家の収納箱へ）。引きとると、その分は水槽からいなくなる。</p>
+      ${q > 0 ? `<p class="mtext small">前に寄贈した分は、だれがどの魚を入れたかの記録がないので、<b>あなたが寄贈した数（あと ${fmt92(q)}ひき）まで</b>、水槽の魚から好きな種類を引きとれる。村のみんなの水槽なので、自分が入れた魚をえらんでね。</p>` : ""}
+      <div class="list">${ids.length ? ids.map(id => { const c = can(id), own = Math.min(c, G[id] | 0); return itemLi(id, `展示中 ${fmt92(F[id][0])}ひき・引きとれる <b>${fmt92(c)}ひき</b>${own ? `（うち、あなたの記録 ${fmt92(own)}ひき）` : ""}`, `<button class="btn" type="button" data-aq128b="${id}" data-n="1" ${F8.connected ? "" : "disabled"}>1ぴき</button><button class="btn light" type="button" data-aq128b="${id}" data-n="${Math.min(99, c)}" ${F8.connected && c > 1 ? "" : "disabled"}>${c > 99 ? "99ひき" : "ぜんぶ"}</button>`); }).join("") : `<p class="mtext">引きとれる魚はないよ。</p>`}</div>`;
   } else {
     const top = Array.isArray(st.top) ? st.top : [];
     html += `<h3 class="lbl">たくさん寄付してくれた人</h3><div class="list">${top.length ? top.map((t, i) => `<div class="li"><span class="nm">${i + 1}. ${esc(t.n)}<span class="sub2">募金 ${fmt(t.g)}・寄贈 ${fmt92(t.f)}ぴき</span></span></div>`).join("") : `<p class="mtext">まだだれも寄付していないよ。</p>`}</div>
@@ -25929,6 +25947,7 @@ function renderAqua128() {
   body.querySelectorAll("[data-aq128g]").forEach(b => b.onclick = () => give(+b.dataset.aq128g));
   body.querySelector("#aq128go")?.addEventListener("click", () => give(+String($("aq128n").value || "").replace(/[,，]/g, "")));
   body.querySelectorAll("[data-aq128f]").forEach(b => b.onclick = () => { const id = b.dataset.aq128f, n = b.dataset.n === "all" ? Math.min(99, count(id)) : 1; if (count(id) < n || n < 1) return; if (sendAqua128("fish", { id, n })) { A128.msg = "…"; b.disabled = true; } });
+  body.querySelectorAll("[data-aq128b]").forEach(b => b.onclick = () => { const id = b.dataset.aq128b, n = Math.max(1, Math.min(99, +b.dataset.n | 0)); if (sendAqua128("back", { id, n })) { A128.msg = "…"; body.querySelectorAll("[data-aq128b]").forEach(x => x.disabled = true); } });
   body.querySelector("#aq128in")?.addEventListener("click", () => { closeModal(); enterAqua128(); });
   body.querySelector("#aq128x").onclick = () => closeModal();
 }
@@ -25938,7 +25957,8 @@ for (const t of TTL128) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT
 GUIDE54.push(["みんなの水族館", "fish_タイ", `<p>みなと町の左上に、村のみんなで建てる水族館があります（オンラインのとき）。</p>
   <ul><li>受付（建つまでは募金箱）で募金できます。募金は村ぜんぶの合計で、1億Gで水族館が建ち、4億Gで大水槽と展示がふえ、10億Gで深海の間ができます</li>
   <li>建ったら、釣った魚や素潜りの海の幸を寄贈できます。はじめての種類を寄贈すると、水槽にあなたの名前が出て、評判が上がります</li>
-  <li>中では、水槽の前でⒶを押すと、どんな生きものがいるか見られます</li></ul>`]);
+  <li>中では、水槽の前でⒶを押すと、どんな生きものがいるか見られます</li>
+  <li>寄贈した魚は、受付の「魚を引きとる」で持ち物にもどせます</li></ul>`]);
 
 // =================== v129: 村の仕立て屋を「こもれびブティック」に（仕入れ・工房で作る・お客さんに提案・満足度・お店を広げる） ===================
 // スマホの「ゲーム」の「村の仕立て屋」から。world.bq129 に、お店の段階 lv（1〜5）・評判 rep・在庫 stock{商品:[ふつう,★2,★3]}・内装 deco・お客さんとのなかよし aff・
@@ -27701,7 +27721,7 @@ function moveProj139(id) {
 F139.moveProj = moveProj139; F139.canPutProj = canPutProj139;
 
 // ---------- 銅像（1億G・1人1体・買った人が好きな場所に置く） ----------
-const STATUE_COST139 = 100000000, POSE139 = ["正面", "左向き", "右向き", "歩くポーズ"];
+const STATUE_COST139 = 100000000, POSE139 = ["正面", "左向き", "右向き", "歩くポーズ", "遠くを指さす", "ばんざい", "手をふる", "すわる", "剣をかかげる", "くわを持つ", "釣り竿を持つ", "つるはしをかつぐ"];
 const ST_KEYS139 = ["skin", "hair", "hairc", "top", "topc", "bottom", "bottomc", "hat", "acc", "shoesc", "bangs", "eyes", "eyec", "hatc"];
 IMG.d139_statue = pix13(16, 28, (s, r) => { const a = C13["#b8b4aa"], b = C13["#8e8a80"], c = C13["#d8d4ca"], g = C13["#c8a048"];
   r(2, 19, 12, 3, c); r(2, 19, 12, 1, C13["#ece8de"]); r(3, 22, 10, 4, a); r(3, 25, 10, 1, b); r(1, 26, 14, 2, b); r(1, 26, 14, 1, a); r(5, 23, 6, 2, g); });
@@ -27710,23 +27730,65 @@ DECOR27.statue139 = { name: "銅像", price: 0, solid: true, tall: true, img: "d
 ITEMS.deco_statue139 = { name: "銅像（自分の像）", icon: "d139_statue", price: 0, place: "decor", decor: "statue139" };
 function statueData139() {
   const c = {}; for (const k of ST_KEYS139) if (typeof cfg[k] === "string" && cfg[k].length <= 20) c[k] = cfg[k];
-  return { p: Math.max(0, Math.min(3, m139().pose | 0)), w: String(m139().word || "").slice(0, 20), c };
+  return { p: Math.max(0, Math.min(POSE139.length - 1, m139().pose | 0)), w: String(m139().word || "").slice(0, 20), c };
 }
 F139.decorExtra = id => id === "statue139" ? { st: statueData139() } : null;
 const stCache139 = new Map();
+// 銅像の絵は 48×60（キャラの32の絵を (8,16) に置く。上げたうで・剣・道具・すわった足がはみ出す分）。描くときは 24×30
+const ST_W139 = 48, ST_H139 = 60, ST_OX139 = 8, ST_OY139 = 16;
+const RAMP139 = [[58, 38, 20], [110, 74, 36], [164, 116, 56], [214, 168, 92], [240, 214, 150]];
 function statueImg139(st) {
   const sig = JSON.stringify(st || {}); let cv = stCache139.get(sig); if (cv) return cv;
   const p = (st && st.p) | 0, dir = ["down", "left", "right", "down"][p] || "down", frame = p === 3 ? 1 : 0;
   let src = null;
   try { src = charImg118({ ...DEFAULT, ...((st && st.c) || {}) }, dir, frame); } catch (e) { src = null; }
   if (!src) { try { src = charImg118({ ...DEFAULT }, "down", 0); } catch (e) { return null; } }
-  cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height;
-  const g = cv.getContext("2d"); g.drawImage(src, 0, 0);
+  cv = document.createElement("canvas"); cv.width = ST_W139; cv.height = ST_H139;
+  const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const sit = p === 7, dy = sit ? 4 : 0;
+  // すわるポーズは、足を消して体を少し下げる
+  if (sit) g.drawImage(src, 0, 0, src.width, src.height * 28 / 32, ST_OX139, ST_OY139 + dy, 32, 28); else g.drawImage(src, 0, 0, src.width, src.height, ST_OX139, ST_OY139, 32, 32);
   try {
-    const im = g.getImageData(0, 0, cv.width, cv.height), d = im.data, ramp = [[58, 38, 20], [110, 74, 36], [164, 116, 56], [214, 168, 92], [240, 214, 150]];
-    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 40) continue; const L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, c = ramp[Math.min(4, Math.floor(L * 5))]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; }
+    const im = g.getImageData(0, 0, ST_W139, ST_H139), d = im.data;
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 40) { d[i + 3] = 0; continue; } const L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, c = RAMP139[Math.min(4, Math.floor(L * 5))]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; }
+    // ここから、ポーズごとの描きたし（キャラの32の絵の座標で。体を下げた分は dy）
+    const S = (x, y, k) => { x += ST_OX139; y += ST_OY139 + dy; if (x < 0 || y < 0 || x >= ST_W139 || y >= ST_H139) return; const i = (y * ST_W139 + x) * 4; if (k < 0) { d[i + 3] = 0; return; } const c = RAMP139[k]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
+    const R = (x, y, w, h, k) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) S(x + i, y + j, k); };
+    const has = (x, y) => { x += ST_OX139; y += ST_OY139 + dy; return x >= 0 && y >= 0 && x < ST_W139 && y < ST_H139 && d[(y * ST_W139 + x) * 4 + 3] > 0; };
+    // 太さ t の線（ふちは暗く・中は k）
+    const line = (x0, y0, x1, y1, t, k, edge = 1) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
+      for (const pass of [0, 1]) for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n); if (!pass) R(x - 1, y - 1, t + 2, t + 2, edge); else R(x, y, t, t, k); } };
+    // 下ろしている手を消す（side: 0＝向かって左・1＝向かって右）。手の所は体のふちの色にして、外がわのふちを1列けずる
+    const noHand = side => { const hx = side ? 22 : 8, ex = side ? 24 : 6; R(hx, 26, 2, 2, 1); for (let y = 23; y <= 27; y++) for (let x = ex; x < ex + 2; x++) if (has(x, y)) S(x, y, y >= 25 ? -1 : 1); };
+    // 上げたうで：肩 (sx,22) から手 (hx,hy) へ。手は明るく
+    const arm = (side, hx, hy) => { const sx = side ? 23 : 7; line(sx, 22, hx, hy, 2, 3); R(hx - 1, hy - 1, 4, 4, 1); R(hx, hy, 2, 2, 4); };
+    if (p === 4) { noHand(0); arm(0, -4, 15); R(-7, 15, 3, 2, 1); R(-6, 15, 2, 1, 4); }                       // 遠くを指さす（向かって左へ、うでをのばす）
+    else if (p === 5) { noHand(0); noHand(1); arm(0, 2, 6); arm(1, 28, 6); }                                    // ばんざい
+    else if (p === 6) { noHand(1); arm(1, 29, 8); }                                                              // 手をふる
+    else if (p === 7) {                                                                                         // すわる（台座に腰かけて、足を前に下ろす）
+      R(7, 25, 18, 5, 1);                                                                                       // ひざ（前に出した太もも）
+      for (const x of [8, 17]) { R(x, 26, 7, 3, 2); R(x, 26, 7, 1, 3); R(x + 1, 30, 5, 4, 1); R(x + 2, 30, 3, 3, 2); R(x, 34, 7, 2, 1); R(x + 1, 34, 5, 1, 0); }
+    } else if (p === 8) {                                                                                       // 剣をかかげる
+      noHand(1); arm(1, 28, 9);
+      R(27, -13, 4, 20, 1); R(28, -12, 2, 19, 4); R(29, -12, 1, 19, 3); S(28, -13, 4); S(27, -13, -1); S(30, -13, -1);   // 刃
+      R(24, 6, 10, 3, 1); R(25, 7, 8, 1, 3); R(28, 12, 2, 3, 1); R(27, 14, 4, 2, 1); S(28, 14, 3);                       // つばと柄
+      R(28, 9, 2, 2, 4);
+    } else if (p === 9 || p === 10 || p === 11) {
+      if (p === 9) {                                                                                            // くわ：柄を地面に立てて持つ
+        R(25, 3, 4, 29, 1); R(26, 4, 2, 28, 2); R(26, 4, 1, 28, 3);
+        R(18, 2, 11, 6, 1); R(19, 3, 9, 2, 3); R(19, 5, 4, 2, 4); R(23, 5, 5, 1, 2);
+        R(24, 25, 4, 4, 1); R(25, 26, 2, 2, 4);
+      } else if (p === 10) {                                                                                    // 釣り竿：ななめに立てて、先から糸と魚
+        line(24, 27, 36, -10, 1, 3); R(23, 25, 4, 4, 1); R(24, 26, 2, 2, 4);
+        for (let y = -9; y <= 8; y++) S(37, y, y % 2 ? 2 : 1);
+        R(34, 9, 6, 5, 1); R(35, 10, 4, 3, 3); S(36, 10, 4); S(38, 11, 0); R(33, 8, 2, 2, 1); R(33, 13, 2, 2, 1);
+      } else {                                                                                                  // つるはし：肩にかつぐ
+        line(21, 27, 31, 9, 2, 2); R(21, 25, 4, 4, 1); R(22, 26, 2, 2, 4);
+        line(25, 5, 30, 4, 2, 4); line(31, 5, 36, 10, 2, 4); R(36, 11, 2, 3, 1); S(36, 11, 3); R(23, 6, 2, 3, 1); S(24, 7, 3);
+      }
+    }
     g.putImageData(im, 0, 0);
-  } catch (e) { }
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "statue139"); }
   if (stCache139.size > 60) stCache139.clear();
   stCache139.set(sig, cv); return cv;
 }
@@ -27738,7 +27800,7 @@ function statueImg139(st) {
     for (const k in (world.decor || {})) {
       const d = world.decor[k]; if (!d || d.id !== "statue139") continue;
       const [x, y] = k.split(",").map(Number);
-      list.push({ s: (y + 1) * TS + .5, d: () => { const im = statueImg139(d.st); if (im) ctx.drawImage(im, x * TS, (y + 1) * TS - 9 - 16, 16, 16); } });
+      list.push({ s: (y + 1) * TS + .5, d: () => { const im = statueImg139(d.st); if (im) ctx.drawImage(im, x * TS - 4, (y + 1) * TS - 9 - 24, 24, 30); } });
     }
   };
   // 人の銅像に向かってⒶ：だれの像かと、一言
@@ -27787,10 +27849,17 @@ function boardExtra139(msg) {
     <div class="list">${done.length ? done.map(id => `<div class="li"><img src="${ASSETS["p35_" + id]}" alt=""><span class="nm">${esc(PROJ35[id].name)}</span><span class="acts"><button class="btn" type="button" data-mv139="${id}">ここへ移す</button></span></div>`).join("") : `<p class="mtext small">動かせる建物は、まだないよ。</p>`}</div>
     <h3 class="lbl">銅像を建てる</h3>
     <p class="mtext small">${fmt(STATUE_COST139)} で、自分の銅像を作れる（1人1体）。できた銅像は、飾りと同じように、村の好きな場所に置ける（向いてⒶで片付け）。</p>
-    <div class="row">${POSE139.map((n, i) => `<button class="chip" type="button" data-ps139="${i}" aria-pressed="${(M.pose | 0) === i}">${n}</button>`).join("")}</div>
+    <div class="stpv139"><canvas id="pv139" width="144" height="210" role="img" aria-label="銅像のプレビュー（${POSE139[M.pose | 0] || POSE139[0]}）"></canvas>
+      <div><p class="mtext small"><b>プレビュー</b>：いまの見た目とポーズで、こうなるよ。服や髪を変えてから作ると、その姿の像になる。</p>
+      <div class="row" style="flex-wrap:wrap">${POSE139.map((n, i) => `<button class="chip" type="button" data-ps139="${i}" aria-pressed="${(M.pose | 0) === i}">${n}</button>`).join("")}</div></div></div>
     <div class="row"><input id="sw139" style="width:100%;box-sizing:border-box;padding:8px 10px;border:2px solid #8a6a48;border-radius:8px;background:#fffaf0;color:#3a2a1c;font:inherit" maxlength="20" placeholder="台座に入れる一言（20文字まで）" value="${esc(String(M.word || ""))}" autocomplete="off"></div>
     <div class="row2">${M.statue ? `<button class="btn" type="button" id="sr139">ポーズと一言を変える</button>` : `<button class="btn" type="button" id="sb139">銅像を作る（${fmt(STATUE_COST139)}）</button>`}</div>`;
   box.querySelectorAll("[data-mv139]").forEach(b => b.onclick = () => { const e = moveProj139(b.dataset.mv139); if (!e) { closeModal(); toast("p35_" + b.dataset.mv139, `${PROJ35[b.dataset.mv139].name}を、ここへ移した`); } else boardExtra139(e); });
+  try { // プレビュー：台座と像を6倍で
+    const pv = box.querySelector("#pv139"), c = pv.getContext("2d"), im = statueImg139(statueData139()); c.imageSmoothingEnabled = false; c.clearRect(0, 0, 144, 210);
+    c.fillStyle = "#8fc46a"; c.fillRect(0, 0, 144, 210); c.fillStyle = "#7db45a"; c.fillRect(0, 184, 144, 26);
+    c.drawImage(IMG.d139_statue, 24, 34, 96, 168); if (im) c.drawImage(im, 0, 4, 144, 180);
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "pv139"); }
   const word = () => { M.word = String(box.querySelector("#sw139").value || "").replace(/[<>&"'\\\u0000-\u001f]/g, "").slice(0, 20); };
   box.querySelectorAll("[data-ps139]").forEach(b => b.onclick = () => { word(); M.pose = +b.dataset.ps139; saveWorld(); boardExtra139(); });
   const sb = box.querySelector("#sb139"); if (sb) sb.onclick = () => { word(); const e = buyStatue139(); boardExtra139(e || "銅像ができた。持ち物に入れたよ。村の好きな場所に置いてね"); };

@@ -244,7 +244,7 @@ public class SharedWorldService implements WelcomeContributor {
     private static final Pattern ST_KEY = Pattern.compile("[A-Za-z0-9]{1,12}"), ST_VAL = Pattern.compile("[^\\p{Cntrl}<>&\"'\\\\]{0,20}");
     private ObjectNode statue(JsonNode in) {
         ObjectNode o = om.createObjectNode();
-        o.put("p", Math.max(0, Math.min(3, in.path("p").asInt(0))));
+        o.put("p", Math.max(0, Math.min(15, in.path("p").asInt(0))));
         String w = in.path("w").asText("").replaceAll("[\\p{Cntrl}<>&\"'\\\\]", "").strip();
         if (w.codePointCount(0, w.length()) > 20) w = w.substring(0, w.offsetByCodePoints(0, 20));
         o.put("w", w);

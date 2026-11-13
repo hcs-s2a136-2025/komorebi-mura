@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.80.0";
+const CLIENT_VERSION = "0.80.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6029,6 +6029,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.80.1", date: "2026/11/13", title: "銅像をかわいく", items: [
+    "銅像のうでを短く・手を丸くして、キャラの体に合う大きさにした（指さす・ばんざい・手をふる・剣・つるはし）",
+    "すわるポーズは、ひざをそろえて、短い足をぶらんと下ろす形に",
+  ] },
   { v: "0.80.0", date: "2026/11/13", title: "銅像のポーズ・水族館の魚を引きとる", items: [
     "銅像のポーズが12種類に：遠くを指さす・ばんざい・手をふる・すわる・剣をかかげる・くわを持つ・釣り竿を持つ・つるはしをかつぐ",
     "銅像を作る画面に、プレビュー。いまの見た目とポーズで、どんな像になるか先に見られる（掲示板の「共同プロジェクト」）",
@@ -27745,47 +27749,54 @@ function statueImg139(st) {
   if (!src) { try { src = charImg118({ ...DEFAULT }, "down", 0); } catch (e) { return null; } }
   cv = document.createElement("canvas"); cv.width = ST_W139; cv.height = ST_H139;
   const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
-  const sit = p === 7, dy = sit ? 4 : 0;
-  // すわるポーズは、足を消して体を少し下げる
+  const sit = p === 7, dy = sit ? 3 : 0;
+  // すわるポーズは、足の所（下の4段）を切って、体を少し下げる（のびちぢみさせない）
   if (sit) g.drawImage(src, 0, 0, src.width, src.height * 28 / 32, ST_OX139, ST_OY139 + dy, 32, 28); else g.drawImage(src, 0, 0, src.width, src.height, ST_OX139, ST_OY139, 32, 32);
   try {
     const im = g.getImageData(0, 0, ST_W139, ST_H139), d = im.data;
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 40) { d[i + 3] = 0; continue; } const L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, c = RAMP139[Math.min(4, Math.floor(L * 5))]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; }
-    // ここから、ポーズごとの描きたし（キャラの32の絵の座標で。体を下げた分は dy）
+    // ここから、ポーズごとの描きたし（キャラの32の絵の座標で。体を下げた分は dy）。キャラは2頭身なので、うでは短く・手は丸く
     const S = (x, y, k) => { x += ST_OX139; y += ST_OY139 + dy; if (x < 0 || y < 0 || x >= ST_W139 || y >= ST_H139) return; const i = (y * ST_W139 + x) * 4; if (k < 0) { d[i + 3] = 0; return; } const c = RAMP139[k]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
     const R = (x, y, w, h, k) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) S(x + i, y + j, k); };
-    const has = (x, y) => { x += ST_OX139; y += ST_OY139 + dy; return x >= 0 && y >= 0 && x < ST_W139 && y < ST_H139 && d[(y * ST_W139 + x) * 4 + 3] > 0; };
-    // 太さ t の線（ふちは暗く・中は k）
-    const line = (x0, y0, x1, y1, t, k, edge = 1) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1;
-      for (const pass of [0, 1]) for (let i = 0; i <= n; i++) { const x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n); if (!pass) R(x - 1, y - 1, t + 2, t + 2, edge); else R(x, y, t, t, k); } };
-    // 下ろしている手を消す（side: 0＝向かって左・1＝向かって右）。手の所は体のふちの色にして、外がわのふちを1列けずる
-    const noHand = side => { const hx = side ? 22 : 8, ex = side ? 24 : 6; R(hx, 26, 2, 2, 1); for (let y = 23; y <= 27; y++) for (let x = ex; x < ex + 2; x++) if (has(x, y)) S(x, y, y >= 25 ? -1 : 1); };
-    // 上げたうで：肩 (sx,22) から手 (hx,hy) へ。手は明るく
-    const arm = (side, hx, hy) => { const sx = side ? 23 : 7; line(sx, 22, hx, hy, 2, 3); R(hx - 1, hy - 1, 4, 4, 1); R(hx, hy, 2, 2, 4); };
-    if (p === 4) { noHand(0); arm(0, -4, 15); R(-7, 15, 3, 2, 1); R(-6, 15, 2, 1, 4); }                       // 遠くを指さす（向かって左へ、うでをのばす）
-    else if (p === 5) { noHand(0); noHand(1); arm(0, 2, 6); arm(1, 28, 6); }                                    // ばんざい
-    else if (p === 6) { noHand(1); arm(1, 29, 8); }                                                              // 手をふる
-    else if (p === 7) {                                                                                         // すわる（台座に腰かけて、足を前に下ろす）
-      R(7, 25, 18, 5, 1);                                                                                       // ひざ（前に出した太もも）
-      for (const x of [8, 17]) { R(x, 26, 7, 3, 2); R(x, 26, 7, 1, 3); R(x + 1, 30, 5, 4, 1); R(x + 2, 30, 3, 3, 2); R(x, 34, 7, 2, 1); R(x + 1, 34, 5, 1, 0); }
-    } else if (p === 8) {                                                                                       // 剣をかかげる
-      noHand(1); arm(1, 28, 9);
-      R(27, -13, 4, 20, 1); R(28, -12, 2, 19, 4); R(29, -12, 1, 19, 3); S(28, -13, 4); S(27, -13, -1); S(30, -13, -1);   // 刃
-      R(24, 6, 10, 3, 1); R(25, 7, 8, 1, 3); R(28, 12, 2, 3, 1); R(27, 14, 4, 2, 1); S(28, 14, 3);                       // つばと柄
-      R(28, 9, 2, 2, 4);
-    } else if (p === 9 || p === 10 || p === 11) {
-      if (p === 9) {                                                                                            // くわ：柄を地面に立てて持つ
-        R(25, 3, 4, 29, 1); R(26, 4, 2, 28, 2); R(26, 4, 1, 28, 3);
-        R(18, 2, 11, 6, 1); R(19, 3, 9, 2, 3); R(19, 5, 4, 2, 4); R(23, 5, 5, 1, 2);
-        R(24, 25, 4, 4, 1); R(25, 26, 2, 2, 4);
-      } else if (p === 10) {                                                                                    // 釣り竿：ななめに立てて、先から糸と魚
-        line(24, 27, 36, -10, 1, 3); R(23, 25, 4, 4, 1); R(24, 26, 2, 2, 4);
-        for (let y = -9; y <= 8; y++) S(37, y, y % 2 ? 2 : 1);
-        R(34, 9, 6, 5, 1); R(35, 10, 4, 3, 3); S(36, 10, 4); S(38, 11, 0); R(33, 8, 2, 2, 1); R(33, 13, 2, 2, 1);
-      } else {                                                                                                  // つるはし：肩にかつぐ
-        line(21, 27, 31, 9, 2, 2); R(21, 25, 4, 4, 1); R(22, 26, 2, 2, 4);
-        line(25, 5, 30, 4, 2, 4); line(31, 5, 36, 10, 2, 4); R(36, 11, 2, 3, 1); S(36, 11, 3); R(23, 6, 2, 3, 1); S(24, 7, 3);
-      }
+    const disk = (cx, cy, r, k) => { for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) S(x, y, k); };
+    // まるい線（ふち1・中 k）。r は中の太さの半分
+    const tube = (x0, y0, x1, y1, r, k) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2) || 1;
+      for (const [rr, kk] of [[r + 1, 1], [r, k]]) for (let i = 0; i <= n; i++) disk(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, rr, kk); };
+    const hand = (x, y) => { disk(x, y, 2.2, 1); disk(x, y, 1.3, 3); S(Math.round(x) - 1, Math.round(y) - 1, 4); S(Math.round(x), Math.round(y) - 1, 4); };
+    // 下ろしている手を消して、体のわきにふちをつける（side: 0＝向かって左・1＝向かって右）
+    const noHand = side => {
+      if (!side) { R(5, 24, 5, 4, -1); R(5, 23, 4, 1, -1); for (let y = 24; y <= 27; y++) S(10, y, 1); S(9, 23, 1); }
+      else { R(22, 24, 5, 4, -1); R(23, 23, 4, 1, -1); for (let y = 24; y <= 27; y++) S(21, y, 1); S(22, 23, 1); }
+    };
+    // 上げたうで：肩から手 (hx,hy) へ。服の色で、手は明るく丸く
+    const arm = (side, hx, hy) => { const sx = side ? 22 : 9, sy = 23; tube(sx, sy, hx, hy, 1.5, 2); hand(hx, hy); };
+    if (p === 4) {                                                                                            // 遠くを指さす：うでを前ななめ上に・人さし指
+      noHand(0); arm(0, 3, 17); R(-1, 15, 2, 3, 1); S(0, 16, 4); S(1, 16, 4);
+    } else if (p === 5) { noHand(0); noHand(1); arm(0, 4, 15); arm(1, 27, 15); }                              // ばんざい
+    else if (p === 6) {                                                                                       // 手をふる（ゆれの線つき）
+      noHand(1); arm(1, 27, 16);
+    } else if (p === 7) {                                                                                     // すわる：ひざをそろえて、短い足をぶらんと
+      R(10, 27, 12, 3, 1); R(11, 27, 10, 2, 2); R(11, 27, 4, 1, 3); R(17, 27, 4, 1, 3); S(15, 28, 1); S(16, 28, 1); S(10, 29, -1); S(21, 29, -1);   // ひざ
+      for (const x of [11, 17]) { R(x + .5 | 0, 30, 4, 1, 1); R(x + 1, 30, 2, 1, 2); disk(x + 1.5, 32, 1.9, 0); S(x + 1, 31, 1); }                   // 短い足と、まるいくつ
+    } else if (p === 8) {                                                                                     // 剣をかかげる：剣を先に描いて、手を上に重ねる
+      noHand(1);
+      R(26, -1, 4, 15, 1); R(27, 0, 2, 14, 4); R(27, 1, 1, 13, 3); S(27, -1, 1); S(28, -1, 1); R(26, -2, 4, 1, -1); S(27, -2, 1); S(28, -2, 1);   // 刃
+      R(23, 13, 10, 3, 1); R(24, 14, 8, 1, 3); S(23, 13, -1); S(32, 13, -1); R(26, 16, 4, 4, 1); R(27, 16, 2, 3, 2);                      // つばと柄
+      arm(1, 27.5, 17.5);
+    } else if (p === 9) {                                                                                     // くわ：柄を地面に立てて、手でにぎる
+      R(25, 9, 3, 23, 1); R(26, 10, 1, 22, 3);
+      R(24, 8, 9, 3, 1); R(25, 9, 7, 1, 3); R(29, 11, 4, 3, 1); R(30, 11, 2, 2, 4); S(30, 9, 4);
+      hand(25.5, 26);
+    } else if (p === 10) {                                                                                    // 釣り竿：ななめに立てて、先から糸と小さな魚
+      tube(23, 27, 33, 4, .5, 3);
+      for (let y = 5; y <= 13; y++) S(34, y, y % 2 ? 2 : 1);
+      disk(34.5, 16, 2.6, 1); disk(34.5, 16, 1.6, 3); S(34, 15, 4); R(33, 19, 3, 2, 1); S(34, 19, 2);
+      hand(23, 26);
+    } else if (p === 11) {                                                                                    // つるはし：かたにかつぐ
+      noHand(1);
+      tube(22, 28, 31, 10, .6, 2);
+      tube(26, 9, 31, 9, .8, 4); tube(31, 9, 35, 13, .8, 4); S(35, 14, 1);
+      arm(1, 25.5, 21);
     }
     g.putImageData(im, 0, 0);
   } catch (e) { if (window.__komoErr) window.__komoErr(e, "statue139"); }

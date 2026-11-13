@@ -3784,7 +3784,7 @@ function renderVillage() {
     return `<div class="sk7"><img src="${ASSETS[SK_ICON[k]]}" alt=""><div><b>${v[0]} Lv${lv}</b>${world.job === k ? `<span class="tag7">${v[1]}</span>` : ""}${bar7(b ? (x - a) / (b - a) * 100 : 100)}
       <div class="perks7">${PERKS[k].map(([pl, t]) => `<span class="${lv >= pl ? "on" : ""}">Lv${pl} ${t}</span>`).join("")}</div></div></div>`;
   }).join("");
-  const titles = TITLES.map(([n, d, f]) => { const ok = f(); return `<button class="chip" type="button" data-title="${n}" aria-pressed="${(world.title || "村の新入り") === n}" ${ok ? "" : "disabled"} title="${d}">${ok ? n : "？？？"}</button>`; }).join("");
+  const titles = shownT140().map(([n, d, f]) => { const ok = f(); return `<button class="chip" type="button" data-title="${n}" aria-pressed="${(world.title || "村の新入り") === n}" ${ok ? "" : "disabled"} title="${d}">${ok ? n : "？？？"}</button>`; }).join("");
   const people = Object.keys(NPCS).map(n => {
     const st = world.npc[n]; if (npcLocked(n)) return `<div class="np7 lock"><b>？？？</b><span>村の評判Lv${NPCS[n].lock}で引っ越してくる</span></div>`;
     const b = NPC7[n].bday; const known = st.known.map(id => ITEMS[id].name).join("・"), dis = st.knownDis.map(id => ITEMS[id].name).join("・");
@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.80.1";
+const CLIENT_VERSION = "0.81.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6029,6 +6029,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.81.0", date: "2026/11/13", title: "星に願いを", items: [
+    "夜、外で星のかけらを手に持ってⒶで、星に願いをかけられる（1回1つ・1日3回まで）。評判が上がって、ときどきお返しがある",
+    "称号「星に願いを」。ほかに、えらばれた人だけがもらえるひみつの称号も",
+    "銅像の上げたうでを、もう少し短くした",
+  ] },
   { v: "0.80.1", date: "2026/11/13", title: "銅像をかわいく", items: [
     "銅像のうでを短く・手を丸くして、キャラの体に合う大きさにした（指さす・ばんざい・手をふる・剣・つるはし）",
     "すわるポーズは、ひざをそろえて、短い足をぶらんと下ろす形に",
@@ -13115,8 +13120,8 @@ renderVillage = function () {
   const info = n => { const T = TITLES.find(t => t[0] === n); if (!T) return ""; const ok = T[2](), cur = (world.title || "村の新入り") === n;
     return `<b>${ok ? "「" + esc(n) + "」" : "？？？"}</b>　${esc(T[1])}<br><span class="note">${ok ? (cur ? "獲得ずみ・いまつけている称号" : thief ? "獲得ずみ（いまは「盗人」がついていて、つけかえられない）" : "獲得ずみ。押すと、この称号にした") : "まだ持っていない称号（条件をみたすと、自動で手に入るよ）"}</span>`; };
   row.insertAdjacentHTML("afterend", `<p class="tinfo71" id="tinfo71">${tsel71 ? info(tsel71) : "称号を押すと、手に入れる条件が見られるよ"}</p>
-    <details class="tall71"><summary>すべての称号と、手に入れる条件</summary><div class="list">${TITLES.map(([n, d, f]) => { const ok = f(); return `<div class="li tl71${ok ? "" : " no"}"><span class="nm">${ok ? esc(n) : "？？？"}<span class="sub2">${esc(d)}</span></span><span class="acts">${ok ? "獲得ずみ" : "まだ"}</span></div>`; }).join("")}</div>
-    <p class="note">${TITLES.filter(t => t[2]()).length} / ${TITLES.length} 個 獲得</p></details>`);
+    <details class="tall71"><summary>すべての称号と、手に入れる条件</summary><div class="list">${shownT140().map(([n, d, f]) => { const ok = f(); return `<div class="li tl71${ok ? "" : " no"}"><span class="nm">${ok ? esc(n) : "？？？"}<span class="sub2">${esc(d)}</span></span><span class="acts">${ok ? "獲得ずみ" : "まだ"}</span></div>`; }).join("")}</div>
+    <p class="note">${TITLES.filter(t => t[2]()).length} / ${shownT140().length} 個 獲得</p></details>`);
   for (const b of chips) {
     const n = b.dataset.title, T = TITLES.find(t => t[0] === n), ok = T ? T[2]() : false;
     b.disabled = false; if (!ok || thief) b.classList.add("lock71");
@@ -13769,7 +13774,7 @@ function openTitles76() {
       const lock = F76.titleLock(), cur = world.title || "村の新入り", got = TITLES.filter(t => t[2]()).length;
       body.innerHTML = `<p class="mtext">いまの称号：<b>「${esc(lock || cur)}」</b>${lock ? `<br><span class="note">「${esc(lock)}」がついているあいだは、つけかえられない</span>` : ""}</p>
         <p class="note">${got} / ${TITLES.length} 個 獲得。つけた称号は、ほかの人の画面の名前にも出るよ</p>
-        <div class="list">${TITLES.map(([n, d, f]) => { const ok = f(); return `<div class="li tl71${ok ? "" : " no"}"><span class="nm">${ok ? "「" + esc(n) + "」" : "？？？"}<span class="sub2">${esc(d)}</span></span><span class="acts">${ok ? (cur === n ? `<b class="note">つけている</b>` : `<button class="btn light" type="button" data-tt76="${esc(n)}" ${lock ? "disabled" : ""}>つける</button>`) : ""}</span></div>`; }).join("")}</div>`;
+        <div class="list">${shownT140().map(([n, d, f]) => { const ok = f(); return `<div class="li tl71${ok ? "" : " no"}"><span class="nm">${ok ? "「" + esc(n) + "」" : "？？？"}<span class="sub2">${esc(d)}</span></span><span class="acts">${ok ? (cur === n ? `<b class="note">つけている</b>` : `<button class="btn light" type="button" data-tt76="${esc(n)}" ${lock ? "disabled" : ""}>つける</button>`) : ""}</span></div>`; }).join("")}</div>`;
       body.querySelectorAll("[data-tt76]").forEach(b => b.onclick = () => { if (F76.titleLock()) return; world.title = b.dataset.tt76; saveWorld(); try { F7.renderVillage(); } catch (e) {} draw(); });
     };
     draw();
@@ -27755,7 +27760,7 @@ function statueImg139(st) {
   try {
     const im = g.getImageData(0, 0, ST_W139, ST_H139), d = im.data;
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 40) { d[i + 3] = 0; continue; } const L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, c = RAMP139[Math.min(4, Math.floor(L * 5))]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; }
-    // ここから、ポーズごとの描きたし（キャラの32の絵の座標で。体を下げた分は dy）。キャラは2頭身なので、うでは短く・手は丸く
+    // ここから、ポーズごとの描きたし（キャラの32の絵の座標で。体を下げた分は dy）。キャラは2頭身なので、うでは短く（肩から5マスくらい）・手は丸く
     const S = (x, y, k) => { x += ST_OX139; y += ST_OY139 + dy; if (x < 0 || y < 0 || x >= ST_W139 || y >= ST_H139) return; const i = (y * ST_W139 + x) * 4; if (k < 0) { d[i + 3] = 0; return; } const c = RAMP139[k]; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; };
     const R = (x, y, w, h, k) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) S(x + i, y + j, k); };
     const disk = (cx, cy, r, k) => { for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) S(x, y, k); };
@@ -27771,18 +27776,18 @@ function statueImg139(st) {
     // 上げたうで：肩から手 (hx,hy) へ。服の色で、手は明るく丸く
     const arm = (side, hx, hy) => { const sx = side ? 22 : 9, sy = 23; tube(sx, sy, hx, hy, 1.5, 2); hand(hx, hy); };
     if (p === 4) {                                                                                            // 遠くを指さす：うでを前ななめ上に・人さし指
-      noHand(0); arm(0, 3, 17); R(-1, 15, 2, 3, 1); S(0, 16, 4); S(1, 16, 4);
-    } else if (p === 5) { noHand(0); noHand(1); arm(0, 4, 15); arm(1, 27, 15); }                              // ばんざい
+      noHand(0); arm(0, 5, 19); R(1, 17, 2, 3, 1); S(2, 18, 4); S(3, 18, 4);
+    } else if (p === 5) { noHand(0); noHand(1); arm(0, 5, 18); arm(1, 26, 18); }                              // ばんざい
     else if (p === 6) {                                                                                       // 手をふる（ゆれの線つき）
-      noHand(1); arm(1, 27, 16);
+      noHand(1); arm(1, 26, 18);
     } else if (p === 7) {                                                                                     // すわる：ひざをそろえて、短い足をぶらんと
       R(10, 27, 12, 3, 1); R(11, 27, 10, 2, 2); R(11, 27, 4, 1, 3); R(17, 27, 4, 1, 3); S(15, 28, 1); S(16, 28, 1); S(10, 29, -1); S(21, 29, -1);   // ひざ
       for (const x of [11, 17]) { R(x + .5 | 0, 30, 4, 1, 1); R(x + 1, 30, 2, 1, 2); disk(x + 1.5, 32, 1.9, 0); S(x + 1, 31, 1); }                   // 短い足と、まるいくつ
     } else if (p === 8) {                                                                                     // 剣をかかげる：剣を先に描いて、手を上に重ねる
       noHand(1);
-      R(26, -1, 4, 15, 1); R(27, 0, 2, 14, 4); R(27, 1, 1, 13, 3); S(27, -1, 1); S(28, -1, 1); R(26, -2, 4, 1, -1); S(27, -2, 1); S(28, -2, 1);   // 刃
-      R(23, 13, 10, 3, 1); R(24, 14, 8, 1, 3); S(23, 13, -1); S(32, 13, -1); R(26, 16, 4, 4, 1); R(27, 16, 2, 3, 2);                      // つばと柄
-      arm(1, 27.5, 17.5);
+      R(25, 2, 4, 15, 1); R(26, 3, 2, 14, 4); R(26, 4, 1, 13, 3); R(25, 2, 1, 1, -1); R(28, 2, 1, 1, -1);                                 // 刃
+      R(22, 16, 10, 3, 1); R(23, 17, 8, 1, 3); S(22, 16, -1); S(31, 16, -1); R(25, 19, 4, 4, 1); R(26, 19, 2, 3, 2);                      // つばと柄
+      arm(1, 26.5, 20);
     } else if (p === 9) {                                                                                     // くわ：柄を地面に立てて、手でにぎる
       R(25, 9, 3, 23, 1); R(26, 10, 1, 22, 3);
       R(24, 8, 9, 3, 1); R(25, 9, 7, 1, 3); R(29, 11, 4, 3, 1); R(30, 11, 2, 2, 4); S(30, 9, 4);
@@ -28302,6 +28307,76 @@ GUIDE54.push(["オークションと銅像", "s139_gthrone139", `<p><b>オーク
 F139.board = () => openBoard("project");
 F139.ready = true;
 
+// =================== v140: 星に願いを（夜、外で星のかけらを手に持ってⒶ）・えらばれた人だけの称号 ===================
+// world.wish140 = {n: 願った回数, day: ゲームの日, today: その日の回数}。1回に星のかけら1つ・1日3回まで。
+// えらばれた人だけの称号（EXCL140＝称号 → 人のID）は、その人がオンラインのときだけ条件を見て、ほかの人の称号の一覧には出さない（shownT140）。
+var F140 = {};
+const wish140 = () => { const w = world.wish140 && typeof world.wish140 === "object" ? world.wish140 : (world.wish140 = {}); w.n = w.n | 0; if (w.day !== world.day) { w.day = world.day; w.today = 0; } return w; };
+const EXCL140 = { "NASAの黒幕": [17, 20], "めっちゃむっちゃまっちゃ": [5] };
+const mine140 = n => { const id = F8.myId(); return !!id && (EXCL140[n] || []).includes(id); };
+function shownT140() { return TITLES.filter(([n]) => !EXCL140[n] || mine140(n) || gotT42().includes(n)); }
+const TTL140 = [
+  ["星に願いを", "夜、外で星のかけらを手に持って、星に願いをかける", () => wish140().n >= 1],
+  ["NASAの黒幕", "えらばれた人だけ：夜空の星に、3回願いをかける", () => mine140("NASAの黒幕") && wish140().n >= 3],
+  ["めっちゃむっちゃまっちゃ", "この人だけの、とくべつな称号", () => mine140("めっちゃむっちゃまっちゃ")],
+];
+for (const t of TTL140) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+const WISH140 = ["みんなが元気でいられますように", "いいことがありますように", "大物が釣れますように", "お金持ちになれますように", "ひみつのお願い"];
+function openWish140() {
+  const W = wish140();
+  openModal("星に願いを", "dark", () => {
+    const body = $("mbody"), left = 3 - (W.today | 0), have = count("starshard109");
+    body.innerHTML = `<p class="mtext">夜空に、星のかけらがふるえている。空へ返すと、願いを1つ運んでくれるらしい。</p>
+      <p class="mtext small">星のかけら ${have}つ・今夜はあと ${Math.max(0, left)}回・これまでに ${W.n}回願った</p>
+      <div class="list">${WISH140.map((t, i) => `<div class="li"><span class="nm">${esc(t)}</span><span class="acts"><button class="btn" type="button" data-w140="${i}" ${have && left > 0 ? "" : "disabled"}>願う</button></span></div>`).join("")}</div>
+      <div class="row2"><button class="btn light" type="button" id="w140x">やめる</button></div>`;
+    body.querySelectorAll("[data-w140]").forEach(b => b.onclick = () => { closeModal(); doWish140(+b.dataset.w140); });
+    body.querySelector("#w140x").onclick = () => closeModal();
+  });
+}
+function doWish140(i) {
+  const W = wish140(); if (!count("starshard109") || (W.today | 0) >= 3) return;
+  removeItem("starshard109", 1); W.n++; W.today = (W.today | 0) + 1; world.stats.wish140 = W.n; addRep(1); renderHotbar();
+  F140.fx = { t: 0 }; se13("win");
+  const r = Math.random(); let got = "胸のあたりが、すこしあたたかくなった";
+  if (r < .45) { const g = 300 + rnd(8) * 100; addMoney(g); got = `足もとに、${fmt(g)} が落ちていた`; }
+  else if (r < .7) { giveItem91("skyflower109", 1); got = "空から、星の花がひとつ降ってきた"; }
+  saveWorld();
+  F7.notify(`「${WISH140[i] || WISH140[0]}」…星のかけらが、流れ星になって空へ帰っていった。${got}（評判+1）`, "starshard109");
+  try { checkTitles42(); } catch (e) { }
+}
+F140.open = openWish140; F140.wish = doWish140; F140.shown = shownT140;
+{
+  const _act = act;
+  act = function () {
+    try {
+      if (!modalOpen && !placing && !fish && !busy && !player.moving && isNight() && outside110()) {
+        const sel = world.inv[world.sel];
+        if (sel && sel.id === "starshard109") { openWish140(); return; }
+      }
+    } catch (e) { if (window.__komoErr) window.__komoErr(e, "v140"); }
+    return _act.apply(this, arguments);
+  };
+  // 願ったあと、流れ星が空へのぼる
+  const _ov = F6.drawOverlay;
+  F6.drawOverlay = function () {
+    const r = _ov.apply(this, arguments);
+    try {
+      const f = F140.fx; if (!f) return r;
+      f.t += 1 / 60; if (f.t > 1.6) { F140.fx = null; return r; }
+      const cv = ctx.canvas, k = f.t / 1.6, x = cv.width * (.5 + .3 * k), y = cv.height * (.55 - .6 * k);
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1 - k * .6;
+      for (let i = 0; i < 10; i++) { ctx.fillStyle = i ? "#fff6c0" : "#ffffff"; const s = Math.max(1, 4 - i * .35); ctx.globalAlpha = (1 - k * .6) * (1 - i / 10); ctx.fillRect(Math.round(x - i * 5), Math.round(y + i * 10), s, s); }
+      ctx.restore();
+    } catch (e) { }
+    return r;
+  };
+}
+GUIDE54.push(["星に願いを", "starshard109", `<p>夜、外にいるときに、星のかけらを手に持ってⒶを押すと、星に願いをかけられます。</p>
+  <ul><li>1回に星のかけらを1つ、空へ返します（1日3回まで）</li>
+  <li>願うと評判が上がって、ときどき、ちょっとしたお返しがあります</li>
+  <li>星のかけらは、流れ星の夜に空を見上げたり、天文台をのぞいたりすると手に入ります</li></ul>`]);
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -28762,5 +28837,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

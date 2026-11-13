@@ -219,15 +219,15 @@ public class SharedWorldService implements WelcomeContributor {
     }
 
     /**
-     * 村を新しくする（v0.78.0）。最初からになるのは、共同プロジェクト（meta の proj: / pjN:）・木・苗木・岩・採石場・みんなの水族館（_aqua）だけ。
-     * 地形・橋・柵・道・畑・建てた家（と家の中身）・飾りと設備・共同農園、それに、サーバーだけが持つ帳簿（スマホコイン・闘鶏・大会・厩舎・リサイクル品・お手紙・討伐・新聞など）は残す。
+     * 村を新しくする（v0.78.0・v0.79.1 で木と岩を外した）。最初からになるのは、共同プロジェクト（meta の proj: / pjN:）と、みんなの水族館（_aqua）だけ。
+     * 木・苗木・岩・採石場・地形・橋・柵・道・畑・建てた家（と家の中身）・飾りと設備・共同農園、それに、サーバーだけが持つ帳簿（スマホコイン・闘鶏・大会・厩舎・リサイクル品・お手紙・討伐・新聞など）は残す。
      * 「村の世代」（_gen）を1つ進める。画面は世代がちがうと、自分のセーブの共同プロジェクトを最初にもどす（古い世代のプロジェクトを送り返さない）。
      * 木と岩は、サーバーが村の地図を知らないので、_regrow を立てておいて、次につないだ画面に「ふさがっていない場所へ生やしなおす」のを頼む。
      */
     public void renew() {
         synchronized (this) {
             ObjectNode layers = layers();
-            for (String k : List.of("trees", "saplings", "rocks", "quarry", "_aqua")) layers.remove(k);
+            layers.remove("_aqua");   // 木・苗木・岩・採石場は残す（v0.79.1）
             if (layers.get("meta") instanceof ObjectNode meta) {
                 List<String> del = new java.util.ArrayList<>();
                 meta.fieldNames().forEachRemaining(k -> { if (projKey(k)) del.add(k); });
@@ -235,7 +235,7 @@ public class SharedWorldService implements WelcomeContributor {
             }
             long next = gen() + 1;
             layers.put("_gen", next);
-            layers.put("_regrow", next);
+            layers.remove("_regrow");   // 木と岩は消さないので、生やしなおしは頼まない
             touch();
         }
         persist();

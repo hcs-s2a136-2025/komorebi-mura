@@ -542,7 +542,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/event/rewards") return json(res, 200, Object.fromEntries(evRewards));
   if (p === "/mock/rooms") return json(res, 200, Object.fromEntries([...rooms].map(([k, r]) => [k, r])));
   // 村を新しくする（本物の SharedWorldService.renew と同じ）：共同プロジェクト・木・苗木・岩・採石場・水族館だけ最初から。家・地形・柵・道・飾り・帳簿は残す
-  if (p === "/mock/renew") { const v = +u.searchParams.get("v") || 1; useV(v); for (const k of ["trees", "saplings", "rocks", "quarry"]) delete shared[k]; for (const k of Object.keys(shared.meta || {})) if (/^(proj:|pj\d+:)/.test(k)) delete shared.meta[k]; aquaBy.delete(v); const g = (genBy.get(v) || 0) + 1; genBy.set(v, g); regrowBy.set(v, g); for (const s of sessions) s.pl && vOf(s.pl) === v && s.send(JSON.stringify({ type: "worldRenew", gen: g })); return json(res, 200, { gen: g }); }
+  if (p === "/mock/renew") { const v = +u.searchParams.get("v") || 1; useV(v); for (const k of Object.keys(shared.meta || {})) if (/^(proj:|pj\d+:)/.test(k)) delete shared.meta[k]; aquaBy.delete(v); const g = (genBy.get(v) || 0) + 1; genBy.set(v, g); regrowBy.delete(v); for (const s of sessions) s.pl && vOf(s.pl) === v && s.send(JSON.stringify({ type: "worldRenew", gen: g })); return json(res, 200, { gen: g }); }
   if (p === "/mock/auc") return json(res, 200, aucOf(+u.searchParams.get("v") || 1));
   if (p === "/mock/aucend") { const d = aucOf(+u.searchParams.get("v") || 1); if (d.cur) d.cur.end = Date.now() - 1; aucTick(); return json(res, 200, d); }
   if (p === "/mock/museum") return json(res, 200, musOf(+u.searchParams.get("v") || 1));

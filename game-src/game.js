@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.79.0";
+const CLIENT_VERSION = "0.79.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -27614,11 +27614,11 @@ function renew138(gen) {
   world.projects = { fountain: { need: { stone: 40, ore: 5 }, have: {}, done: false }, lamps: { need: { wood: 20, ore: 4 }, have: {}, done: false },
     beds: { need: { wood: 12, seed_tomato: 3 }, have: {}, done: false }, clock: { need: { stone: 60, wood: 40, ore: 10, gem: 2 }, have: {}, done: false } };
   world.projRep = {};
-  world.trees = {}; world.saplings = {}; world.rocks = {}; world.quarry = { level: 1, m: { 1: 0, 2: 0, 3: 0 } };
+  // 木・苗木・岩・採石場は、そのまま（v0.79.1。前はここで最初にもどしていた）
   for (const k of Object.keys(world.sharedMeta || {})) if (/^(proj:|pj\d+:)/.test(k)) delete world.sharedMeta[k];
   world.sharedGen138 = gen; saveWorld();
   try { rebuildSolid(); } catch (e) { }
-  F7.notify("村が新しくなったよ。共同プロジェクト・木・岩・採石場・水族館が最初からになった。建てた家や畑、持ち物・お金はそのままだから安心してね", null);
+  F7.notify("村の共同プロジェクトと水族館が、最初からになったよ。建てた家や畑、木や岩、持ち物・お金はそのままだから安心してね", null);
   return true;
 }
 // 木と岩を、最初の場所へ生やしなおす。家・柵・道・畑・橋・飾りなどでふさがっている場所と、入口の前には生やさない
@@ -27649,7 +27649,7 @@ F138.renew = renew138; F138.regrow = regrow138;
       // つないでいるあいだに新しくなった：自分の分を片付けて、つなぎ直して村をもらいなおす
       try { renew138(m.gen); } catch (e) { if (window.__komoErr) window.__komoErr(e, "renew138"); }
       F11.synced = false; shLast = {};
-      toast(null, "管理人が村を新しくしました。つなぎ直します"); if (ws8) ws8.close();
+      toast(null, "管理人が、共同プロジェクトと水族館を最初からにしました。つなぎ直します"); if (ws8) ws8.close();
       return;
     }
     // つないでいなかったあいだに新しくなった：村をもらう前に、自分の分を片付ける

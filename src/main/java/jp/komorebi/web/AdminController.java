@@ -125,7 +125,7 @@ public class AdminController {
         }
         world.renew();
         socket.broadcast(socket.json().createObjectNode().put("type", "worldRenew").put("gen", world.gen()), null);
-        ra.addFlashAttribute("msg", "村を新しくしました。共同プロジェクト・木・岩・採石場・水族館が最初からになりました。建てた家・地形・柵・道・畑・飾りと設備、持ち物・お金・称号、スマホコイン・闘鶏・大会・厩舎などはそのままです");
+        ra.addFlashAttribute("msg", "共同プロジェクト（みんなで建てた建物）と水族館を、最初からにしました。木・岩・建てた家・地形・柵・道・畑・飾り、持ち物・お金・称号、ほかの記録はそのままです");
         return "redirect:/admin";
     }
 

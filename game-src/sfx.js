@@ -84,6 +84,9 @@ const SFX = (() => {
     // 音ゲー（カラオケ）用：音の部品をそのまま使えるように
     // 音の出口が止まっていたら、もどす（さわったときと2秒ごとに game.js の wake112 が呼ぶ）
     wake() { if (ac && ac.state !== "running" && ac.state !== "closed") { try { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } catch (e) { } } },
+    // 音の出口をつなぎ直す（v0.82.4）。iPhone はマイクを使いはじめる・やめるときに音の行き先が変わり、
+    // 止まっていない（running の）ままでも音が出なくなることがあるので、いちど止めて動かしなおす
+    kick() { if (ac && ac.state === "running") { try { const p = ac.suspend(); if (p && p.then) p.then(() => ac.resume()).catch(() => { }); else ac.resume(); } catch (e) { } } else if (ac && ac.state !== "closed") { try { ac.resume(); } catch (e) { } } },
     audio(force) {
       if (!ctx(force)) return null;
       if (!force) return { ac, out, tone, noise, hz };

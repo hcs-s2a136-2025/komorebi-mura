@@ -155,6 +155,8 @@ const ITEMS = {
 const FISH = [["アジ", 30, 25], ["サケ", 20, 55], ["タイ", 14, 70], ["マグロ", 10, 110], ["ナマズ", 12, 40], ["ネッタイギョ", 11, 60], ["ヌシ", 3, 800]];
 FISH.forEach(([n, , p]) => ITEMS["fish_" + n] = { name: n, icon: "fish_" + n, price: p, fish: true });
 const sellPrice = id => ITEMS[id].tool ? Math.floor(ITEMS[id].price * .5) : Math.round(ITEMS[id].price * (typeof F7 !== "undefined" && F7.sellMul ? F7.sellMul(id) : 1));
+// 売る画面に「職業・腕前・タロットなどで、いつもより何%高いか」を出す（v0.82.4。前は上がったあとの値段だけで、効いているかわからなかった）
+const sellTag = id => { try { if (!ITEMS[id] || ITEMS[id].tool || typeof F7 === "undefined" || !F7.sellMul) return ""; const p = Math.round((F7.sellMul(id) - 1) * 100); return p > 0 ? `<span class="up83">+${p}%</span>` : ""; } catch (e) { return ""; } };
 const RECIPES = [
   { out: "fence", n: 1, need: { wood: 2 } },
   { out: "stonepath", n: 2, need: { stone: 1 } },
@@ -1226,7 +1228,7 @@ function openShop(tab) {
         `<button class="btn" type="button" data-buy="${id}" ${world.money < ITEMS[id].price ? "disabled" : ""}>買う</button>`)).join("")}</div>`;
     } else if (tab === "sell") {
       const ids = [...new Set(world.inv.filter(Boolean).map(it => it.id))];
-      html += ids.length ? `<p class="mtext">道具はリサイクル品として半額で買い取り、店頭で再販売されます。★2（レア）は1.5倍、★3（激レア）は3倍で売れるよ。</p><div class="list">${ids.flatMap(id => [1, 2, 3].filter(t => countT(id, t) > 0).map(t => { const c = countT(id, t); return itemLi(id, `${t > 1 ? `<b class="rare${t}">${RARE_STAR[t - 1]} ${RARE_NAME[t - 1]}</b>・` : ""}1個 ${fmt(Math.round(sellPrice(id) * RARE_MUL[t - 1]))}・${c}個`,
+      html += ids.length ? `<p class="mtext">道具はリサイクル品として半額で買い取り、店頭で再販売されます。★2（レア）は1.5倍、★3（激レア）は3倍で売れるよ。</p><div class="list">${ids.flatMap(id => [1, 2, 3].filter(t => countT(id, t) > 0).map(t => { const c = countT(id, t); return itemLi(id, `${t > 1 ? `<b class="rare${t}">${RARE_STAR[t - 1]} ${RARE_NAME[t - 1]}</b>・` : ""}1個 ${fmt(Math.round(sellPrice(id) * RARE_MUL[t - 1]))}${sellTag(id)}・${c}個`,
         `<button class="btn light" type="button" data-sell="${id}" data-t="${t}" data-n="1">1個</button>${c > 1 ? `<button class="btn" type="button" data-sell="${id}" data-t="${t}" data-n="all">全部</button>` : ""}`); })).join("")}</div>` : `<p class="mtext">売れる物を持っていないよ。</p>`;
     } else {
       html += world.recycle.length ? `<p class="mtext">ほかの人が手放した道具。新品より安いよ。</p><div class="list">${world.recycle.map((r, i) => itemLi(r.id, `${fmt(r.price)}（新品 ${fmt(ITEMS[r.id].price)}）`,
@@ -2262,7 +2264,7 @@ function updateDungeon(dt) {
   for (let i = dg.drops.length - 1; i >= 0; i--) { const d = dg.drops[i]; if (d.x === player.x && d.y === player.y && addItem(d.id, d.n || 1, true)) { toast(ITEMS[d.id].icon, `${ITEMS[d.id].name}を拾った`); dg.drops.splice(i, 1); } }
 }
 function swordHit(tx, ty) {
-  const sel = world.inv[world.sel], hw = ITEMS[sel?.id]?.weapon; const dmg = (hw ? hw + accAtk127() : (eqW127() || 1)) + rnd(2);   // v127：身につけた武器・アクセサリー
+  const dmg = atk127() + rnd(2);   // v127：手の剣と身につけた武器の強いほう＋アクセサリー（v0.82.4）
   const targets = (dg?.mobs || []).filter(m => (m.x === tx && m.y === ty) || (m.fx === tx && m.fy === ty));
   for (const m of targets) {
     m.hp -= dmg; m.flash = .2; const [dx, dy] = DIRS[player.dir];
@@ -2314,7 +2316,7 @@ function makePort() {
 function openFishMarket() {
   openModal("魚市場", "shop", body => {
     const fishes = [...new Set(world.inv.filter(Boolean).map(i => i.id))].filter(id => ITEMS[id].fish);
-    body.innerHTML = `<p class="mtext">「いい魚は高く買うよ！」魚はよろず屋より3割増しで売れます。</p><p class="mtext small">大きい魚ほどレア。★2（レア）は1.5倍、★3（激レア）は3倍で買い取るよ。</p><div class="list">${fishes.length ? fishes.flatMap(id => [1, 2, 3].filter(t => countT(id, t) > 0).map(t => itemLi(id, `${t > 1 ? `<b class="rare${t}">${RARE_STAR[t - 1]} ${RARE_NAME[t - 1]}</b>・` : ""}1匹 ${fmt(Math.round(sellPrice(id) * 1.3 * RARE_MUL[t - 1]))}・${countT(id, t)}匹`, `<button class="btn light" type="button" data-fs="${id}" data-t="${t}" data-n="1">1匹</button><button class="btn" type="button" data-fs="${id}" data-t="${t}" data-n="all">全部</button>`))).join("") : `<p class="mtext">魚を持っていないよ。海で釣ってみよう。</p>`}</div>`;
+    body.innerHTML = `<p class="mtext">「いい魚は高く買うよ！」魚はよろず屋より3割増しで売れます。</p><p class="mtext small">大きい魚ほどレア。★2（レア）は1.5倍、★3（激レア）は3倍で買い取るよ。</p><div class="list">${fishes.length ? fishes.flatMap(id => [1, 2, 3].filter(t => countT(id, t) > 0).map(t => itemLi(id, `${t > 1 ? `<b class="rare${t}">${RARE_STAR[t - 1]} ${RARE_NAME[t - 1]}</b>・` : ""}1匹 ${fmt(Math.round(sellPrice(id) * 1.3 * RARE_MUL[t - 1]))}${sellTag(id)}・${countT(id, t)}匹`, `<button class="btn light" type="button" data-fs="${id}" data-t="${t}" data-n="1">1匹</button><button class="btn" type="button" data-fs="${id}" data-t="${t}" data-n="all">全部</button>`))).join("") : `<p class="mtext">魚を持っていないよ。海で釣ってみよう。</p>`}</div>`;
     body.querySelectorAll("[data-fs]").forEach(b => b.onclick = () => { const id = b.dataset.fs, t = +b.dataset.t || 1, n = b.dataset.n === "all" ? countT(id, t) : Math.min(1, countT(id, t)); if (n <= 0) return; const v = Math.round(sellPrice(id) * 1.3 * RARE_MUL[t - 1]) * n; removeTier(id, t, n); addMoney(v); toast("coin", `+${fmt(v)}`); closeModal(); openFishMarket(); });
   });
 }
@@ -3947,7 +3949,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.82.3";
+const CLIENT_VERSION = "0.82.4";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6032,6 +6034,11 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.82.4", date: "2026/11/15", title: "装備・職業・通話の不具合", items: [
+    "装備：手に剣を持っていると、身につけた武器が使われていなかったのを直した（強いほうが使われる）。武器なしでも、アクセサリーの攻撃が足されるように",
+    "職業：売る画面の値段のよこに「+○%」を出して、スキルが効いているのがわかるように。職業の画面に、いま高く売れる分と、まだえらんでいない道を出す",
+    "通話：とちゅうでマイクが止まると（電話がかかってきたときなど）、そのあと声が届かなくなっていたのを直した。iPhone で、マイクを使いはじめたあとに BGM や声が聞こえなくなるのを起きにくく"
+  ] },
   { v: "0.82.3", date: "2026/11/15", title: "ジャックポットの上限をなくした", items: [
     "スロットのジャックポットに上限がなくなった。賭けた額の3%が、当たるまでずっと積み上がる"
   ] },
@@ -21722,6 +21729,14 @@ F7.sellMul = id => {
   m += (has106("m2") ? .05 : 0) + (has106("m4a") ? .05 : 0) + (has106("m6") ? .05 : 0) + (has106("m8a") ? .07 : 0) + (has106("m10") ? .05 : 0);
   return m;
 };
+// 職業のスキルで、売るときにいくら上がっているか（v0.82.4・職業の画面に出す）
+F106.sellNow = () => {
+  const pc = v => Math.round(v * 100), all = (has106("m2") ? .05 : 0) + (has106("m4a") ? .05 : 0) + (has106("m6") ? .05 : 0) + (has106("m8a") ? .07 : 0) + (has106("m10") ? .05 : 0);
+  return [["なんでも", all], ["作物", (has106("f4a") ? .15 : 0) + (has106("f8b") ? .2 : 0) + (has106("f10") ? .1 : 0)], ["料理", (has106("c4a") ? .2 : 0) + (has106("c8a") ? .25 : 0) + (has106("c10") ? .1 : 0)],
+    ["魚", (has106("s4a") ? .15 : 0) + (has106("s8a") ? .25 : 0) + (has106("s10") ? .1 : 0)], ["家具・飾り", has106("d10") ? .2 : 0]].filter(([, v]) => v > 0).map(([n, v]) => `${n} +${pc(v)}%`);
+};
+// まだえらんでいない道（Lv4・Lv8 の「どちらか1つ」。えらぶまでスキルは効かない）
+F106.unpicked = () => { const out = []; for (const c in JOB106) { const L = jlv106(c), p = job106().pick[c] || {}; for (const [lv, s] of JOB106[c].sk) if (typeof s !== "string" && lv <= L && !p[lv]) out.push(`${JOB106[c].name} Lv${lv}`); } return out; };
 // 商人：お店・市場で売ったお金で経験
 const _addMoney106 = addMoney;
 addMoney = function (n) {
@@ -21734,7 +21749,7 @@ swordHit = function (tx, ty) {
   try {
     const targets = (dg?.mobs || []).filter(m => (m.x === tx && m.y === ty) || (m.fx === tx && m.fy === ty));
     if (targets.length) {
-      const sel = world.inv[world.sel], base = (ITEMS[sel?.id]?.weapon || eqW127() || 1);
+      const base = atk127();
       const extra = (has106("a2") ? 2 : 0) + (has106("a8b") ? 4 : 0) + (has106("a4b") && Math.random() < .15 ? base : 0);
       if (extra) for (const m of targets) m.hp -= extra;
     }
@@ -21780,6 +21795,7 @@ function openJob106(sel, note) {
     const cur = curJob106(), J = JOB106[sel], L = jlv106(sel), x = j.xp[sel] || 0, nx = JOBLV106[L] ?? null, px = JOBLV106[L - 1];
     body.innerHTML = `${note ? `<p class="mtext small">${esc(note)}</p>` : ""}
       <p class="mtext">${cur ? `いまの職業：<b>${JOB106[cur].name}</b>（Lv${jlv106(cur)}）` : "まだ職業についていないよ。下からえらんでね（はじめての1回は無料）"}</p>
+      ${(() => { const a = F106.sellNow(), u = F106.unpicked(); return (a.length ? `<p class="mtext small">職業のスキルで高く売れる分：<b>${a.join("・")}</b>（売る画面の値段のよこの「+○%」は、腕前・装備などもあわせた分）</p>` : "") + (u.length ? `<p class="mtext small"><b class="warn83">まだえらんでいない道：${u.join("・")}</b>。えらぶまで、その段のスキルは効かないよ（その職業にしているときにえらべる）</p>` : ""); })()}
       <div class="jobs106">${Object.entries(JOB106).map(([k, o]) => `<button type="button" class="job106 ${k === sel ? "sel" : ""} ${k === cur ? "cur" : ""}" data-j106="${k}" style="--jc:${o.c}"><img src="${ASSETS[o.icon] || ""}" alt=""><span>${o.name}</span><small>Lv${jlv106(k)}</small></button>`).join("")}</div>
       <h3 class="lbl">${J.name}　Lv${L}${L >= 10 ? "（最高）" : ""}</h3>
       <div class="jbar106"><i style="width:${nx == null ? 100 : Math.round((x - px) / (nx - px) * 100)}%"></i></div>
@@ -22648,7 +22664,7 @@ act = function () {
     const c = RD.cur, b = bossAt111(c);
     if (b && b.onMap(map) && distBoss111(b, player.x, player.y) <= b.reach) {
       const now = performance.now(); if (now - RD.hitAt < 600) return; RD.hitAt = now;
-      const sel = world.inv[world.sel], w = ITEMS[sel?.id]?.weapon ? ITEMS[sel.id].weapon + accAtk127() : eqW127(), B = F106 && F106.raidBonus ? F106.raidBonus() : { add: 0, crit: 0, mul: 1 };
+      const w = atk127(true), B = F106 && F106.raidBonus ? F106.raidBonus() : { add: 0, crit: 0, mul: 1 };
       let d = 2 + w + rnd(3) + B.add; const crit = Math.random() < B.crit; if (crit) d *= 2; d = Math.round(d * B.mul);
       d = Math.max(1, Math.min(80, d));
       // 向きを魔物のほうへ
@@ -25606,7 +25622,7 @@ for (const t of TTL126) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT
 
 // =================== v127: 装備（武器・防具・アクセサリー2つを身につける） ===================
 // world.eq127 = { w: 武器のID, a: 防具のID, x: [アクセサリー, アクセサリー] }。身につけた物は持ち物から出て、ホットバーがあく。
-// 武器：剣を持っていなくても、魔物に向かってⒶで、身につけた武器で攻撃する（手に持った剣があれば、そちらが先）。
+// 武器：剣を持っていなくても、魔物に向かってⒶで、身につけた武器で攻撃する（手に持った剣と身につけた武器は、強いほう。v0.82.4）。
 // 防具：受けるダメージが減る（身につけていないときは、今までどおり持ち物の鉄の鎧が効く）。
 // アクセサリー：攻撃・守り・歩く速さ・売値・経験・HPの回復。
 var F127 = {};
@@ -25642,8 +25658,12 @@ function eqW127() { const o = eq127(); return o.w ? ITEMS[o.w].weapon + accSum12
 function eqArmor127() { const o = eq127(), a = o.a ? ITEMS[o.a].armor127 : 0, d = accSum127("def"); if (!a && d === 1) return 0; return (a || (count("armor") > 0 ? .6 : 1)) * d; }
 /** 手に持った剣の攻撃に足すアクセサリーの攻撃 */
 function accAtk127() { return accSum127("atk"); }
+/** いまの攻撃（v0.82.4）：手に持った剣と、身につけた武器の強いほう ＋ アクセサリーの攻撃。
+ *  前は手に剣を持っていると身につけた武器が使われず、武器なしだとアクセサリーの攻撃も足されなかった。
+ *  bare=true のときは、剣がないと 0 から（討伐はもとから 2 を足している） */
+function atk127(bare) { const sel = world.inv[world.sel], hw = (sel && ITEMS[sel.id] && ITEMS[sel.id].weapon) || 0, o = eq127(), ew = o.w ? ITEMS[o.w].weapon : 0; return (Math.max(hw, ew) || (bare ? 0 : 1)) + accSum127("atk"); }
 F127.atkAdd = accAtk127;
-F127.w = eqW127; F127.armor = eqArmor127; F127.state = eq127;
+F127.w = eqW127; F127.atk = atk127; F127.armor = eqArmor127; F127.state = eq127;
 // 歩く速さ：乗り物の速さに、風の指輪をかける
 { let base = +player.speed || 1; try { Object.defineProperty(player, "speed", { configurable: true, enumerable: true, get: () => { try { return base * (1 + accSum127("spd")); } catch (e) { return base; } }, set: v => { base = +v || 1; } }); } catch (e) { } }
 // 売値・経験
@@ -25676,7 +25696,7 @@ function openEquip127(tab, note) {
   tab = tab || "eq";
   openModal("装備", "", body => {
     const draw = msg => {
-      const o = eq127(), atk = o.w ? eqW127() : 1 + accSum127("atk"), dm = eqArmor127() || (count("armor") > 0 ? .6 : 1);
+      const o = eq127(), atk = atk127(), dm = eqArmor127() || (count("armor") > 0 ? .6 : 1);
       const slotLi = (lbl, id, act) => `<div class="li eq127s"><span class="eq127k">${lbl}</span>${id ? `<img src="${ASSETS[ITEMS[id].icon]}" alt="">` : `<span class="eq127e"></span>`}<span class="nm">${id ? esc(ITEMS[id].name) : "なし"}<span class="sub2">${id ? esc(gearSub127(id)) : ""}</span></span><span class="acts">${id ? `<button class="btn light" type="button" data-un127="${act}">はずす</button>` : ""}</span></div>`;
       const cand = world.inv.map(x => x && x.id).filter((id, i, a) => id && a.indexOf(id) === i && (ITEMS[id].weapon || ITEMS[id].armor127 || ITEMS[id].acc127));
       let html = `<div class="mtabs">${[["eq", "身につける"], ["shop", "行商の武具屋"]].map(([k, n]) => `<button class="chip" type="button" data-t127="${k}" aria-pressed="${tab === k}">${n}</button>`).join("")}</div>${msg || note ? `<p class="mtext"><b>${esc(msg || note)}</b></p>` : ""}`;
@@ -25685,7 +25705,7 @@ function openEquip127(tab, note) {
           <div class="list">${slotLi("武器", o.w, "w")}${slotLi("防具", o.a, "a")}${slotLi("アクセ1", o.x[0], "x0")}${slotLi("アクセ2", o.x[1], "x1")}</div>
           <h3 class="lbl">持ち物から身につける</h3>
           <div class="list">${cand.length ? cand.map(id => itemLi(id, esc(gearSub127(id)), `<button class="btn" type="button" data-eq127="${id}">身につける</button>`)).join("") : `<p class="mtext">身につけられる物を持っていないよ。「行商の武具屋」で買えるよ。</p>`}</div>
-          <p class="note">身につけた物は持ち物から出るので、ホットバーがあくよ。武器を身につけていれば、剣を手に持っていなくても、魔物に向かってⒶで攻撃できる。手に持った剣があれば、そちらで攻撃する。</p>`;
+          <p class="note">身につけた物は持ち物から出るので、ホットバーがあくよ。武器を身につけていれば、剣を手に持っていなくても、魔物に向かってⒶで攻撃できる。手に持った剣と身につけた武器は、強いほうが使われるよ。アクセサリーの攻撃は、どちらにも足される。</p>`;
       } else {
         html += staffSay13(charIcon13({ skin: "小麦色", hair: "ショート", hairc: "黒", top: "よろい", topc: "グレー", bottom: "パンツ", bottomc: "茶", hat: "なし", acc: "なし", shoesc: "茶" }), "旅の武具屋ガルドだ。いい品はそろってるぞ。強いよろいは、遺跡の鍛冶師テツに頼むといい")
           + `<p class="mtext">所持金 <b>${fmt(world.money)}</b></p><div class="list">${SHOP127.map(id => itemLi(id, `${esc(gearSub127(id))}・${fmt(ITEMS[id].price)}`, `<button class="btn" type="button" data-by127="${id}" ${world.money >= ITEMS[id].price ? "" : "disabled"}>買う</button>`)).join("")}</div>
@@ -25741,7 +25761,7 @@ const TTL127 = [["フル装備", "武器・防具・アクセサリー2つを、
 for (const t of TTL127) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
 GUIDE54.push(["装備", "armor", `<p>スマホの「装備」で、武器・防具・アクセサリー（2つまで）を身につけられます。</p>
   <ul><li>身につけた物は持ち物から出るので、ホットバーがあきます。はずすと持ち物にもどります（いっぱいなら家の収納箱へ）</li>
-  <li>武器を身につけていれば、剣を手に持っていなくても、魔物に向かってⒶで攻撃できます。鍛冶師テツの鍛えた分もそのまま効きます</li>
+  <li>武器を身につけていれば、剣を手に持っていなくても、魔物に向かってⒶで攻撃できます。手に持った剣と身につけた武器は、強いほうが使われます。鍛冶師テツの鍛えた分もそのまま効きます</li>
   <li>防具は受けるダメージを減らします。アクセサリーは攻撃・守り・歩く速さ・売値・腕前の経験・洞窟でのHP回復</li>
   <li>買えるのは「行商の武具屋」。騎士のよろい・竜うろこのよろいは、遺跡の鍛冶師テツが作ります</li></ul>`]);
 
@@ -27008,21 +27028,39 @@ const micWhy136 = e => {
   if (n === "NotReadableError" || n === "AbortError") return "ほかのアプリ（電話・通話アプリなど）がマイクを使っているみたい。そちらを終わらせてから、もう一度 ON にしてね";
   return "マイクを使えなかった（ブラウザの設定でマイクを許可してね）";
 };
+// iPhone の音の切りかえ（v0.82.4）：マイクを使うあいだは「話す・聞く」の音にしておき、やめたら元にもどす。
+// 切りかわったあとは、BGM・効果音・通話の声の出口をつなぎ直す（running のまま音が出なくなることがあるため）
+const session136 = type => { try { if (navigator.audioSession && navigator.audioSession.type !== type) navigator.audioSession.type = type; } catch (e) { } };
+const kickAll136 = () => {
+  for (const ms of [600, 2200]) setTimeout(() => {
+    try { if (typeof BGM !== "undefined" && BGM.kick) BGM.kick(); } catch (e) { }
+    try { if (typeof SFX !== "undefined" && SFX.kick) SFX.kick(); } catch (e) { }
+    try { const ac = VC.ac; if (ac && ac.state === "running") ac.suspend().then(() => ac.resume()).catch(() => { }); else wakeAc136(); } catch (e) { }
+  }, ms);
+};
+// マイクのエラーのうち、ほかのアプリが使っていた・とちゅうで止まったものは、少したってからもう一度ためす（v0.82.4。前は一度失敗すると、ON にしなおすまでずっと使わなかった）
+const retryErr136 = e => { const n = String(e && e.name || ""); return n === "NotReadableError" || n === "AbortError" || n === "InvalidStateError" || n === ""; };
 async function getMic136() {
   if (VC.mic) return VC.mic;
   if (VC.micAsk) return VC.micAsk;
+  session136("play-and-record");
   VC.micAsk = navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(s => {
-    VC.mic = s; VC.err = ""; s.getAudioTracks().forEach(t => t.enabled = !VC.muted);
+    VC.mic = s; VC.err = ""; VC.errN = 0; s.getAudioTracks().forEach(t => t.enabled = !VC.muted);
     const ac = acOf136(); if (ac) { const src = ac.createMediaStreamSource(s), an = ac.createAnalyser(); an.fftSize = 512; src.connect(an); VC.me.an = an; VC.me.buf = new Float32Array(an.fftSize); }
     for (const p of VC.peers.values()) addTrack136(p);
+    // マイクが止まったら（iPhone で電話がかかってきた・ほかのアプリがマイクを取った）、手放して、あとでもう一度とる
+    s.getAudioTracks().forEach(t => t.addEventListener("ended", () => { if (VC.mic === s) dropMic136(); }));
+    kickAll136();
     return s;
-  }).catch(e => { VC.err = micWhy136(e); toast(null, VC.err); return null; }).finally(() => { VC.micAsk = null; });
+  }).catch(e => { VC.err = micWhy136(e); VC.errAt = Date.now(); VC.errN = (VC.errN || 0) + 1; VC.errRetry = retryErr136(e) && VC.errN <= 3; toast(null, VC.err); session136("auto"); return null; }).finally(() => { VC.micAsk = null; });
   return VC.micAsk;
 }
-function dropMic136() { if (VC.mic) { VC.mic.getTracks().forEach(t => t.stop()); VC.mic = null; VC.me.an = null; VC.me.on = false; } }
+function dropMic136() { if (VC.mic) { VC.mic.getTracks().forEach(t => t.stop()); VC.mic = null; VC.me.an = null; VC.me.on = false; session136("auto"); kickAll136(); } }
 function addTrack136(p) {
-  if (!VC.mic || p.sent) return;
+  if (!VC.mic) return;
   const t = VC.mic.getAudioTracks()[0]; if (!t) return;
+  // マイクを取りなおしたときは、前の（止まった）マイクを送っている所を、新しいマイクに差しかえる（v0.82.4。前は差しかえず、相手に声が届かなくなった）
+  if (p.sent) { try { const s = p.pc.getSenders().find(x => x.track ? x.track.kind === "audio" : true); if (s && s.track !== t) s.replaceTrack(t).catch(() => { }); } catch (e) { } return; }
   try { if (p.tx && p.tx.sender) { p.tx.sender.replaceTrack(t); p.tx.direction = "sendrecv"; } else p.pc.addTrack(t, VC.mic); p.sent = true; } catch (e) { }
 }
 function makePeer136(id, initiator) {
@@ -27116,7 +27154,10 @@ function applyVol136(p) {
   if (!inRoom) { const e = remotes.get(p.id); if (e && e.rmap === mapKey()) v = Math.max(.08, Math.min(1, 1 - (distTo136(e) - 3) / 9)); }
   v *= V.vol * (VC.spk ? 1 : 0);
   p.vol = v;
-  if (p.gain) p.gain.gain.value = v; else if (p.audio) { try { p.audio.volume = v; } catch (e) { } }
+  // 声は WebAudio で鳴らす。WebAudio の出口が止まっているあいだは（iPhone で起きる）、audio のほうで鳴らして、声が聞こえなくならないように（v0.82.4）
+  const acOk = !!(VC.ac && VC.ac.state === "running");
+  if (p.gain) { p.gain.gain.value = acOk ? v : 0; if (p.audio) { try { p.audio.muted = acOk || v <= 0; if (!acOk) p.audio.volume = Math.min(1, v); } catch (e) { } } }
+  else if (p.audio) { try { p.audio.volume = v; } catch (e) { } }
 }
 let tick136 = 0;
 setInterval(() => {
@@ -27127,6 +27168,7 @@ setInterval(() => {
     // 近くの声を ON にしているだけで、ずっと通話モードのままにしない（v0.77.0）
     const needMic = canVoice136() && (!!VC.room || VC.peers.size > 0 || nearAny136());
     if (needMic) VC.idleAt = 0; else if (!VC.idleAt) VC.idleAt = Date.now();
+    if (VC.err && VC.errRetry && Date.now() - (VC.errAt || 0) > 15000) { VC.err = ""; VC.errRetry = false; }
     if (needMic && !VC.mic && !VC.micAsk && !VC.err) getMic136();
     if (!needMic && VC.mic && Date.now() - VC.idleAt > 8000) dropMic136();
     for (const id of W) if (!VC.peers.has(id) && me && me < id) makePeer136(id, true);

@@ -151,6 +151,9 @@ const BGM = (() => {
       try { if (ac.state !== "running" && ac.state !== "closed") { const p = ac.resume(); if (p && p.catch) p.catch(() => { }); } } catch (e) { }
       if (!cur) switchNow();
     },
+    // 音の出口をつなぎ直す（v0.82.4）。iPhone はマイクを使いはじめる・やめるときに音の行き先が変わり、
+    // 止まっていない（running の）ままでも音が出なくなることがあるので、いちど止めて動かしなおす
+    kick() { if (ac && ac.state === "running") { try { const p = ac.suspend(); if (p && p.then) p.then(() => ac.resume()).catch(() => { }); else ac.resume(); } catch (e) { } } else if (ac && ac.state !== "closed") { try { ac.resume(); } catch (e) { } } },
     // カラオケ中などに、いったん小さくする（false で元にもどす）
     duck(on) { if (enabled && ac) fadeTo(on ? 0 : vol * .9, .3); },
     SONGS,

@@ -1275,3 +1275,8 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
 .stpv139 > div { flex: 1 1 auto; min-width: 0; }
 /* 景品交換所の個数（v0.82.2・数を入れられる） */
 input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; font: inherit; font-weight: 700; border: 2px solid #8a6a48; border-radius: 6px; background: #fffaf0; color: var(--ink); }
+/* 売る画面の「+○%」と、職業のえらんでいない道（v0.82.4） */
+.up83 { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px; background: #e3f2d8; color: #2f6a1e; font-weight: 700; font-size: .92em; }
+.mbox.dark .up83, .ph76m .up83 { background: rgba(120, 200, 100, .22); color: #b8f0a0; }
+.warn83 { color: #b5382e; }
+.mbox.dark .warn83, .ph76m .warn83 { color: #ff9a8f; }

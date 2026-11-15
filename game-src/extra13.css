@@ -1273,3 +1273,5 @@ body.ghin137 .vc136 { top: calc(110px + env(safe-area-inset-top)); }
 .stpv139 { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; }
 .stpv139 canvas { flex: 0 0 auto; width: 108px; height: 158px; image-rendering: pixelated; border: 2px solid #8a6a48; border-radius: 8px; }
 .stpv139 > div { flex: 1 1 auto; min-width: 0; }
+/* 景品交換所の個数（v0.82.2・数を入れられる） */
+input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; font: inherit; font-weight: 700; border: 2px solid #8a6a48; border-radius: 6px; background: #fffaf0; color: var(--ink); }

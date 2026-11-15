@@ -3376,21 +3376,23 @@ function showHeartEvent(n, th) {
 
 // ---- gambling links: medals, prize counter, loss limit ----
 const PRIZES = [["f_trophy", 20], ["gem", 8], ["goldbar", 40], ["f_chandelier", 60], ["hat:シルクハット", 80], ["f_piano", 150], ["f_goldstatue", 300]];
-const prizeQty = {};
+const prizeQty = {}, PRIZE_MAXQ = 9999;
 function openPrize() {
   openModal("景品交換所", "shop", body => {
-    const maxQ = c => Math.max(1, Math.min(99, Math.floor(world.medals / c)));
+    // 1回に交換できる数（v0.82.2 で99から9,999に。メダルがたくさんある人向け）
+    const maxQ = c => Math.max(1, Math.min(PRIZE_MAXQ, Math.floor(world.medals / c)));
     const draw = () => {
       body.innerHTML = `<p class="mtext">「勝ったぶんは、ここで形にしていきませんか？」</p>
-      <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、まとめて交換できます）</span></p>
+      <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、1回に${PRIZE_MAXQ.toLocaleString()}個まで、まとめて交換できます）</span></p>
       <div class="list">${PRIZES.map(([id, c]) => {
         if (id.startsWith("hat:")) { const h = id.slice(4); return `<div class="li"><img src="${charImg118({ ...cfg, hat: h }, "down", 0).toDataURL()}" alt=""><span class="nm">${h}（着せ替え）<span class="sub2">メダル${c}枚</span></span><span class="acts">${hatUnlocked(h) ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換</button>`}</span></div>`; }
         const q = Math.max(1, Math.min(maxQ(c), prizeQty[id] || 1)); prizeQty[id] = q;
-        return itemLi(id, `メダル${c.toLocaleString()}枚（1個）${ITEMS[id].furn ? "・家具" : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><b class="pzq">${q}</b><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${(c * q).toLocaleString()}枚）</button>`);
+        return itemLi(id, `メダル${c.toLocaleString()}枚（1個）${ITEMS[id].furn ? "・家具" : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><input class="pzq" type="number" inputmode="numeric" min="1" max="${maxQ(c)}" step="1" value="${q}" data-pzn="${id}" data-c="${c}" aria-label="交換する数"><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${(c * q).toLocaleString()}枚）</button>`);
       }).join("")}</div>`;
       body.querySelectorAll("[data-pzd]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzd] = Math.max(1, (prizeQty[b.dataset.pzd] || 1) - 1); draw(); });
       body.querySelectorAll("[data-pzu]").forEach(b => b.onclick = () => { const c = +b.dataset.c; prizeQty[b.dataset.pzu] = Math.min(maxQ(c), (prizeQty[b.dataset.pzu] || 1) + 1); draw(); });
       body.querySelectorAll("[data-pzx]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzx] = maxQ(+b.dataset.c); draw(); });
+      body.querySelectorAll("[data-pzn]").forEach(inp => inp.onchange = () => { const v = Math.floor(+inp.value) || 1; prizeQty[inp.dataset.pzn] = Math.max(1, Math.min(maxQ(+inp.dataset.c), v)); draw(); });
       body.querySelectorAll("[data-pz]").forEach(b => b.onclick = () => {
         const id = b.dataset.pz, c = +b.dataset.c, hat = id.startsWith("hat:"), q = hat ? 1 : Math.max(1, prizeQty[id] || 1);
         if (world.medals < c * q) return;
@@ -3945,7 +3947,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.82.1";
+const CLIENT_VERSION = "0.82.2";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6030,6 +6032,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.82.2", date: "2026/11/15", title: "ペット小屋のおみやげ・景品交換", items: [
+    "通信が切れているあいだに朝になると、ほかの人のペット小屋の前にも、自分のペットのおみやげが出ていたのを直した（ニワトリ小屋・サイロなどの建物も、自分の物だけが動く）",
+    "景品交換所で、1回に9,999個まで交換できるように。個数は数字でも入れられる"
+  ] },
   { v: "0.82.1", date: "2026/11/15", title: "スロットのジャックポット", items: [
     "ジャックポットの数字が人によってちがったり、だれも当てていないのに下がって見えたりしたのを直した（大きく賭けた回の積み立てが、みんなのジャックポットに入っていなかった）",
     "ジャックポットのいちばん上を10億Gに"
@@ -7641,7 +7647,8 @@ SH_LAYERS.push("decor");
 SHARED_KEYS14.push("decor");
 const EVENT_NAME27 = { easter: "イースター", halloween: "ハロウィン", christmas: "クリスマス" };
 const decorVisible27 = d => { const D = DECOR27[d.id]; return !!D && !(D.limit === "event" && F26.event() !== D.event); };
-const myDecor27 = d => !d.o || !F8.connected || d.o === F8.myId();
+// オンラインのキャラなら、つないでいないとき（切れているあいだ・つなぐ前）も、持ち主の番号で見る（v0.82.2。前は切れているあいだ、ほかの人のペット小屋・ニワトリ小屋なども自分の物になって、朝のおみやげがほかの人の小屋の前に出ていた）
+const myDecor27 = d => !d.o || (F8.connected ? +d.o === +F8.myId() : !(+onl.id > 0) || +d.o === +onl.id);
 
 // ---------- 当たり判定・描画 ----------
 const _rebuildSolid27 = rebuildSolid;

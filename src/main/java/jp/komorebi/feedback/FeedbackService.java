@@ -1,6 +1,8 @@
 package jp.komorebi.feedback;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -94,6 +96,29 @@ public class FeedbackService {
     @Transactional
     public void changeStatus(Long id, Status status) {
         find(id).setStatus(status);
+    }
+
+    /** えらんだお便りの状態をまとめて変える（なくなっていたお便りはとばす）。変えた数を返す */
+    @Transactional
+    public int changeStatusAll(List<Long> ids, Status status) {
+        int n = 0;
+        for (Long id : ids) {
+            if (id == null) continue;
+            FeedbackThread t = threads.findById(id).orElse(null);
+            if (t == null) continue;
+            t.setStatus(status);
+            n++;
+        }
+        return n;
+    }
+
+    /** 状態ごとのお便りの数（しぼりこみの選択肢に出す） */
+    @Transactional(readOnly = true)
+    public Map<String, Long> countByStatus() {
+        Map<String, Long> out = new LinkedHashMap<>();
+        for (Status s : Status.values()) out.put(s.name(), 0L);
+        for (FeedbackThread t : threads.findAll()) out.merge(t.getStatus().name(), 1L, Long::sum);
+        return out;
     }
 
     @Transactional(readOnly = true)

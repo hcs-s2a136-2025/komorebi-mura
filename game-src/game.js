@@ -3379,6 +3379,10 @@ function showHeartEvent(n, th) {
 // ---- gambling links: medals, prize counter, loss limit ----
 const PRIZES = [["f_trophy", 20], ["gem", 8], ["goldbar", 40], ["f_chandelier", 60], ["hat:シルクハット", 80], ["f_piano", 150], ["f_goldstatue", 300]];
 const prizeQty = {}, PRIZE_MAXQ = 9999;
+// 着せ替えなど、持ち物に入らない景品（v0.83.0）。PRIZES の id が「名前:中身」のとき、PRIZE_SP[名前](中身) が
+// { name, sub, img(), owned(), give() } を返す（帽子の "hat:" は前からの形のまま）
+const PRIZE_SP = {};
+const prizeSp = id => { const i = id.indexOf(":"); const f = i > 0 && id.slice(0, i) !== "hat" && PRIZE_SP[id.slice(0, i)]; try { return f ? f(id.slice(i + 1)) : null; } catch (e) { return null; } };
 function openPrize() {
   openModal("景品交換所", "shop", body => {
     // 1回に交換できる数（v0.82.2 で99から9,999に。メダルがたくさんある人向け）
@@ -3387,20 +3391,22 @@ function openPrize() {
       body.innerHTML = `<p class="mtext">「勝ったぶんは、ここで形にしていきませんか？」</p>
       <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、1回に${PRIZE_MAXQ.toLocaleString()}個まで、まとめて交換できます）</span></p>
       <div class="list">${PRIZES.map(([id, c]) => {
+        const sp = prizeSp(id);
+        if (sp) return `<div class="li"><img src="${sp.img()}" alt=""><span class="nm">${esc(sp.name)}<span class="sub2">メダル${c.toLocaleString()}枚${sp.sub ? "・" + esc(sp.sub) : ""}</span></span><span class="acts">${sp.owned() ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換（${c.toLocaleString()}枚）</button>`}</span></div>`;
         if (id.startsWith("hat:")) { const h = id.slice(4); return `<div class="li"><img src="${charImg118({ ...cfg, hat: h }, "down", 0).toDataURL()}" alt=""><span class="nm">${h}（着せ替え）<span class="sub2">メダル${c}枚</span></span><span class="acts">${hatUnlocked(h) ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換</button>`}</span></div>`; }
         const q = Math.max(1, Math.min(maxQ(c), prizeQty[id] || 1)); prizeQty[id] = q;
-        return itemLi(id, `メダル${c.toLocaleString()}枚（1個）${ITEMS[id].furn ? "・家具" : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><input class="pzq" type="number" inputmode="numeric" min="1" max="${maxQ(c)}" step="1" value="${q}" data-pzn="${id}" data-c="${c}" aria-label="交換する数"><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${(c * q).toLocaleString()}枚）</button>`);
+        return itemLi(id, `メダル${c.toLocaleString()}枚（1個）${ITEMS[id].furn ? `・家具${ITEMS[id].price ? `・売値 ${fmt(sellPrice(id))}` : ""}` : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><input class="pzq" type="number" inputmode="numeric" min="1" max="${maxQ(c)}" step="1" value="${q}" data-pzn="${id}" data-c="${c}" aria-label="交換する数"><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${(c * q).toLocaleString()}枚）</button>`);
       }).join("")}</div>`;
       body.querySelectorAll("[data-pzd]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzd] = Math.max(1, (prizeQty[b.dataset.pzd] || 1) - 1); draw(); });
       body.querySelectorAll("[data-pzu]").forEach(b => b.onclick = () => { const c = +b.dataset.c; prizeQty[b.dataset.pzu] = Math.min(maxQ(c), (prizeQty[b.dataset.pzu] || 1) + 1); draw(); });
       body.querySelectorAll("[data-pzx]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzx] = maxQ(+b.dataset.c); draw(); });
       body.querySelectorAll("[data-pzn]").forEach(inp => inp.onchange = () => { const v = Math.floor(+inp.value) || 1; prizeQty[inp.dataset.pzn] = Math.max(1, Math.min(maxQ(+inp.dataset.c), v)); draw(); });
       body.querySelectorAll("[data-pz]").forEach(b => b.onclick = () => {
-        const id = b.dataset.pz, c = +b.dataset.c, hat = id.startsWith("hat:"), q = hat ? 1 : Math.max(1, prizeQty[id] || 1);
+        const id = b.dataset.pz, c = +b.dataset.c, sp = prizeSp(id), hat = id.startsWith("hat:"), q = hat || sp ? 1 : Math.max(1, prizeQty[id] || 1);
         if (world.medals < c * q) return;
-        if (hat) unlock(id.slice(4)); else if (!addItem(id, q)) return;
+        if (sp) { if (sp.owned()) return; sp.give(); } else if (hat) unlock(id.slice(4)); else if (!addItem(id, q)) return;
         world.medals -= c * q; world.stats.prizes = (world.stats.prizes || 0) + q; prizeQty[id] = 1; saveWorld();
-        toast(hat ? null : ITEMS[id].icon, `${hat ? id.slice(4) : ITEMS[id].name}${q > 1 ? "を" + q + "個" : "と"}交換した`); draw();
+        toast(hat || sp ? null : ITEMS[id].icon, `${sp ? sp.name : hat ? id.slice(4) : ITEMS[id].name}${q > 1 ? "を" + q + "個" : "と"}交換した`); draw();
       });
     };
     draw();
@@ -3949,7 +3955,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.82.4";
+const CLIENT_VERSION = "0.83.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6034,6 +6040,13 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.83.0", date: "2026/11/15", title: "ふち取りとリボンの色・オーラと小物がふえた", items: [
+    "着せ替えの「服」に、ふち取りの色（フリル・襟・白い所）とリボンの色（服のリボン・ネクタイ・帯・リボンの帽子）。服の色と別にえらべて、ほかの人にも見える",
+    "オーラが6つふえた：ハート・音符・雪はオークション、ほたる・紅葉・星くずはカジノの景品交換所（メダル20,000〜30,000枚）。持っているオーラは着せ替えの「小物」でつけ外しできる",
+    "小物が6つふえた：妖精の羽・蝶の羽はオークション、赤いマント・ねこのしっぽ・星のイヤリング・ハートのペンダントは景品交換所（メダル5,000〜8,000枚）",
+    "景品交換所の金の家具（黄金のどんぐり像〜黄金のこもれび城）を、よろず屋で売れるように（メダル1枚あたり70G。特殊景品は100Gで、こちらのほうが高い）",
+    "称号「オーラの収集家」「小物の目利き」",
+  ] },
   { v: "0.82.4", date: "2026/11/15", title: "装備・職業・通話の不具合", items: [
     "装備：手に剣を持っていると、身につけた武器が使われていなかったのを直した（強いほうが使われる）。武器なしでも、アクセサリーの攻撃が足されるように",
     "職業：売る画面の値段のよこに「+○%」を出して、スキルが効いているのがわかるように。職業の画面に、いま高く売れる分と、まだえらんでいない道を出す",
@@ -27992,9 +28005,9 @@ function aucPay139(list) {
     const g = Math.max(0, Math.floor(+p.g || 0)), it = AUC139[p.item];
     if (p.why === "refund") { addMoney(g); F7.notify(`オークション：${it ? it.name : "品物"}で、ほかの人がもっと高く入れた。預けていた ${fmt(g)} が返ってきたよ`, null); }
     else if (p.why === "win" && it) {
-      if (it.aura) { if (!M.aura.includes(it.aura)) M.aura.push(it.aura); } else giveItem91(p.item, 1);
+      if (it.aura) { if (!M.aura.includes(it.aura)) M.aura.push(it.aura); } else if (it.wear) grantWear26(it.wear[0], it.wear[1], true); else giveItem91(p.item, 1);
       M.wins++; world.stats.aucWin139 = (world.stats.aucWin139 || 0) + 1;
-      F7.notify(`オークション：${it.name}を ${fmt(g)} で落札したよ！${it.aura ? "スマホの「オークション」でつけられる" : "持ち物（いっぱいなら家の箱）に入れた"}`, null);
+      F7.notify(`オークション：${it.name}を ${fmt(g)} で落札したよ！${it.aura ? "スマホの「オークション」か着せ替えでつけられる" : it.wear ? "着せ替えのアクセサリーでえらべる" : "持ち物（いっぱいなら家の箱）に入れた"}`, null);
       try { checkTitles42(); } catch (e) { }
     }
   }
@@ -28074,7 +28087,7 @@ F76.add({ id: "auc139", name: "オークション", ch: "競", c: "#c8a030", ope
       const k = e === player ? cfg.aura : e && e.kind === "remote" && e.cfg ? e.cfg.aura : null, A = k && AURA139[k];
       if (A && !e.hidden) {
         const t = performance.now() / 1000, cx = e.px + 8, cy = e.py + 6;
-        for (let i = 0; i < 6; i++) {
+        if (A.draw) A.draw(t, cx, cy); else for (let i = 0; i < 6; i++) {
           const a = t * (k === "s" ? .9 : 1.6) + i * 1.047, rx = 9 + Math.sin(t * 2 + i) * 2, y = k === "s" ? ((t * 9 + i * 5) % 22) - 12 : Math.sin(a) * 5 + Math.sin(t * 3 + i) * 2;
           ctx.globalAlpha = .55 + Math.sin(t * 5 + i * 2) * .35; ctx.fillStyle = A.cols[i % A.cols.length];
           ctx.fillRect(Math.round(cx + Math.cos(a) * rx), Math.round(cy + y), i % 2 ? 1 : 2, i % 2 ? 2 : 1);
@@ -28441,7 +28454,8 @@ GUIDE54.push(["星に願いを", "starshard109", `<p>夜、外にいるときに
 
 // =================== v141: カジノの景品に、金の像より上の家具と、よろず屋で換金できる特殊景品 ===================
 var F141 = {};
-// 家具（飾り専用・よろず屋では売れない・店に出ない）
+// 家具（店に出ない）。v0.83.0 から、よろず屋で売れる（メダル1枚＝70G。特殊景品の100G より低く・売値アップはのらない＝SELL141）
+const SELL141 = 70;
 const PFURN141 = {
   gacorn141: { name: "黄金のどんぐり像", medal: 1000, w: 1, h: 1, oy: -14, spr: (s, r) => { const g = C13["#e8b838"], l = C13["#fff0a0"], d = C13["#a87818"], k = C13["#7a5410"];
     r(3, 22, 10, 7, d); r(3, 22, 10, 1, g); r(5, 24, 6, 2, k);
@@ -28474,8 +28488,8 @@ const CASH141 = {
 for (const [k, f] of Object.entries(PFURN141)) {
   const key = "s141_" + k;
   IMG[key] = pix13(f.w * 16, f.h * 16 - f.oy, f.spr); ASSETS[key] = IMG[key].toDataURL();
-  FURN[k] = { name: f.name, img: key, w: f.w, h: f.h, oy: f.oy, price: 0 };
-  ITEMS["f_" + k] = { name: f.name, icon: key, furn: k, price: 0 };
+  FURN[k] = { name: f.name, img: key, w: f.w, h: f.h, oy: f.oy, price: f.medal * SELL141 };
+  ITEMS["f_" + k] = { name: f.name, icon: key, furn: k, price: f.medal * SELL141 };
 }
 for (const [id, p] of Object.entries(CASH141)) {
   const key = "s141_" + id, [m, l, d] = p.c.map(h => C13[h]), big = id === "prize_l141";
@@ -28491,18 +28505,7 @@ for (const [id, p] of Object.entries(CASH141)) {
 for (const [k, f] of Object.entries(PFURN141)) PRIZES.push(["f_" + k, f.medal]);
 for (const [id, p] of Object.entries(CASH141)) PRIZES.push([id, p.medal]);
 { const _hf = F7.hideFurn; F7.hideFurn = k => k in PFURN141 || _hf(k); }
-{ const _sm = F7.sellMul; F7.sellMul = id => id in CASH141 ? 1 : _sm(id); }
-{
-  const NOSELL = new Set(Object.keys(PFURN141).map(k => "f_" + k));
-  const _shop = openShop;
-  openShop = function (tab) {
-    const r = _shop.apply(this, arguments);
-    if (tab === "sell") document.querySelectorAll("#mbody [data-sell]").forEach(b => {
-      if (NOSELL.has(b.dataset.sell)) { const li = b.closest(".li"); if (li) li.querySelector(".acts").innerHTML = `<span class="note">飾り専用（買い取れない）</span>`; }
-    });
-    return r;
-  };
-}
+{ const _sm = F7.sellMul; F7.sellMul = id => id in CASH141 || (id.startsWith("f_") && id.slice(2) in PFURN141) ? 1 : _sm(id); }
 // 称号
 const TTL141 = [
   ["景品の大富豪", "カジノの景品交換所で、黄金のこもれび城と交換する", () => (world.stats.prize141 || {}).gcastle141 > 0],
@@ -28526,11 +28529,166 @@ for (const t of TTL141) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT
   };
 }
 GUIDE54.push(["カジノの高い景品と換金", "goldbar", `<p>カジノの景品交換所に、金の像より高い景品がふえた。</p>
-<p><b>飾りの家具</b>：黄金のどんぐり像（メダル1,000枚）・虹色の宝石の木（3,000枚）・ダイヤモンドの王冠（6,000枚）・黄金のこもれび城（10,000枚）。よろず屋では売れない。</p>
-<p><b>特殊景品</b>：銀（1,000枚）・金（10,000枚）・プラチナ（100,000枚）。よろず屋の「売る」で、それぞれ 100,000G・1,000,000G・10,000,000G に換金できる（売値アップの効果はのらない）。</p>`]);
+<p><b>飾りの家具</b>：黄金のどんぐり像（メダル1,000枚）・虹色の宝石の木（3,000枚）・ダイヤモンドの王冠（6,000枚）・黄金のこもれび城（10,000枚）。よろず屋で、メダル1枚あたり70G で売れる（70,000G・210,000G・420,000G・700,000G。売値アップの効果はのらない）。</p>
+<p><b>特殊景品</b>：銀（1,000枚）・金（10,000枚）・プラチナ（100,000枚）。よろず屋の「売る」で、それぞれ 100,000G・1,000,000G・10,000,000G に換金できる（メダル1枚あたり100G。家具より高い。売値アップの効果はのらない）。</p>`]);
 F141.shop = tab => openShop(tab);
 F141.art = k => ASSETS[k];
 F141.ready = true;
+
+// =================== v142: 服のふち取りとリボンの色・オーラと小物がふえた ===================
+var F142 = {};
+// ---------- ふち取りの色（服のフリル・襟・白い所）とリボンの色（服のリボン・ネクタイ・帯と、リボンの帽子） ----------
+// 服の絵の字のうち、W（白）X（白の影）w（32の白い光）がふち取り、R（赤）P（ピンク）がリボン。描くあいだだけ、その字の色を cfg の色に差しかえる
+// cfg の trimc・ribc（服の色と同じ名前。虹とゲーミングはなし）。「もとのまま」は cfg に持たない（見た目の設定の項目をふやさない）
+const COLS142 = Object.fromEntries(Object.entries(CHAR.CLOTH).filter(([, v]) => Array.isArray(v)));
+const NONE142 = "もとのまま";
+const TRIM142 = { [NONE142]: [[246, 244, 236], [246, 244, 236], [206, 200, 192], [120, 110, 100]], ...COLS142 };
+const RIB142 = { [NONE142]: [[255, 160, 200], [206, 52, 64], [170, 50, 100], [96, 30, 46]], ...COLS142 };
+Object.assign(POOLS, { trimc: TRIM142, ribc: RIB142 });
+const W0_142 = { W: CHAR.WHITE.W, X: CHAR.WHITE.X, R: CHAR.WHITE.R, P: CHAR.WHITE.P, w: XC118.w };
+const RHAT142 = ["リボン", "大きなリボン"].filter(h => HATS[h] && HATS[h].pal).map(h => [HATS[h].pal, { ...HATS[h].pal }]);
+const trimOf142 = c => c && c.trimc && c.trimc !== NONE142 ? COLS142[c.trimc] : null;
+const ribOf142 = c => c && c.ribc && c.ribc !== NONE142 ? COLS142[c.ribc] : null;
+function apply142(c) {
+  const t = trimOf142(c), r = ribOf142(c);
+  CHAR.WHITE.W = t ? t[0] : W0_142.W; CHAR.WHITE.X = t ? t[1] : W0_142.X; XC118.w = t ? mix118(t[0], [255, 255, 255], .5) : W0_142.w;
+  CHAR.WHITE.R = r ? r[1] : W0_142.R; CHAR.WHITE.P = r ? r[0] : W0_142.P;
+  for (const [pal, o] of RHAT142) { pal.A = r ? r[2] : o.A; pal.a = r ? r[1] : o.a; pal.b = r ? r[0] : o.b; }
+}
+let cur142 = null;
+// 着せ替えのタブ（髪・顔・服・小物。v34）に、足した段を入れる
+const cat142 = (sec, c) => { sec.dataset.cat34 = c; sec.hidden = cat34 !== "ぜんぶ" && cat34 !== c; };
+const wrap142 = f => function (c) {
+  const prev = cur142; cur142 = c; apply142(c);
+  try { return f.apply(this, arguments); } finally { cur142 = prev; apply142(prev); }
+};
+renderChar = wrap142(renderChar);
+charImg118 = wrap142(charImg118); F118.img = charImg118;
+// 着せ替えの「服の色」の下に2つの段を足す
+{
+  const topc = document.querySelector('#opts .row[data-key="topc"]'), sec0 = topc && topc.closest(".opt");
+  if (sec0) {
+    let at = sec0;
+    for (const [label, key, pool] of [["ふち取りの色（フリル・襟・白い所）", "trimc", TRIM142], ["リボンの色（服のリボン・ネクタイ・帯・リボンの帽子）", "ribc", RIB142]]) {
+      const sec = document.createElement("div"); sec.className = "opt"; sec.innerHTML = `<h3>${label}</h3>`; cat142(sec, "服");
+      const row = document.createElement("div"); row.className = "row"; row.dataset.key = key;
+      swatchRow(row, pool, 1, v => { if (v === NONE142) delete cfg[key]; else cfg[key] = v; changed(); }, label, key);
+      const b0 = row.querySelector(`button[data-v="${NONE142}"]`); if (b0) { b0.classList.add("sw142o"); b0.style.background = ""; b0.title = "もとのまま（服の絵の色）"; }
+      sec.appendChild(row); at.after(sec); at = sec;
+    }
+  }
+}
+// ---------- オーラがふえた（オークション3つ・景品交換所3つ） ----------
+const px142 = (x, y, col, a, w = 1, h = 1) => { ctx.globalAlpha = Math.max(0, Math.min(1, a)); ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+const HEART142 = [[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [1, 2]];
+const NOTE142 = [[2, 0], [3, 0], [2, 1], [4, 1], [2, 2], [2, 3], [0, 3], [1, 3], [0, 4], [1, 4]];
+const LEAF142 = [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]];
+const fr142 = x => x - Math.floor(x);
+const NEW_AURA142 = {
+  h: { name: "ハートのオーラ", item: "aura_heart142", how: "auc", cols: ["#ff6a9a", "#ff9ac0", "#ffd0e0"],
+    draw(t, cx, cy) { for (let i = 0; i < 4; i++) { const k = fr142(t * .45 + i / 4), x = cx + (i % 2 ? 7 : -9) + Math.sin(t * 2 + i * 1.7) * 2, y = cy + 8 - k * 22; for (const [dx, dy] of HEART142) px142(x + dx, y + dy, this.cols[i % 3], (1 - k) * .95); } } },
+  n: { name: "音符のオーラ", item: "aura_note142", how: "auc", cols: ["#6ab0ff", "#ffd24a", "#ff8ac0", "#8ae0a0"],
+    draw(t, cx, cy) { for (let i = 0; i < 3; i++) { const k = fr142(t * .35 + i / 3), x = cx + (i - 1) * 9 - 2 + Math.sin(t * 2.4 + i * 2) * 3, y = cy + 6 - k * 20; for (const [dx, dy] of NOTE142) px142(x + dx, y + dy, this.cols[(i + Math.floor(t * .35 + i / 3)) % 4], Math.min(1, (1 - k) * 1.6)); } } },
+  y: { name: "雪のオーラ", item: "aura_snow142", how: "auc", cols: ["#ffffff", "#e0f0ff", "#c8e4ff"],
+    draw(t, cx, cy) { for (let i = 0; i < 9; i++) { const k = fr142(t * .28 + i * .113), x = cx - 12 + (i * 37 % 25) + Math.sin(t * 1.3 + i) * 1.5, y = cy - 12 + k * 26; px142(x, y, this.cols[i % 3], Math.sin(k * Math.PI) * .95, i % 3 ? 1 : 2, i % 3 ? 1 : 2); } } },
+  f: { name: "ほたるのオーラ", item: "aura_firefly142", how: "prize", medal: 20000, cols: ["#e8ff8a", "#c8f060", "#fff6b0"],
+    draw(t, cx, cy) { for (let i = 0; i < 5; i++) { const x = cx + Math.sin(t * .7 + i * 1.9) * 11, y = cy + Math.cos(t * .9 + i * 2.3) * 8 - 1, a = .35 + .65 * Math.max(0, Math.sin(t * 2.2 + i * 1.3)); px142(x - 1, y - 1, this.cols[i % 3], a * .25, 3, 3); px142(x, y, this.cols[i % 3], a); } } },
+  k: { name: "紅葉のオーラ", item: "aura_momiji142", how: "prize", medal: 20000, cols: ["#e8502a", "#f08a2a", "#f0c040", "#c8302a"],
+    draw(t, cx, cy) { for (let i = 0; i < 5; i++) { const k = fr142(t * .3 + i * .21), x = cx - 11 + (i * 23 % 22) + Math.sin(t * 2 + i * 1.4) * 4, y = cy - 13 + k * 26; for (const [dx, dy] of LEAF142) px142(x + dx, y + dy, this.cols[i % 4], Math.sin(k * Math.PI)); } } },
+  m: { name: "星くずのオーラ", item: "aura_star142", how: "prize", medal: 30000, cols: ["#ffffff", "#fff0a0", "#a8d8ff", "#e0b8ff"],
+    draw(t, cx, cy) { for (let i = 0; i < 6; i++) { const p = t * .9 + i * .37, n = Math.floor(p), k = fr142(p), hx = Math.sin(n * 12.9898 + i * 78.233) * 43758.5453, hy = Math.sin(n * 39.346 + i * 11.135) * 24634.6345, x = cx - 12 + fr142(hx) * 24, y = cy - 11 + fr142(hy) * 20, a = Math.sin(k * Math.PI), c = this.cols[i % 4]; px142(x, y, c, a); if (a > .55) { px142(x - 1, y, c, a * .7); px142(x + 1, y, c, a * .7); px142(x, y - 1, c, a * .7); px142(x, y + 1, c, a * .7); } } } },
+};
+Object.assign(AURA139, NEW_AURA142);
+for (const [k, a] of Object.entries(NEW_AURA142)) {
+  const key = "s139_aura_" + k;
+  IMG[key] = pix13(16, 16, (s, r) => { const c = a.cols.map(h => C13[h]); for (let i = 0; i < 9; i++) { const t = i / 9 * 6.283, x = Math.round(8 + Math.cos(t) * 5), y = Math.round(8 + Math.sin(t) * 5); s(x, y, c[i % c.length]); if (i % 3 === 0) { s(x + 1, y, c[i % c.length]); s(x, y + 1, c[i % c.length]); } } s(8, 8, c[0]); s(7, 8, c[0]); s(9, 8, c[0]); s(8, 7, c[0]); s(8, 9, c[0]); }, false);
+  ASSETS[key] = IMG[key].toDataURL();
+  ITEMS[a.item] = { name: a.name, icon: key, price: 0 };
+  if (a.how === "auc") AUC139[a.item] = { name: a.name, icon: key, aura: k, desc: "体のまわりに光がまう。ほかの人にも見える（着せ替えかオークションの画面でつけ外し）" };
+}
+// ---------- 小物（アクセサリー）がふえた（オークション2つ・景品交換所4つ） ----------
+const ACC142 = {
+  "妖精の羽": { item: "acc_fairy142", how: "auc", show: "up", art: (put, dir) => {
+    const L = [200, 240, 255], M = [150, 214, 244], E = [96, 164, 214], P = [255, 190, 230];
+    const wing = (m) => { const X = x => m ? 15 - x : x; for (const [x, y, c] of [[2, 8, E], [3, 8, E], [1, 9, E], [2, 9, P], [3, 9, L], [4, 9, M], [1, 10, E], [2, 10, L], [3, 10, L], [4, 10, M], [2, 11, E], [3, 11, M], [4, 11, M], [3, 12, E], [4, 12, M]]) put(X(x), y, c); };
+    if (dir === "up") { wing(false); wing(true); } else if (dir === "down") { for (const [x, y, c] of [[2, 8, E], [1, 9, M], [2, 9, L], [1, 10, E], [2, 10, L], [2, 11, E]]) { put(x, y, c); put(15 - x, y, c); } } else for (const [x, y, c] of [[13, 8, E], [12, 9, L], [13, 9, P], [14, 9, E], [12, 10, L], [13, 10, M], [14, 10, E], [12, 11, M], [13, 11, E]]) put(x, y, c); } },
+  "蝶の羽": { item: "acc_bfly142", how: "auc", show: "up", art: (put, dir) => {
+    const O = [248, 156, 48], Y = [255, 226, 120], K = [52, 40, 52];
+    const wing = (m) => { const X = x => m ? 15 - x : x; for (const [x, y, c] of [[2, 8, K], [3, 8, K], [1, 9, K], [2, 9, Y], [3, 9, O], [4, 9, O], [1, 10, K], [2, 10, O], [3, 10, O], [4, 10, K], [2, 11, K], [3, 11, Y], [4, 11, O], [3, 12, K], [4, 12, K]]) put(X(x), y, c); };
+    if (dir === "up") { wing(false); wing(true); } else if (dir === "down") { for (const [x, y, c] of [[2, 8, K], [1, 9, K], [2, 9, O], [1, 10, K], [2, 10, Y], [2, 11, K]]) { put(x, y, c); put(15 - x, y, c); } } else for (const [x, y, c] of [[13, 8, K], [12, 9, O], [13, 9, Y], [14, 9, K], [12, 10, O], [13, 10, O], [14, 10, K], [12, 11, Y], [13, 11, K]]) put(x, y, c); } },
+  "赤いマント": { item: "acc_cape142", how: "prize", medal: 8000, show: "up", art: (put, dir) => {
+    const R = [200, 40, 56], D = [130, 24, 40], G = [240, 200, 80];
+    if (dir === "up") { for (let y = 10; y <= 14; y++) for (let x = 4; x <= 11; x++) put(x, y, x === 4 || x === 11 || (y === 14 && x % 2) ? D : R); }
+    else if (dir === "down") { put(6, 10, G); put(9, 10, G); for (let y = 11; y <= 14; y++) { put(3, y, y === 14 ? D : R); put(12, y, y === 14 ? D : R); } put(2, 14, D); put(13, 14, D); }
+    else { put(6, 10, G); for (let y = 10; y <= 14; y++) { put(11, y, R); put(12, y, y < 12 ? R : D); } put(13, 13, D); put(13, 14, D); } } },
+  "ねこのしっぽ": { item: "acc_cat142", how: "prize", medal: 5000, show: "left", art: (put, dir) => {
+    const K = [70, 64, 78], T = [120, 112, 128];
+    if (dir === "down") { put(12, 13, K); put(13, 12, K); put(13, 11, K); put(14, 10, K); put(14, 9, T); }
+    else if (dir === "up") { put(8, 13, K); put(8, 14, K); put(9, 14, K); put(10, 13, K); put(11, 12, K); put(11, 11, T); }
+    else { put(12, 13, K); put(13, 13, K); put(14, 12, K); put(14, 11, K); put(15, 10, T); } } },
+  "星のイヤリング": { item: "acc_star142", how: "prize", medal: 5000, show: "down", art: (put, dir) => {
+    if (dir === "up") return; const Y = [255, 220, 80], W = [255, 250, 210];
+    if (dir === "down") { put(3, 9, Y); put(12, 9, Y); put(3, 10, W); put(12, 10, W); } else { put(10, 9, Y); put(10, 10, W); } } },
+  "ハートのペンダント": { item: "acc_heart142", how: "prize", medal: 6000, show: "down", art: (put, dir) => {
+    if (dir === "up") return; const G = [240, 200, 80], P = [255, 90, 140], D = [200, 50, 100];
+    if (dir === "down") { put(6, 10, G); put(9, 10, G); put(7, 11, P); put(8, 11, P); put(7, 12, D); } else { put(5, 10, G); put(5, 11, P); put(5, 12, D); } } },
+};
+{
+  const accRow = document.querySelector('#opts .row[data-key="acc"]');
+  for (const [v, a] of Object.entries(ACC142)) {
+    ACC_ART26[v] = a.art; ACCS[v] = 1; if (a.show === "up" || a.show === "left") BACK34.add(v);
+    WEAR26.acc[v] = { shop: "prize142", where: a.how === "auc" ? "週1回のオークションで手に入る" : `カジノの景品交換所（メダル${a.medal.toLocaleString()}枚）で手に入る` };
+    const key = "s142_acc_" + a.item;
+    try { const cv = renderChar({ ...DEFAULT, top: "Tシャツ", topc: "生成り", acc: v }, a.show, 0); ASSETS[key] = cv.toDataURL(); } catch (e) { ASSETS[key] = ASSETS.s139_aura_g; }
+    if (a.how === "auc") AUC139[a.item] = { name: v, icon: key, wear: ["acc", v], desc: "着せ替えのアクセサリー。オークションでしか手に入らない" };
+  }
+  if (accRow) swatchRow(accRow, Object.fromEntries(Object.keys(ACC142).map(v => [v, 1])), null, v => { cfg.acc = v; changed(); }, "アクセサリー", "acc");
+}
+// ---------- 景品交換所：オーラと小物 ----------
+PRIZE_SP.aura = k => { const A = AURA139[k]; return A && { name: A.name, sub: "オーラ（着せ替えでつけ外し）", img: () => ASSETS["s139_aura_" + k], owned: () => m139().aura.includes(k), give: () => { const M = m139(); if (!M.aura.includes(k)) M.aura.push(k); world.stats.prizeAura142 = (world.stats.prizeAura142 || 0) + 1; } }; };
+PRIZE_SP.acc = v => { const a = ACC142[v]; return a && { name: v, sub: "着せ替えのアクセサリー", img: () => ASSETS["s142_acc_" + a.item], owned: () => wearOwned26("acc", v), give: () => grantWear26("acc", v, true) }; };
+for (const [k, a] of Object.entries(NEW_AURA142)) if (a.how === "prize") PRIZES.push(["aura:" + k, a.medal]);
+for (const [v, a] of Object.entries(ACC142)) if (a.how === "prize") PRIZES.push(["acc:" + v, a.medal]);
+// ---------- 着せ替えの画面で、持っているオーラをつけ外し ----------
+{
+  const accSec = document.querySelector('#opts .row[data-key="acc"]'), sec0 = accSec && accSec.closest(".opt");
+  if (sec0) {
+    const sec = document.createElement("div"); sec.className = "opt"; sec.id = "aura142"; cat142(sec, "小物");
+    sec.innerHTML = `<h3>オーラ</h3><div class="row" id="aura142r"></div><p class="note">オーラは、オークションやカジノの景品交換所で手に入る。つけると、ほかの人にも見える。</p>`;
+    sec0.after(sec);
+  }
+}
+function drawAuraRow142() {
+  const row = $("aura142r"); if (!row) return;
+  let M; try { M = m139(); } catch (e) { return; }
+  const have = M.aura.filter(k => AURA139[k]);
+  const sig = have.join(",") + "|" + (cfg.aura || "");
+  if (row.dataset.sig === sig) return; row.dataset.sig = sig;
+  row.innerHTML = !have.length ? `<span class="note">まだ持っていない</span>` : `<button class="chip" type="button" data-au142="" aria-pressed="${!cfg.aura}">つけない</button>` + have.map(k => `<button class="chip" type="button" data-au142="${k}" aria-pressed="${cfg.aura === k}">${esc(AURA139[k].name)}</button>`).join("");
+  row.querySelectorAll("[data-au142]").forEach(b => b.onclick = () => { setAura139(b.dataset.au142 || null); drawAuraRow142(); });
+}
+{
+  const _s = syncUI;
+  syncUI = function () {
+    _s.apply(this, arguments);
+    for (const key of ["trimc", "ribc"]) document.querySelectorAll(`#opts .row[data-key="${key}"] button`).forEach(b => b.setAttribute("aria-pressed", String((cfg[key] || NONE142) === b.dataset.v)));
+    try { drawAuraRow142(); } catch (e) { }
+  };
+}
+setInterval(() => { try { if (document.body.classList.contains("menu")) drawAuraRow142(); } catch (e) { } }, 1500);
+// 起動したとき：知らない色の名前は消す
+for (const key of ["trimc", "ribc"]) if (cfg[key] && !(cfg[key] in COLS142)) delete cfg[key];
+// 称号
+const TTL142 = [
+  ["オーラの収集家", "オーラを4種類集める", () => { try { return m139().aura.filter(k => AURA139[k]).length >= 4; } catch (e) { return false; } }],
+  ["小物の目利き", "オークションか景品交換所でしか手に入らない小物を3つ集める", () => Object.keys(ACC142).filter(v => wearOwned26("acc", v)).length >= 3],
+];
+for (const t of TTL142) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["ふち取りとリボンの色・オーラと小物", "s139_aura_g", `<p>着せ替えで、服の色とは別に<b>ふち取りの色</b>（フリル・襟・白い所）と<b>リボンの色</b>（服のリボン・ネクタイ・帯と、リボンの帽子）をえらべる。ほかの人にもそのまま見える。</p>
+<p><b>オーラ</b>：金のきらめき・虹・桜吹雪・ハート・音符・雪は、週1回のオークション。ほたる（メダル20,000枚）・紅葉（20,000枚）・星くず（30,000枚）は、カジノの景品交換所。持っているオーラは、着せ替えの「オーラ」でつけ外しできる。</p>
+<p><b>小物</b>：妖精の羽・蝶の羽はオークション。赤いマント（メダル8,000枚）・ねこのしっぽ（5,000枚）・星のイヤリング（5,000枚）・ハートのペンダント（6,000枚）は、カジノの景品交換所。</p>`]);
+F142.apply = apply142; F142.aura = NEW_AURA142; F142.acc = ACC142;
+F142.ready = true;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -28992,5 +29150,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

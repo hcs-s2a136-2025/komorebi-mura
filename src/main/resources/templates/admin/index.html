@@ -126,7 +126,7 @@
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="letters">
     <h2>お便り <span class="badge" th:if="${unread > 0}" th:text="|未読 ${unread}|">未読</span></h2>
     <form class="row filters" method="get" th:action="@{/admin}">
       <select name="category">
@@ -137,20 +137,46 @@
       </select>
       <select name="status">
         <option value="" th:selected="${status == ''}">すべての状態</option>
-        <option value="OPEN" th:selected="${status == 'OPEN'}">未対応</option>
-        <option value="WIP" th:selected="${status == 'WIP'}">対応中</option>
-        <option value="DONE" th:selected="${status == 'DONE'}">対応済み</option>
-        <option value="CLOSED" th:selected="${status == 'CLOSED'}">クローズ</option>
+        <option th:each="s : ${statuses}" th:value="${s.name()}" th:selected="${status == s.name()}" th:text="|${@fmt.label(s.name())}（${statusCounts.get(s.name())}）|">未対応</option>
       </select>
       <button class="btn ghost" type="submit">しぼりこむ</button>
     </form>
     <p class="muted" th:if="${#lists.isEmpty(threads)}">まだお便りはありません</p>
-    <a class="thread" th:each="t : ${threads}" th:href="@{/admin/threads/{id}(id=${t.id()})}" th:classappend="${t.adminUnread()} ? 'unread'">
-      <span class="cat" th:classappend="${t.category()}" th:text="${@fmt.label(t.category())}">不具合</span>
-      <span class="ttl" th:text="${t.title()}">タイトル</span>
-      <span class="who" th:text="|${t.playerName()}・${@fmt.time(t.updatedAt())}・${#lists.size(t.messages())}通|">name</span>
-      <span class="st" th:classappend="${t.status()}" th:text="${@fmt.label(t.status())}">未対応</span>
-    </a>
+    <th:block th:unless="${#lists.isEmpty(threads)}">
+      <p class="muted">右のボタンを押すと、その場で状態が変わります。左のチェックでえらんで、下の「まとめて変える」でいくつも一度に変えられます。</p>
+      <!-- 1押しのボタンと、まとめて変えるボタンが使うフォーム（一覧の行の中にフォームを入れ子にできないので、form 属性でつなぐ） -->
+      <form id="qst" method="post" th:action="@{/admin/threads/status}">
+        <input type="hidden" name="back" value="list">
+        <input type="hidden" name="fs" th:value="${status}">
+        <input type="hidden" name="fc" th:value="${category}">
+      </form>
+      <div class="trow" th:each="t : ${threads}">
+        <input class="pick" type="checkbox" name="ids" form="qst" th:value="${t.id()}" th:title="|${t.title()} をえらぶ|">
+        <a class="thread" th:href="@{/admin/threads/{id}(id=${t.id()})}" th:classappend="${t.adminUnread()} ? 'unread'">
+          <span class="cat" th:classappend="${t.category()}" th:text="${@fmt.label(t.category())}">不具合</span>
+          <span class="ttl" th:text="${t.title()}">タイトル</span>
+          <span class="who" th:text="|${t.playerName()}・${@fmt.time(t.updatedAt())}・${#lists.size(t.messages())}通|">name</span>
+          <span class="st" th:classappend="${t.status()}" th:text="${@fmt.label(t.status())}">未対応</span>
+        </a>
+        <span class="qst">
+          <button th:each="s : ${statuses}" class="stb" th:classappend="|${s.name()} ${s.name() == t.status() ? 'now' : ''}|" type="submit" form="qst"
+                  th:formaction="@{/admin/threads/{id}/status(id=${t.id()})}" name="status" th:value="${s.name()}"
+                  th:disabled="${s.name() == t.status()}" th:text="${@fmt.label(s.name())}">未対応</button>
+        </span>
+      </div>
+      <div class="row bulk">
+        <label class="muted"><input type="checkbox" id="pickAll"> ぜんぶえらぶ</label>
+        <span class="grow"></span>
+        <span class="muted">えらんだお便りを</span>
+        <button th:each="s : ${statuses}" class="stb" th:classappend="${s.name()}" type="submit" form="qst" name="status" th:value="${s.name()}" th:text="|${@fmt.label(s.name())}に|">未対応に</button>
+      </div>
+      <script>
+        (function () {
+          var all = document.getElementById('pickAll');
+          if (all) all.addEventListener('change', function () { document.querySelectorAll('.trow .pick').forEach(function (c) { c.checked = all.checked; }); });
+        })();
+      </script>
+    </th:block>
   </section>
 </main>
 </body>

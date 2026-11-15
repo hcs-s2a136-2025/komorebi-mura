@@ -67,3 +67,23 @@ table.players td.acts form { display: flex; gap: 4px; align-items: center; margi
 .grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 12px; align-items: end; }
 .grid2 label { display: grid; gap: 4px; font-size: .9rem; }
 .grid2 .btn { justify-self: start; }
+
+/* お便りの一覧：1押しで状態を変える（v0.83.0） */
+.trow { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; margin-top: 8px; }
+.trow .thread { margin-top: 0; }
+.trow .pick { width: 20px; height: 20px; }
+.qst { display: flex; flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
+.stb { font: inherit; font-size: .78rem; padding: 6px 10px; border-radius: 999px; border: 2px solid var(--panel2); background: #fffaf0; color: var(--ink, #3a2a1c); cursor: pointer; }
+.stb:hover:not(:disabled) { filter: brightness(.95); }
+.stb.OPEN { border-color: #e8c860; } .stb.WIP { border-color: #8ab8e8; } .stb.DONE { border-color: #9ccc88; } .stb.CLOSED { border-color: #c4bcb0; }
+.stb.now { cursor: default; font-weight: 700; }
+.stb.now.OPEN { background: #ffe8a8; } .stb.now.WIP { background: #d8ecff; } .stb.now.DONE { background: #dff0d4; } .stb.now.CLOSED { background: #e4e0d8; }
+.stb:disabled { opacity: 1; }
+.bulk { margin-top: 12px; gap: 6px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .trow { grid-template-columns: auto 1fr; }
+  .qst { grid-column: 1 / -1; flex-wrap: wrap; justify-content: flex-start; }
+}
+.row input[type=checkbox], .trow input[type=checkbox] { flex: none; min-width: 0; width: auto; display: inline-block; vertical-align: middle; margin: 0 4px 0 0; }
+.trow input.pick { width: 20px; height: 20px; margin: 0; }
+.bulk label { display: inline-flex; align-items: center; gap: 4px; }

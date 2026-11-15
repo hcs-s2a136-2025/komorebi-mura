@@ -20,11 +20,9 @@
     </p>
     <details th:if="${t.context()}" open><summary>ゲームの状況</summary><pre th:text="${t.context()}"></pre></details>
     <form class="row" method="post" th:action="@{/admin/threads/{id}/status(id=${t.id()})}">
-      <span class="muted">状態</span>
-      <select name="status">
-        <option th:each="s : ${statuses}" th:value="${s}" th:selected="${s.name() == t.status()}" th:text="${@fmt.label(s.name())}"></option>
-      </select>
-      <button class="btn ghost" type="submit">変える</button>
+      <span class="muted">状態（押すとすぐ変わります）</span>
+      <button th:each="s : ${statuses}" class="stb" th:classappend="|${s.name()} ${s.name() == t.status() ? 'now' : ''}|" type="submit" name="status" th:value="${s.name()}"
+              th:disabled="${s.name() == t.status()}" th:text="${@fmt.label(s.name())}">未対応</button>
     </form>
   </section>
 
@@ -35,7 +33,11 @@
     </div>
     <form method="post" th:action="@{/admin/threads/{id}/reply(id=${t.id()})}" class="reply">
       <textarea name="body" rows="4" maxlength="2000" placeholder="返事を書く（ゲームの中で本人に届きます）" required></textarea>
-      <button class="btn" type="submit">返事を送る</button>
+      <div class="row">
+        <label class="muted"><input type="checkbox" name="done" value="1"> 送ったら「対応済み」にする</label>
+        <span class="grow"></span>
+        <button class="btn" type="submit">返事を送る</button>
+      </div>
     </form>
   </section>
 </main>

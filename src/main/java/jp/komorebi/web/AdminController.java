@@ -77,6 +77,8 @@ public class AdminController {
         model.addAttribute("status", status == null ? "" : status);
         model.addAttribute("category", category == null ? "" : category);
         model.addAttribute("unread", feedback.adminUnreadCount());
+        model.addAttribute("statusCounts", feedback.countByStatus());
+        model.addAttribute("statuses", Status.values());
         model.addAttribute("online", socket.onlinePlayers());
         model.addAttribute("version", props.version());
         model.addAttribute("worldStats", world.stats());
@@ -100,21 +102,56 @@ public class AdminController {
     }
 
     @PostMapping("/threads/{id}/reply")
-    public String reply(@PathVariable Long id, @RequestParam String body, RedirectAttributes ra) {
+    public String reply(@PathVariable Long id, @RequestParam String body, @RequestParam(required = false) String done, RedirectAttributes ra) {
         if (body == null || body.isBlank()) {
             ra.addFlashAttribute("msg", "返事が空っぽです");
         } else {
             feedback.adminReply(id, body);
-            ra.addFlashAttribute("msg", "返事を送りました");
+            if ("1".equals(done)) feedback.changeStatus(id, Status.DONE);
+            ra.addFlashAttribute("msg", "1".equals(done) ? "返事を送って、対応済みにしました" : "返事を送りました");
         }
         return "redirect:/admin/threads/" + id;
     }
 
+    /**
+     * 状態を変える。お便りの画面からと、一覧の1押しのボタンから（back=list のときは一覧へ。fs・fc は一覧のしぼりこみ）
+     */
     @PostMapping("/threads/{id}/status")
-    public String status(@PathVariable Long id, @RequestParam Status status, RedirectAttributes ra) {
+    public String status(@PathVariable Long id, @RequestParam Status status, @RequestParam(required = false) String back,
+                         @RequestParam(required = false) String fs, @RequestParam(required = false) String fc, RedirectAttributes ra) {
         feedback.changeStatus(id, status);
-        ra.addFlashAttribute("msg", "状態を変えました");
+        ra.addFlashAttribute("msg", "状態を「" + fmtLabel(status) + "」にしました");
+        if ("list".equals(back)) return backToList(fs, fc, ra);
         return "redirect:/admin/threads/" + id;
+    }
+
+    /** 一覧でチェックしたお便りを、まとめて同じ状態にする */
+    @PostMapping("/threads/status")
+    public String statusAll(@RequestParam(value = "ids", required = false) List<Long> ids, @RequestParam Status status,
+                            @RequestParam(required = false) String fs, @RequestParam(required = false) String fc, RedirectAttributes ra) {
+        if (ids == null || ids.isEmpty()) {
+            ra.addFlashAttribute("msg", "お便りがえらばれていません（左のチェックでえらんでください）");
+        } else {
+            int n = feedback.changeStatusAll(ids, status);
+            ra.addFlashAttribute("msg", n + "通のお便りを「" + fmtLabel(status) + "」にしました");
+        }
+        return backToList(fs, fc, ra);
+    }
+
+    private static String fmtLabel(Status s) {
+        return switch (s) {
+            case OPEN -> "未対応";
+            case WIP -> "対応中";
+            case DONE -> "対応済み";
+            case CLOSED -> "クローズ";
+        };
+    }
+
+    /** 一覧へもどる（しぼりこみはそのまま・お便りの所まで） */
+    private static String backToList(String fs, String fc, RedirectAttributes ra) {
+        if (fs != null && fs.matches("[A-Z]{1,10}")) ra.addAttribute("status", fs);
+        if (fc != null && fc.matches("[A-Z]{1,10}")) ra.addAttribute("category", fc);
+        return "redirect:/admin#letters";
     }
 
     @PostMapping("/world/reset")

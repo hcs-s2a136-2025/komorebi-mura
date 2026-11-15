@@ -43,7 +43,7 @@ const dmPend = new Map(); // 留守の人へのひそひそ
 const recycleBy = new Map(); // 村ごとのリサイクル品の棚
 // みんなの水族館（本物は aqua/AquaHandler.java）。村ごとに {fund, fish:{id:{n,by}}, don:{id:{n,g,f}}}
 // 週1回のオークション（本物は jp.komorebi.auction の AuctionService・村ごと・同じ約束）。AUC_MS（環境変数・ミリ秒）で、しめきりまでを短くできる。/mock/auc?v=村・/mock/aucend?v=村
-const AUC_ITEMS = ["f_gthrone139", "aura_gold139", "f_gpiano139", "aura_rainbow139", "f_gfount139", "aura_sakura139", "f_gbed139", "f_gstatue139"], AUC_MIN = 1000000, AUC_MAX = 5000000000, AUC_STEP = 10000;
+const AUC_ITEMS = ["f_gthrone139", "aura_gold139", "f_gpiano139", "aura_rainbow139", "f_gfount139", "aura_sakura139", "f_gbed139", "f_gstatue139", "aura_heart142", "acc_fairy142", "aura_note142", "acc_bfly142", "aura_snow142"], AUC_MIN = 1000000, AUC_MAX = 5000000000, AUC_STEP = 10000;
 const aucBy = new Map(), aucOf = v => aucBy.get(v) || (aucBy.set(v, { seq: 0, n: 0, pseq: 0, cur: null, last: [], pend: {} }), aucBy.get(v));
 const aucNextEnd = now => { if (process.env.AUC_MS) return now + +process.env.AUC_MS; const t = new Date(now + 9 * 3600e3); const add = (5 - t.getUTCDay() + 7) % 7; let e = Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() + add, 21) - 9 * 3600e3; if (e - now < 6 * 3600e3) e += 7 * 86400e3; return e; };
 const aucMin = c => { const top = c.top ? c.top.g : 0; if (top <= 0) return AUC_MIN; return Math.max(Math.ceil(top * 1.05 / AUC_STEP) * AUC_STEP, top + AUC_STEP); };

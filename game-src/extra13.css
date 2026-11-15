@@ -1280,3 +1280,5 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 .mbox.dark .up83, .ph76m .up83 { background: rgba(120, 200, 100, .22); color: #b8f0a0; }
 .warn83 { color: #b5382e; }
 .mbox.dark .warn83, .ph76m .warn83 { color: #ff9a8f; }
+/* v142：ふち取り・リボンの色の「もとのまま」（斜めの線） */
+.sw.sw142o { background: linear-gradient(135deg, #fffaf0 0 44%, #c8504a 44% 56%, #fffaf0 56% 100%) !important; }

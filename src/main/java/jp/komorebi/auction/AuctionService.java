@@ -36,14 +36,15 @@ import jp.komorebi.ws.WelcomeContributor;
  *       （画面は pid で、同じ pay を2回は受けとらない）</li>
  * </ul>
  * しめきりが来たら、いちばん高い人に {why:"win", item}（落札額はそのまま消える）、村に {"ev":"end"}。だれも入れなければ、同じ品を次の週に持ちこす。
- * しめきり前の60秒に入札があると、しめきりを60秒のばす。品物は ITEMS の順（画面の AUC139 と同じ名前）。
+ * しめきり前の60秒に入札があると、しめきりを60秒のばす。品物は ITEMS の順（画面の AUC139 と同じ名前。v0.83.0 でオーラ3つと小物2つをうしろに足した）。
  */
 @Service
 public class AuctionService implements MessageHandler, WelcomeContributor {
 
     static final String KEY = "_auction";
     /** 出す品（この順にくり返す）。画面の game.js の AUC139 と同じ名前にする */
-    public static final String[] ITEMS = { "f_gthrone139", "aura_gold139", "f_gpiano139", "aura_rainbow139", "f_gfount139", "aura_sakura139", "f_gbed139", "f_gstatue139" };
+    public static final String[] ITEMS = { "f_gthrone139", "aura_gold139", "f_gpiano139", "aura_rainbow139", "f_gfount139", "aura_sakura139", "f_gbed139", "f_gstatue139",
+        "aura_heart142", "acc_fairy142", "aura_note142", "acc_bfly142", "aura_snow142" };
     public static final long MIN_START = 1_000_000L, MAX_BID = 5_000_000_000L, STEP = 10_000L;
     static final int MAX_LAST = 6, MAX_PAY = 20;
     static final ZoneId JST = ZoneId.of("Asia/Tokyo");

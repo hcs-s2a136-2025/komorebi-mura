@@ -14,8 +14,10 @@ import jp.komorebi.ws.WelcomeContributor;
 @Service
 public class JackpotService implements WelcomeContributor {
 
-    /** いちばん上は10億（v0.82.1。前は5,000万で、大きく賭ける人の積み立てがそこで止まっていた） */
-    public static final long START = 3000, MAX = 1_000_000_000;
+    /**
+     * 上限なし（v0.82.3）。MAX は数が壊れないための安全な値だけ：画面（JavaScript）が正しく持てるいちばん大きい整数（2^53−1・約9,007兆）
+     */
+    public static final long START = 3000, MAX = 9_007_199_254_740_991L;
 
     private final SharedWorldService world;
 
@@ -29,7 +31,8 @@ public class JackpotService implements WelcomeContributor {
     }
 
     public synchronized long add(long n) {
-        long v = Math.min(MAX, pot() + Math.max(0, n));
+        long p = pot(), add = Math.max(0, n);
+        long v = add > MAX - p ? MAX : p + add;
         world.putSystem("_jackpot", LongNode.valueOf(v));
         return v;
     }

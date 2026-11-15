@@ -181,7 +181,7 @@ function setupSlot(cb, body) {
     if (K.betAllowed && !K.betAllowed(total)) { res.textContent = K.betMsg(); res.className = "result"; return; }
     S.lastBet = per; S.busy = true; wins = []; res.className = "result"; res.textContent = "……";
     cb.querySelector("#reach").hidden = true;
-    K.addMoney(-total); K.world.jackpot += Math.ceil(total * .03); if (K.jpAdd) K.jpAdd(Math.ceil(total * .03)); refreshMoney(body);
+    K.addMoney(-total); { const jpa = Math.ceil(total * .03); if (!(K.jpAdd && K.jpAdd(jpa))) K.world.jackpot += jpa; } refreshMoney(body);
     const kkOn = slotEv84().kk > 0, kind = K.slotForce || rollSlotEv84(kkOn); K.slotForce = null; zenSym = null;
     cur = { per, total, kind, kk: kkOn, mult: kind === "freeze" ? pickW84(FREEZE_PRIZE84) : 0, lockStop: kind === "freeze" }; SFX.lever(); SFX.spinStart();
     reels.forEach((r, i) => { r.target = rnd(21); r.spinning = true; r.remain = -1; r.speed = 16; });

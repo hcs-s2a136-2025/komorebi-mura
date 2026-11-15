@@ -675,7 +675,7 @@ wss.on("connection", s => {
         s.send(JSON.stringify({ type: "crank", board: { all: part("a", "all"), week: part("w", "week"), me, from, to: today } }));
       }
     }
-    if (m.type === "jp") { const n = +m.add || 0; if (n > 0 && n <= 30000) { jackpot += n; bc({ type: "jp", pot: jackpot }); } }
+    if (m.type === "jp") { const n = +m.add || 0; if (n > 0) { jackpot = Math.min(1e9, jackpot + Math.min(n, 1e9)); bc({ type: "jp", pot: jackpot }); } }
     if (m.type === "jpWin") { const won = jackpot; jackpot = 3000; bc({ type: "jp", pot: jackpot, won, by: s.pl.id, winner: s.pl.name }); }
     if (m.type === "gift") { const to = +m.to, amt = +m.amount, rid = String(m.rid || "").slice(0, 20); const t = [...sessions].find(o => o.pl && o.pl.id === to);
       if (!(amt > 0 && amt <= 100000) || to === s.pl.id) s.send(JSON.stringify({ type: "giftNg", rid, text: "渡せる額は1〜100,000Gだよ" }));

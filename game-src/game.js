@@ -3945,7 +3945,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.82.0";
+const CLIENT_VERSION = "0.82.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -5498,7 +5498,8 @@ const _layerSet14 = layerSet;
 layerSet = function (L, k, v) { _layerSet14(L, k, v); if (L === "meta" && typeof k === "string") metaToProj14(k, v); };
 
 // ---------- スロットのジャックポットを全員で1つに ----------
-K.jpAdd = n => { if (F8.connected) send8({ type: "jp", add: n }); };
+// 送れたら true。そのときは画面で先に足さず、サーバーの額（jp のお知らせ）だけを出す（v0.82.1。先に足すと、人ごとに数字がずれていた）
+K.jpAdd = n => { if (F8.connected && ws8 && ws8.readyState === 1) { send8({ type: "jp", add: n }); return true; } return false; };
 K.jpWon = amount => { if (F8.connected) send8({ type: "jpWin", amount }); };
 
 // ---------- お小遣い（向かい合ってⒶ） ----------
@@ -6029,6 +6030,10 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.82.1", date: "2026/11/15", title: "スロットのジャックポット", items: [
+    "ジャックポットの数字が人によってちがったり、だれも当てていないのに下がって見えたりしたのを直した（大きく賭けた回の積み立てが、みんなのジャックポットに入っていなかった）",
+    "ジャックポットのいちばん上を10億Gに"
+  ] },
   { v: "0.82.0", date: "2026/11/15", title: "カジノの高い景品と換金", items: [
     "カジノの景品交換所に、金の像より高い家具が4つ：黄金のどんぐり像・虹色の宝石の木・ダイヤモンドの王冠・黄金のこもれび城（メダル1,000〜10,000枚）",
     "よろず屋で換金できる「特殊景品」（銀・金・プラチナ）。メダル1,000・10,000・100,000枚で、100,000G・1,000,000G・10,000,000G に",

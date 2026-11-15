@@ -14,7 +14,8 @@ import jp.komorebi.ws.WelcomeContributor;
 @Service
 public class JackpotService implements WelcomeContributor {
 
-    public static final long START = 3000, MAX = 50_000_000;
+    /** いちばん上は10億（v0.82.1。前は5,000万で、大きく賭ける人の積み立てがそこで止まっていた） */
+    public static final long START = 3000, MAX = 1_000_000_000;
 
     private final SharedWorldService world;
 

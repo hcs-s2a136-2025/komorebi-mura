@@ -36,8 +36,8 @@ final class Sanitize {
     private static final Pattern PAINT = Pattern.compile("[0-9a-f]{90}");
     /** 顔に描いたメイクの細かい版（よこ20×たて18マス・32ドットの絵用。paint もいっしょに送られる） */
     private static final Pattern PAINT2 = Pattern.compile("[0-9a-f]{360}");
-    /** 服のマイデザイン（よこ20×たて10マス、1マス16色を16進数1文字で） */
-    private static final Pattern MYDESIGN = Pattern.compile("[0-9a-f]{200}");
+    /** 服のマイデザイン（よこ20×たて10マス、1マスを36進数1文字で。v0.83.1 から35色。前の16進数の柄もそのまま通る） */
+    private static final Pattern MYDESIGN = Pattern.compile("[0-9a-z]{200}");
 
     /** 見た目の設定：文字列の値だけ・40項目まで（v0.83.0 で36から。ふち取りとリボンの色）・各20文字まで（メイクの paint は決まった形の90文字、pt2 は360文字、服のマイデザイン md は200文字） */
     static ObjectNode cfg(JsonNode n, ObjectMapper om) {

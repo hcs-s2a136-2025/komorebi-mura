@@ -1744,6 +1744,11 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 .mbox.dark .warn83, .ph76m .warn83 { color: #ff9a8f; }
 /* v142：ふち取り・リボンの色の「もとのまま」（斜めの線） */
 .sw.sw142o { background: linear-gradient(135deg, #fffaf0 0 44%, #c8504a 44% 56%, #fffaf0 56% 100%) !important; }
+/* v0.83.1：景品交換所の個数つきの行は、操作欄をいつも次の行いっぱいに出す（数や桁で行の高さがかわって、一覧が上へ流れないように）。
+   スクロール位置は game.js の openPrize が押したボタンに合わせる。ブラウザの自動補正は切る */
+.mbox.prize143 .mbody { overflow-anchor: none; }
+.li.pzr143 > .acts { grid-column: 1 / -1; justify-content: flex-end; }
+@media (max-width: 560px) { .li.pzr143 > .acts > .btn:not(.light) { flex: 1 1 100%; } }
 </style>
 
 <header>
@@ -1870,7 +1875,7 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.83.0";
+  const VER = "0.84.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -5193,6 +5198,26 @@ Object.assign(CHAR.CLOTH, {
   "オレンジ": [[255, 210, 150], [250, 160, 70], [210, 110, 40], [120, 60, 24]], "グレー": [[226, 226, 230], [180, 180, 188], [132, 132, 142], [72, 72, 82]],
 });
 Object.assign(SHOEC, { "ピンク": [240, 140, 180], "黄色": [240, 200, 60], "緑": [80, 150, 80], "むらさき": [130, 80, 180], "金": [220, 180, 60] });
+// 色がふえた（v0.83.1）：服・髪・目・靴・肌。真ん中の色（base）から、ハイライト・影・ふち取りを作る
+{
+  const mk = ([r, g, b]) => { const hi = c => Math.round(c + (255 - c) * .5), lo = (c, k) => Math.round(c * k); return [[hi(r), hi(g), hi(b)], [r, g, b], [lo(r, .74), lo(g, .74), lo(b, .74)], [lo(r, .42), lo(g, .42), lo(b, .42)]]; };
+  const add = (pool, list) => { for (const [n, c] of list) if (!(n in pool)) pool[n] = mk(c); };
+  add(CHAR.CLOTH, [["ネイビー", [44, 62, 128]], ["ロイヤルブルー", [48, 96, 214]], ["空色", [120, 190, 255]], ["ターコイズ", [40, 184, 178]], ["ピーコック", [20, 120, 150]],
+    ["エメラルド", [30, 160, 110]], ["深緑", [34, 92, 66]], ["モスグリーン", [86, 116, 66]], ["オリーブ", [128, 128, 56]], ["カーキ", [150, 140, 92]], ["黄緑", [140, 200, 60]], ["ライム", [190, 240, 70]],
+    ["レモン", [250, 230, 90]], ["マスタード", [214, 168, 40]], ["ゴールド", [226, 176, 52]], ["あんず", [252, 184, 110]], ["みかん", [250, 150, 40]],
+    ["サーモン", [250, 140, 120]], ["コーラル", [250, 110, 96]], ["トマト", [226, 70, 60]], ["ボルドー", [110, 30, 52]], ["ローズ", [220, 80, 130]], ["マゼンタ", [210, 50, 160]], ["さくら", [252, 214, 224]], ["ももいろ", [250, 190, 200]],
+    ["ふじ色", [170, 130, 220]], ["ブドウ", [112, 64, 150]], ["チョコ", [90, 56, 40]], ["キャラメル", [190, 140, 84]], ["サンド", [226, 204, 160]], ["クリーム", [252, 240, 208]],
+    ["シルバー", [190, 196, 206]], ["チャコール", [74, 76, 86]]]);
+  add(CHAR.HAIRC, [["ハニーブロンド", [228, 184, 96]], ["プラチナ", [236, 232, 220]], ["キャラメル", [176, 112, 56]], ["チョコ", [84, 52, 40]], ["あか茶", [146, 64, 44]], ["ボルドー", [120, 34, 56]],
+    ["ローズ", [220, 90, 130]], ["さくら", [252, 200, 214]], ["コーラル", [246, 130, 110]], ["レモン", [250, 230, 100]], ["モスグリーン", [96, 120, 66]], ["エメラルド", [40, 160, 110]],
+    ["ターコイズ", [40, 180, 176]], ["ロイヤルブルー", [54, 100, 214]], ["ブルーブラック", [28, 34, 64]], ["ふじ色", [170, 130, 220]], ["ブドウ", [112, 64, 150]], ["ダークグレー", [80, 82, 92]]]);
+  const addC = (pool, list) => { for (const [n, c] of list) if (!(n in pool)) pool[n] = c; };
+  addC(SHOEC, [["こげ茶", [60, 40, 32]], ["キャメル", [190, 140, 84]], ["ベージュ", [226, 204, 170]], ["ネイビー", [40, 56, 120]], ["水色", [120, 190, 240]], ["ミント", [140, 220, 190]], ["ワイン", [130, 40, 70]],
+    ["オレンジ", [240, 140, 50]], ["グレー", [150, 150, 160]], ["銀", [200, 204, 214]], ["ターコイズ", [40, 180, 176]], ["ライム", [170, 220, 60]], ["黒ラメ", [70, 60, 96]]]);
+  addC(EYEC34, [["ヘーゼル", [150, 110, 50]], ["灰色", [130, 134, 146]], ["あお緑", [30, 150, 150]], ["ワイン", [140, 30, 60]], ["オレンジ", [240, 140, 50]], ["銀色", [190, 196, 210]],
+    ["ふかい青", [30, 60, 140]], ["きみどり", [140, 200, 60]], ["ラベンダー", [170, 140, 220]], ["琥珀", [200, 130, 30]], ["さくら", [240, 170, 190]], ["ターコイズ", [30, 190, 180]]]);
+  addC(CHAR.SKIN, [["さくら肌", [[255, 230, 226], [246, 196, 190], [188, 120, 118]]], ["オークル", [[240, 200, 160], [218, 168, 120], [150, 100, 72]]], ["ココア", [[150, 100, 76], [120, 76, 56], [70, 44, 36]]]]);
+}
 Object.assign(CHAR.WHITE, { B: [70, 110, 200], G: [96, 170, 96], O: [240, 150, 60], L: [180, 150, 230], D: [120, 80, 60] });
 Object.assign(CHAR.TOPS, {
   "キャミソール": { rows: [".....T....T.....", "....TuttttvT....", "....TttttttT...."], covers: false },
@@ -5822,11 +5847,21 @@ const prizeQty = {}, PRIZE_MAXQ = 9999;
 // { name, sub, img(), owned(), give() } を返す（帽子の "hat:" は前からの形のまま）
 const PRIZE_SP = {};
 const prizeSp = id => { const i = id.indexOf(":"); const f = i > 0 && id.slice(0, i) !== "hat" && PRIZE_SP[id.slice(0, i)]; try { return f ? f(id.slice(i + 1)) : null; } catch (e) { return null; } };
+const pzRow143 = (id, sub, acts) => itemLi(id, sub, acts).replace('<div class="li">', '<div class="li pzr143">');
 function openPrize() {
-  openModal("景品交換所", "shop", body => {
+  openModal("景品交換所", "shop prize143", body => {
     // 1回に交換できる数（v0.82.2 で99から9,999に。メダルがたくさんある人向け）
     const maxQ = c => Math.max(1, Math.min(PRIZE_MAXQ, Math.floor(world.medals / c)));
-    const draw = () => {
+    // 作りなおしても、押したボタンが画面の同じ高さに残るようにする（v0.83.1。前は数や桁がかわるたびに行の高さがかわって、
+    // 一覧が少しずつ上へ流れ、ボタンが逃げていった）。keep＝[属性名, 値]
+    const findBy = (a, v) => [...body.querySelectorAll("[" + a + "]")].find(b => b.getAttribute(a) === v);
+    const draw = keep => {
+      const st = body.scrollTop, ke = keep && findBy(keep[0], keep[1]), off = ke ? ke.getBoundingClientRect().top - body.getBoundingClientRect().top : null;
+      drawBody();
+      const k2 = keep && findBy(keep[0], keep[1]);
+      if (k2 && off !== null) body.scrollTop += k2.getBoundingClientRect().top - body.getBoundingClientRect().top - off; else body.scrollTop = st;
+    };
+    const drawBody = () => {
       body.innerHTML = `<p class="mtext">「勝ったぶんは、ここで形にしていきませんか？」</p>
       <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、1回に${PRIZE_MAXQ.toLocaleString()}個まで、まとめて交換できます）</span></p>
       <div class="list">${PRIZES.map(([id, c]) => {
@@ -5834,18 +5869,18 @@ function openPrize() {
         if (sp) return `<div class="li"><img src="${sp.img()}" alt=""><span class="nm">${esc(sp.name)}<span class="sub2">メダル${c.toLocaleString()}枚${sp.sub ? "・" + esc(sp.sub) : ""}</span></span><span class="acts">${sp.owned() ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換（${c.toLocaleString()}枚）</button>`}</span></div>`;
         if (id.startsWith("hat:")) { const h = id.slice(4); return `<div class="li"><img src="${charImg118({ ...cfg, hat: h }, "down", 0).toDataURL()}" alt=""><span class="nm">${h}（着せ替え）<span class="sub2">メダル${c}枚</span></span><span class="acts">${hatUnlocked(h) ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換</button>`}</span></div>`; }
         const q = Math.max(1, Math.min(maxQ(c), prizeQty[id] || 1)); prizeQty[id] = q;
-        return itemLi(id, `メダル${c.toLocaleString()}枚（1個）${ITEMS[id].furn ? `・家具${ITEMS[id].price ? `・売値 ${fmt(sellPrice(id))}` : ""}` : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><input class="pzq" type="number" inputmode="numeric" min="1" max="${maxQ(c)}" step="1" value="${q}" data-pzn="${id}" data-c="${c}" aria-label="交換する数"><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${(c * q).toLocaleString()}枚）</button>`);
+        return pzRow143(id, `メダル${c.toLocaleString()}枚（1個）${ITEMS[id].furn ? `・家具${ITEMS[id].price ? `・売値 ${fmt(sellPrice(id))}` : ""}` : `・売値 ${fmt(sellPrice(id))}`}`, `<button class="btn light" type="button" data-pzd="${id}" ${q <= 1 ? "disabled" : ""} aria-label="へらす">−</button><input class="pzq" type="number" inputmode="numeric" min="1" max="${maxQ(c)}" step="1" value="${q}" data-pzn="${id}" data-c="${c}" aria-label="交換する数"><button class="btn light" type="button" data-pzu="${id}" data-c="${c}" ${q >= maxQ(c) || world.medals < c * (q + 1) ? "disabled" : ""} aria-label="ふやす">＋</button><button class="btn light" type="button" data-pzx="${id}" data-c="${c}" ${world.medals < c * 2 ? "disabled" : ""}>最大</button><button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c * q ? "disabled" : ""}>交換（${(c * q).toLocaleString()}枚）</button>`);
       }).join("")}</div>`;
-      body.querySelectorAll("[data-pzd]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzd] = Math.max(1, (prizeQty[b.dataset.pzd] || 1) - 1); draw(); });
-      body.querySelectorAll("[data-pzu]").forEach(b => b.onclick = () => { const c = +b.dataset.c; prizeQty[b.dataset.pzu] = Math.min(maxQ(c), (prizeQty[b.dataset.pzu] || 1) + 1); draw(); });
-      body.querySelectorAll("[data-pzx]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzx] = maxQ(+b.dataset.c); draw(); });
-      body.querySelectorAll("[data-pzn]").forEach(inp => inp.onchange = () => { const v = Math.floor(+inp.value) || 1; prizeQty[inp.dataset.pzn] = Math.max(1, Math.min(maxQ(+inp.dataset.c), v)); draw(); });
+      body.querySelectorAll("[data-pzd]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzd] = Math.max(1, (prizeQty[b.dataset.pzd] || 1) - 1); draw(["data-pzd", b.dataset.pzd]); });
+      body.querySelectorAll("[data-pzu]").forEach(b => b.onclick = () => { const c = +b.dataset.c; prizeQty[b.dataset.pzu] = Math.min(maxQ(c), (prizeQty[b.dataset.pzu] || 1) + 1); draw(["data-pzu", b.dataset.pzu]); });
+      body.querySelectorAll("[data-pzx]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzx] = maxQ(+b.dataset.c); draw(["data-pzx", b.dataset.pzx]); });
+      body.querySelectorAll("[data-pzn]").forEach(inp => inp.onchange = () => { const v = Math.floor(+inp.value) || 1; prizeQty[inp.dataset.pzn] = Math.max(1, Math.min(maxQ(+inp.dataset.c), v)); draw(["data-pzn", inp.dataset.pzn]); });
       body.querySelectorAll("[data-pz]").forEach(b => b.onclick = () => {
         const id = b.dataset.pz, c = +b.dataset.c, sp = prizeSp(id), hat = id.startsWith("hat:"), q = hat || sp ? 1 : Math.max(1, prizeQty[id] || 1);
         if (world.medals < c * q) return;
         if (sp) { if (sp.owned()) return; sp.give(); } else if (hat) unlock(id.slice(4)); else if (!addItem(id, q)) return;
         world.medals -= c * q; world.stats.prizes = (world.stats.prizes || 0) + q; prizeQty[id] = 1; saveWorld();
-        toast(hat || sp ? null : ITEMS[id].icon, `${sp ? sp.name : hat ? id.slice(4) : ITEMS[id].name}${q > 1 ? "を" + q + "個" : "と"}交換した`); draw();
+        toast(hat || sp ? null : ITEMS[id].icon, `${sp ? sp.name : hat ? id.slice(4) : ITEMS[id].name}${q > 1 ? "を" + q + "個" : "と"}交換した`); draw(["data-pz", id]);
       });
     };
     draw();
@@ -6394,7 +6429,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.83.0";
+const CLIENT_VERSION = "0.84.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -8479,6 +8514,12 @@ F17.ready = true;
 // =================== v19: update history (アップデート履歴) ===================
 // 新しい版を出すときは、いちばん上に1つ足す（v は CLIENT_VERSION と同じ値。お知らせしない小さな版は足さなくてよい）
 const CHANGES19 = [
+  { v: "0.84.0", date: "2026/11/16", title: "オリジナル称号・色がふえた・小屋のうしろを通れる", items: [
+    "村タブの称号の下から、自分だけの称号を作れる（10,000,000G・10文字まで。あとから変えるのは1,000,000G）。名前の上に出て、ほかの人にも見える",
+    "色がふえた：着せ替えの服・髪・目・靴・肌に新しい色をたくさん。服のマイデザインの色も15色から35色に",
+    "サイロ・家畜小屋・ニワトリ小屋・ペット小屋のうしろを通れるようにした（うしろにいるあいだは建物が半透明になる）",
+    "景品交換所で「最大」や「交換」を押すたびに、一覧が少しずつ上へずれて押しにくかったのを直した",
+  ] },
   { v: "0.83.0", date: "2026/11/15", title: "ふち取りとリボンの色・オーラと小物がふえた", items: [
     "着せ替えの「服」に、ふち取りの色（フリル・襟・白い所）とリボンの色（服のリボン・ネクタイ・帯・リボンの帽子）。服の色と別にえらべて、ほかの人にも見える",
     "オーラが6つふえた：ハート・音符・雪はオークション、ほたる・紅葉・星くずはカジノの景品交換所（メダル20,000〜30,000枚）。持っているオーラは着せ替えの「小物」でつけ外しできる",
@@ -10128,7 +10169,9 @@ F7.addToList = (list, now) => {
     const D = DECOR27[d.id], im = IMG[D.img]; if (!im) continue;
     const [x, y] = k.split(",").map(Number);
     list.push({ s: (y + 1) * TS - (D.solid ? 0 : 8), d: () => {
+      const fa = D.b32 ? fade143(k, d) : 1; if (fa < 1) ctx.globalAlpha = fa;
       ctx.drawImage(im, x * TS, (y + 1) * TS - im.height);
+      if (fa < 1) ctx.globalAlpha = 1;
       if (D.glow && (world.time >= 1020 || world.time < 420)) { const a = .18 + Math.sin(now / 300 + x) * .06; ctx.fillStyle = D.glow; ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(x * TS + 8, (y + 1) * TS - im.height / 2, 14, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
     } });
   }
@@ -10885,6 +10928,13 @@ function reg32(id, b) {
 for (const [id, b] of Object.entries(B32)) reg32(id, b);
 const foot32 = (k, d) => { const [x, y] = k.split(",").map(Number), b = B32[d.id]; return { x0: x, y0: y - b.h + 1, x1: x + b.w - 1, y1: y }; };
 const builds32 = () => Object.entries(world.decor || {}).filter(([, d]) => B32[d.id]);
+// うしろを通れる建物（手前の1列だけがふさがる）と、うしろにいるあいだ半透明にする（キャラが見えなくなるので）
+const BACK143 = new Set(["barn32", "silo32", "coop32", "pethouse32"]);
+const fade143 = (k, d) => {
+  if (!BACK143.has(d.id) || map !== village) return 1;
+  const f = foot32(k, d), tx = Math.floor((player.px + 8) / TS), ty = Math.floor((player.py + 8) / TS);
+  return tx >= f.x0 && tx <= f.x1 && ty >= f.y0 && ty < f.y1 ? .45 : 1;
+};
 const COMBO32 = { sprharv80: ["sprinkler33", "harv80"] }; // 同じマスに重ねた建物（v0.48.0）。中の建物ぜんぶの仕事をする
 const mine32 = id => builds32().filter(([, d]) => (d.id === id || (COMBO32[d.id] || []).includes(id)) && (myDecor27(d) || share103(d))).map(([k]) => k);
 const buildAt32 = (x, y) => builds32().find(([k, d]) => { const f = foot32(k, d); return x >= f.x0 && x <= f.x1 && y >= f.y0 && y <= f.y1; });
@@ -10895,7 +10945,8 @@ const _rebuildSolid32 = rebuildSolid;
 rebuildSolid = function () {
   _rebuildSolid32();
   const S = village.solid;
-  for (const [k, d] of builds32()) { const f = foot32(k, d); for (let y = f.y0; y <= f.y1; y++) for (let x = f.x0; x <= f.x1; x++) if (S[y] && x >= 0 && x < village.w) S[y][x] = true; }
+  // 背の高い小屋・サイロ（v0.83.1）：ふさぐのは足もとの手前の1列だけ。うしろの列は通れる（建物のうしろに回りこめる）
+  for (const [k, d] of builds32()) { const f = foot32(k, d), y0 = BACK143.has(d.id) ? f.y1 : f.y0; for (let y = y0; y <= f.y1; y++) for (let x = f.x0; x <= f.x1; x++) if (S[y] && x >= 0 && x < village.w) S[y][x] = true; }
 };
 rebuildSolid();
 // 置く場所：プレイヤーから見て向こう側に広がるように
@@ -26821,13 +26872,17 @@ function phoneBubble120(e) {
 
 // ---- 服のマイデザイン（cfg.md） ----
 // 上の服の上に、自分で描いた柄をのせる。マスは 32 ドットの服のあたり（よこ20×たて10・x 6〜25・y 20〜29）。
-// cfg.md は 200 文字（1マス 16 色を 16 進数1文字。0 は「もとの服の色のまま」）。のるのは服の色のついたドットだけ（白い襟や小物はそのまま）。
+// cfg.md は 200 文字（1マスを 36 進数1文字（v0.83.1 から35色。前は16進数で15色）。0 は「もとの服の色のまま」）。のるのは服の色のついたドットだけ（白い襟や小物はそのまま）。
 // 16 ドットで描くとき（「細かいドット」OFF）は、2×2 をまとめて 10×5 でのせる。
 const MDW120 = 20, MDH120 = 10, MDX120 = 6, MDY120 = 20, MDLEN120 = MDW120 * MDH120;
 const PALMD120 = [null, ["#fbfaf6", "しろ"], ["#2a2830", "くろ"], ["#9a98a4", "グレー"], ["#e84a4a", "あか"], ["#ff9a3a", "オレンジ"], ["#f8d84a", "きいろ"], ["#9ad85a", "きみどり"],
-  ["#3aa86a", "みどり"], ["#4ac8c8", "みずいろ"], ["#4a8ae8", "あお"], ["#2a3a8a", "こん"], ["#9a6ad8", "むらさき"], ["#ff8ab8", "ピンク"], ["#a86a3a", "ちゃいろ"], ["#f4c8a0", "ベージュ"]];
+  ["#3aa86a", "みどり"], ["#4ac8c8", "みずいろ"], ["#4a8ae8", "あお"], ["#2a3a8a", "こん"], ["#9a6ad8", "むらさき"], ["#ff8ab8", "ピンク"], ["#a86a3a", "ちゃいろ"], ["#f4c8a0", "ベージュ"],
+  // v0.83.1：ここから足した20色（番号は16〜35。1マスを36進数の1文字 g〜z で持つ。前の15色は同じ番号のまま）
+  ["#ffd0dc", "うすピンク"], ["#d83a78", "ローズ"], ["#7a1e3a", "ボルドー"], ["#ff7a66", "コーラル"], ["#ffb870", "あんず"], ["#d8a830", "ゴールド"], ["#fff07a", "レモン"],
+  ["#b8f040", "ライム"], ["#5a7a3a", "モスグリーン"], ["#1e5a46", "ふかみどり"], ["#20b8a8", "ターコイズ"], ["#9ad0ff", "そらいろ"], ["#2a5ad8", "ロイヤルブルー"], ["#1a2250", "ネイビー"],
+  ["#c8b0f0", "ラベンダー"], ["#6a3a9a", "ブドウ"], ["#5a3828", "チョコ"], ["#c89050", "キャラメル"], ["#fff0cc", "クリーム"], ["#4a4c58", "チャコール"]];
 const PALRGB120 = PALMD120.map(p => p ? [1, 3, 5].map(i => parseInt(p[0].slice(i, i + 2), 16)) : null);
-const validMd120 = s => typeof s === "string" && s.length === MDLEN120 && /^[0-9a-f]+$/.test(s) && /[1-9a-f]/.test(s);
+const validMd120 = s => typeof s === "string" && s.length === MDLEN120 && /^[0-9a-z]+$/.test(s) && /[1-9a-z]/.test(s) && [...s].every(ch => parseInt(ch, 36) < PALMD120.length);
 const EMPTYMD120 = "0".repeat(MDLEN120);
 // みんなの見た目にも通す（スマホの ph もここで）
 {
@@ -26848,11 +26903,11 @@ charImg118 = function (c, dir, frame) {
   for (let Y = 0; Y < S; Y++) for (let X = 0; X < S; X++) {
     const k = (Y * S + X) * 4; if (!d[k + 3] || (d[k] === a[k] && d[k + 1] === a[k + 1] && d[k + 2] === a[k + 2])) continue;
     let v = 0;
-    if (S === 32) { const i = (flip ? 31 - X : X) - MDX120, j = Y - MDY120; if (i < 0 || j < 0 || i >= MDW120 || j >= MDH120) continue; v = parseInt(c.md[j * MDW120 + i], 16); }
+    if (S === 32) { const i = (flip ? 31 - X : X) - MDX120, j = Y - MDY120; if (i < 0 || j < 0 || i >= MDW120 || j >= MDH120) continue; v = parseInt(c.md[j * MDW120 + i], 36); }
     else {
       const i0 = ((flip ? 15 - X : X) - MDX120 / 2) * 2, j0 = (Y - MDY120 / 2) * 2; if (i0 < 0 || j0 < 0 || i0 >= MDW120 || j0 >= MDH120) continue;
       const n = {}; let bn = 0;
-      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const w = parseInt(c.md[(j0 + dy) * MDW120 + i0 + dx], 16); if (!w) continue; n[w] = (n[w] || 0) + 1; if (n[w] > bn) { bn = n[w]; v = w; } }
+      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const w = parseInt(c.md[(j0 + dy) * MDW120 + i0 + dx], 36); if (!w) continue; n[w] = (n[w] || 0) + 1; if (n[w] > bn) { bn = n[w]; v = w; } }
     }
     if (!v) continue;
     // 服のもとの明るさ（影と光）を少しだけ残す
@@ -26900,7 +26955,7 @@ function openMyDesign120() {
     bx.clearRect(0, 0, 32, 32); bx.drawImage(aim, 0, 0, aim.width, aim.height, 0, 0, 32, 32); const ad = bx.getImageData(0, 0, 32, 32).data;
     const draw = () => {
       for (let j = 0; j < MDH120; j++) for (let i = 0; i < MDW120; i++) {
-        const v = parseInt(md120s.p[j * MDW120 + i], 16), k = ((MDY120 + j) * 32 + MDX120 + i) * 4;
+        const v = parseInt(md120s.p[j * MDW120 + i], 36), k = ((MDY120 + j) * 32 + MDX120 + i) * 4;
         const cloth = bd[k + 3] && (bd[k] !== ad[k] || bd[k + 1] !== ad[k + 1] || bd[k + 2] !== ad[k + 2]);
         g.fillStyle = v ? PALMD120[v][0] : bd[k + 3] ? `rgb(${bd[k]},${bd[k + 1]},${bd[k + 2]})` : ((i + j) % 2 ? "#f4eef0" : "#ebe2e6");
         g.fillRect(i * CELL, j * CELL, CELL, CELL);
@@ -26921,7 +26976,7 @@ function openMyDesign120() {
       if (i < 0 || j < 0 || i >= MDW120 || j >= MDH120) return;
       if (md120s.size === 2) { i &= ~1; j &= ~1; }
       const k = i + "," + j; if (k === last) return; last = k;
-      const ch = md120s.col.toString(16);
+      const ch = md120s.col.toString(36);
       if (md120s.size === 2) { dot(i, j, ch); dot(i + 1, j, ch); dot(i, j + 1, ch); dot(i + 1, j + 1, ch); } else dot(i, j, ch);
       draw();
     };
@@ -26933,7 +26988,7 @@ function openMyDesign120() {
     body.querySelectorAll("[data-mc120]").forEach(b => b.onclick = () => { md120s.col = +b.dataset.mc120; body.querySelectorAll("[data-mc120]").forEach(o => o.classList.toggle("on", o === b)); });
     body.querySelectorAll("[data-sz120]").forEach(b => b.onclick = () => { md120s.size = +b.dataset.sz120; body.querySelectorAll("[data-sz120]").forEach(o => o.setAttribute("aria-pressed", String(o === b))); });
     body.querySelector("#md120mir").onclick = e => { md120s.mirror = !md120s.mirror; e.currentTarget.setAttribute("aria-pressed", String(md120s.mirror)); draw(); };
-    body.querySelector("#md120fill").onclick = () => { push(); md120s.p = md120s.col.toString(16).repeat(MDLEN120).split(""); draw(); };
+    body.querySelector("#md120fill").onclick = () => { push(); md120s.p = md120s.col.toString(36).repeat(MDLEN120).split(""); draw(); };
     body.querySelector("#md120undo").onclick = () => { const p = md120s.undo.pop(); if (p) { md120s.p = p.split(""); draw(); } };
     body.querySelector("#md120clr").onclick = () => { push(); md120s.p = EMPTYMD120.split(""); draw(); };
     body.querySelectorAll("[data-ms120]").forEach(b => b.onclick = () => { if (!validMd120(str())) { msg.textContent = "まだなにも描いていないよ"; return; } md120().looks[+b.dataset.ms120] = str(); saveWorld(); closeModal(); openMyDesign120(); });
@@ -31129,6 +31184,71 @@ GUIDE54.push(["ふち取りとリボンの色・オーラと小物", "s139_aura_
 F142.apply = apply142; F142.aura = NEW_AURA142; F142.acc = ACC142;
 F142.ready = true;
 
+// =================== v143: オリジナル称号（1,000万G） ===================
+var F143 = {};
+// 村タブの称号の下から、自分だけの称号を作れる（はじめて 10,000,000G・あとから変えるのは 1,000,000G）。
+// 作った称号は、ふつうの称号と同じに選べて、名前の上に出る。ほかの人には cfg の tt（名前）と ot（"1"＝作った称号）で届く。
+// 長さは10文字まで。<>・見えない文字・制御文字はのぞく。ほかの称号と同じ名前・「盗人」・管理人をまねる名前は付けられない。
+const OT_COST143 = 10000000, OT_RENAME143 = 1000000, OT_MAX143 = 10;
+const otData143 = () => { const o = world.ot143; return o && typeof o === "object" && typeof o.name === "string" && o.name ? o : null; };
+const otClean143 = s => String(s || "").normalize("NFKC").replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff<>"&]/g, "").replace(/\s+/g, " ").trim().slice(0, OT_MAX143);
+const otBad143 = n => {
+  if (!n) return "名前を入れてね";
+  if (n === "盗人" || /管理人|運営|公式|GM|admin/i.test(n)) return "その名前は付けられないよ";
+  if (TITLES.some(t => t[0] === n && !(otData143() && otData143().name === n))) return "いまある称号と同じ名前は付けられないよ";
+  return "";
+};
+const otSync143 = () => {
+  const o = otData143(); if (!o) return;
+  const i = TITLES.findIndex(t => t.ot143);
+  const row = [o.name, "自分で作った称号", () => !!otData143() && otData143().name === o.name]; row.ot143 = true;
+  if (i >= 0) TITLES[i] = row; else TITLES.push(row);
+};
+otSync143();
+// セーブを読みなおしたとき（world が差しかわる）にも、称号の一覧に入れなおす
+setInterval(otSync143, 2000);
+{
+  const _cl = cleanCfg;
+  cleanCfg = function (c) { const o = _cl(c); if (c && c.ot === "1" && typeof c.tt === "string") { const n = otClean143(c.tt); if (n && n === c.tt) { o.tt = n; o.ot = "1"; } } return o; };
+  setInterval(() => {
+    const o = otData143(), mine = !!o && cfg.tt === o.name;
+    if (mine && cfg.ot !== "1") { cfg.ot = "1"; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); }
+    else if (!mine && cfg.ot) { delete cfg.ot; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); }
+  }, 1000);
+}
+function openOT143() {
+  const o = otData143(), cost = o ? OT_RENAME143 : OT_COST143;
+  openModal(o ? "オリジナル称号を変える" : "オリジナル称号を作る", "", body => {
+    body.innerHTML = `<p class="mtext">自分だけの称号を作れるよ。名前の上に出て、ほかの人にも見える。${OT_MAX143}文字まで。</p>
+      <p class="mtext">${o ? `いまの称号：「<b>${esc(o.name)}</b>」。変えるのは <b>${fmt(cost)}</b>。` : `作るのは <b>${fmt(cost)}</b>（はじめの1回）。あとから変えるのは ${fmt(OT_RENAME143)}。`}　所持金 ${fmt(world.money)}</p>
+      <div class="row2"><input id="ot143in" type="text" maxlength="${OT_MAX143}" value="${esc(o ? o.name : "")}" placeholder="例：どんぐり博士" autocomplete="off" aria-label="称号の名前"><button class="btn" type="button" id="ot143ok" ${world.money >= cost ? "" : "disabled"}>${o ? "変える" : "作る"}</button></div>
+      <p class="mtext small" id="ot143msg">${world.money >= cost ? "" : "お金が足りないよ"}</p>
+      <p class="mtext small">ほかの人が不快になる名前は付けないでね。村の管理人の判断で、変えてもらうことがあります。</p>`;
+    const inp = body.querySelector("#ot143in"), msg = body.querySelector("#ot143msg");
+    body.querySelector("#ot143ok").onclick = () => {
+      const n = otClean143(inp.value), bad = otBad143(n);
+      if (bad) { msg.textContent = bad; return; }
+      if (o && o.name === n) { msg.textContent = "いまと同じ名前だよ"; return; }
+      if (world.money < cost) { msg.textContent = "お金が足りないよ"; return; }
+      addMoney(-cost); world.ot143 = { name: n, at: world.day }; world.title = n; otSync143(); saveWorld();
+      closeModal(); try { F7.renderVillage(); } catch (e) { } toast(null, `称号「${n}」を作った。名前の上に出るよ`);
+    };
+  });
+}
+F143.open = openOT143; F143.clean = otClean143;
+{
+  const _rv = renderVillage;
+  renderVillage = function () {
+    _rv.apply(this, arguments);
+    const row = document.querySelector("#villageBody [data-title]")?.closest(".opt"); if (!row || row.querySelector("#ot143btn")) return;
+    const o = otData143();
+    row.insertAdjacentHTML("beforeend", `<div class="row2"><button class="btn light" type="button" id="ot143btn">${o ? "オリジナル称号を変える" : "オリジナル称号を作る"}（${fmt(o ? OT_RENAME143 : OT_COST143)}）</button></div>`);
+    row.querySelector("#ot143btn").onclick = openOT143;
+  };
+  F7.renderVillage = renderVillage;
+}
+GUIDE54.push(["オリジナル称号", "", `<p>村タブの称号の下から、自分だけの称号を作れます（はじめて10,000,000G・変えるのは1,000,000G・10文字まで）。作った称号は名前の上に出て、ほかの人にも見えます。</p>`]);
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -31589,7 +31709,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

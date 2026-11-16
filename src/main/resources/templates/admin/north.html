@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>北の土地｜こもれび村 管理人室</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<header class="bar">
+  <h1>北の土地の建物</h1>
+  <span class="grow"></span>
+  <a class="btn ghost" href="/admin">管理人室に戻る</a>
+</header>
+<nav th:replace="~{admin/fragments :: vbar}"></nav>
+<main class="wrap">
+  <p class="flash" th:if="${msg}" th:text="${msg}"></p>
+  <section class="card">
+    <h2>いまの村の、北の土地（y 44〜83）に建っている物</h2>
+    <p class="muted">飾り・建物・家・みんなの建物を消せます。飾り・建物・みんなの建物は、場所（x, y）を入れて動かせます（家は消すだけ。家の中身は残るので、持ち主が建てなおせば元にもどります）。消した物は元にもどせないので、気をつけてください。動かす先に、ほかの物があっても重ならないよう確かめてから入れてね。</p>
+    <p th:if="${items.isEmpty()}">北の土地に建っている物はありません。</p>
+    <table th:unless="${items.isEmpty()}" class="tbl">
+      <thead><tr><th>種類</th><th>名前・ID</th><th>持ち主</th><th>場所</th><th>動かす</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="it : ${items}">
+          <td th:text="${it.kind()}">飾り</td>
+          <td th:text="${it.label()}">id</td>
+          <td th:text="${it.owner()}">持ち主</td>
+          <td th:text="|${it.x()}, ${it.y()}|">0, 44</td>
+          <td>
+            <form th:if="${it.movable()}" method="post" th:action="@{/admin/north/move}" class="row">
+              <input type="hidden" name="layer" th:value="${it.layer()}"><input type="hidden" name="key" th:value="${it.key()}">
+              x <input name="x" inputmode="numeric" size="3" th:value="${it.x()}"> y <input name="y" inputmode="numeric" size="3" th:value="${it.y()}">
+              <button class="btn" type="submit">動かす</button>
+            </form>
+            <span th:unless="${it.movable()}" class="muted">動かせません</span>
+          </td>
+          <td>
+            <form method="post" th:action="@{/admin/north/delete}">
+              <input type="hidden" name="layer" th:value="${it.layer()}"><input type="hidden" name="key" th:value="${it.key()}">
+              <button class="btn ghost" type="submit" onclick="return confirm('これを消しますか？（元にもどせません）')">消す</button>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

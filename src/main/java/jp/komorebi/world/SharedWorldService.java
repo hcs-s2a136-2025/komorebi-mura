@@ -175,6 +175,69 @@ public class SharedWorldService implements WelcomeContributor {
         return out;
     }
 
+    /** 北の土地（y が NORTH_Y0 以上）に建っている物の一覧（管理人室の「北の土地」） */
+    public static final int NORTH_Y0 = 44;
+    public record NorthItem(String layer, String key, String kind, String label, String owner, int x, int y, boolean movable) { }
+
+    public synchronized List<NorthItem> northItems() {
+        List<NorthItem> out = new java.util.ArrayList<>();
+        ObjectNode ls = layers();
+        if (ls.get("decor") instanceof ObjectNode d) d.fields().forEachRemaining(e -> {
+            int[] xy = xy(e.getKey()); if (xy == null || xy[1] < NORTH_Y0) return;
+            out.add(new NorthItem("decor", e.getKey(), "飾り・建物", e.getValue().path("id").asText("?"), e.getValue().path("n").asText(""), xy[0], xy[1], true));
+        });
+        if (ls.get("houses") instanceof ObjectNode h) h.fields().forEachRemaining(e -> {
+            int[] xy = xy(e.getKey()); if (xy == null || xy[1] < NORTH_Y0) return;
+            out.add(new NorthItem("houses", e.getKey(), "家", e.getValue().path("name").asText(e.getValue().path("owner").asText("")), e.getValue().path("owner").asText(""), xy[0], xy[1], false));
+        });
+        if (ls.get("meta") instanceof ObjectNode m) m.fields().forEachRemaining(e -> {
+            if (!projKey(e.getKey()) || !e.getValue().path("at").isArray() || e.getValue().path("at").size() < 2) return;
+            int x = e.getValue().path("at").get(0).asInt(-1), y = e.getValue().path("at").get(1).asInt(-1);
+            if (y < NORTH_Y0) return;
+            out.add(new NorthItem("meta", e.getKey(), "みんなの建物", e.getKey().substring(e.getKey().indexOf(':') + 1), "", x, y, true));
+        });
+        out.sort(java.util.Comparator.comparingInt(NorthItem::y).thenComparingInt(NorthItem::x));
+        return out;
+    }
+
+    private static int[] xy(String k) {
+        String[] a = k.split(",");
+        if (a.length != 2) return null;
+        try { return new int[] { Integer.parseInt(a[0].trim()), Integer.parseInt(a[1].trim()) }; } catch (NumberFormatException e) { return null; }
+    }
+
+    /**
+     * 管理人の操作：北の土地の物を消す（move=false）か、(nx, ny) へ動かす（move=true）。持ち主の確認はしない。
+     * 返すのは、村のみんなに配る変更（edits の list）。できなかったら null（理由は reason に入る）
+     */
+    public synchronized ArrayNode adminNorth(String layer, String key, boolean move, int nx, int ny, String[] reason) {
+        if (!Set.of("decor", "houses", "meta").contains(layer) || !KEY.matcher(key).matches()) { reason[0] = "対象がちがうよ"; return null; }
+        if (!(layers().get(layer) instanceof ObjectNode lay) || lay.get(key) == null) { reason[0] = "もう見つからないよ（消えたか、動いたあと）"; return null; }
+        ArrayNode out = om.createArrayNode();
+        JsonNode cur = lay.get(key).deepCopy();
+        if (!move) {
+            lay.remove(key);
+            out.addObject().put("l", layer).put("k", key).set("v", NullNode.getInstance());
+        } else {
+            if ("houses".equals(layer)) { reason[0] = "家は動かせないよ（消すだけ）"; return null; }
+            if (nx < 0 || ny < NORTH_Y0 || nx >= 64 || ny >= 84) { reason[0] = "北の土地の中（x 0〜63・y 44〜83）を入れてね"; return null; }
+            if ("decor".equals(layer)) {
+                String nk = nx + "," + ny;
+                if (lay.has(nk)) { reason[0] = "そこにはもう飾りがあるよ"; return null; }
+                lay.remove(key); lay.set(nk, cur);
+                out.addObject().put("l", layer).put("k", key).set("v", NullNode.getInstance());
+                out.addObject().put("l", layer).put("k", nk).set("v", cur);
+            } else {
+                if (!(cur instanceof ObjectNode o)) { reason[0] = "この建物は動かせないよ"; return null; }
+                o.putArray("at").add(nx).add(ny);
+                lay.set(key, o);
+                out.addObject().put("l", layer).put("k", key).set("v", o);
+            }
+        }
+        touch();
+        return out;
+    }
+
     /** サーバーだけが書く情報（村の時計など）。プレイヤーからの edits では書きかえられない */
     public synchronized void putSystem(String name, JsonNode value) {
         layers().set(name, value);

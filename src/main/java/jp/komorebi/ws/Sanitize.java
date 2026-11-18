@@ -39,17 +39,19 @@ final class Sanitize {
     /** 服のマイデザイン（よこ20×たて10マス、1マスを36進数1文字で。v0.83.1 から35色。前の16進数の柄もそのまま通る） */
     private static final Pattern MYDESIGN = Pattern.compile("[0-9a-z]{200}");
 
-    /** 見た目の設定：文字列の値だけ・40項目まで（v0.83.0 で36から。ふち取りとリボンの色）・各20文字まで（メイクの paint は決まった形の90文字、pt2 は360文字、服のマイデザイン md は200文字） */
+    /** 見た目の設定：文字列の値だけ・48項目まで（v0.85.0 で40から。アイドルの見た目）・各20文字まで（メイクの paint は決まった形の90文字、pt2 は360文字、服のマイデザイン md は200文字、アイドルのメイク ipt は90文字・ip2 は360文字） */
     static ObjectNode cfg(JsonNode n, ObjectMapper om) {
         ObjectNode out = om.createObjectNode();
         if (n == null || !n.isObject()) return out;
         int count = 0;
-        for (Iterator<Map.Entry<String, JsonNode>> it = n.fields(); it.hasNext() && count < 40; ) {
+        for (Iterator<Map.Entry<String, JsonNode>> it = n.fields(); it.hasNext() && count < 48; ) {
             Map.Entry<String, JsonNode> e = it.next();
             if (e.getKey().length() > 12) continue;
             JsonNode v = e.getValue();
             if ("pt2".equals(e.getKey())) { if (v.isTextual() && PAINT2.matcher(v.asText()).matches()) { out.put("pt2", v.asText()); count++; } continue; }
             if ("md".equals(e.getKey())) { if (v.isTextual() && MYDESIGN.matcher(v.asText()).matches()) { out.put("md", v.asText()); count++; } continue; }
+            if ("ip2".equals(e.getKey())) { if (v.isTextual() && PAINT2.matcher(v.asText()).matches()) { out.put("ip2", v.asText()); count++; } continue; }
+            if ("ipt".equals(e.getKey())) { if (v.isTextual() && PAINT.matcher(v.asText()).matches()) { out.put("ipt", v.asText()); count++; } continue; }
             if ("paint".equals(e.getKey())) { if (v.isTextual() && PAINT.matcher(v.asText()).matches()) { out.put("paint", v.asText()); count++; } continue; }
             if (v.isTextual() && v.asText().length() <= 20) { out.put(e.getKey(), v.asText()); count++; }
             else if (v.isBoolean()) { out.put(e.getKey(), v.asBoolean()); count++; }

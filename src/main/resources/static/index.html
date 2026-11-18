@@ -1749,6 +1749,60 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 .mbox.prize143 .mbody { overflow-anchor: none; }
 .li.pzr143 > .acts { grid-column: 1 / -1; justify-content: flex-end; }
 @media (max-width: 560px) { .li.pzr143 > .acts > .btn:not(.light) { flex: 1 1 100%; } }
+
+/* v144：アイドルのコーデカード・対決・トレード・オーラ・アルバム・はがす */
+#act144 { margin-bottom: 8px; }
+#act144 .nm144 label { display: flex; gap: 6px; align-items: center; flex: 1 1 12em; min-width: 0; }
+#act144 .nm144 input { flex: 1 1 auto; min-width: 0; width: 8em; padding: 5px 6px; font: inherit; border: 2px solid #8a6a90; border-radius: 6px; background: #fffaf0; color: var(--ink); }
+#act144 .ty144 .chip[aria-pressed="true"] { background: var(--c); color: #fff; border-color: #fff; }
+.grid144 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
+.grid144 .btn { min-width: 0; white-space: normal; }
+.cds144 { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; margin: 6px 0; }
+.cd144 { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 4px 6px; border: 2px solid rgba(255,255,255,.25); border-radius: 8px; background: rgba(0,0,0,.35); color: #fff; font: inherit; font-size: 11px; line-height: 1.3; text-align: center; min-width: 0; cursor: pointer; }
+.cd144 img { width: 60px; height: 80px; image-rendering: pixelated; border-radius: 4px; }
+.cd144[aria-pressed="true"] { border-color: #ffe27a; box-shadow: 0 0 0 2px #ffe27a; }
+.cd144.empty144 { min-height: 110px; justify-content: center; cursor: default; opacity: .7; }
+.cdn144 { font-weight: 700; overflow-wrap: anywhere; }
+.cdr144 { position: absolute; top: 6px; right: 6px; padding: 0 4px; border-radius: 4px; color: #fff; font-weight: 700; font-size: 10px; }
+.cdt144, .cdp144 { color: #e8dcf0; font-size: 10px; }
+.cdp144 { color: #ffe27a; font-weight: 700; }
+.cd144.par144 { border-color: transparent; background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)) padding-box, linear-gradient(90deg, #ff7ab0, #ffe04a, #7ae0a0, #7ad8ff, #b070ff, #ff7ab0) border-box; background-size: 100% 100%, 300% 100%; animation: par144 3s linear infinite; }
+@keyframes par144 { to { background-position: 0 0, 300% 0; } }
+.reveal144 .cd144 { animation: rv144 .5s ease-out both; }
+.reveal144 .cd144:nth-child(2) { animation-delay: .1s; } .reveal144 .cd144:nth-child(3) { animation-delay: .2s; } .reveal144 .cd144:nth-child(4) { animation-delay: .3s; }
+@keyframes rv144 { from { transform: rotateY(90deg) scale(.8); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cd144.par144, .reveal144 .cd144 { animation: none; } }
+.co144, .au144, .cm144 { display: flex; gap: 10px; align-items: center; margin: 6px 0; }
+.co144 canvas, .au144 canvas { flex: 0 0 auto; width: 96px; height: 96px; image-rendering: pixelated; border-radius: 8px; }
+.au144 canvas { width: 128px; height: 128px; }
+.co144 > div, .au144 > div, .cm144 > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cl144 { align-items: center; } .cl144 span { min-width: 5em; } .cl144 select { flex: 1 1 auto; min-width: 0; font: inherit; padding: 4px; border-radius: 6px; }
+.auc144 { gap: 4px; }
+.sw144 { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); padding: 0; cursor: pointer; }
+.sw144[aria-pressed="true"] { border-color: #ffe27a; box-shadow: 0 0 0 3px #ffe27a; }
+.sw144 .sr, .sr144 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.bk144 > div { margin: 6px 0; }
+.bkr144 { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
+.bkr144 span { min-width: 28px; padding: 2px 4px; border-radius: 4px; background: rgba(255,255,255,.1); color: #c8bcd8; font-size: 11px; text-align: center; }
+.bkr144 span.on { background: rgba(255,226,122,.25); color: #fff; font-weight: 700; }
+.bkr144 span.par { background: linear-gradient(90deg, #ff7ab0, #ffe04a, #7ad8ff, #b070ff); color: #221; }
+.al144 { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; margin: 6px 0; }
+.al144 figure { margin: 0; padding: 4px; border-radius: 6px; background: #fff; color: #2a2030; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.al144 figure.bro144 { background: linear-gradient(#fff, #ffd8e8); }
+.al144 canvas { width: 80px; height: 80px; image-rendering: pixelated; }
+.al144 figcaption { display: flex; flex-direction: column; font-size: 11px; line-height: 1.3; }
+.al144 figcaption span { color: #5a4a60; }
+.hg144 { position: fixed; left: 50%; bottom: 140px; transform: translateX(-50%); z-index: 60; display: flex; gap: 8px; align-items: center; max-width: calc(100vw - 24px); padding: 8px 10px; border-radius: 10px; background: rgba(40, 20, 50, .94); color: #fff; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+.hg144[hidden] { display: none; }
+.bt144 canvas, .mg144 canvas { display: block; width: 100%; max-width: 480px; margin: 0 auto; image-rendering: pixelated; border-radius: 8px; }
+.mg144 canvas { max-width: 320px; }
+.btn.sp144:not(:disabled) { background: linear-gradient(90deg, #ff7ab0, #ffb84a, #7ad8ff); color: #221; font-weight: 700; }
+.wk97 > .row2 { display: flex; flex-direction: column; align-items: center; gap: 6px; width: min(100%, 320px); }
+@media (max-height: 560px) and (min-aspect-ratio: 4/3) {
+  .wk97:has(#lv102cv) { grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+  .wk97:has(#lv102cv) > p { grid-column: 1 / -1; }
+  .wk97:has(#lv102cv) canvas { height: 46vh; }
+}
 </style>
 
 <header>
@@ -1875,7 +1929,7 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.84.0";
+  const VER = "0.85.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6429,7 +6483,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.84.0";
+const CLIENT_VERSION = "0.85.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -23138,7 +23192,7 @@ const idol102 = () => {
 };
 F102.state = idol102;
 const total102 = () => { const s = idol102().st; return s.vo + s.da + s.ex; };
-const idolCfg102 = () => { const d = idol102(), I = IDOLS102[Math.max(0, d.pick)], O = OUTFIT102[d.outfit] && total102() >= OUTFIT102[d.outfit][1] ? OUTFIT102[d.outfit][2] : null; return { ...DEFAULT, ...I.cfg, ...idolLook126(d), ...(O || {}) }; };
+const idolCfg102 = () => { const d = idol102(), I = IDOLS102[Math.max(0, d.pick)], O = OUTFIT102[d.outfit] && total102() >= OUTFIT102[d.outfit][1] ? OUTFIT102[d.outfit][2] : null; return { ...DEFAULT, ...I.cfg, ...idolLook126(d), ...(O || {}), ...(typeof F144 === "object" && F144 && F144.look ? F144.look() : {}) }; };
 const stageReady102 = () => !!(world.projects && world.projects.stage35 && world.projects.stage35.done);
 const fanTitle102 = f => f >= 5000 ? "伝説のプロデューサー" : f >= 1000 ? "人気プロデューサー" : f >= 100 ? "新人プロデューサー" : "";
 function openIdol102(note) {
@@ -23189,6 +23243,7 @@ function lesson102(k) {
     b.innerHTML = `${staffSay13(charIcon13(idolCfg102()), esc(hit >= 3 ? "プロデューサー、見ててくれた？ 手ごたえ、あったよ！" : "うーん、まだまだ……もっと練習しなきゃ"))}<div class="dk75r"><b>${NAME} +${gain}</b><span>${hit}/${N}回 決まった</span>${news.map(n => `<span>${esc(n)}が使えるようになった！</span>`).join("")}</div><div class="row2"><button class="btn" type="button" id="ls102back">プロデュースにもどる</button></div>`;
     $("ls102back").onclick = () => { closeModal(); openIdol102(); };
     if (news.length) se13("big");
+    try { if (typeof F144 === "object" && F144 && F144.afterLesson) F144.afterLesson(hit, N); } catch (e) { }
   }
   const loop = now => {
     if (!cv.isConnected || ended) return;
@@ -23210,7 +23265,8 @@ function live102(body) {
   const d = idol102(), I = IDOLS102[d.pick], S = SONG102[d.song] && total102() >= SONG102[d.song][1] ? SONG102[d.song] : SONG102[0], paid = (d.paid || 0) < LIVEPAY102;
   const N = S[3], W = 320, H = 180, HX = 64, SPD = 110, notes = []; let tt = 0, ended = false, last = performance.now(), good = 0, miss = 0, judge = "", judgeT = 0;
   for (let k = 0; k < N; k++) notes.push({ t: 1.6 + k * (k % 4 === 3 ? .9 : .6) + (k > N / 2 ? -.05 * (k - N / 2) * .3 : 0), hit: false, gone: false });
-  body.innerHTML = `<div class="wk97"><p class="mtext small">${esc(I.name)}が「${esc(S[0])}」を歌う！ 音符がわっかに重なったら「コール！」</p><canvas id="lv102cv" width="${W}" height="${H}"></canvas><button type="button" class="btn" id="lv102b">コール！</button></div>`;
+  const X144 = typeof F144 === "object" && F144 && F144.liveInfo ? F144.liveInfo() : null; let sp144 = 0, spT144 = 0;
+  body.innerHTML = `<div class="wk97"><p class="mtext small">${esc(I.name)}が「${esc(S[0])}」を歌う！ 音符がわっかに重なったら「コール！」${X144 ? `　6回コールが決まると「スペシャルアピール」` : ""}</p><canvas id="lv102cv" width="${W}" height="${H}"></canvas><div class="row2"><button type="button" class="btn" id="lv102b">コール！</button>${X144 ? `<button type="button" class="btn sp144" id="lv102sp" disabled>スペシャルアピール</button>` : ""}</div></div>`;
   const cv = $("lv102cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
   const tap = () => {
     if (ended) return; const n = notes.find(x => !x.hit && !x.gone && Math.abs(W - (tt - x.t + (W - HX) / SPD) * SPD - HX) < 26);
@@ -23218,13 +23274,16 @@ function live102(body) {
     judgeT = .4;
   };
   $("lv102b").addEventListener("pointerdown", e => { e.preventDefault(); tap(); }); cv.addEventListener("pointerdown", e => { e.preventDefault(); tap(); });
+  const spB144 = $("lv102sp");
+  const special144 = () => { if (ended || sp144 || !X144 || good < 6) return; sp144 = 1; spT144 = 1.8; if (spB144) { spB144.disabled = true; spB144.textContent = X144.sp; } se13("jackpot"); try { X144.onSpecial && X144.onSpecial(); } catch (e) { } };
+  if (spB144) spB144.addEventListener("pointerdown", e => { e.preventDefault(); special144(); });
   const kd = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!e.repeat) tap(); } };
   addEventListener("keydown", kd, true);
   const xOf = n => W - (tt - n.t + (W - HX) / SPD) * SPD;
   function end() {
     if (ended) return; ended = true; removeEventListener("keydown", kd, true);
     const st = d.st, w = I.trait, statSum = st.vo * (w === "vo" ? 1.2 : 1) + st.da * (w === "da" ? 1.2 : 1) + st.ex * (w === "ex" ? 1.2 : 1);
-    const statScore = Math.min(1, statSum / S[4]), call = good / N, score = Math.round((statScore * .6 + call * .4) * 100), ok = score >= 50;
+    const statScore = Math.min(1, (statSum + (X144 ? X144.pow : 0)) / S[4]), call = good / N, score = Math.min(100, Math.round((statScore * .6 + call * .4) * 100) + (sp144 ? 10 : 0)), ok = score >= 50;
     let fans = 0, pay = 0;
     if (paid) { d.paid = (d.paid || 0) + 1; fans = ok ? Math.round(score / 100 * 30 * S[2] * (1 + Math.min(2, d.fans / 2000))) : 2; pay = ok ? fans * 10 : 0; d.fans += fans; if (pay) addMoney(pay); }
     d.lives++; d.best = Math.max(d.best, score); saveWorld(); try { checkTitles42(); } catch (e) { }
@@ -23235,11 +23294,13 @@ function live102(body) {
       <div class="dk75r"><b>${ok ? "ライブ成功！" : "ライブ、もうひといき"}</b><span>スコア ${score}点（アイドルの力 ${Math.round(statScore * 100)}%・コール ${good}/${N}）</span><span>${paid ? `ファン +${fans}人${pay ? `・お金 <em>${fmt(pay)}</em>` : ""}` : "きょうの本番はもう終わり（練習なので、ファンとお金はなし）"}</span><span>ファンの合計 ${fmt92(d.fans)}人${fanTitle102(d.fans) ? `・「${fanTitle102(d.fans)}」` : ""}</span></div>
       <div class="row2"><button class="btn light" type="button" id="lv102end">おりる</button></div>`;
     $("lv102end").onclick = () => closeModal();
+    try { if (X144 && X144.after) X144.after({ ok, score, sp: !!sp144, good, N }); } catch (e) { if (window.__komoErr) window.__komoErr(e, "v144 after live"); }
   }
-  F102.V = { tap, end, notes, N, setT: v => { tt = v; } , perfect: () => { good = N; end(); } };
+  F102.V = { tap, end, notes, N, setT: v => { tt = v; } , perfect: () => { good = N; end(); }, special: () => special144(), setGood: v => { good = v; } };
   const loop = now => {
     if (!cv.isConnected || ended) return;
-    const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt; if (judgeT > 0) judgeT -= dt;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; tt += dt; if (judgeT > 0) judgeT -= dt; if (spT144 > 0) spT144 -= dt;
+    if (spB144 && !sp144) spB144.disabled = good < 6;
     for (const n of notes) if (!n.hit && !n.gone && xOf(n) < HX - 26) { n.gone = true; miss++; }
     if (notes.every(n => n.hit || n.gone) && tt > notes[notes.length - 1].t + 3) { end(); return; }
     // ステージ
@@ -23247,7 +23308,9 @@ function live102(body) {
     for (let k = 0; k < 4; k++) { g.fillStyle = `hsla(${(tt * 60 + k * 90) % 360},90%,70%,.18)`; g.beginPath(); g.moveTo(60 + k * 70, 0); g.lineTo(30 + k * 70 + Math.sin(tt + k) * 30, 130); g.lineTo(90 + k * 70 + Math.sin(tt + k) * 30, 130); g.fill(); }
     g.fillStyle = "#5a3a2a"; g.fillRect(0, 120, W, 60); g.fillStyle = "#8a5a3a"; g.fillRect(0, 120, W, 4);
     const dir = ["down", "left", "down", "right"][Math.floor(tt * 2) % 4];
+    if (X144 && X144.aura) X144.aura(g, 164, 84, tt, Math.min(3, Math.floor(good / 4)) + (sp144 ? 2 : 0));
     g.drawImage(charImg118(idolCfg102(), dir, Math.floor(tt * 6) % 3), 136, 62, 56, 56);
+    if (spT144 > 0 && X144) { g.fillStyle = `rgba(255,255,255,${Math.min(.5, spT144 / 3)})`; g.fillRect(0, 0, W, H); g.fillStyle = X144.col; g.font = "bold 20px sans-serif"; g.textAlign = "center"; g.fillText(X144.sp, W / 2, 104); g.textAlign = "left"; }
     for (let k = 0; k < 7; k++) { const x = 20 + k * 44, j = Math.max(0, Math.sin(tt * 5 + k)) * 3; g.fillStyle = "#3a2a4a"; g.fillRect(x, 150 - j, 14, 16); g.fillRect(x + 3, 142 - j, 8, 8); if (Math.floor(tt * 2 + k) % 3 === 0) { g.fillStyle = ["#ff7aa8", "#7ad8ff", "#ffd84a"][k % 3]; g.fillRect(x + 12, 132 - j, 3, 10); } }
     // 音符とわっか
     g.strokeStyle = "#ffe27a"; g.lineWidth = 3; g.beginPath(); g.arc(HX, 30, 14, 0, 7); g.stroke();
@@ -27732,8 +27795,9 @@ const idlCode124 = () => {
   return `${d.pick}${outfit.toString(36)}${Math.min(9, d.song | 0)}${mode}${faceCode126(d)}`;
 };
 // v0.72.0：うしろに16文字の顔のコード（イメチェン・v126）がつくことがある
-const parseIdl124 = s => { const m = /^([0-2])([0-9a-z])([0-9])([wl])([0-9a-z]{16})?$/.exec(typeof s === "string" ? s : ""); if (!m) return null; const p = +m[1], o = parseInt(m[2], 36); return { pick: p, outfit: OUTFIT102[o] ? o : 0, song: +m[3], mode: m[4], face: m[5] || "" }; };
-const lookOf124 = x => ({ ...DEFAULT, ...IDOLS102[x.pick].cfg, ...faceOf126(x.face), ...((OUTFIT102[x.outfit] && OUTFIT102[x.outfit][2]) || {}) });
+// v0.85.0：見た目の設定（cfg）をまるごと渡すこともできる（x.c に入る。コーデ・メイク・名前・オーラは v144）。アイドルは5人（0〜4）
+const parseIdl124 = s => { const c = s && typeof s === "object" ? s : null; if (c) s = c.idl; const m = /^([0-4])([0-9a-z])([0-9])([wl])([0-9a-z]{16})?$/.exec(typeof s === "string" ? s : ""); if (!m || !IDOLS102[+m[1]]) return null; const p = +m[1], o = parseInt(m[2], 36); return { pick: p, outfit: OUTFIT102[o] ? o : 0, song: +m[3], mode: m[4], face: m[5] || "", c }; };
+const lookOf124 = x => ({ ...DEFAULT, ...IDOLS102[x.pick].cfg, ...faceOf126(x.face), ...((OUTFIT102[x.outfit] && OUTFIT102[x.outfit][2]) || {}), ...(x.c && typeof F144 === "object" && F144 && F144.remote ? F144.remote(x.c) : {}) });
 const _clean124 = cleanCfg;
 cleanCfg = function (c) { const o = _clean124(c); if (c && parseIdl124(c.idl)) o.idl = c.idl; return o; };
 setInterval(() => {
@@ -27755,7 +27819,7 @@ drawEnt = function (e) {
   const r = _drawEnt124.apply(this, arguments);
   try {
     const c = e === player ? cfg : e && e.kind === "remote" ? e.cfg : null;
-    const x = c && parseIdl124(c.idl);
+    const x = c && parseIdl124(c);
     if (x && x.mode === "w" && (map === village || map === port || map.isTown)) {
       const [dx, dy] = DIRS[e.dir] || [0, 1], tx = e.px - dx * 13 + (dy ? 9 : 0), ty = e.py - dy * 9;
       let t = trail124.get(e); if (!t) { t = { x: tx, y: ty }; trail124.set(e, t); }
@@ -27768,7 +27832,7 @@ drawEnt = function (e) {
   } catch (err) { }
   return r;
 };
-const liveNow124 = () => { const L = []; const add = (c, name) => { const x = c && parseIdl124(c.idl); if (x && x.mode === "l") L.push({ ...x, owner: name }); };
+const liveNow124 = () => { const L = []; const add = (c, name) => { const x = c && parseIdl124(c); if (x && x.mode === "l") L.push({ ...x, owner: name }); };
   add(cfg, myName()); for (const e of remotes.values()) add(e.cfg, e.name); return L; };
 F124.liveNow = liveNow124;
 const _addToList124 = F7.addToList;
@@ -27785,7 +27849,7 @@ F7.addToList = (list, now) => {
         ctx.drawImage(charImg118(lookOf124(x), dir, Math.floor(now / 160) % 3), Math.round(px), py - (Math.floor(now / 250) % 2), 16, 16);
         const t = (now / 1100 + i * .3) % 1; ctx.fillStyle = `rgba(255,226,122,${1 - t})`; ctx.font = "8px sans-serif"; ctx.textAlign = "center"; ctx.fillText("♪", px + 14 + Math.sin(now / 300) * 3, py - 2 - t * 14);
       });
-      ctx.fillStyle = "rgba(0,0,0,.55)"; const lab = `${IDOLS102[L[0].pick].name}のライブ中！`; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center"; const w = ctx.measureText(lab).width + 8; ctx.fillRect(bx + 32 - w / 2, by - 54, w, 10); ctx.fillStyle = "#ffe27a"; ctx.fillText(lab, bx + 32, by - 46);
+      ctx.fillStyle = "rgba(0,0,0,.55)"; const lab = `${idolNm144(L[0])}のライブ中！`; ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center"; const w = ctx.measureText(lab).width + 8; ctx.fillRect(bx + 32 - w / 2, by - 54, w, 10); ctx.fillStyle = "#ffe27a"; ctx.fillText(lab, bx + 32, by - 46);
     } });
   } catch (e) { }
 };
@@ -27795,8 +27859,8 @@ setInterval(() => {
   try {
     if (!F8.connected) return;
     for (const e of remotes.values()) {
-      const x = parseIdl124(e.cfg && e.cfg.idl), live = !!(x && x.mode === "l"), was = seen124.get(e);
-      if (live && !was) F7.notify(`${e.name}さんのアイドル「${IDOLS102[x.pick].name}」が、野外ステージでライブ中！ 見に行ってみよう`, null);
+      const x = parseIdl124(e.cfg), live = !!(x && x.mode === "l"), was = seen124.get(e);
+      if (live && !was) F7.notify(`${e.name}さんのアイドル「${idolNm144(x)}」が、野外ステージでライブ中！ 見に行ってみよう`, null);
       seen124.set(e, live);
     }
   } catch (err) { }
@@ -27900,7 +27964,7 @@ function audition124() {
       if (ended) return; ended = true; removeEventListener("keydown", kd, true);
       const st = d.st, w = I.trait, sum = st.vo * (w === "vo" ? 1.2 : 1) + st.da * (w === "da" ? 1.2 : 1) + st.ex * (w === "ex" ? 1.2 : 1) + Math.max(0, d.outfit) * 6;
       const score = Math.min(100, Math.round((Math.min(1.1, sum / A.need) * .6 + hit / N * .4) * 100)), ok = score >= 70, first = ok && !o.pass[ai];
-      if (ok) { d.fans += A.fans; if (first) o.pass[ai] = true; }
+      if (ok) { d.fans += A.fans; if (first) o.pass[ai] = true; try { if (typeof F144 === "object" && F144 && F144.afterAud) F144.afterAud(ai); } catch (e) { } }
       saveWorld(); try { checkTitles42(); } catch (e) { }
       se13(ok ? (first ? "jackpot" : "win") : "small"); if (first) { try { acornRain95(1800, 40); } catch (e) { } }
       const b = $("mbody"); if (!b) return;
@@ -29375,7 +29439,7 @@ const SENPAI135 = [{ name: "ミライ", cfg: { hair: "ロング", hairc: "ピン
   { name: "ソラ", cfg: { hair: "ショート", hairc: "青" in CHAR.HAIRC ? "青" : "黒", top: "セーラー服", topc: "青", bottom: "スカート", bottomc: "青" } }];
 function liveOthers135() {
   const L = [];
-  for (const e of remotes.values()) { const x = parseIdl124(e.cfg && e.cfg.idl); if (x && x.mode === "l") L.push({ id: e.rid, owner: e.name, x }); }
+  for (const e of remotes.values()) { const x = parseIdl124(e.cfg); if (x && x.mode === "l") L.push({ id: e.rid, owner: e.name, x }); }
   return L;
 }
 function openWatch135() {
@@ -29383,11 +29447,11 @@ function openWatch135() {
   openModal("ライブを見る", "dark", body => {
     body.innerHTML = `<p class="mtext">ライブを見ながら、流れてくるコールにあわせてボタンを押そう。ほかの人のライブなら、あなたのコールがその人のアイドルに届いて、ファンがふえるよ。</p>
       <h4>いま野外ステージでライブ中</h4>
-      <div class="list">${L.length ? L.map(l => `<div class="li"><span class="nm">${esc(l.owner)}さんのアイドル「${esc(IDOLS102[l.x.pick].name)}」<span class="sub2">${esc((SONG102[l.x.song] || SONG102[0])[0])}</span></span><span class="acts"><button class="btn" type="button" data-w135="${l.id}">見る・応援する</button></span></div>`).join("") : `<p class="mtext small">いまはだれもライブをしていないよ。${F8.connected ? "" : "（ほかの人のライブは、オンラインのときに見られる）"}</p>`}</div>
+      <div class="list">${L.length ? L.map(l => `<div class="li"><span class="nm">${esc(l.owner)}さんのアイドル「${esc(idolNm144(l.x))}」<span class="sub2">${esc((SONG102[l.x.song] || SONG102[0])[0])}</span></span><span class="acts"><button class="btn" type="button" data-w135="${l.id}">見る・応援する</button></span></div>`).join("") : `<p class="mtext small">いまはだれもライブをしていないよ。${F8.connected ? "" : "（ほかの人のライブは、オンラインのときに見られる）"}</p>`}</div>
       <h4>先輩アイドルのライブ（いつでも）</h4>
       <div class="list">${SENPAI135.map((s, i) => `<div class="li"><span class="nm">${esc(s.name)}<span class="sub2">村のアイドルの先輩。コールの練習にもどうぞ</span></span><span class="acts"><button class="btn light" type="button" data-s135="${i}">見る</button></span></div>`).join("")}</div>
       <p class="mtext small">見た回数 ${o.watched}回・コール成功 ${fmt92(o.calls)}回・あなたのアイドルがもらったコール ${fmt92(o.got)}回</p>`;
-    body.querySelectorAll("[data-w135]").forEach(b => b.onclick = () => { const l = liveOthers135().find(y => y.id === +b.dataset.w135); closeModal(); if (l) watchLive135({ id: l.id, owner: l.owner, look: lookOf124(l.x), name: IDOLS102[l.x.pick].name, song: l.x.song }); else openWatch135(); });
+    body.querySelectorAll("[data-w135]").forEach(b => b.onclick = () => { const l = liveOthers135().find(y => y.id === +b.dataset.w135); closeModal(); if (l) watchLive135({ id: l.id, owner: l.owner, look: lookOf124(l.x), name: idolNm144(l.x), song: l.x.song, c: l.x.c }); else openWatch135(); });
     body.querySelectorAll("[data-s135]").forEach(b => b.onclick = () => { const s = SENPAI135[+b.dataset.s135]; closeModal(); watchLive135({ id: 0, owner: "", look: { ...DEFAULT, ...s.cfg }, name: s.name, song: rnd(SONG102.length) }); });
   });
 }
@@ -29421,6 +29485,7 @@ function watchLive135(who) {
     const o = id135(); o.watched++; o.calls += ok;
     const rep = who.id && ok >= 5 && o.day !== world.day; if (rep) { o.day = world.day; addRep(1); }
     if (who.id && ok >= 1) world.stats.cheerOthers135 = (world.stats.cheerOthers135 || 0) + 1;
+    try { if (who.id && ok >= 3 && typeof F144 === "object" && F144 && F144.cheki) F144.cheki(who.owner, who.name, who.c, "live"); } catch (e) { }
     saveWorld(); try { checkTitles42(); } catch (e) { }
     const el = $("wl135m"); if (el) el.innerHTML = `<b>おしまい！</b> コール成功 ${ok}回${who.id ? `（${esc(who.owner)}さんのアイドルに届いた）` : ""}${rep ? "・村の評判 +1" : ""}`;
     const k = document.querySelector(".wl135k"); if (k) k.innerHTML = `<button class="btn light" type="button" id="wl135back">ライブをえらぶ</button>`;
@@ -29498,8 +29563,8 @@ setInterval(() => {
     try {
       if (!F8.connected || WATCH88) return;
       for (const e of remotes.values()) {
-        const x = parseIdl124(e.cfg && e.cfg.idl), live = !!(x && x.mode === "l"), was = seen.get(e.rid);
-        if (live && !was) { const id = e.rid, owner = e.name; F7.pending.push({ kind: "custom", show: () => openModal("ライブ中！", "dark", body => { body.innerHTML = `<p class="mtext">${esc(owner)}さんのアイドル「${esc(IDOLS102[x.pick].name)}」が、野外ステージでライブ中！ 見に行って、コールで応援する？</p><div class="row2"><button class="btn" type="button" id="lv135go">応援する</button><button class="btn light" type="button" id="lv135no">あとで</button></div>`; body.querySelector("#lv135go").onclick = () => { closeModal(); const c = remotes.get(id); const xx = c && parseIdl124(c.cfg && c.cfg.idl); if (xx && xx.mode === "l") watchLive135({ id, owner, look: lookOf124(xx), name: IDOLS102[xx.pick].name, song: xx.song }); else openWatch135(); }; body.querySelector("#lv135no").onclick = () => closeModal(); }) }); }
+        const x = parseIdl124(e.cfg), live = !!(x && x.mode === "l"), was = seen.get(e.rid);
+        if (live && !was) { const id = e.rid, owner = e.name; F7.pending.push({ kind: "custom", show: () => openModal("ライブ中！", "dark", body => { body.innerHTML = `<p class="mtext">${esc(owner)}さんのアイドル「${esc(idolNm144(x))}」が、野外ステージでライブ中！ 見に行って、コールで応援する？</p><div class="row2"><button class="btn" type="button" id="lv135go">応援する</button><button class="btn light" type="button" id="lv135no">あとで</button></div>`; body.querySelector("#lv135go").onclick = () => { closeModal(); const c = remotes.get(id); const xx = c && parseIdl124(c.cfg); if (xx && xx.mode === "l") watchLive135({ id, owner, look: lookOf124(xx), name: idolNm144(xx), song: xx.song, c: xx.c }); else openWatch135(); }; body.querySelector("#lv135no").onclick = () => closeModal(); }) }); }
         seen.set(e.rid, live);
       }
     } catch (err) { }
@@ -31249,6 +31314,864 @@ F143.open = openOT143; F143.clean = otClean143;
 }
 GUIDE54.push(["オリジナル称号", "", `<p>村タブの称号の下から、自分だけの称号を作れます（はじめて10,000,000G・変えるのは1,000,000G・10文字まで）。作った称号は名前の上に出て、ほかの人にも見えます。</p>`]);
 
+// =================== v144: アイドルの新しい遊び（コーデカード・トレード・対決とアイドルグランプリ・メイク・名前・オーラ・ファンサとはがし・チェキ・男の子のアイドル） ===================
+// ・コーデカード（CARD144）：トップス・ボトムス・シューズ・アクセの4つ。テイストはキュート・クール・ポップ・セクシー、レア度は N・R・SR・PR。強さはレア度で決まる。
+//   パラレル（キラキラの絵・見た目だけ）・サイン（アイドルの名前を入れる）。レッスン・ライブ・オーディション・対決・ガチャ（スマホコイン）で手に入る。world.ic144
+// ・トレード：同じ村でつないでいる人と、ふたりで「これでOK」を押したら交換（サーバー idol/IdolHandler・type "idol" の a:"tr"）。お金やGは使わない
+// ・対決状：ほかの人のアイドルと3本勝負（歌・ダンス・表情）。サーバーが勝負を決める。勝つとカード2枚・負けても1枚。対決ポイントの週のランキングが「アイドルグランプリ」で、先週の1位がスーパーアイドル（王冠）
+// ・アイドルの名前（自由）・タイプ（キュートなど）・メイク（プレイヤーと同じ 20×18 マス）・オーラ（形と色は自由・大きさとキラキラは歌・ダンス・表情の合計で決まる・3つまで重ねられる・ライブ中は大きくなる）
+// ・ほかの人の連れているアイドルに話しかけるとファンサ。話しかけられた人は「はがす」（マネージャーが「そろそろお時間です」）。チェキ・ブロマイドのアルバム
+// ・ほかの人に見せる見た目の設定（連れて歩く・ライブ中だけ）：icd（コーデ）・inm（名前）・iau（オーラ）・ipt と ip2（メイク。サーバーの Sanitize が決まった形だけ通す）
+var F144 = { sup: null, tr: new Map(), inb: [], outb: [], list: [], rank: null };
+
+// ---- 男の子のアイドル（2人）と、名前を自由に ----
+IDOLS102.push(
+  { name: "レン", trait: "da", male: true, desc: "クールな男の子。ダンスがのびやすい", cfg: { skin: "やや明るめ", hair: "マッシュ", hairc: "黒", top: "ジャケット", topc: "黒", bottom: "パンツ", bottomc: "黒", hat: "なし", acc: "なし", shoesc: "黒" } },
+  { name: "ハルト", trait: "vo", male: true, desc: "明るい男の子。歌がのびやすい", cfg: { skin: "小麦色", hair: "ショート", hairc: "ブラウン", top: "パーカー", topc: "オレンジ", bottom: "ジーンズ", bottomc: "ネイビー", hat: "なし", acc: "なし", shoesc: "白" } });
+IDOLS102.forEach((I, i) => {
+  const base = I.name; I.base144 = base;
+  Object.defineProperty(I, "name", { configurable: true, get: () => { const d = world.idol102; return d && d.pick === i && typeof d.nm === "string" && d.nm ? d.nm : base; } });
+});
+const nmClean144 = s => String(s || "").normalize("NFKC").replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff<>"&]/g, "").replace(/\s+/g, " ").trim().slice(0, 10);
+/** アイドルの名前（ほかの人のアイドルは見た目の設定の inm） */
+function idolNm144(x) {
+  if (!x) return "";
+  const n = x.c && typeof x.c.inm === "string" ? nmClean144(x.c.inm) : "";
+  const I = IDOLS102[x.pick] || IDOLS102[0];
+  return n || I.base144 || I.name;
+}
+
+// ---- テイスト・レア度・カード ----
+const TASTE144 = [
+  { k: "cute", n: "キュート", st: "ex", c: "#e8508a", m: "♡", sp: "キュートフラッシュ", au: "h", ac: 0 },
+  { k: "cool", n: "クール", st: "da", c: "#3a78d8", m: "◆", sp: "クールスターダスト", au: "s", ac: 7 },
+  { k: "pop", n: "ポップ", st: "vo", c: "#d88a10", m: "★", sp: "ポップキャンディシャワー", au: "c", ac: 3 },
+  { k: "sexy", n: "セクシー", st: "all", c: "#9a48c8", m: "✦", sp: "ミッドナイトローズ", au: "f", ac: 8 },
+];
+const RARE144 = [{ n: "N", pw: 5, c: "#8a8a8a", w: 60 }, { n: "R", pw: 10, c: "#3a80d0", w: 28 }, { n: "SR", pw: 20, c: "#c88a10", w: 10 }, { n: "PR", pw: 35, c: "#d8408a", w: 2 }];
+const PART144 = [["top", "トップス"], ["bottom", "ボトムス"], ["shoes", "シューズ"], ["acc", "アクセ"]];
+// [テイスト, パーツ, レア度, 名前, 中身（服・靴の色・帽子）, 色]
+const CARD144 = [];
+{
+  const T = [
+    [["Tシャツ", "ももいろ", "ももいろTシャツ"], ["フリルブラウス", "さくら", "さくらのフリルブラウス"], ["ロリータドレス", "ピンク", "いちごのロリータドレス"], ["ドレス", "ローズ", "ハートプリンセスドレス"],
+      ["スカート", "ピンク", "ピンクのスカート"], ["フリルスカート", "白", "白いフリルスカート"], ["チュチュ", "さくら", "さくらのチュチュ"], ["フリルスカート", "ローズ", "プリンセスのフリルスカート"],
+      ["ピンク", "", "ピンクのくつ"], ["白", "", "白いバレエシューズ"], ["赤", "", "赤いリボンシューズ"], ["金", "", "金のガラスのくつ"],
+      ["ヘアピン", "", "ハートのヘアピン"], ["リボン", "", "ピンクのリボン"], ["大きなリボン", "", "大きなリボン"], ["ティアラ", "", "プリンセスのティアラ"]],
+    [["ジャケット", "ネイビー", "ネイビーのジャケット"], ["ライダース", "黒", "黒いライダース"], ["スーツ", "ロイヤルブルー", "ロイヤルブルーのスーツ"], ["トレンチコート", "シルバー", "シルバーのロングコート"],
+      ["パンツ", "黒", "黒いパンツ"], ["ジーンズ", "ネイビー", "ネイビーのジーンズ"], ["ワイドパンツ", "黒", "黒いワイドパンツ"], ["プリーツスカート", "ロイヤルブルー", "ブルーのプリーツスカート"],
+      ["黒", "", "黒いスニーカー"], ["ネイビー", "", "ネイビーのブーツ"], ["銀", "", "銀のブーツ"], ["黒ラメ", "", "星くずのブーツ"],
+      ["キャップ", "", "黒いキャップ"], ["ヘッドホン", "", "ヘッドホン"], ["中折れ帽", "", "中折れ帽"], ["王冠", "", "夜空の王冠"]],
+    [["ボーダー", "黄", "きいろのボーダー"], ["パーカー", "オレンジ", "オレンジのパーカー"], ["オーバーオール", "レモン", "レモンのオーバーオール"], ["うさぎパーカー", "虹", "にじいろうさぎパーカー"],
+      ["ショートパンツ", "黄", "きいろのショートパンツ"], ["キュロット", "オレンジ", "オレンジのキュロット"], ["サルエル", "ライム", "ライムのサルエル"], ["チュチュ", "虹", "にじいろチュチュ"],
+      ["黄色", "", "きいろのスニーカー"], ["オレンジ", "", "オレンジのくつ"], ["ライム", "", "ライムのハイカット"], ["ターコイズ", "", "キャンディのくつ"],
+      ["ベレー帽", "", "ベレー帽"], ["バケットハット", "", "バケットハット"], ["パーティー帽", "", "パーティー帽"], ["花かんむり", "", "お花のかんむり"]],
+    [["キャミソール", "ワイン", "ワインのキャミソール"], ["オフショルダー", "ボルドー", "ボルドーのオフショルダー"], ["シルクのブラウス", "ブドウ", "ブドウ色のシルクブラウス"], ["ドレス", "ワイン", "ミッドナイトドレス"],
+      ["ロングスカート", "黒", "黒いロングスカート"], ["スカート", "ワイン", "ワインのスカート"], ["ロングスカート", "ブドウ", "ブドウ色のロングスカート"], ["ロングスカート", "ゴールド", "金のロングスカート"],
+      ["ワイン", "", "ワインのヒール"], ["黒", "", "黒いヒール"], ["金", "", "金のヒール"], ["銀", "", "月のヒール"],
+      ["カチューシャ", "", "黒いカチューシャ"], ["つば広ハット", "", "つば広ハット"], ["シルクハット", "", "シルクハット"], ["天使の輪", "", "天使の輪"]],
+  ];
+  T.forEach((L, t) => L.forEach(([v, c, n], i) => CARD144.push({ i: CARD144.length, t, pt: PART144[i >> 2][0], r: i % 4, n, v, c })));
+}
+const COLS144 = () => Object.keys(CHAR.CLOTH);
+/** カード1枚の見た目（cfg の一部） */
+function cardLook144(C, col) {
+  if (!C) return {};
+  if (C.pt === "top") return { top: C.v, topc: col && CHAR.CLOTH[col] ? col : C.c };
+  if (C.pt === "bottom") return { bottom: C.v, bottomc: col && CHAR.CLOTH[col] ? col : C.c };
+  if (C.pt === "shoes") return SHOEC[C.v] ? { shoesc: C.v } : {};
+  return HATS[C.v] !== undefined ? { hat: C.v } : {};
+}
+
+// ---- 状態 ----
+const ic144 = () => {
+  const o = world.ic144 = world.ic144 && typeof world.ic144 === "object" && !Array.isArray(world.ic144) ? world.ic144 : {};
+  o.cards = Array.isArray(o.cards) ? o.cards.filter(x => x && CARD144[x.c] && Number.isInteger(x.u)).slice(0, 400) : [];
+  o.uid = Math.max(o.uid | 0, ...o.cards.map(x => x.u));
+  if (!o.eq || typeof o.eq !== "object") o.eq = {};
+  if (!o.col || typeof o.col !== "object") o.col = {};
+  if (!o.lock || typeof o.lock !== "object") o.lock = {};
+  if (!o.book || typeof o.book !== "object") o.book = {};
+  o.au = Array.isArray(o.au) ? o.au.filter(a => Array.isArray(a) && AU144[a[0]] && AC144[a[1]]).slice(0, 3) : [];
+  o.chk = Array.isArray(o.chk) ? o.chk.slice(0, 80) : [];
+  o.seen = Array.isArray(o.seen) ? o.seen.slice(-60) : [];
+  o.fanLog = Array.isArray(o.fanLog) ? o.fanLog.slice(0, 12) : [];
+  if (!o.hag || typeof o.hag !== "object") o.hag = {};
+  if (!o.fanAt || typeof o.fanAt !== "object") o.fanAt = {};
+  for (const k of ["wins", "loses", "trades", "fanSent", "fanGot", "pulls", "signs", "supWeeks", "spN"]) o[k] = o[k] | 0;
+  // タイプ：自分でえらぶまでは、アイドルの得意なこと（★）から（tyAuto）
+  if (!Number.isInteger(o.ty) || !TASTE144[o.ty] || o.tyAuto) { const d = world.idol102, I = d && IDOLS102[d.pick]; o.ty = I ? ({ vo: 2, da: 1, ex: 0 }[I.trait] ?? 0) : 0; o.tyAuto = true; }
+  if (o.pt2 && !(F119 && F119.valid && F119.valid(o.pt2))) delete o.pt2;
+  for (const [k] of PART144) { const u = o.eq[k]; if (u != null && !o.cards.some(x => x.u === u && CARD144[x.c].pt === k)) delete o.eq[k]; }
+  const today = jstDay144(); if (o.day !== today) { o.day = today; o.pullsToday = 0; o.fanToday = 0; o.signToday = 0; }
+  return o;
+};
+F144.state = ic144;
+const jstDay144 = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const locked144 = () => { const s = new Set(); for (const L of Object.values(ic144().lock)) if (Array.isArray(L)) L.forEach(u => s.add(u)); return s; };
+const card144 = u => ic144().cards.find(x => x.u === u);
+function addCard144(c, p, s) {
+  const o = ic144(); if (!CARD144[c]) return null;
+  if (o.cards.length >= 400) return null;
+  const x = { u: ++o.uid, c, p: p ? 1 : 0, s: typeof s === "string" ? nmClean144(s) : "" };
+  o.cards.push(x); o.book[c] = Math.max(o.book[c] | 0, x.p ? 2 : 1);
+  return x;
+}
+/** カードを引く（boost：0 ふつう・1 SR が出やすい・2 SR 以上） */
+function drawOne144(boost, taste) {
+  const w = RARE144.map((R, i) => R.w * (boost >= 1 && i >= 2 ? 2.5 : 1) * (boost >= 2 && i < 2 ? 0 : 1));
+  let x = Math.random() * w.reduce((a, b) => a + b, 0), r = 0; for (; r < 3; r++) { x -= w[r]; if (x < 0) break; }
+  const t = taste != null && Math.random() < .5 ? taste : rnd(4);
+  const pool = CARD144.filter(C => C.r === r && C.t === t);
+  const C = pool[rnd(pool.length)];
+  return addCard144(C.i, Math.random() < .05, "");
+}
+function giveCards144(n, boost, why) {
+  const got = []; for (let k = 0; k < n; k++) { const x = drawOne144(boost, ic144().ty); if (x) got.push(x); }
+  if (got.length) { saveWorld(); try { checkTitles42(); } catch (e) { } }
+  return got;
+}
+F144.give = giveCards144;
+// はじめてのカード（タイプのカードを4枚）
+function starter144() {
+  const o = ic144(); if (o.started) return [];
+  o.started = 1; const got = [];
+  for (const [k] of PART144) { const C = CARD144.find(C => C.t === o.ty && C.pt === k && C.r === 0); const x = addCard144(C.i, 0, ""); if (x) { got.push(x); o.eq[k] = x.u; } }
+  saveWorld(); return got;
+}
+
+// ---- コーデの強さと見た目 ----
+const eqCards144 = () => { const o = ic144(), L = locked144(); return PART144.map(([k]) => { const x = o.eq[k] != null ? card144(o.eq[k]) : null; return x && !L.has(x.u) ? x : null; }); };
+function coordInfo144() {
+  const o = ic144(), E = eqCards144().filter(Boolean);
+  let pw = E.reduce((a, x) => a + RARE144[CARD144[x.c].r].pw + (x.p ? 2 : 0), 0);
+  const same = E.length === 4 && E.every(x => CARD144[x.c].t === CARD144[E[0].c].t);
+  const full = same && E.every(x => CARD144[x.c].r === CARD144[E[0].c].r);
+  if (same) pw *= 1.5; if (full) pw *= 1.2;
+  const match = same && CARD144[E[0].c].t === o.ty; if (match) pw *= 1.1;
+  return { pw: Math.min(300, Math.round(pw)), same, full, match, n: E.length, t: same ? CARD144[E[0].c].t : -1, r: full ? CARD144[E[0].c].r : -1 };
+}
+F144.coord = coordInfo144;
+function myLook144() {
+  const o = ic144(), out = {};
+  for (const x of eqCards144()) if (x) Object.assign(out, cardLook144(CARD144[x.c], CARD144[x.c].pt === "top" ? o.col.topc : CARD144[x.c].pt === "bottom" ? o.col.bottomc : null));
+  if (o.pt2 && F119.valid(o.pt2)) { out.pt2 = o.pt2; out.paint = F119.down(o.pt2); }
+  return out;
+}
+F144.look = () => { try { return world.ic144 ? myLook144() : {}; } catch (e) { return {}; } };
+
+// ---- ほかの人に見せるコード ----
+// icd：タイプ1文字＋4枚のカード（36進数2文字・zz＝なし）＋トップスとボトムスの色（服の色の番号・zz＝カードの色）
+const b36_144 = (n, w = 2) => n.toString(36).padStart(w, "0").slice(-w);
+function icdCode144() {
+  const o = ic144(), E = eqCards144(), cols = COLS144();
+  const ci = k => { const i = o.col[k] ? cols.indexOf(o.col[k]) : -1; return i >= 0 ? b36_144(i) : "zz"; };
+  return String(o.ty) + E.map(x => x ? b36_144(x.c) : "zz").join("") + ci("topc") + ci("bottomc");
+}
+function icdLook144(code) {
+  if (typeof code !== "string" || !/^[0-3][0-9a-z]{12}$/.test(code)) return {};
+  const cols = COLS144(), out = {}, col = s => s === "zz" ? null : cols[parseInt(s, 36)] || null;
+  const tc = col(code.slice(9, 11)), bc = col(code.slice(11, 13));
+  for (let i = 0; i < 4; i++) { const s = code.slice(1 + i * 2, 3 + i * 2); if (s === "zz") continue; const C = CARD144[parseInt(s, 36)]; if (C && C.pt === PART144[i][0]) Object.assign(out, cardLook144(C, C.pt === "top" ? tc : C.pt === "bottom" ? bc : null)); }
+  return out;
+}
+F144.remote = c => {
+  try {
+    const out = icdLook144(c.icd);
+    if (typeof c.ip2 === "string" && F119.valid(c.ip2) && typeof c.ipt === "string" && F119.down(c.ip2) === c.ipt) { out.pt2 = c.ip2; out.paint = c.ipt; }
+    else if (typeof c.ipt === "string" && /^[0-9a-f]{90}$/.test(c.ipt)) { out.paint = c.ipt; out.pt2 = undefined; }
+    return out;
+  } catch (e) { return {}; }
+};
+
+// ---- オーラ ----
+const AU144 = {
+  h: { n: "ハート", p: [[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [1, 2]], mv: "rise" },
+  s: { n: "星", p: [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]], mv: "orbit" },
+  f: { n: "花", p: [[1, 0], [0, 1], [2, 1], [1, 2], [1, 1, 1]], mv: "orbit" },
+  k: { n: "桜", p: [[0, 0], [1, 0], [1, 1], [2, 1]], mv: "fall" },
+  c: { n: "お菓子", p: [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1], [3, 1, 1], [-1, 1, 1]], mv: "rise" },
+  b: { n: "こうもり", p: [[0, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [1, 2], [2, 2]], mv: "fly" },
+  m: { n: "お金", p: [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1, 1], [2, 1], [0, 2], [1, 2], [2, 2]], mv: "fly", money: true },
+  n: { n: "音符", p: [[2, 0], [3, 0], [2, 1], [2, 2], [0, 3], [1, 3], [2, 3], [0, 4], [1, 4]], mv: "rise", need: "vo" },
+  w: { n: "羽根", p: [[2, 0], [1, 1], [2, 1], [0, 2], [1, 2], [0, 3]], mv: "fall", need: "da" },
+  r: { n: "虹", p: [[0, 1], [1, 0], [2, 0], [3, 0], [4, 1]], mv: "orbit", need: "ex", rainbow: true },
+};
+const AC144 = [["ピンク", "#ff7ab0"], ["赤", "#ff4a4a"], ["オレンジ", "#ff9a3a"], ["黄色", "#ffe04a"], ["黄緑", "#a8e04a"], ["緑", "#4ac870"], ["水色", "#7ad8ff"], ["青", "#4a7aff"], ["紫", "#b070ff"], ["白", "#ffffff"], ["金", "#f2c84a"], ["黒", "#3a3040"]];
+const statTot144 = () => { const d = world.idol102; return d && d.st ? (d.st.vo | 0) + (d.st.da | 0) + (d.st.ex | 0) : 0; };
+const auraLv144 = () => Math.max(1, Math.min(7, 1 + Math.floor(statTot144() / 150)));
+const auraSlots144 = () => 1 + (statTot144() >= 300 ? 1 : 0) + (statTot144() >= 600 ? 1 : 0);
+const auraOpen144 = k => { const A = AU144[k]; if (!A) return false; if (!A.need) return true; const d = world.idol102; return !!(d && d.st && d.st[A.need] >= 300); };
+const iauCode144 = boost => { const o = ic144(); const L = o.au.slice(0, auraSlots144()).filter(a => auraOpen144(a[0])); return L.length ? String(Math.min(9, auraLv144() + (boost | 0))) + L.map(a => a[0] + a[1].toString(36)).join("") : ""; };
+const parseIau144 = s => { const m = /^([1-9])((?:[a-z][0-9ab])+)$/.exec(typeof s === "string" ? s : ""); if (!m || m[2].length > 6) return null; const L = []; for (let i = 0; i < m[2].length; i += 2) { const k = m[2][i], c = parseInt(m[2][i + 1], 36); if (AU144[k] && AC144[c]) L.push([k, c]); } return L.length ? { lv: +m[1], L } : null; };
+F144.iau = iauCode144; F144.parseIau = parseIau144;
+const fr144 = x => x - Math.floor(x);
+/** オーラを描く。g：描く所、(cx,cy)：体のまんなか、s：ドット1つの大きさ */
+function drawAura144(g, cx, cy, code, t, s) {
+  const A = typeof code === "string" ? parseIau144(code) : code; if (!A) return;
+  const lv = A.lv, n = 2 + lv, big = lv >= 5 ? 2 : 1, R = (8 + lv) * s;
+  A.L.forEach(([k, ci], j) => {
+    const S = AU144[k], col = AC144[ci][1];
+    for (let i = 0; i < n; i++) {
+      const ph = i / n + j * .17, q = t * (.35 + lv * .03) + ph, f = fr144(q);
+      let x, y, a = 1;
+      if (S.mv === "rise") { x = cx + (fr144(i * .618 + j * .3) - .5) * 2 * R; y = cy + R * .6 - f * R * 2; a = Math.sin(f * Math.PI); }
+      else if (S.mv === "fall") { x = cx + (fr144(i * .618 + j * .41) - .5) * 2 * R + Math.sin(t * 2 + i) * 2 * s; y = cy - R + f * R * 2; a = Math.sin(f * Math.PI); }
+      else if (S.mv === "fly") { const ang = i / n * 6.283 + j; x = cx + Math.cos(ang) * f * R * 1.3; y = cy + Math.sin(ang) * f * R - f * 4 * s; a = 1 - f; }
+      else { const ang = t * 1.4 + i / n * 6.283 + j * .8; x = cx + Math.cos(ang) * R * .9; y = cy + Math.sin(ang) * R * .55; a = .55 + Math.sin(t * 4 + i) * .4; }
+      g.globalAlpha = Math.max(0, Math.min(1, a));
+      const sz = s * (i % 3 === 0 ? big : 1);
+      for (const [dx, dy, hi] of S.p) {
+        g.fillStyle = S.rainbow ? `hsl(${(dx * 60 + t * 90) % 360},90%,65%)` : S.money ? (i % 2 ? (hi ? "#2a6a3a" : "#7ac88a") : (hi ? "#fff6c0" : col === "#3a3040" ? "#f2c84a" : col)) : hi ? "#ffffff" : col;
+        g.fillRect(Math.round(x + dx * sz), Math.round(y + dy * sz), sz, sz);
+      }
+    }
+  });
+  // キラキラ（レベルで多くなる）
+  for (let i = 0; i < lv * 2; i++) {
+    const k = fr144(t * .8 + i * .37), hx = fr144(Math.sin(i * 12.98 + Math.floor(t * .8 + i * .37)) * 43758.5), hy = fr144(Math.sin(i * 39.3 + Math.floor(t * .8 + i * .37)) * 24634.6);
+    g.globalAlpha = Math.sin(k * Math.PI) * .9; g.fillStyle = "#ffffff";
+    const x = cx - R + hx * R * 2, y = cy - R + hy * R * 1.6;
+    g.fillRect(Math.round(x), Math.round(y), s, s); if (lv >= 4 && k > .3 && k < .7) { g.fillRect(Math.round(x - s), Math.round(y), s, s); g.fillRect(Math.round(x + s), Math.round(y), s, s); g.fillRect(Math.round(x), Math.round(y - s), s, s); g.fillRect(Math.round(x), Math.round(y + s), s, s); }
+  }
+  g.globalAlpha = 1;
+}
+F144.drawAura = drawAura144;
+const crown144 = (g, x, y, s) => { g.fillStyle = "#f2c84a"; g.fillRect(x, y + 2 * s, 7 * s, 2 * s); for (const k of [0, 3, 6]) g.fillRect(x + k * s, y, s, 2 * s); g.fillStyle = "#ff4a7a"; g.fillRect(x + 3 * s, y + 2 * s, s, s); };
+
+// ---- ライブ（v102 の中から呼ばれる） ----
+F144.liveInfo = () => {
+  const o = ic144(), T = TASTE144[o.ty], ci = coordInfo144();
+  return {
+    sp: T.sp, col: T.c, pow: Math.round(ci.pw * .5 * (ci.match ? 1.2 : 1)),
+    aura: (g, cx, cy, t, bonus) => { const code = iauCode144(bonus); if (code) drawAura144(g, cx, cy, code, t, 2); },
+    onSpecial: () => { o.spN++; live124 = Date.now() + 60000; F144.liveBoost = 2; },
+    after: r => {
+      F144.liveBoost = 0;
+      const b = $("mbody"); if (!b) return;
+      let got = [];
+      if (r.ok) { got = giveCards144(1, r.score >= 85 ? 1 : 0, "live"); chekiSelf144("b"); }
+      const row = b.querySelector(".dk75r"); if (!row) return;
+      row.insertAdjacentHTML("beforeend", `${r.sp ? `<span>スペシャルアピール「${esc(T.sp)}」が決まった！（+10点）</span>` : ""}${got.length ? `<span>コーデカード「${esc(CARD144[got[0].c].n)}」${got[0].p ? "（パラレル）" : ""}をもらった・ブロマイドができた</span>` : ""}`);
+    },
+  };
+};
+F144.afterLesson = (hit, N) => {
+  if (!world.ic144 && !world.idol102) return;
+  if (Math.random() < .3 + hit * .05) { const got = giveCards144(1, 0, "lesson"); const row = $("mbody")?.querySelector(".dk75r"); if (got.length && row) row.insertAdjacentHTML("beforeend", `<span>コーデカード「${esc(CARD144[got[0].c].n)}」をもらった！</span>`); }
+};
+F144.afterAud = ai => { const got = giveCards144(1, ai >= 1 ? 2 : 1, "aud"); setTimeout(() => { const row = $("mbody")?.querySelector(".dk75r"); if (got.length && row) row.insertAdjacentHTML("beforeend", `<span>コーデカード「${esc(CARD144[got[0].c].n)}」をもらった！</span>`); }, 0); };
+
+// ---- 見た目の設定にのせる（連れて歩く・ライブ中だけ） ----
+const _cc144 = cleanCfg;
+cleanCfg = function (c) {
+  const o = _cc144(c);
+  if (c) {
+    if (typeof c.icd === "string" && /^[0-3][0-9a-z]{12}$/.test(c.icd)) o.icd = c.icd;
+    if (typeof c.inm === "string" && nmClean144(c.inm)) o.inm = nmClean144(c.inm);
+    if (parseIau144(c.iau)) o.iau = c.iau;
+    if (typeof c.ipt === "string" && /^[0-9a-f]{90}$/.test(c.ipt)) o.ipt = c.ipt;
+    if (typeof c.ip2 === "string" && F119.valid(c.ip2)) o.ip2 = c.ip2;
+  }
+  return o;
+};
+setInterval(() => {
+  try {
+    if (world.idol102 === undefined) return;
+    const on = !!cfg.idl, o = world.ic144 ? ic144() : null, d = idol102();
+    const want = on && o ? { icd: icdCode144(), inm: d.nm ? nmClean144(d.nm) : undefined, iau: iauCode144(Date.now() < live124 ? 1 + (F144.liveBoost | 0) : 0) || undefined, ipt: o.pt2 ? F119.down(o.pt2) : undefined, ip2: o.pt2 || undefined } : {};
+    let ch = false;
+    for (const k of ["icd", "inm", "iau", "ipt", "ip2"]) { const v = want[k]; if ((cfg[k] || undefined) !== v) { if (v) cfg[k] = v; else delete cfg[k]; ch = true; } }
+    if (ch && typeof sendCfgSoon === "function") sendCfgSoon();
+  } catch (e) { }
+}, 900);
+
+// ---- 描く：連れているアイドルのオーラ・王冠・ステージ ----
+const supId144 = () => F144.sup && F144.sup.id ? +F144.sup.id : 0;
+{
+  const _de = drawEnt;
+  drawEnt = function (e) {
+    const r = _de.apply(this, arguments);
+    try {
+      const c = e === player ? cfg : e && e.kind === "remote" ? e.cfg : null;
+      if (!c || !c.idl || e.hidden) return r;
+      const t = trail124.get(e); if (!t) return r;
+      const x = parseIdl124(c); if (!x || x.mode !== "w") return r;
+      const now = performance.now() / 1000;
+      if (c.iau) drawAura144(ctx, Math.round(t.x) + 8, Math.round(t.y) + 8, c.iau, now, 1);
+      const id = e === player ? (F8.myId ? F8.myId() : 0) : e.rid;
+      if (id && id === supId144()) crown144(ctx, Math.round(t.x) + 5, Math.round(t.y) - 5, 1);
+      const fx = fanFx144.get(e); if (fx && performance.now() < fx.until) { ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center"; const w = ctx.measureText(fx.text).width + 6; ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.fillRect(Math.round(t.x) + 8 - w / 2, Math.round(t.y) - 14, w, 9); ctx.fillStyle = "#c83a7a"; ctx.fillText(fx.text, Math.round(t.x) + 8, Math.round(t.y) - 7); ctx.textAlign = "left"; }
+    } catch (err) { ctx.globalAlpha = 1; }
+    return r;
+  };
+}
+{
+  const _al = F7.addToList;
+  F7.addToList = (list, now) => {
+    _al(list, now);
+    try {
+      if (map !== village || !world.projects?.stage35?.done) return;
+      const L = liveNow124(); if (!L.length) return;
+      const [ax, ay] = world.projects.stage35.at, bx = ax * TS, by = (ay + 1) * TS;
+      list.push({ s: (ay + 1) * TS + 1.5, d: () => {
+        L.slice(0, 3).forEach((x, i) => {
+          const px = bx + 24 + (i - (Math.min(3, L.length) - 1) / 2) * 16, py = by - 26;
+          if (x.c && x.c.iau) drawAura144(ctx, px + 8, py + 8, x.c.iau, now / 1000, 1);
+          const id = x.c === cfg ? (F8.myId ? F8.myId() : 0) : [...remotes.values()].find(e => e.cfg === x.c)?.rid;
+          if (id && id === supId144()) crown144(ctx, Math.round(px) + 5, py - 5, 1);
+        });
+      } });
+    } catch (e) { }
+  };
+}
+
+// ---- 画面：カードの絵 ----
+const cardCache144 = new Map();
+const MANNE144 = { ...DEFAULT, skin: "やや明るめ", hair: "ボブ", hairc: "ブラウン", top: "Tシャツ", topc: "白", bottom: "スカート", bottomc: "白", hat: "なし", acc: "なし", shoesc: "白" };
+function cardImg144(x) {
+  const key = `${x.c}|${x.p}|${x.s}`; const hit = cardCache144.get(key); if (hit) return hit;
+  const C = CARD144[x.c], T = TASTE144[C.t], R = RARE144[C.r];
+  const cv = document.createElement("canvas"); cv.width = 48; cv.height = 64; const g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+  const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, "#ffffff"); gr.addColorStop(1, T.c); g.fillStyle = gr; g.fillRect(0, 0, 48, 64);
+  if (x.p) { for (let i = 0; i < 12; i++) { g.fillStyle = `hsla(${i * 30},90%,70%,.35)`; g.fillRect(0, i * 6, 48, 3); } }
+  g.fillStyle = R.c; g.fillRect(0, 0, 48, 2); g.fillRect(0, 62, 48, 2); g.fillRect(0, 0, 2, 64); g.fillRect(46, 0, 2, 64);
+  g.drawImage(charImg118({ ...MANNE144, ...cardLook144(C) }, "down", 0), 4, 8, 40, 40);
+  g.fillStyle = "#ffffff"; g.font = "bold 9px sans-serif"; g.fillText(T.m, 5, 12);
+  if (x.s) { g.save(); g.translate(24, 56); g.rotate(-.18); g.font = "italic bold 8px sans-serif"; g.textAlign = "center"; g.fillStyle = "rgba(255,255,255,.9)"; g.fillText(x.s, 1, 1); g.fillStyle = "#c8306a"; g.fillText(x.s, 0, 0); g.restore(); }
+  const url = cv.toDataURL(); if (cardCache144.size > 300) cardCache144.clear(); cardCache144.set(key, url); return url;
+}
+const cardHtml144 = (x, extra = "", attrs = "") => { const C = CARD144[x.c]; return `<button type="button" class="cd144${x.p ? " par144" : ""}" ${attrs}><img src="${cardImg144(x)}" alt=""><span class="cdn144">${esc(C.n)}</span><span class="cdr144" style="background:${RARE144[C.r].c}">${RARE144[C.r].n}</span><span class="cdt144">${TASTE144[C.t].n}${x.p ? "・パラレル" : ""}${x.s ? "・サイン" : ""}</span>${extra}</button>`; };
+function showCards144(list, title, note, back) {
+  if (!list.length) return;
+  openModal(title || "コーデカード", "dark", body => {
+    body.innerHTML = `${note ? `<p class="mtext">${note}</p>` : ""}<div class="cds144 reveal144">${list.map(x => cardHtml144(x)).join("")}</div><div class="row2"><button class="btn" type="button" id="cr144ok">${back ? "もどる" : "とじる"}</button></div>`;
+    body.querySelector("#cr144ok").onclick = () => { closeModal(); if (back) back(); };
+  });
+  if (list.some(x => CARD144[x.c].r >= 2)) se13("jackpot"); else se13("win");
+}
+
+// ---- 画面：アイドルのメニュー（プロデュースの画面に足す） ----
+setInterval(() => {
+  try {
+    if (!modalOpen || !$("id102cv") || $("act144")) return;
+    const box = document.querySelector("#mbody .id102r"); if (!box) return;
+    const d = idol102(), o = ic144();
+    box.insertAdjacentHTML("afterbegin", `<div id="act144"><div class="row2 nm144"><label>名前 <input id="nm144" maxlength="10" value="${esc(d.nm || "")}" placeholder="${esc(IDOLS102[d.pick].base144)}"></label><button class="btn light" type="button" id="nm144b">名前を変える</button></div>
+      <div class="row2 ty144">${TASTE144.map((T, i) => `<button class="chip" type="button" data-ty144="${i}" aria-pressed="${o.ty === i}" style="--c:${T.c}">${T.m} ${T.n}</button>`).join("")}</div>
+      <div class="grid144">
+        <button class="btn" type="button" data-m144="coord">コーデカード</button><button class="btn" type="button" data-m144="battle">対決・グランプリ</button>
+        <button class="btn" type="button" data-m144="trade">カードのトレード</button><button class="btn" type="button" data-m144="aura">オーラ</button>
+        <button class="btn" type="button" data-m144="cosme">メイク</button><button class="btn" type="button" data-m144="album">チェキとブロマイド</button>
+        <button class="btn" type="button" data-m144="fans">話しかけてくれた人</button><button class="btn light" type="button" data-m144="repick">アイドルをえらびなおす</button>
+      </div><p class="mtext small">タイプ：${esc(TASTE144[o.ty].n)}（${TASTE144[o.ty].st === "all" ? "どのラウンドも少し強い" : `${({ vo: "歌", da: "ダンス", ex: "表情" })[TASTE144[o.ty].st]}が得意`}）。同じテイストのコーデだと、ライブと対決でもっと強くなる。</p></div>`);
+    $("nm144b").onclick = () => { const v = nmClean144($("nm144").value); idol102().nm = v || undefined; if (!v) delete idol102().nm; saveWorld(); closeModal(); openIdol102(v ? `名前を「${v}」にした！` : "名前をはじめの名前にもどした"); };
+    box.querySelectorAll("[data-ty144]").forEach(b => b.onclick = () => { const o2 = ic144(); o2.ty = +b.dataset.ty144; delete o2.tyAuto; saveWorld(); closeModal(); openIdol102(`タイプを「${TASTE144[+b.dataset.ty144].n}」にした`); });
+    box.querySelectorAll("[data-m144]").forEach(b => b.onclick = () => { const k = b.dataset.m144; closeModal(); ({ coord: openCoord144, battle: () => openBattle144(), trade: () => openTrade144(), aura: openAura144, cosme: openIdolCosme144, album: openAlbum144, fans: openFans144, repick: openRepick144 })[k](); });
+    // プレビューにオーラ
+    const cv = $("id102cv"), g = cv.getContext("2d");
+    const loop = () => { if (!cv.isConnected) return; g.fillStyle = "#3a2450"; g.fillRect(0, 0, 64, 64); const code = iauCode144(0); if (code) drawAura144(g, 32, 34, code, performance.now() / 1000, 2); g.drawImage(charImg118(idolCfg102(), "down", 0), 0, 0, 64, 64); if (F8.myId && F8.myId() && F8.myId() === supId144()) crown144(g, 22, 0, 3); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v144 menu"); }
+}, 300);
+
+// ---- コーデカードの画面 ----
+let coordTab144 = "coord", coordPart144 = "all";
+function openCoord144(msg) {
+  const d = idol102(); if (d.pick < 0) { openIdol102(); return; }
+  const first = starter144();
+  openModal("コーデカード", "dark", body => {
+    const draw = note => {
+      if (!body.isConnected) return;
+      const o = ic144(), L = locked144(), ci = coordInfo144(), E = eqCards144();
+      const tabs = `<div class="mtabs">${[["coord", "コーデ"], ["cards", `カード（${o.cards.length}）`], ["book", "図鑑"], ["gacha", "ガチャ"]].map(([k, n]) => `<button class="chip" type="button" data-ct144="${k}" aria-pressed="${coordTab144 === k}">${n}</button>`).join("")}</div>`;
+      let html = "";
+      if (coordTab144 === "coord") {
+        const cols = COLS144();
+        html = `<div class="co144"><canvas id="co144cv" width="96" height="96"></canvas><div><b>コーデの力 ${ci.pw}</b><span class="mtext small">${ci.same ? `${TASTE144[ci.t].n}でそろった（×1.5）${ci.full ? "・フルコーデ（×1.2）" : ""}${ci.match ? "・タイプとぴったり（×1.1）" : ""}` : "同じテイストで4つそろえると強くなる"}</span></div></div>
+          <div class="cds144">${PART144.map(([k, n], i) => E[i] ? cardHtml144(E[i], `<span class="cdp144">${n}</span>`, `data-uneq144="${k}"`) : `<div class="cd144 empty144"><span class="cdp144">${n}</span><span class="cdn144">なし</span></div>`).join("")}</div>
+          <p class="mtext small">カードを押すと外せる。つけるのは「カード」のタブから。</p>
+          <h4>服の色（トップス・ボトムス）</h4>
+          ${["topc", "bottomc"].map(k => `<div class="row2 cl144"><span>${k === "topc" ? "トップス" : "ボトムス"}</span><select data-cl144="${k}"><option value="">カードの色のまま</option>${cols.map(c => `<option ${o.col[k] === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`).join("")}`;
+      } else if (coordTab144 === "cards") {
+        const list = o.cards.filter(x => coordPart144 === "all" || CARD144[x.c].pt === coordPart144).sort((a, b) => CARD144[b.c].r - CARD144[a.c].r || a.c - b.c);
+        html = `<div class="row2">${[["all", "ぜんぶ"], ...PART144].map(([k, n]) => `<button class="chip" type="button" data-cp144="${k}" aria-pressed="${coordPart144 === k}">${n}</button>`).join("")}</div>
+          <div class="cds144">${list.map(x => cardHtml144(x, Object.values(o.eq).includes(x.u) ? `<span class="cdp144">つけている</span>` : L.has(x.u) ? `<span class="cdp144">トレード中</span>` : "", `data-cd144="${x.u}"`)).join("") || `<p class="mtext small">まだカードがないよ</p>`}</div>
+          <p class="mtext small">カードを押すと、つける・サインを入れる。サインは1日3枚まで（アイドルの名前が入る）。</p>`;
+      } else if (coordTab144 === "book") {
+        const n = Object.keys(o.book).length;
+        html = `<p class="mtext">集めたカード ${n} / ${CARD144.length}（キラキラはパラレルを持っている印）</p><div class="bk144">${TASTE144.map((T, t) => `<div><b style="color:${T.c}">${T.m} ${T.n}</b><div class="bkr144">${CARD144.filter(C => C.t === t).map(C => `<span class="${o.book[C.i] ? (o.book[C.i] === 2 ? "on par" : "on") : ""}" title="${esc(o.book[C.i] ? C.n : "？")}">${o.book[C.i] ? RARE144[C.r].n : "？"}</span>`).join("")}</div></div>`).join("")}</div>`;
+      } else {
+        const left = 30 - (o.pullsToday | 0);
+        html = `<p class="mtext">スマホコインでカードを引く（1日30回まで・のこり${left}回）。SR 10%・PR 2%・パラレル 5%。</p>
+          <div class="row2"><button class="btn" type="button" id="ga144a" ${left >= 1 ? "" : "disabled"}>1回（10コイン）</button><button class="btn" type="button" id="ga144b" ${left >= 10 ? "" : "disabled"}>10回（90コイン・SR以上を1枚）</button></div>`;
+      }
+      body.innerHTML = `${note || msg ? `<p class="mtext"><b>${esc(note || msg)}</b></p>` : ""}${tabs}${html}<div class="row2"><button class="btn light" type="button" id="co144bk">プロデュースにもどる</button></div>`;
+      msg = "";
+      body.querySelectorAll("[data-ct144]").forEach(b => b.onclick = () => { coordTab144 = b.dataset.ct144; draw(); });
+      body.querySelectorAll("[data-cp144]").forEach(b => b.onclick = () => { coordPart144 = b.dataset.cp144; draw(); });
+      body.querySelectorAll("[data-uneq144]").forEach(b => b.onclick = () => { delete ic144().eq[b.dataset.uneq144]; saveWorld(); draw("外した"); });
+      body.querySelectorAll("[data-cl144]").forEach(sl => sl.onchange = () => { const o2 = ic144(); if (sl.value) o2.col[sl.dataset.cl144] = sl.value; else delete o2.col[sl.dataset.cl144]; saveWorld(); draw(); });
+      body.querySelectorAll("[data-cd144]").forEach(b => b.onclick = () => cardMenu144(+b.dataset.cd144, draw));
+      $("co144bk").onclick = () => { closeModal(); openIdol102(); };
+      const pull = (n, cost) => { const o2 = ic144(); if ((o2.pullsToday | 0) + n > 30) return; spend98(cost, n > 1 ? "idolcard10" : "idolcard", ok => { if (!ok) { draw(); return; } const o3 = ic144(); o3.pullsToday = (o3.pullsToday | 0) + n; o3.pulls += n; const got = giveCards144(n - (n > 1 ? 1 : 0), 0, "gacha"); if (n > 1) { const x = drawOne144(2, o3.ty); if (x) got.push(x); saveWorld(); } showCards144(got, "カードガチャ", `${n}回引いた！`, () => openCoord144()); }); };
+      const ga = $("ga144a"), gb = $("ga144b"); if (ga) ga.onclick = () => { ga.disabled = true; pull(1, 10); }; if (gb) gb.onclick = () => { gb.disabled = true; pull(10, 90); };
+      const cv = $("co144cv"); if (cv) { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#3a2450"; g.fillRect(0, 0, 96, 96); g.drawImage(charImg118(idolCfg102(), "down", 0), 0, 0, 96, 96); }
+    };
+    draw();
+  });
+  if (first.length) setTimeout(() => showCards144(first, "はじめてのコーデカード", `${esc(IDOLS102[idol102().pick].name)}のタイプ「${esc(TASTE144[ic144().ty].n)}」のカードを4枚もらった。もうつけてあるよ`, () => openCoord144()), 50);
+}
+F144.coordOpen = openCoord144;
+function cardMenu144(u, back) {
+  const o = ic144(), x = card144(u); if (!x) return;
+  const C = CARD144[x.c], L = locked144(), eqd = o.eq[C.pt] === u, canSign = !x.s && !L.has(u) && (o.signToday | 0) < 3;
+  const b = $("mbody"); if (!b) return;
+  b.innerHTML = `<div class="cm144">${cardHtml144(x)}<div><b>${esc(C.n)}</b><span class="mtext small">${PART144.find(p => p[0] === C.pt)[1]}・${TASTE144[C.t].n}・${RARE144[C.r].n}（コーデの力 ${RARE144[C.r].pw}${x.p ? "＋2" : ""}）</span></div></div>
+    <div class="row2"><button class="btn" type="button" id="cm144eq" ${L.has(u) ? "disabled" : ""}>${eqd ? "外す" : "つける"}</button><button class="btn light" type="button" id="cm144sg" ${canSign ? "" : "disabled"}>${x.s ? "サインずみ" : "サインを入れる"}</button><button class="btn light" type="button" id="cm144bk">もどる</button></div>`;
+  $("cm144eq").onclick = () => { const o2 = ic144(); if (eqd) delete o2.eq[C.pt]; else o2.eq[C.pt] = u; saveWorld(); try { checkTitles42(); } catch (e) { } back(eqd ? "外した" : `「${C.n}」をつけた`); };
+  $("cm144sg").onclick = () => { const o2 = ic144(), y = card144(u); if (!y || y.s) return; y.s = nmClean144(IDOLS102[idol102().pick].name); o2.signToday = (o2.signToday | 0) + 1; o2.signs++; cardCache144.clear(); saveWorld(); se13("small"); back(`「${C.n}」にサインを入れた`); };
+  $("cm144bk").onclick = () => back();
+}
+
+// ---- オーラの画面 ----
+function openAura144(msg) {
+  const d = idol102(); if (d.pick < 0) { openIdol102(); return; }
+  let raf = 0;
+  openModal("アイドルのオーラ", "dark", body => {
+    const draw = note => {
+      if (!body.isConnected) return;
+      const o = ic144(), slots = auraSlots144(), T = TASTE144[o.ty];
+      body.innerHTML = `${note || msg ? `<p class="mtext"><b>${esc(note || msg)}</b></p>` : ""}<div class="au144"><canvas id="au144cv" width="128" height="128"></canvas><div><b>オーラの大きさ Lv${auraLv144()}</b><span class="mtext small">歌・ダンス・表情の合計（いま ${statTot144()}）で大きく、キラキラも多くなる。ライブ中はもっと大きくなる。重ねられるのは ${slots}つ（合計300で2つ・600で3つ）。</span><span class="mtext small">${esc(T.n)}タイプのおすすめ：${esc(AU144[T.au].n)}・${esc(AC144[T.ac][0])}</span></div></div>
+        ${[0, 1, 2].map(j => j >= slots ? "" : `<div class="aus144"><h4>オーラ ${j + 1}</h4><div class="row2">${j > 0 || !o.au[0] ? "" : ""}<button class="chip" type="button" data-aus144="${j}" data-v="" aria-pressed="${!o.au[j]}">なし</button>${Object.entries(AU144).map(([k, A]) => `<button class="chip" type="button" data-aus144="${j}" data-v="${k}" aria-pressed="${o.au[j] && o.au[j][0] === k}" ${auraOpen144(k) ? "" : "disabled"}>${esc(A.n)}${A.need && !auraOpen144(k) ? `（${({ vo: "歌", da: "ダンス", ex: "表情" })[A.need]}300）` : ""}</button>`).join("")}</div>
+          ${o.au[j] ? `<div class="row2 auc144">${AC144.map(([n, c], ci) => `<button type="button" class="sw144" data-auc144="${j}" data-v="${ci}" aria-pressed="${o.au[j][1] === ci}" title="${esc(n)}" style="background:${c}"><span class="sr">${esc(n)}</span></button>`).join("")}</div>` : ""}</div>`).join("")}
+        <p class="mtext small">オーラは、アイドルを村で連れて歩いているときと、ライブ中にほかの人にも見える。</p>
+        <div class="row2"><button class="btn light" type="button" id="au144bk">プロデュースにもどる</button></div>`;
+      body.querySelectorAll("[data-aus144]").forEach(b => b.onclick = () => { const o2 = ic144(), j = +b.dataset.aus144, v = b.dataset.v; const au = o2.au.slice(); if (!v) au.splice(j, 1); else au[j] = [v, au[j] ? au[j][1] : (v === T.au ? T.ac : 0)]; o2.au = au.filter(Boolean); saveWorld(); draw(); });
+      body.querySelectorAll("[data-auc144]").forEach(b => b.onclick = () => { const o2 = ic144(), j = +b.dataset.auc144; if (o2.au[j]) o2.au[j][1] = +b.dataset.v; saveWorld(); draw(); });
+      $("au144bk").onclick = () => { closeModal(); openIdol102(); };
+      const cv = $("au144cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+      cancelAnimationFrame(raf);
+      const loop = () => { if (!cv.isConnected) return; g.fillStyle = "#24163a"; g.fillRect(0, 0, 128, 128); const code = iauCode144(0); if (code) drawAura144(g, 64, 70, code, performance.now() / 1000, 3); g.drawImage(charImg118(idolCfg102(), ["down", "left", "down", "right"][Math.floor(performance.now() / 900) % 4], 0), 32, 32, 64, 64); raf = requestAnimationFrame(loop); };
+      raf = requestAnimationFrame(loop);
+    };
+    draw();
+  }, () => cancelAnimationFrame(raf));
+}
+F144.auraOpen = openAura144;
+
+// ---- メイク（プレイヤーの COSME COUNTER と同じ 20×18 マス） ----
+function openIdolCosme144() {
+  const d = idol102(); if (d.pick < 0) { openIdol102(); return; }
+  const o = ic144(), PW = 20, PH = 18, CELL = 12, W = PW * CELL, H = PH * CELL, PX = 6, PY = 4;
+  const st = { paint: (o.pt2 && F119.valid(o.pt2) ? o.pt2 : "0".repeat(PW * PH)).split(""), col: 1, mirror: true, size: 1, undo: [] };
+  const baseCfg = () => { const c = idolCfg102(); return { ...c, paint: undefined, pt2: undefined }; };
+  const withPt = p => F119.valid(p) ? { ...baseCfg(), pt2: p, paint: F119.down(p) } : baseCfg();
+  openModal("アイドルのメイク", "salon26", body => {
+    body.innerHTML = `<p class="mtext">プレイヤーのメイクと同じように、${esc(IDOLS102[d.pick].name)}の顔にドットでメイクを描けるよ。</p>
+      <div class="cos62"><div class="cos62l"><canvas id="im144cv" class="fine119" width="${W}" height="${H}"></canvas>
+        <div class="cos62t"><button class="chip" type="button" id="im144mir" aria-pressed="true">左右対称</button><button class="chip" type="button" data-imz144="1" aria-pressed="true">細いペン</button><button class="chip" type="button" data-imz144="2" aria-pressed="false">太いペン</button><button class="chip" type="button" id="im144undo">ひとつ戻す</button><button class="chip" type="button" id="im144clr">ぜんぶ消す</button></div></div>
+        <div class="cos62r"><div class="cos62pal">${PAL62.map((p, i) => `<button type="button" class="cos62c${i === 1 ? " on" : ""}" data-imc144="${i}" title="${p ? p[1] : "消しゴム"}">${p ? `<i style="background:${p[0]}"></i>` : `<i class="er"></i>`}<span>${p ? p[1] : "消す"}</span></button>`).join("")}</div><div class="salonprev26" id="im144prev"></div></div></div>
+      <div class="row2"><button class="btn light" type="button" id="im144off" ${o.pt2 ? "" : "disabled"}>メイクを落とす</button><button class="btn" type="button" id="im144go">このメイクにする（${fmt(MAKE_PRICE62)}）</button><button class="btn light" type="button" id="im144bk">もどる</button></div>`;
+    const cv = body.querySelector("#im144cv"), g = cv.getContext("2d");
+    const bc = document.createElement("canvas"); bc.width = bc.height = 32; const bx = bc.getContext("2d"); bx.imageSmoothingEnabled = false;
+    const bim = charImg118(baseCfg(), "down", 0); bx.drawImage(bim, 0, 0, bim.width, bim.height, 0, 0, 32, 32); const bd = bx.getImageData(0, 0, 32, 32).data;
+    const str = () => st.paint.join("");
+    const draw = () => {
+      for (let j = 0; j < PH; j++) for (let i = 0; i < PW; i++) { const v = parseInt(st.paint[j * PW + i], 16), k = ((PY + j) * 32 + PX + i) * 4; g.fillStyle = v ? PAL62[v][0] : bd[k + 3] ? `rgb(${bd[k]},${bd[k + 1]},${bd[k + 2]})` : ((i + j) % 2 ? "#f4eef0" : "#ebe2e6"); g.fillRect(i * CELL, j * CELL, CELL, CELL); }
+      if (st.mirror) { g.strokeStyle = "rgba(240,90,140,.5)"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); g.setLineDash([]); }
+      const p = F119.valid(str()) ? str() : null;
+      body.querySelector("#im144prev").innerHTML = ["down", "left", "right"].map(dd => `<img src="${charImg118(withPt(p), dd, 0).toDataURL()}" alt="">`).join("");
+      const go = body.querySelector("#im144go"); go.disabled = !p || p === ic144().pt2 || world.money < MAKE_PRICE62;
+    };
+    let painting = false, last = "";
+    const cellAt = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * PW), Math.floor((e.clientY - r.top) / r.height * PH)]; };
+    const dot = (i, j, ch) => { if (i < 0 || j < 0 || i >= PW || j >= PH) return; st.paint[j * PW + i] = ch; if (st.mirror) st.paint[j * PW + (PW - 1 - i)] = ch; };
+    const put = (i, j) => { if (i < 0 || j < 0 || i >= PW || j >= PH) return; if (st.size === 2) { i &= ~1; j &= ~1; } const k = i + "," + j; if (k === last) return; last = k; const ch = st.col.toString(16); if (st.size === 2) { dot(i, j, ch); dot(i + 1, j, ch); dot(i, j + 1, ch); dot(i + 1, j + 1, ch); } else dot(i, j, ch); draw(); };
+    cv.addEventListener("pointerdown", e => { e.preventDefault(); cv.setPointerCapture?.(e.pointerId); st.undo.push(str()); if (st.undo.length > 60) st.undo.shift(); painting = true; last = ""; put(...cellAt(e)); });
+    cv.addEventListener("pointermove", e => { if (painting) put(...cellAt(e)); });
+    const up = () => { painting = false; last = ""; }; cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up); cv.addEventListener("pointerleave", up);
+    body.querySelectorAll("[data-imc144]").forEach(b => b.onclick = () => { st.col = +b.dataset.imc144; body.querySelectorAll("[data-imc144]").forEach(x => x.classList.toggle("on", x === b)); });
+    body.querySelectorAll("[data-imz144]").forEach(b => b.onclick = () => { st.size = +b.dataset.imz144; body.querySelectorAll("[data-imz144]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+    body.querySelector("#im144mir").onclick = e => { st.mirror = !st.mirror; e.currentTarget.setAttribute("aria-pressed", String(st.mirror)); draw(); };
+    body.querySelector("#im144undo").onclick = () => { const p = st.undo.pop(); if (p) { st.paint = p.split(""); draw(); } };
+    body.querySelector("#im144clr").onclick = () => { st.undo.push(str()); st.paint = "0".repeat(PW * PH).split(""); draw(); };
+    body.querySelector("#im144go").onclick = () => { const p = str(); if (!F119.valid(p) || world.money < MAKE_PRICE62) return; addMoney(-MAKE_PRICE62); ic144().pt2 = p; world.stats.idolMake144 = (world.stats.idolMake144 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { } closeModal(); openIdol102("メイク完了！ とってもかわいい"); se13("small"); };
+    body.querySelector("#im144off").onclick = () => { delete ic144().pt2; saveWorld(); closeModal(); openIdol102("メイクを落とした"); };
+    body.querySelector("#im144bk").onclick = () => { closeModal(); openIdol102(); };
+    F144.CM = { put: (i, j) => { st.undo.push(str()); put(i, j); }, go: () => body.querySelector("#im144go").click() };
+    draw();
+  });
+}
+F144.cosme = openIdolCosme144;
+
+// ---- アイドルをえらびなおす（力・ファン・カードはそのまま。男の子のアイドルもえらべる） ----
+const REPICK144 = 30000;
+function openRepick144() {
+  const d = idol102();
+  openModal("アイドルをえらびなおす", "dark", body => {
+    body.innerHTML = `<p class="mtext">歌・ダンス・表情の力、ファン、コーデカードはそのまま。見た目と得意なこと（★）が変わるよ。イメチェンは、はじめの顔にもどる（${fmt(REPICK144)}）。</p><div class="id102pick">${IDOLS102.map((I, i) => `<button class="gm92c" type="button" data-rp144="${i}" ${i === d.pick || world.money < REPICK144 ? "disabled" : ""}><img src="${charIcon13(I.cfg)}" alt=""><b>${esc(I.base144)}${I.male ? "（男の子）" : ""}</b><span>${esc(I.desc)}</span></button>`).join("")}</div><div class="row2"><button class="btn light" type="button" id="rp144bk">もどる</button></div>`;
+    body.querySelectorAll("[data-rp144]").forEach(b => b.onclick = () => { if (world.money < REPICK144) return; addMoney(-REPICK144); const dd = idol102(); dd.pick = +b.dataset.rp144; delete dd.look; delete dd.nm; saveWorld(); closeModal(); openIdol102(`${IDOLS102[dd.pick].name}「よろしくおねがいします、プロデューサー！」`); });
+    $("rp144bk").onclick = () => { closeModal(); openIdol102(); };
+  });
+}
+
+// ---- チェキとブロマイド ----
+const lookCodes144 = c => { const o = {}; for (const k of ["idl", "icd", "iau", "inm", "ipt"]) if (c && typeof c[k] === "string" && c[k]) o[k] = c[k]; return o; };
+function addChk144(e) { const o = ic144(); o.chk.unshift(e); o.chk = o.chk.slice(0, 80); saveWorld(); try { checkTitles42(); } catch (x) { } }
+function chekiSelf144(kind) {
+  const d = idol102(); if (d.pick < 0) return;
+  const c = { idl: idlAny144(), icd: icdCode144(), iau: iauCode144(1), inm: d.nm || "" };
+  addChk144({ k: kind, o: myName(), nm: IDOLS102[d.pick].name, c: lookCodes144(c), day: world.day, at: Date.now() });
+}
+F144.cheki = (owner, nm, c, why) => { if (!c || !c.idl) return; const o = ic144(); const today = jstDay144(); if (o.chk.some(x => x.k === "c" && x.o === owner && x.dd === today)) return; addChk144({ k: "c", o: owner, nm, c: lookCodes144({ ...c, idl: String(c.idl).slice(0, 3) + "w" + String(c.idl).slice(4) }), day: world.day, dd: today, at: Date.now(), why }); toast(null, `${owner}さんのアイドル「${nm}」のチェキをもらった！（アルバムに入った）`); };
+// アイドルのコード（連れて歩いていなくても）
+const idlAny144 = () => { const d = idol102(); if (d.pick < 0) return ""; const outfit = OUTFIT102[d.outfit] && total102() >= OUTFIT102[d.outfit][1] ? d.outfit : 0; return `${d.pick}${outfit.toString(36)}${Math.min(9, d.song | 0)}w${faceCode126(d)}`; };
+function lookFromCodes144(c) { const x = parseIdl124(c); return x ? lookOf124(x) : null; }
+function openAlbum144() {
+  let raf = 0;
+  openModal("チェキとブロマイド", "dark", body => {
+    const o = ic144();
+    body.innerHTML = `<p class="mtext">ライブが成功するとブロマイド（自分のアイドル）、ほかの人のアイドルにファンサしてもらったり、ライブで応援したりするとチェキがもらえる（同じ人は1日1枚）。</p>
+      <div class="al144">${o.chk.map((x, i) => `<figure class="${x.k === "b" ? "bro144" : "chk144"}"><canvas width="64" height="64" data-al144="${i}"></canvas><figcaption><b>${esc(x.nm || "")}</b><span>${x.k === "b" ? "ブロマイド" : `${esc(x.o || "")}さんのアイドル`}</span></figcaption></figure>`).join("") || `<p class="mtext small">まだないよ</p>`}</div>
+      <div class="row2"><button class="btn light" type="button" id="al144bk">プロデュースにもどる</button></div>`;
+    $("al144bk").onclick = () => { closeModal(); openIdol102(); };
+    const cvs = [...body.querySelectorAll("[data-al144]")].map(cv => { const x = o.chk[+cv.dataset.al144], lk = lookFromCodes144(x.c); return { g: cv.getContext("2d"), lk, x }; });
+    const loop = () => { if (!body.isConnected) return; const t = performance.now() / 1000; for (const { g, lk, x } of cvs) { g.imageSmoothingEnabled = false; g.fillStyle = x.k === "b" ? "#ffe0ec" : "#e0f0ff"; g.fillRect(0, 0, 64, 64); if (x.c.iau) drawAura144(g, 32, 34, x.c.iau, t, 2); if (lk) g.drawImage(charImg118(lk, "down", 0), 4, 4, 56, 56); } raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+  }, () => cancelAnimationFrame(raf));
+}
+
+// ---- オンライン：type "idol" ----
+const sendI144 = m => { if (F8.connected && !WATCH88) send8({ type: "idol", ...m }); };
+const mySummary144 = () => { const d = idol102(); if (d.pick < 0) return null; const ci = coordInfo144(); return { nm: IDOLS102[d.pick].name, ty: ic144().ty, vo: d.st.vo, da: d.st.da, ex: d.st.ex, pw: ci.pw, lk: { idl: idlAny144(), icd: icdCode144(), ...(iauCode144(0) ? { iau: iauCode144(0) } : {}) } }; };
+F144.summary = mySummary144;
+let lastPut144 = "";
+setInterval(() => { try { if (!F8.connected || WATCH88 || !world.idol102) return; const s = mySummary144(); const j = JSON.stringify(s); if (j !== lastPut144) { lastPut144 = j; sendI144({ a: "put", i: s }); } } catch (e) { } }, 5000);
+const pending144 = [];
+const applyDone144 = m => {
+  const o = ic144(), L = o.lock[m.id]; if (!Array.isArray(L)) return false;
+  delete o.lock[m.id];
+  const giveN = Array.isArray(m.give) ? m.give.length : 0;
+  o.cards = o.cards.filter(x => !L.slice(0, giveN).includes(x.u));
+  for (const k of Object.keys(o.eq)) if (!o.cards.some(x => x.u === o.eq[k])) delete o.eq[k];
+  const got = []; for (const c of (Array.isArray(m.get) ? m.get : [])) { const x = addCard144(c.c | 0, c.p === 1, c.s || ""); if (x) got.push(x); }
+  o.trades++; saveWorld(); try { checkTitles42(); } catch (e) { }
+  F144.tr.delete(m.id);
+  showCards144(got, "トレード成立！", `${esc(m.with || "")}さんとトレードした。${got.length ? "もらったカード：" : "カードはもらわなかった"}`);
+  if (!got.length) toast(null, `${m.with || ""}さんとのトレードが成立した`);
+  return true;
+};
+const resSeen144 = id => { const o = ic144(); if (o.seen.includes(id)) return true; o.seen.push(id); o.seen = o.seen.slice(-60); return false; };
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "welcome") {
+      _h(m);
+      try {
+        const x = m.idolx; if (!x) return;
+        F144.inb = Array.isArray(x.in) ? x.in : []; F144.outb = Array.isArray(x.out) ? x.out : [];
+        F144.sup = x.sup && x.sup.id ? x.sup : null;
+        setTimeout(() => {
+          try {
+            const o = ic144();
+            for (const t of (Array.isArray(x.tres) ? x.tres : [])) applyDone144(t);
+            const act = new Set((x.trs || []).map(Number));
+            for (const id of Object.keys(o.lock)) if (!act.has(+id)) delete o.lock[id];
+            for (const id of [...F144.tr.keys()]) if (!act.has(+id)) F144.tr.delete(id);
+            saveWorld();
+            for (const r of (Array.isArray(x.res) ? x.res : [])) F7.pending.push({ kind: "custom", show: () => playBattle144(r) });
+            if (F144.sup && F8.myId() === +F144.sup.id && o.supSeen !== x.sup.n + jstWeek144()) { o.supSeen = x.sup.n + jstWeek144(); o.supWeeks++; saveWorld(); try { checkTitles42(); } catch (e) { } F7.notify(`先週のアイドルグランプリで1位！ あなたのアイドルが今週のスーパーアイドル（王冠がつく）`, null); }
+            if (F144.inb.length) toast(null, `アイドルの対決状が ${F144.inb.length}通 とどいている`);
+          } catch (e) { }
+        }, 4500);
+      } catch (e) { }
+      return;
+    }
+    if (m && m.type === "idol") { try { onIdol144(m); } catch (e) { if (window.__komoErr) window.__komoErr(e, "idol144"); } return; }
+    _h(m);
+  };
+}
+const jstWeek144 = () => { const d = new Date(Date.now() + 9 * 3600e3), wd = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - wd); return d.toISOString().slice(0, 10); };
+function onIdol144(m) {
+  if (m.ng) { toast(null, String(m.ng)); F144.wait = null; redraw144(); return; }
+  if (m.a === "list") { F144.list = Array.isArray(m.list) ? m.list : []; redraw144(); return; }
+  if (m.a === "rank") { F144.rank = m; if (m.sup && m.sup.id) F144.sup = m.sup; redraw144(); return; }
+  if (m.a === "tr") return onTrade144(m);
+  if (m.ok === "send" && m.c) { F144.outb = F144.outb.filter(c => c.id !== m.c.id).concat([m.c]); toast(null, `${m.c.tn}さんに対決状を送った`); redraw144(); return; }
+  if (m.ok === "cancel" || m.ok === "no") { F144.outb = F144.outb.filter(c => c.id !== m.id); F144.inb = F144.inb.filter(c => c.id !== m.id); redraw144(); return; }
+  if (m.ev === "in" && m.c) { F144.inb = F144.inb.filter(c => c.id !== m.c.id).concat([m.c]); toast(null, `${m.c.fn}さんから、アイドルの対決状がとどいた！`); redraw144(); return; }
+  if (m.ev === "gone") { F144.outb = F144.outb.filter(c => c.id !== m.id); F144.inb = F144.inb.filter(c => c.id !== m.id); redraw144(); return; }
+  if (m.ev === "res" && m.r) { F144.outb = F144.outb.filter(c => c.id !== m.r.id); F144.inb = F144.inb.filter(c => c.id !== m.r.id); const r = m.r; if (F144.wait === r.id || (redrawFn144 && modalOpen && $("mtitle").textContent === "アイドルの対決")) { F144.wait = null; playBattle144(r); } else F7.pending.push({ kind: "custom", show: () => playBattle144(r) }); return; }
+  if (m.ev === "fan") return gotFan144(m);
+  if (m.ev === "hagasu") return gotHagasu144(m);
+}
+let redrawFn144 = null;
+const redraw144 = () => { try { if (redrawFn144) redrawFn144(); } catch (e) { } };
+
+// ---- 対決の画面 ----
+let batTab144 = "box";
+function openBattle144(note) {
+  const d = idol102(); if (d.pick < 0) { openIdol102(); return; }
+  if (!F8.connected) { openModal("アイドルの対決", "dark", b => { b.innerHTML = `<p class="mtext">対決とアイドルグランプリは、オンラインでつないでいるときに遊べるよ。</p><div class="row2"><button class="btn light" type="button" id="bt144bk">もどる</button></div>`; $("bt144bk").onclick = () => { closeModal(); openIdol102(); }; }); return; }
+  sendI144({ a: "put", i: mySummary144() }); lastPut144 = JSON.stringify(mySummary144());
+  sendI144({ a: "list" }); sendI144({ a: "rank" });
+  openModal("アイドルの対決", "dark", body => {
+    const draw = msg => {
+      if (!body.isConnected) { redrawFn144 = null; return; }
+      const me = mySummary144(), R = F144.rank, sup = F144.sup;
+      const tabs = `<div class="mtabs">${[["box", `対決状（${F144.inb.length}）`], ["find", "相手をえらぶ"], ["gp", "アイドルグランプリ"]].map(([k, n]) => `<button class="chip" type="button" data-bt144="${k}" aria-pressed="${batTab144 === k}">${n}</button>`).join("")}</div>`;
+      const row = (i, extra) => `<span class="nm">${esc(i.nm)}<span class="sub2">${TASTE144[i.ty] ? TASTE144[i.ty].m + TASTE144[i.ty].n : ""}・歌${i.vo} ダンス${i.da} 表情${i.ex}・コーデ${i.pw}${extra || ""}</span></span>`;
+      let html = "";
+      if (batTab144 === "box") {
+        html = `<h4>とどいた対決状</h4><div class="list">${F144.inb.map(c => `<div class="li">${row(c.a, `・${esc(c.fn)}さん`)}<span class="acts"><button class="btn" type="button" data-yes144="${c.id}" ${F144.wait ? "disabled" : ""}>受ける</button><button class="btn light" type="button" data-no144="${c.id}">ことわる</button></span></div>`).join("") || `<p class="mtext small">いまはないよ</p>`}</div>
+          <h4>送った対決状</h4><div class="list">${F144.outb.map(c => `<div class="li"><span class="nm">${esc(c.tn)}さんの「${esc(c.b.nm)}」<span class="sub2">返事を待っている</span></span><span class="acts"><button class="btn light" type="button" data-cn144="${c.id}">取り下げる</button></span></div>`).join("") || `<p class="mtext small">いまはないよ</p>`}</div>`;
+      } else if (batTab144 === "find") {
+        html = `<p class="mtext small">3本勝負（歌・ダンス・表情）。アイドルの力とコーデの力で決まる。勝つとコーデカード2枚（SRが出やすい）、負けても1枚。相手が留守でも、次に来たときに届くよ。</p><div class="list">${F144.list.map(p => `<div class="li">${row(p.i, `・${esc(p.owner)}さん`)}<span class="acts"><button class="btn" type="button" data-snd144="${p.id}" ${F144.outb.some(c => c.t === p.id) ? "disabled" : ""}>${F144.outb.some(c => c.t === p.id) ? "送ってある" : "対決状を送る"}</button></span></div>`).join("") || `<p class="mtext small">同じ村に、まだアイドルを育てている人がいないみたい</p>`}</div>`;
+      } else {
+        const L = rr => rr && rr.length ? rr.map((r, i) => `<div class="li"><span class="nm">${i + 1}位 ${esc(r.nm || "")}<span class="sub2">${esc(r.n)}さん</span></span><span class="acts"><b>${fmt92(rr === R.week ? r.wp : r.p)}pt</b></span></div>`).join("") : `<p class="mtext small">まだだれもいないよ</p>`;
+        html = `<div class="gp144">${sup ? `<p class="mtext"><b>スーパーアイドル（先週の1位）：${esc(sup.nm || "")}</b>（${esc(sup.n || "")}さん）。村で連れて歩くと王冠がつく。</p>` : `<p class="mtext small">先週のスーパーアイドルはいないよ。今週の1位が来週のスーパーアイドルになる。</p>`}
+          ${R ? `<p class="mtext small">あなたの対決ポイント：今週 ${fmt92(R.me?.wp || 0)}pt・ぜんぶ ${fmt92(R.me?.p || 0)}pt。勝つと10pt（強い相手ほど多い）・負けても3pt（同じ相手とは1日3回まで）</p><h4>今週のアイドルグランプリ</h4><div class="list">${L(R.week)}</div><h4>これまでの合計</h4><div class="list">${L(R.all)}</div>` : `<p class="mtext small">読みこみ中…</p>`}</div>`;
+      }
+      body.innerHTML = `${msg || note ? `<p class="mtext"><b>${esc(msg || note)}</b></p>` : ""}${me ? `<p class="mtext small">あなたのアイドル：${esc(me.nm)}（${TASTE144[me.ty].n}）・歌${me.vo} ダンス${me.da} 表情${me.ex}・コーデの力 ${me.pw}</p>` : ""}${tabs}${html}<div class="row2"><button class="btn light" type="button" id="bt144bk">プロデュースにもどる</button></div>`;
+      note = "";
+      body.querySelectorAll("[data-bt144]").forEach(b => b.onclick = () => { batTab144 = b.dataset.bt144; if (batTab144 === "gp") sendI144({ a: "rank" }); if (batTab144 === "find") sendI144({ a: "list" }); draw(); });
+      body.querySelectorAll("[data-snd144]").forEach(b => b.onclick = () => { b.disabled = true; sendI144({ a: "send", to: +b.dataset.snd144, me: mySummary144() }); });
+      body.querySelectorAll("[data-yes144]").forEach(b => b.onclick = () => { F144.wait = +b.dataset.yes144; b.disabled = true; sendI144({ a: "yes", id: +b.dataset.yes144, me: mySummary144() }); });
+      body.querySelectorAll("[data-no144]").forEach(b => b.onclick = () => { sendI144({ a: "no", id: +b.dataset.no144 }); F144.inb = F144.inb.filter(c => c.id !== +b.dataset.no144); draw(); });
+      body.querySelectorAll("[data-cn144]").forEach(b => b.onclick = () => { sendI144({ a: "cancel", id: +b.dataset.cn144 }); F144.outb = F144.outb.filter(c => c.id !== +b.dataset.cn144); draw(); });
+      $("bt144bk").onclick = () => { redrawFn144 = null; closeModal(); openIdol102(); };
+    };
+    redrawFn144 = draw; draw();
+  }, () => { redrawFn144 = null; });
+}
+F144.battle = openBattle144;
+const ROUND144 = ["歌", "ダンス", "表情"];
+function playBattle144(r) {
+  const myId = F8.myId ? F8.myId() : 0, side = r.a && r.a.id === myId ? 0 : r.b && r.b.id === myId ? 1 : -1;
+  const first = !resSeen144(r.id); let got = [];
+  if (first && side >= 0) { const o = ic144(); if (r.w === side) o.wins++; else o.loses++; got = giveCards144(r.w === side ? 2 : 1, r.w === side ? 1 : 0, "battle"); saveWorld(); try { checkTitles42(); } catch (e) { } }
+  const S = [r.a, r.b], looks = S.map(s => lookFromCodes144({ ...(s.lk || {}), inm: s.nm }) || { ...DEFAULT, ...IDOLS102[0].cfg });
+  let raf = 0, t0 = 0, done = false;
+  openModal("アイドルの対決", "dark", body => {
+    body.innerHTML = `<div class="bt144"><canvas id="bt144cv" width="320" height="180"></canvas><div id="bt144r" class="dk75r"></div><div class="row2"><button class="btn light" type="button" id="bt144sk">とばす</button></div></div>`;
+    const cv = $("bt144cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false;
+    const finish = () => {
+      if (done) return; done = true;
+      const win = side >= 0 && r.w === side, wl = side < 0 ? `${esc(S[r.w].nm)}の勝ち！` : win ? "勝った！" : "負けちゃった…";
+      $("bt144r").innerHTML = `<b>${wl}</b>${r.rd.map((x, k) => `<span>${ROUND144[k]}：${esc(S[0].nm)} ${x[0]}${x[2] ? "（スペシャル）" : ""} − ${x[1]}${x[3] ? "（スペシャル）" : ""} ${esc(S[1].nm)}</span>`).join("")}${side >= 0 && r.pt ? `<span>対決ポイント +${r.pt[side]}</span>` : ""}${got.length ? `<span>コーデカード ${got.map(x => `「${esc(CARD144[x.c].n)}」`).join("")}をもらった</span>` : ""}`;
+      const b = $("bt144sk"); b.textContent = "とじる"; b.onclick = () => closeModal();
+      se13(win ? "win" : "small");
+    };
+    $("bt144sk").onclick = () => { t0 = -1e9; };
+    const frame = ts => {
+      if (!cv.isConnected) return; if (!t0) t0 = ts; const t = (ts - t0) / 1000, k = Math.min(2, Math.floor(t / 2.2)), kt = t - k * 2.2;
+      g.fillStyle = "#1a1030"; g.fillRect(0, 0, 320, 180);
+      for (let i = 0; i < 6; i++) { g.fillStyle = `hsla(${(ts / 20 + i * 60) % 360},80%,60%,.15)`; g.fillRect(i * 56, 0, 20, 120); }
+      g.fillStyle = "#3a2a50"; g.fillRect(0, 130, 320, 50);
+      for (let i = 0; i < 2; i++) {
+        const x = i ? 210 : 46, sp = r.rd[k] && r.rd[k][2 + i] && kt > .6 && kt < 1.8;
+        const au = S[i].lk && S[i].lk.iau; if (au) drawAura144(g, x + 32, 92, au, ts / 1000, 2);
+        g.drawImage(charImg118(looks[i], ["down", i ? "left" : "right", "down"][Math.floor(ts / 400) % 3], Math.floor(ts / 160) % 3), x, 60, 64, 64);
+        g.fillStyle = "#fff"; g.font = "bold 10px sans-serif"; g.textAlign = "center"; g.fillText(S[i].nm, x + 32, 140);
+        g.font = "9px sans-serif"; g.fillText(`${S[i].o || ""}さん`, x + 32, 152);
+        if (sp) { const T = TASTE144[S[i].ty] || TASTE144[0]; g.fillStyle = T.c; g.font = "bold 13px sans-serif"; g.fillText(T.sp, x + 32, 52); }
+      }
+      g.textAlign = "center"; g.fillStyle = "#ffe27a"; g.font = "bold 14px sans-serif"; g.fillText(t < 6.6 ? `${ROUND144[k]}の勝負` : "けっか", 160, 20);
+      const x0 = r.rd[k] || [0, 0], p = Math.min(1, kt / 1.2), m = Math.max(x0[0], x0[1], 1);
+      for (let i = 0; i < 2; i++) { g.fillStyle = "rgba(255,255,255,.15)"; g.fillRect(i ? 170 : 20, 30, 130, 8); g.fillStyle = i ? "#7ad0f0" : "#ff8ac8"; const w = 130 * p * x0[i] / m; g.fillRect(i ? 170 : 150 - w, 30, w, 8); }
+      if (t >= 6.6) { g.fillStyle = "#fff"; g.font = "bold 18px sans-serif"; g.fillText(`${S[r.w].nm}の勝ち！`, 160, 100); finish(); }
+      g.textAlign = "left";
+      if (t < 8) raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+  }, () => { cancelAnimationFrame(raf); });
+}
+F144.play = playBattle144;
+
+// ---- トレード ----
+function onTrade144(m) {
+  const o = ic144();
+  if (m.list) { F144.tr = new Map(m.list.map(T => [T.id, T])); redraw144(); return; }
+  if ((m.ok === "ask" || m.ev === "in" || m.ev === "up") && m.tr) {
+    const T = m.tr; F144.tr.set(T.id, T);
+    if (!Array.isArray(o.lock[T.id])) o.lock[T.id] = [];
+    if (m.ev === "in") { toast(null, `${T.fn}さんから、コーデカードのトレードの申しこみ！`); F7.pending.push({ kind: "custom", show: () => openTradeRoom144(T.id) }); }
+    if (m.ok === "ask") openTradeRoom144(T.id);
+    saveWorld(); redraw144(); return;
+  }
+  if (m.ev === "gone") { if (F144.tr.has(m.id)) toast(null, "トレードは取りやめになった"); F144.tr.delete(m.id); delete o.lock[m.id]; saveWorld(); redraw144(); return; }
+  if (m.ev === "done") { applyDone144(m); redraw144(); return; }
+}
+const freeCards144 = () => { const o = ic144(), L = locked144(), eq = new Set(Object.values(o.eq)); return o.cards.filter(x => !L.has(x.u) && !eq.has(x.u)); };
+function pickCards144(title, cur, cb) {
+  const sel = new Set(cur);
+  const b = $("mbody"); if (!b) return;
+  const draw = () => {
+    const list = freeCards144().concat(cur.map(card144).filter(Boolean)).filter((x, i, a) => a.findIndex(y => y.u === x.u) === i).sort((a, c) => CARD144[c.c].r - CARD144[a.c].r);
+    b.innerHTML = `<p class="mtext">${esc(title)}（5枚まで・えらんだ ${sel.size}枚）。つけているカードは出せないよ。</p><div class="cds144">${list.map(x => cardHtml144(x, sel.has(x.u) ? `<span class="cdp144">えらんだ</span>` : "", `data-pk144="${x.u}" aria-pressed="${sel.has(x.u)}"`)).join("") || `<p class="mtext small">出せるカードがないよ</p>`}</div><div class="row2"><button class="btn" type="button" id="pk144ok">これにする</button><button class="btn light" type="button" id="pk144bk">もどる</button></div>`;
+    b.querySelectorAll("[data-pk144]").forEach(x => x.onclick = () => { const u = +x.dataset.pk144; if (sel.has(u)) sel.delete(u); else if (sel.size < 5) sel.add(u); draw(); });
+    $("pk144ok").onclick = () => cb([...sel]); $("pk144bk").onclick = () => cb(null);
+  };
+  draw();
+}
+const codeOf144 = u => { const x = card144(u); return x ? { c: x.c, p: x.p, s: x.s || "" } : null; };
+function openTrade144() {
+  const d = idol102(); if (d.pick < 0) { openIdol102(); return; }
+  if (!F8.connected) { openModal("カードのトレード", "dark", b => { b.innerHTML = `<p class="mtext">トレードは、オンラインで同じ村の人とできるよ。</p><div class="row2"><button class="btn light" type="button" id="tr144bk">もどる</button></div>`; $("tr144bk").onclick = () => { closeModal(); openIdol102(); }; }); return; }
+  sendI144({ a: "tr", op: "look" });
+  openModal("カードのトレード", "dark", body => {
+    const draw = () => {
+      if (!body.isConnected) { redrawFn144 = null; return; }
+      const me = F8.myId(), mine = [...F144.tr.values()], people = [...remotes.values()].filter(e => e.rid > 0);
+      body.innerHTML = `<p class="mtext">いま同じ村でつないでいる人と、コーデカードを交換できる。ふたりとも「これでOK」を押したら成立。お金は使わないよ。</p>
+        <h4>トレード中</h4><div class="list">${mine.map(T => `<div class="li"><span class="nm">${esc(T.f === me ? T.tn : T.fn)}さん<span class="sub2">出す ${(T.f === me ? T.gf : T.gt).length}枚・もらう ${(T.f === me ? T.gt : T.gf).length}枚</span></span><span class="acts"><button class="btn" type="button" data-tro144="${T.id}">ひらく</button></span></div>`).join("") || `<p class="mtext small">いまはないよ</p>`}</div>
+        <h4>申しこむ</h4><div class="list">${people.map(e => `<div class="li"><span class="nm">${esc(e.name)}</span><span class="acts"><button class="btn" type="button" data-tra144="${e.rid}" ${mine.some(T => T.f === e.rid || T.t === e.rid) ? "disabled" : ""}>カードをえらんで申しこむ</button></span></div>`).join("") || `<p class="mtext small">いま同じ村にだれもいないみたい</p>`}</div>
+        <div class="row2"><button class="btn light" type="button" id="tr144bk">プロデュースにもどる</button></div>`;
+      body.querySelectorAll("[data-tro144]").forEach(b => b.onclick = () => openTradeRoom144(+b.dataset.tro144));
+      body.querySelectorAll("[data-tra144]").forEach(b => b.onclick = () => { const to = +b.dataset.tra144; redrawFn144 = null; pickCards144("相手に出すカードをえらぶ", [], sel => { if (!sel) { redrawFn144 = draw; draw(); return; } tradeAsk144(to, sel); }); });
+      $("tr144bk").onclick = () => { redrawFn144 = null; closeModal(); openIdol102(); };
+    };
+    redrawFn144 = draw; draw();
+  }, () => { redrawFn144 = null; });
+}
+let askLock144 = null;
+function tradeAsk144(to, uids) { askLock144 = uids; sendI144({ a: "tr", op: "ask", to, give: uids.map(codeOf144).filter(Boolean) }); }
+{ const _o = onTrade144; onTrade144 = m => { if (m.ok === "ask" && m.tr && askLock144) { ic144().lock[m.tr.id] = askLock144; askLock144 = null; } if (m.ng) askLock144 = null; return _o(m); }; }
+function openTradeRoom144(id) {
+  const T0 = F144.tr.get(id); if (!T0) return;
+  const show = () => {
+    const T = F144.tr.get(id), b = $("mbody"); if (!b || !T) { if (!T && modalOpen && $("trr144")) { closeModal(); } return; }
+    const me = F8.myId(), isF = T.f === me, mineC = isF ? T.gf : T.gt, theirC = isF ? T.gt : T.gf, okMe = isF ? T.okf : T.okt, okThey = isF ? T.okt : T.okf;
+    b.innerHTML = `<div id="trr144"><h4>${esc(isF ? T.tn : T.fn)}さんとトレード</h4>
+      <p class="mtext small">あなたが出すカード ${okMe ? "（OK を押した）" : ""}</p><div class="cds144">${mineC.map(c => cardHtml144(c)).join("") || `<p class="mtext small">なし</p>`}</div>
+      <p class="mtext small">${esc(isF ? T.tn : T.fn)}さんが出すカード ${okThey ? "（OK を押した）" : ""}</p><div class="cds144">${theirC.map(c => cardHtml144(c)).join("") || `<p class="mtext small">まだえらんでいない</p>`}</div>
+      <div class="row2"><button class="btn light" type="button" id="trr144pk">出すカードをえらびなおす</button><button class="btn" type="button" id="trr144ok" ${okMe ? "disabled" : ""}>これでOK</button><button class="btn light" type="button" id="trr144cn">やめる</button></div>
+      <p class="mtext small">カードがかわると、OK はもう一度押しなおし。</p></div>`;
+    $("trr144pk").onclick = () => { redrawFn144 = null; pickCards144("出すカードをえらぶ", ic144().lock[id] || [], sel => { redrawFn144 = show; if (sel) { ic144().lock[id] = sel; saveWorld(); sendI144({ a: "tr", op: "put", id, give: sel.map(codeOf144).filter(Boolean) }); } show(); }); };
+    $("trr144ok").onclick = () => { $("trr144ok").disabled = true; sendI144({ a: "tr", op: "ok", id }); };
+    $("trr144cn").onclick = () => { sendI144({ a: "tr", op: "cancel", id }); F144.tr.delete(id); delete ic144().lock[id]; saveWorld(); closeModal(); };
+  };
+  if (!modalOpen || !$("trr144")) openModal("カードのトレード", "dark", () => { }, () => { if (redrawFn144 === show) redrawFn144 = null; });
+  redrawFn144 = show; show();
+}
+F144.tradeRoom = openTradeRoom144;
+
+// ---- ファンサとはがし ----
+const FANSA144 = ["手をふってくれた♪", "ウインクしてくれた☆", "ハートをくれた♡", "ピースしてくれた！", "投げキッスしてくれた♡", "にっこり笑ってくれた"];
+const fanFx144 = new WeakMap();
+function idolNear144() {
+  if (!(map === village || map === port || map.isTown)) return [];
+  const L = [];
+  for (const e of remotes.values()) {
+    if (e.rmap !== mapKey()) continue; const x = parseIdl124(e.cfg); if (!x || x.mode !== "w") continue;
+    const t = trail124.get(e); if (!t) continue;
+    const tx = Math.round(t.x / TS), ty = Math.round(t.y / TS), dist = Math.abs(tx - player.x) + Math.abs(ty - player.y);
+    if (dist <= 6) L.push({ e, x, tx, ty, dist });
+  }
+  return L.sort((a, b) => a.dist - b.dist);
+}
+function fansa144(it) {
+  const o = ic144(), id = it.e.rid, now = Date.now();
+  if ((o.hag[id] || 0) > now) { toast(null, `マネージャーさん「${it.e.name}さんのアイドルは、本日はここまでです〜」`); return; }
+  const log = (o.fanAt[id] = (Array.isArray(o.fanAt[id]) ? o.fanAt[id] : []).filter(t => now - t < 180000));
+  if (log.length && now - log[log.length - 1] < 15000) { toast(null, "少し待ってから、また話しかけてみよう"); return; }
+  if (log.length >= 5) { o.hag[id] = now + 5 * 60000; saveWorld(); showManager144(it.e.name, true); return; }
+  log.push(now); o.fanSent++;
+  const nm = idolNm144(it.x), text = FANSA144[rnd(FANSA144.length)];
+  fanFx144.set(it.e, { text: text.replace(/してくれた.*|をくれた.*|くれた.*/, "") || "♡", until: performance.now() + 2600 });
+  toast(null, `${nm}が${text}`); se13("small");
+  sendI144({ a: "fan", to: id });
+  F144.cheki(it.e.name, nm, it.e.cfg, "fansa");
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+}
+F144.fansa = fansa144; F144.near = idolNear144;
+// Ⓐ：前のマスにほかの人のアイドルがいたらファンサ
+{
+  const _a = act;
+  act = function () {
+    try {
+      if (!modalOpen && F8.connected && !WATCH88) {
+        const [dx, dy] = DIRS[player.dir] || [0, 1], fx = player.x + dx, fy = player.y + dy;
+        const it = idolNear144().find(i => (i.tx === fx && i.ty === fy) || (i.tx === player.x && i.ty === player.y));
+        if (it && !(remotes.size && [...remotes.values()].some(e => e.rmap === mapKey() && e.x === fx && e.y === fy))) { fansa144(it); return; }
+      }
+    } catch (e) { }
+    return _a.apply(this, arguments);
+  };
+}
+function gotFan144(m) {
+  const o = ic144(), d = world.idol102; if (!d || d.pick < 0) return;
+  o.fanGot++;
+  if ((o.fanToday | 0) < 30) { o.fanToday = (o.fanToday | 0) + 1; d.fans = (d.fans | 0) + 1; }
+  o.fanLog.unshift({ id: m.from, n: String(m.name || "").slice(0, 12), at: Date.now() }); o.fanLog = o.fanLog.slice(0, 12);
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+  showFanBar144(m.from, String(m.name || ""));
+}
+function showFanBar144(id, name) {
+  let el = $("hg144"); if (!el) { document.body.insertAdjacentHTML("beforeend", `<div id="hg144" class="hg144" role="status"></div>`); el = $("hg144"); }
+  el.innerHTML = `<span>${esc(name)}さんが、あなたのアイドルに話しかけた（ファン+1）</span><button class="btn light" type="button" id="hg144b">はがす</button>`;
+  el.hidden = false; clearTimeout(F144.hgT); F144.hgT = setTimeout(() => { el.hidden = true; }, 8000);
+  $("hg144b").onclick = () => { hagasu144(id, name); el.hidden = true; };
+}
+function hagasu144(id, name) { sendI144({ a: "hagasu", to: id }); toast(null, `マネージャーが ${name}さんに「そろそろお時間です」と声をかけた`); }
+function gotHagasu144(m) { const o = ic144(); o.hag[m.from] = Date.now() + 10 * 60000; saveWorld(); showManager144(String(m.name || ""), false); }
+function showManager144(owner, auto) {
+  F7.pending.push({ kind: "custom", show: () => openModal("マネージャーさん", "dark", body => {
+    body.innerHTML = `<div class="mg144"><canvas id="mg144cv" width="160" height="80"></canvas>${staffSay13(charIcon13({ hair: "ショート", hairc: "黒", top: "スーツ", topc: "黒", bottom: "パンツ", bottomc: "黒", acc: "メガネ" }), esc(auto ? "はい、たくさん来てくださってありがとうございます〜。少し休憩をいただきますね" : "はい、そろそろお時間です〜。またライブで会いに来てくださいね"))}</div><p class="mtext small">${esc(owner)}さんのアイドルには、${auto ? "5分" : "10分"}のあいだ話しかけられない（はがされた）。</p><div class="row2"><button class="btn" type="button" id="mg144ok">はーい</button></div>`;
+    $("mg144ok").onclick = () => closeModal();
+    const cv = $("mg144cv"), g = cv.getContext("2d"); g.imageSmoothingEnabled = false; let t0 = 0;
+    const lp = ts => { if (!cv.isConnected) return; if (!t0) t0 = ts; const t = Math.min(1, (ts - t0) / 1200); g.fillStyle = "#2a1838"; g.fillRect(0, 0, 160, 80);
+      g.drawImage(charImg118(cfg, "right", 0), 70 - t * 50, 24, 40, 40); g.drawImage(charImg118({ ...DEFAULT, hair: "ショート", hairc: "黒", top: "スーツ", topc: "黒", bottom: "パンツ", bottomc: "黒", acc: "メガネ" }, "left", Math.floor(ts / 160) % 3), 100 - t * 40, 24, 40, 40);
+      g.fillStyle = "#ffe27a"; g.font = "bold 9px sans-serif"; g.fillText("はーい、はがしまーす", 64, 16); requestAnimationFrame(lp); };
+    requestAnimationFrame(lp);
+  }) });
+}
+F144.gotFan = gotFan144; F144.gotHagasu = gotHagasu144;
+function openFans144() {
+  const o = ic144(), near = F8.connected ? idolNear144() : [];
+  openModal("ファンサ", "dark", body => {
+    body.innerHTML = `<h4>近くにいるほかの人のアイドル</h4><div class="list">${near.map((it, i) => `<div class="li"><span class="nm">${esc(idolNm144(it.x))}<span class="sub2">${esc(it.e.name)}さんのアイドル</span></span><span class="acts"><button class="btn" type="button" data-fs144="${i}">話しかける</button></span></div>`).join("") || `<p class="mtext small">近くに、連れて歩いているアイドルはいないよ（アイドルの前に立ってⒶでも話しかけられる）</p>`}</div>
+      <h4>あなたのアイドルに話しかけてくれた人</h4><div class="list">${o.fanLog.map((f, i) => `<div class="li"><span class="nm">${esc(f.n)}さん<span class="sub2">${new Date(f.at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}</span></span><span class="acts"><button class="btn light" type="button" data-hg144="${i}" ${F8.connected ? "" : "disabled"}>はがす</button></span></div>`).join("") || `<p class="mtext small">まだいないよ</p>`}</div>
+      <p class="mtext small">「はがす」と、マネージャーさんが「そろそろお時間です」と声をかけて、その人は10分のあいだ話しかけられなくなる。</p>
+      <div class="row2"><button class="btn light" type="button" id="fs144bk">プロデュースにもどる</button></div>`;
+    body.querySelectorAll("[data-fs144]").forEach(b => b.onclick = () => { const it = near[+b.dataset.fs144]; closeModal(); if (it) fansa144(it); });
+    body.querySelectorAll("[data-hg144]").forEach(b => b.onclick = () => { const f = o.fanLog[+b.dataset.hg144]; if (f) hagasu144(f.id, f.n); b.disabled = true; });
+    $("fs144bk").onclick = () => { closeModal(); openIdol102(); };
+  });
+}
+
+// ---- 称号・てびき・アップデート ----
+const TTL144 = [
+  ["コーデの達人", "同じテイストの SR か PR のカード4枚でフルコーデにする", () => { try { return coordInfo144().r >= 2; } catch (e) { return false; } }],
+  ["カードコレクター", "コーデカードを32種類あつめる", () => Object.keys(world.ic144?.book || {}).length >= 32],
+  ["トレードの約束", "コーデカードのトレードを1回する", () => (world.ic144?.trades || 0) >= 1],
+  ["ステージの勝者", "アイドルの対決で10回勝つ", () => (world.ic144?.wins || 0) >= 10],
+  ["スーパーアイドルの生みの親", "アイドルグランプリで週の1位になる", () => (world.ic144?.supWeeks || 0) >= 1],
+  ["神ファンサ", "あなたのアイドルが、ほかの人に50回話しかけられる", () => (world.ic144?.fanGot || 0) >= 50],
+  ["アルバムいっぱい", "チェキとブロマイドを30枚あつめる", () => (world.ic144?.chk?.length || 0) >= 30],
+];
+for (const t of TTL144) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["アイドルのコーデと対決", "s13_latte30", `<ul>
+  <li><b>コーデカード</b>：トップス・ボトムス・シューズ・アクセの4つ。テイスト（キュート・クール・ポップ・セクシー）とレア度（N・R・SR・PR）があって、強さはレア度で決まる。同じテイストで4つそろえると、ライブと対決で強くなる。キラキラのパラレルや、サイン入りのカードも</li>
+  <li><b>手に入れる</b>：レッスン・ライブの成功・オーディションの合格・対決（勝つと2枚・負けても1枚）・ガチャ（スマホコイン）</li>
+  <li><b>トレード</b>：同じ村でつないでいる人と、カードどうしを交換。ふたりとも「これでOK」で成立。お金は使わない</li>
+  <li><b>対決とアイドルグランプリ</b>：対決状を送って3本勝負（歌・ダンス・表情）。対決ポイントの週のランキングがアイドルグランプリで、先週の1位はスーパーアイドル（王冠）</li>
+  <li><b>名前・タイプ・メイク・オーラ</b>：名前は自由に変えられる。メイクはプレイヤーと同じように描ける。オーラは形と色を自由にえらべて、大きさとキラキラは力の合計で決まる（3つまで重ねられる・ライブ中は大きくなる）</li>
+  <li><b>ファンサとはがし</b>：ほかの人の連れて歩いているアイドルの前でⒶで話しかけるとファンサ（チェキがもらえる）。話しかけられた人は「はがす」でマネージャーさんに止めてもらえる</li>
+  <li><b>スペシャルアピール</b>：ライブで6回コールが決まると使える。対決でも1回ずつ出る</li></ul>`]);
+CHANGES19.unshift({ v: "0.85.0", date: "2026/11/18", title: "アイドルのコーデカード・対決・トレード・メイク・オーラ", items: [
+  "アイドルにコーデカード（トップス・ボトムス・シューズ・アクセ・64種類）。テイストとレア度・パラレル・サイン・図鑑・ガチャ",
+  "コーデカードのトレード（同じ村の人と、ふたりで OK を押して交換）",
+  "アイドルの対決状（3本勝負）と、週のアイドルグランプリ。先週の1位はスーパーアイドル（王冠）",
+  "アイドルの名前を自由に・タイプ・メイク・オーラ（形と色を自由に・大きさは力で決まる・3つまで重ねられる）・服の色",
+  "男の子のアイドルが2人（えらびなおしもできる）・ライブのスペシャルアピール",
+  "ほかの人のアイドルにファンサ・はがす（マネージャーさん）・チェキとブロマイドのアルバム",
+] });
+ICON80.idol144 = `<path d="M16 4l3.4 7 7.6 1.1-5.5 5.3 1.3 7.6L16 21.4 9.2 25l1.3-7.6L5 12.1l7.6-1.1z"/>`;
+F76.add({ id: "idol144", name: "アイドル", ch: "偶", c: "#d8508a", open: () => openIdol102() });
+F144.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -31709,7 +32632,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

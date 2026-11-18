@@ -161,6 +161,57 @@ function duelRace(A, B) {
   const w = fin[0] < fin[1] ? 0 : fin[1] < fin[0] ? 1 : (rnd() < .5 ? 0 : 1);
   return { e: ev, w, ph: Math.abs(fin[0] - fin[1]) < .35, d: Math.round(Math.abs(fin[0] - fin[1]) * 100) / 100, p, c: cond };
 }
+// アイドルの対決・カードのトレード・ファンサとはがし・グランプリ（本物は idol/IdolHandler.java）
+const idolBy = new Map(), idolOf = v => { if (!idolBy.has(v)) idolBy.set(v, { seq: 0, ros: {}, box: [], res: {}, tres: {}, pt: {}, pd: {}, tops: {} }); const d = idolBy.get(v); d.box = d.box.filter(c => Date.now() - c.at < 3 * 86400e3); return d; };
+const idolTr = new Map(); let idolTrSeq = 0; const idolLast = new Map(), idolFanAt = new Map();
+const idolNm = (s, n) => String(s || "").replace(/[\u0000-\u001f\u007f-\u009f<>"&\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]/g, "").trim().slice(0, n);
+const idolCl = (v, a, b) => Math.max(a, Math.min(b, Math.floor(+v || 0)));
+function idolOne(c) { if (!c || typeof c !== "object") return null; const o = { nm: idolNm(c.nm, 10) || "アイドル", ty: idolCl(c.ty, 0, 3), vo: idolCl(c.vo, 0, 300), da: idolCl(c.da, 0, 300), ex: idolCl(c.ex, 0, 300), pw: idolCl(c.pw, 0, 300), lk: {} }; for (const k of ["idl", "icd", "iau"]) { const v = String((c.lk || {})[k] || ""); if (/^[0-9a-z]{1,20}$/.test(v)) o.lk[k] = v; } return o; }
+const idolTot = i => i.vo + i.da + i.ex + i.pw;
+const IDOL_ST = ["vo", "da", "ex"], IDOL_TYR = [2, 1, 0, -1];
+function idolBattle(a, b) { const s = [a, b], sp = [false, false], wins = [0, 0], tot = [0, 0], rd = [];
+  for (let k = 0; k < 3; k++) { const sc = [0, 0], used = [0, 0]; for (let i = 0; i < 2; i++) { const ty = s[i].ty; let v = s[i][IDOL_ST[k]] + s[i].pw * .4 + (IDOL_TYR[ty] === k ? 30 : ty === 3 ? 12 : 0) + Math.floor(Math.random() * 91); if (!sp[i] && (k === 2 || Math.random() < .35)) { sp[i] = true; used[i] = 1; v += 45; } sc[i] = Math.round(v); tot[i] += sc[i]; }
+    if (sc[0] > sc[1]) wins[0]++; else if (sc[1] > sc[0]) wins[1]++; rd.push([sc[0], sc[1], used[0], used[1]]); }
+  const w = wins[0] !== wins[1] ? (wins[0] > wins[1] ? 0 : 1) : tot[0] !== tot[1] ? (tot[0] > tot[1] ? 0 : 1) : (Math.random() < .5 ? 0 : 1); return { a: { ...a }, b: { ...b }, rd, w }; }
+const idolWeek = back => { const d = new Date(Date.now() + 9 * 3600e3), wd = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - wd - 7 * back - +(process.env.IDOL_WEEK_SHIFT || 0) * 7); return d.toISOString().slice(0, 10); };
+function idolLeader(d, wk) { let best = null; for (const [id, e] of Object.entries(d.pt)) if (e.wk === wk && e.wp > (best ? best.p : 0)) best = { id: +id, n: e.n, nm: e.nm, p: e.wp }; return best; }
+function idolPoints(d, f, fn, fnm, t, tn, tnm, w, sa, sb) { const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10), pair = Math.min(f, t) + "-" + Math.max(f, t);
+  if (d.pd.day !== day) d.pd = { day, pairs: {} }; const n = d.pd.pairs[pair] || 0; if (n >= 3) return [0, 0]; d.pd.pairs[pair] = n + 1;
+  const gain = 10 + idolCl((w === 0 ? sb - sa : sa - sb) / 60, 0, 10), wk = idolWeek(0), out = [0, 0];
+  [[f, fn, fnm], [t, tn, tnm]].forEach(([id, n2, nm], i) => { const e = d.pt[id] = d.pt[id] || { p: 0, wp: 0 }; if (e.wk !== wk) { e.wk = wk; e.wp = 0; } const dl = i === w ? gain : 3; Object.assign(e, { n: idolNm(n2, 12), nm: idolNm(nm, 10), p: e.p + dl, wp: e.wp + dl }); out[i] = dl; });
+  const top = idolLeader(d, wk); if (top) d.tops[wk] = top; return out; }
+function idolCards(L) { const out = []; for (const c of (Array.isArray(L) ? L : [])) { if (out.length >= 5) break; const id = Math.floor(+(c && c.c)); if (!(id >= 0 && id <= 255)) continue; out.push({ c: id, p: c.p === 1 ? 1 : 0, s: idolNm(c.s, 10) }); } return out; }
+function idolHandle(s, m) {
+  if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), d = idolOf(V), a = String(m.a || ""), send = o => s.send(JSON.stringify({ type: "idol", ...o }));
+  const on = id => [...sessions].some(x => x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V), toP = (id, o) => { for (const x of sessions) if (x.pl && x.pl.id === id && !x.watch && vOf(x.pl) === V) x.send(JSON.stringify({ type: "idol", ...o })); };
+  const acc = id => accounts.find(x => x.id === id && !x.deleted && vOf(x) === V), now = Date.now();
+  if (a === "fan" || a === "hagasu") { const pv = idolFanAt.get(me); if (pv && now - pv < 1500) return; idolFanAt.set(me, now); const to = Math.floor(+m.to || 0); if (to > 0 && to !== me && on(to)) toP(to, { ev: a, from: me, name: idolNm(s.pl.name, 12) }); return; }
+  if (!["list", "put", "rank"].includes(a) && !(a === "tr" && m.op === "look")) { const pv = idolLast.get(me); idolLast.set(me, now); if (pv && now - pv < 300) return send({ ng: "少し待ってからもう一度ためしてね" }); }
+  if (a === "put") { const i = idolOne(m.i); if (i) d.ros[me] = { n: idolNm(s.pl.name, 12), i }; else delete d.ros[me]; return; }
+  if (a === "list") return send({ a: "list", list: Object.entries(d.ros).map(([id, r]) => [+id, r]).filter(([id]) => id !== me && acc(id)).slice(0, 40).map(([id, r]) => ({ id, owner: acc(id).name, i: r.i })) });
+  if (a === "send") { const to = Math.floor(+m.to || 0), mine = idolOne(m.me); if (!to || to === me || !mine) return send({ ng: "対決状を書けなかった" }); const p = acc(to); if (!p) return send({ ng: "その人には対決状を送れないみたい" });
+    const tg = (d.ros[to] || {}).i; if (!tg) return send({ ng: "その人のアイドルが見つからなかった" }); if (d.box.some(c => c.f === me && c.t === to)) return send({ ng: "その人には、もう対決状を送ってあるよ" });
+    if (d.box.filter(c => c.f === me).length >= 5) return send({ ng: "送れる対決状は5通まで。返事を待とう" }); if (d.box.filter(c => c.t === to).length >= 10) return send({ ng: "その人には対決状がたまっているみたい。また今度" });
+    const c = { id: ++d.seq, f: me, fn: idolNm(s.pl.name, 12), t: to, tn: p.name, at: now, a: mine, b: { ...tg } }; d.box.push(c); send({ ok: "send", c }); if (on(to)) toP(to, { ev: "in", c }); return; }
+  if (a === "cancel" || a === "no") { const id = +m.id, k = a === "cancel" ? "f" : "t", i = d.box.findIndex(c => c.id === id && c[k] === me); if (i >= 0) { const c = d.box.splice(i, 1)[0], other = a === "cancel" ? c.t : c.f; if (on(other)) toP(other, { ev: "gone", id }); } return send({ ok: a, id }); }
+  if (a === "yes") { const id = +m.id, i = d.box.findIndex(c => c.id === id && c.t === me); if (i < 0) return send({ ev: "gone", id }); const c = d.box.splice(i, 1)[0], mine = idolOne(m.me); if (!mine) return send({ ng: "アイドルの用意ができていないみたい" });
+    const r = idolBattle(c.a, mine); r.id = id; r.at = now; Object.assign(r.a, { id: c.f, o: c.fn }); Object.assign(r.b, { id: me, o: idolNm(s.pl.name, 12) });
+    r.pt = idolPoints(d, c.f, c.fn, c.a.nm, me, idolNm(s.pl.name, 12), mine.nm, r.w, idolTot(c.a), idolTot(mine));
+    for (const who of [c.f, me]) { if (on(who)) toP(who, { ev: "res", r }); else { const L = d.res[who] = d.res[who] || []; L.push(r); while (L.length > 10) L.shift(); } } return; }
+  if (a === "rank") { const wk = idolWeek(0), rows = Object.entries(d.pt).map(([id, e]) => [+id, e]).filter(([id]) => acc(id)).map(([id, e]) => ({ id, n: acc(id).name, nm: e.nm, p: e.p, wp: e.wk === wk ? e.wp : 0 })), mine = rows.find(r => r.id === me);
+    return send({ a: "rank", all: rows.filter(r => r.p > 0).sort((x, y) => y.p - x.p).slice(0, 20), week: rows.filter(r => r.wp > 0).sort((x, y) => y.wp - x.wp).slice(0, 20), me: { p: mine ? mine.p : 0, wp: mine ? mine.wp : 0 }, ...(d.tops[idolWeek(1)] ? { sup: d.tops[idolWeek(1)] } : {}), ...(idolLeader(d, wk) ? { lead: idolLeader(d, wk) } : {}), wk }); }
+  if (a === "tr") { const R = idolTr.get(V) || new Map(); idolTr.set(V, R); const op = String(m.op || ""), T0 = { a: "tr" };
+    if (op === "look") return send({ ...T0, list: [...R.values()].filter(T => T.f === me || T.t === me) });
+    if (op === "ask") { const to = Math.floor(+m.to || 0), p = to && to !== me ? acc(to) : null; if (!p || !on(to)) return send({ ng: "トレードは、いま同じ村でつないでいる人とだけできるよ" });
+      const mineN = [...R.values()].filter(T => T.f === me || T.t === me); if (mineN.some(T => (T.f === me && T.t === to) || (T.f === to && T.t === me))) return send({ ng: "その人とは、もうトレードの話をしているよ" }); if (mineN.length >= 3) return send({ ng: "トレードは同時に3つまで" });
+      const T = { id: ++idolTrSeq, f: me, fn: idolNm(s.pl.name, 12), t: to, tn: p.name, okf: false, okt: false, at: now, gf: idolCards(m.give), gt: [] }; R.set(T.id, T); send({ ...T0, ok: "ask", tr: T }); toP(to, { ...T0, ev: "in", tr: T }); return; }
+    const id = +m.id, T = R.get(id); if (!T || (T.f !== me && T.t !== me)) return send({ ...T0, ev: "gone", id }); const isF = T.f === me, other = isF ? T.t : T.f;
+    if (op === "put") { T[isF ? "gf" : "gt"] = idolCards(m.give); T.okf = T.okt = false; T.at = now; for (const w of [me, other]) toP(w, { ...T0, ev: "up", tr: T }); return; }
+    if (op === "ok") { T[isF ? "okf" : "okt"] = true; if (T.okf && T.okt) { R.delete(id); const done = (who, get, give) => { const o = { ...T0, ev: "done", id, with: who === T.f ? T.tn : T.fn, get, give }; if (on(who)) toP(who, o); else { const L = d.tres[who] = d.tres[who] || []; L.push(o); while (L.length > 10) L.shift(); } }; done(T.f, T.gt, T.gf); done(T.t, T.gf, T.gt); } else for (const w of [me, other]) toP(w, { ...T0, ev: "up", tr: T }); return; }
+    if (op === "cancel") { R.delete(id); for (const w of [me, other]) toP(w, { ...T0, ev: "gone", id }); return; } }
+}
+function idolWelcome(pl) { const d = idolOf(vOf(pl)), id = pl.id, R = idolTr.get(vOf(pl)) || new Map(), w = { trs: [...R.values()].filter(T => T.f === id || T.t === id).map(T => T.id), in: d.box.filter(c => c.t === id), out: d.box.filter(c => c.f === id) };
+  for (const k of ["res", "tres"]) if (d[k][id] && d[k][id].length) { w[k] = d[k][id]; delete d[k][id]; } const sp = d.tops[idolWeek(1)]; if (sp) w.sup = sp; return { idolx: w }; }
 const duelLast = new Map();
 function duelHandle(s, m) {
   if (s.watch || !(s.pl.id > 0)) return; const me = s.pl.id, V = vOf(s.pl), d = duelOf(V), a = String(m.a || ""), send = o => s.send(JSON.stringify({ type: "duel", ...o }));
@@ -519,6 +570,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/jackpot") return json(res, 200, { jackpot });
   if (p.startsWith("/mock/reply")) { const t = threads.find(t => t.id === +u.searchParams.get("id")); t.messages.push({ sender: "ADMIN", body: u.searchParams.get("body"), createdAt: new Date().toISOString() }); t.playerUnread = true; t.status = "WIP"; for (const s of sessions) if (s.pl && s.pl.id === t.player.id) s.send(JSON.stringify({ type: "feedbackReply", threadId: t.id, title: t.title })); return json(res, 200, {}); }
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
+  if (p === "/mock/idolsup") { const d = idolOf(+u.searchParams.get("v") || 1), top = idolLeader(d, idolWeek(0)); if (top) d.tops[idolWeek(1)] = top; return json(res, 200, { sup: top }); }
   if (p === "/mock/world") { if (u.searchParams.has("v")) useV(+u.searchParams.get("v")); return json(res, 200, shared); }
   if (p === "/mock/villages") return json(res, 200, villages);
   if (p === "/mock/tny") return json(res, 200, tnyOf(+u.searchParams.get("v") || 1));
@@ -612,7 +664,7 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, worldGen: genBy.get(vOf(pl)) || 0, ...((aucOf(vOf(pl)).pend[pl.id] || []).length ? { auc: { pay: aucOf(vOf(pl)).pend[pl.id] } } : {}), ...(regrowBy.get(vOf(pl)) ? { regrow: regrowBy.get(vOf(pl)) } : {}), ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...tnyWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, worldGen: genBy.get(vOf(pl)) || 0, ...((aucOf(vOf(pl)).pend[pl.id] || []).length ? { auc: { pay: aucOf(vOf(pl)).pend[pl.id] } } : {}), ...(regrowBy.get(vOf(pl)) ? { regrow: regrowBy.get(vOf(pl)) } : {}), ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...idolWelcome(pl), ...tnyWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -630,6 +682,7 @@ wss.on("connection", s => {
     if (m.type === "job") return jobHandle(s, m);
     if (m.type === "coin") return coinHandle(s, m);
     if (m.type === "duel") return duelHandle(s, m);
+    if (m.type === "idol") return idolHandle(s, m);
     if (m.type === "raid") { const v = vOf(s.pl), R = raidOf(v), a = String(m.a || ""), now = Date.now(), id = String(s.pl.id);
       if (a === "look") { s.send(JSON.stringify(raidState(v))); return; }
       if (a === "hit" && R.cur && now < R.cur.end && R.cur.hp > 0 && s.pl.id > 0) { if (now - (R.hitAt[id] || 0) < 250) return; R.hitAt[id] = now;

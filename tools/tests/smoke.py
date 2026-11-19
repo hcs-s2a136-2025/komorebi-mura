@@ -112,6 +112,8 @@ STEPS = [
     ("アイドルのコーデカード", f"window.KOMO.closeModal(); {G}.F102.state().pick = 3; {G}.F144.give(6, 1); {G}.F144.coordOpen()"),
     ("アイドルのオーラ", f"window.KOMO.closeModal(); {G}.F144.state().au = [['h', 0], ['k', 3]]; {G}.F144.auraOpen()"),
     ("アイドルのメイク", f"window.KOMO.closeModal(); {G}.F144.cosme()"),
+    ("アイドル事務所", f"window.KOMO.closeModal(); {G}.F145.state().s[1] = {{ d: {{ pick: 4, st: {{ vo: 10, da: 0, ex: 0 }}, fans: 0, nm: 'ハル' }}, c: {{}} }}; {G}.F102.open()"),
+    ("アイドルのスカウト", f"window.KOMO.closeModal(); {G}.world.money = 999999; {G}.F145.scout(2)"),
     ("アイドルの対決（オフライン）", f"window.KOMO.closeModal(); {G}.F144.battle()"),
     ("アイドルの対決の結果", f"window.KOMO.closeModal(); {G}.F144.play({{ id: 1, w: 0, a: {{ id: 0, o: 'わたし', nm: 'レン', ty: 1, vo: 50, da: 60, ex: 40, pw: 20, lk: {{ idl: '300w', iau: '2s7' }} }}, b: {{ id: 9, o: 'たろう', nm: 'ミライ', ty: 0, vo: 40, da: 30, ex: 50, pw: 10, lk: {{ idl: '000w' }} }}, rd: [[100, 90, 0, 0], [120, 80, 1, 0], [90, 140, 0, 1]], pt: [10, 3] }})"),
     ("主催レース", f"window.KOMO.closeModal(); {G}.F125.open()"),

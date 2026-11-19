@@ -3985,7 +3985,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.85.0";
+const CLIENT_VERSION = "0.86.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -29198,7 +29198,7 @@ function openCoord144(msg) {
       } else if (coordTab144 === "cards") {
         const list = o.cards.filter(x => coordPart144 === "all" || CARD144[x.c].pt === coordPart144).sort((a, b) => CARD144[b.c].r - CARD144[a.c].r || a.c - b.c);
         html = `<div class="row2">${[["all", "ぜんぶ"], ...PART144].map(([k, n]) => `<button class="chip" type="button" data-cp144="${k}" aria-pressed="${coordPart144 === k}">${n}</button>`).join("")}</div>
-          <div class="cds144">${list.map(x => cardHtml144(x, Object.values(o.eq).includes(x.u) ? `<span class="cdp144">つけている</span>` : L.has(x.u) ? `<span class="cdp144">トレード中</span>` : "", `data-cd144="${x.u}"`)).join("") || `<p class="mtext small">まだカードがないよ</p>`}</div>
+          <div class="cds144">${list.map(x => cardHtml144(x, Object.values(o.eq).includes(x.u) ? `<span class="cdp144">つけている</span>` : typeof F145 === "object" && F145.eqBy && F145.eqBy(x.u) ? `<span class="cdp144">${esc(F145.eqBy(x.u))}がつけている</span>` : L.has(x.u) ? `<span class="cdp144">トレード中</span>` : "", `data-cd144="${x.u}"`)).join("") || `<p class="mtext small">まだカードがないよ</p>`}</div>
           <p class="mtext small">カードを押すと、つける・サインを入れる。サインは1日3枚まで（アイドルの名前が入る）。</p>`;
       } else if (coordTab144 === "book") {
         const n = Object.keys(o.book).length;
@@ -29227,10 +29227,10 @@ function openCoord144(msg) {
 F144.coordOpen = openCoord144;
 function cardMenu144(u, back) {
   const o = ic144(), x = card144(u); if (!x) return;
-  const C = CARD144[x.c], L = locked144(), eqd = o.eq[C.pt] === u, canSign = !x.s && !L.has(u) && (o.signToday | 0) < 3;
+  const C = CARD144[x.c], L = locked144(), eqd = o.eq[C.pt] === u, by145 = typeof F145 === "object" && F145.eqBy ? F145.eqBy(u) : "", canSign = !x.s && !L.has(u) && (o.signToday | 0) < 3;
   const b = $("mbody"); if (!b) return;
   b.innerHTML = `<div class="cm144">${cardHtml144(x)}<div><b>${esc(C.n)}</b><span class="mtext small">${PART144.find(p => p[0] === C.pt)[1]}・${TASTE144[C.t].n}・${RARE144[C.r].n}（コーデの力 ${RARE144[C.r].pw}${x.p ? "＋2" : ""}）</span></div></div>
-    <div class="row2"><button class="btn" type="button" id="cm144eq" ${L.has(u) ? "disabled" : ""}>${eqd ? "外す" : "つける"}</button><button class="btn light" type="button" id="cm144sg" ${canSign ? "" : "disabled"}>${x.s ? "サインずみ" : "サインを入れる"}</button><button class="btn light" type="button" id="cm144bk">もどる</button></div>`;
+    <div class="row2"><button class="btn" type="button" id="cm144eq" ${L.has(u) || by145 ? "disabled" : ""}>${eqd ? "外す" : by145 ? `${esc(by145)}がつけている` : "つける"}</button><button class="btn light" type="button" id="cm144sg" ${canSign ? "" : "disabled"}>${x.s ? "サインずみ" : "サインを入れる"}</button><button class="btn light" type="button" id="cm144bk">もどる</button></div>`;
   $("cm144eq").onclick = () => { const o2 = ic144(); if (eqd) delete o2.eq[C.pt]; else o2.eq[C.pt] = u; saveWorld(); try { checkTitles42(); } catch (e) { } back(eqd ? "外した" : `「${C.n}」をつけた`); };
   $("cm144sg").onclick = () => { const o2 = ic144(), y = card144(u); if (!y || y.s) return; y.s = nmClean144(IDOLS102[idol102().pick].name); o2.signToday = (o2.signToday | 0) + 1; o2.signs++; cardCache144.clear(); saveWorld(); se13("small"); back(`「${C.n}」にサインを入れた`); };
   $("cm144bk").onclick = () => back();
@@ -29505,7 +29505,7 @@ function onTrade144(m) {
   if (m.ev === "gone") { if (F144.tr.has(m.id)) toast(null, "トレードは取りやめになった"); F144.tr.delete(m.id); delete o.lock[m.id]; saveWorld(); redraw144(); return; }
   if (m.ev === "done") { applyDone144(m); redraw144(); return; }
 }
-const freeCards144 = () => { const o = ic144(), L = locked144(), eq = new Set(Object.values(o.eq)); return o.cards.filter(x => !L.has(x.u) && !eq.has(x.u)); };
+const freeCards144 = () => { const o = ic144(), L = locked144(), eq = new Set(Object.values(o.eq)), el = typeof F145 === "object" && F145.eqElse ? F145.eqElse() : new Set(); return o.cards.filter(x => !L.has(x.u) && !eq.has(x.u) && !el.has(x.u)); };
 function pickCards144(title, cur, cb) {
   const sel = new Set(cur);
   const b = $("mbody"); if (!b) return;
@@ -29584,7 +29584,7 @@ function fansa144(it) {
   fanFx144.set(it.e, { text: text.replace(/してくれた.*|をくれた.*|くれた.*/, "") || "♡", until: performance.now() + 2600 });
   toast(null, `${nm}が${text}`); se13("small");
   sendI144({ a: "fan", to: id });
-  F144.cheki(it.e.name, nm, it.e.cfg, "fansa");
+  F144.cheki(it.e.name, nm, (it.x && it.x.c) || it.e.cfg, "fansa");
   saveWorld(); try { checkTitles42(); } catch (e) { }
 }
 F144.fansa = fansa144; F144.near = idolNear144;
@@ -29673,6 +29673,223 @@ CHANGES19.unshift({ v: "0.85.0", date: "2026/11/18", title: "アイドルのコ�
 ICON80.idol144 = `<path d="M16 4l3.4 7 7.6 1.1-5.5 5.3 1.3 7.6L16 21.4 9.2 25l1.3-7.6L5 12.1l7.6-1.1z"/>`;
 F76.add({ id: "idol144", name: "アイドル", ch: "偶", c: "#d8508a", open: () => openIdol102() });
 F144.ready = true;
+
+// =================== v145: アイドル事務所（3人まで・切りかえ・3人で連れて歩く） ===================
+// ・アイドルは3人まで（`world.idols145`＝{cur, s:[枠,枠,枠], walk3}）。いま選んでいる子（センター）は今までどおり world.idol102 と world.ic144 にいて、
+//   ほかの子は s[i]＝{d:{pick, st, fans, …}, c:{eq, col, ty, tyAuto, au, pt2}} にしまっておく（センターの枠は null）。切りかえると入れかわる（`switch145`）
+// ・アイドルごと：見た目のもと・力・ファン・名前・イメチェン・衣装と曲・メイク・オーラ・タイプ・つけているコーデ。事務所でいっしょ：コーデカード・チェキ・その日の回数・ライブのお給料
+// ・カードは1枚を1人だけがつけられる（`eqElse`）。トレードに出せるのは、だれもつけていないカード
+// ・連れて歩くと、センターのうしろに2人目・3人目が並んでついてくる。ほかの人には cfg の id2/id3（アイドルのコード）・ic2/ic3（コーデ）・in2/in3（名前）・ia2/ia3（オーラ）で見せる
+var F145 = {};
+const IDK145 = ["pick", "st", "fans", "lessons", "lives", "best", "outfit", "song", "wait", "nm", "look"];
+const ICK145 = ["eq", "col", "ty", "tyAuto", "au", "pt2"];
+const SCOUT145 = [0, 50000, 150000];
+const clone145 = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
+const ofc145 = () => {
+  const o = world.idols145 = world.idols145 && typeof world.idols145 === "object" && !Array.isArray(world.idols145) ? world.idols145 : {};
+  o.s = Array.isArray(o.s) ? o.s.slice(0, 3) : [];
+  while (o.s.length < 3) o.s.push(null);
+  o.cur = Number.isInteger(o.cur) && o.cur >= 0 && o.cur < 3 ? o.cur : 0;
+  o.s = o.s.map((x, i) => i === o.cur ? null : x && typeof x === "object" && x.d && IDOLS102[x.d.pick] ? { d: x.d, c: x.c && typeof x.c === "object" ? x.c : {} } : null);
+  if (typeof o.walk3 !== "boolean") o.walk3 = true;
+  return o;
+};
+F145.state = ofc145;
+const snap145 = () => { const d = idol102(), o = ic144(), out = { d: {}, c: {} }; for (const k of IDK145) if (d[k] !== undefined) out.d[k] = clone145(d[k]); for (const k of ICK145) if (o[k] !== undefined) out.c[k] = clone145(o[k]); return out; };
+function load145(slot) {
+  const d = idol102(), o = ic144();
+  for (const k of IDK145) delete d[k];
+  for (const k of ICK145) delete o[k];
+  Object.assign(d, clone145(slot.d)); Object.assign(o, clone145(slot.c || {}));
+  idol102(); ic144();
+}
+/** i 番目の子をセンターにする */
+function switch145(i) {
+  const O = ofc145(); if (i === O.cur || !O.s[i]) return false;
+  const now = snap145(), next = O.s[i];
+  O.s[O.cur] = now; O.s[i] = null;
+  load145(next); O.cur = i;
+  saveWorld(); try { checkTitles42(); } catch (e) { }
+  return true;
+}
+F145.switch = switch145;
+/** センターでない子がつけているカード */
+F145.eqElse = () => { const O = ofc145(), set = new Set(); for (const x of O.s) if (x && x.c && x.c.eq) for (const u of Object.values(x.c.eq)) set.add(u); return set; };
+F145.eqBy = u => { const O = ofc145(); for (const x of O.s) if (x && x.c && x.c.eq && Object.values(x.c.eq).includes(u)) return nameOf145(x); return ""; };
+const nameOf145 = x => x.d.nm || IDOLS102[x.d.pick].base144;
+const tot145 = d => d && d.st ? (d.st.vo | 0) + (d.st.da | 0) + (d.st.ex | 0) : 0;
+// しまってある子の見た目・コード
+function slotLook145(x) {
+  const d = x.d, c = x.c || {}, I = IDOLS102[d.pick], O = OUTFIT102[d.outfit] && tot145(d) >= OUTFIT102[d.outfit][1] ? OUTFIT102[d.outfit][2] : null;
+  const out = { ...DEFAULT, ...I.cfg, ...idolLook126(d), ...(O || {}) };
+  const cards = ic144().cards;
+  for (const [k] of PART144) { const u = c.eq && c.eq[k]; const y = u != null ? cards.find(z => z.u === u) : null; if (y) Object.assign(out, cardLook144(CARD144[y.c], k === "top" ? c.col && c.col.topc : k === "bottom" ? c.col && c.col.bottomc : null)); }
+  if (c.pt2 && F119.valid(c.pt2)) { out.pt2 = c.pt2; out.paint = F119.down(c.pt2); }
+  return out;
+}
+function slotCodes145(x) {
+  const d = x.d, c = x.c || {}, cards = ic144().cards, cols = COLS144();
+  const outfit = OUTFIT102[d.outfit] && tot145(d) >= OUTFIT102[d.outfit][1] ? d.outfit : 0;
+  const idl = `${d.pick}${(outfit | 0).toString(36)}${Math.min(9, d.song | 0)}w${faceCode126(d)}`;
+  const ty = Number.isInteger(c.ty) && TASTE144[c.ty] ? c.ty : ({ vo: 2, da: 1, ex: 0 }[IDOLS102[d.pick].trait] ?? 0);
+  const ci = k => { const i = c.col && c.col[k] ? cols.indexOf(c.col[k]) : -1; return i >= 0 ? b36_144(i) : "zz"; };
+  const icd = String(ty) + PART144.map(([k]) => { const u = c.eq && c.eq[k]; const y = u != null ? cards.find(z => z.u === u) : null; return y ? b36_144(y.c) : "zz"; }).join("") + ci("topc") + ci("bottomc");
+  const lv = Math.max(1, Math.min(7, 1 + Math.floor(tot145(d) / 150))), slots = 1 + (tot145(d) >= 300 ? 1 : 0) + (tot145(d) >= 600 ? 1 : 0);
+  const open = k => { const A = AU144[k]; return A && (!A.need || (d.st && d.st[A.need] >= 300)); };
+  const au = (Array.isArray(c.au) ? c.au : []).slice(0, slots).filter(a => Array.isArray(a) && open(a[0]) && AC144[a[1]]);
+  return { idl, icd, inm: d.nm ? nmClean144(d.nm) : "", iau: au.length ? String(lv) + au.map(a => a[0] + a[1].toString(36)).join("") : "" };
+}
+F145.codes = slotCodes145;
+const others145 = () => { const O = ofc145(); return O.s.map((x, i) => x ? { x, i } : null).filter(Boolean); };
+
+// ---- 見た目の設定にのせる：2人目・3人目 ----
+const _cc145 = cleanCfg;
+cleanCfg = function (c) {
+  const o = _cc145(c);
+  if (c) for (const n of ["2", "3"]) {
+    if (parseIdl124(c["id" + n])) o["id" + n] = c["id" + n]; else continue;
+    if (typeof c["ic" + n] === "string" && /^[0-3][0-9a-z]{12}$/.test(c["ic" + n])) o["ic" + n] = c["ic" + n];
+    if (typeof c["in" + n] === "string" && nmClean144(c["in" + n])) o["in" + n] = nmClean144(c["in" + n]);
+    if (parseIau144(c["ia" + n])) o["ia" + n] = c["ia" + n];
+  }
+  return o;
+};
+setInterval(() => {
+  try {
+    if (world.idol102 === undefined || !world.idols145) return;
+    const O = ofc145(), on = !!(cfg.idl && /w/.test(cfg.idl.slice(3, 4)) && O.walk3);
+    const L = on ? others145().slice(0, 2) : [], want = {};
+    L.forEach(({ x }, j) => { const k = String(j + 2), c = slotCodes145(x); want["id" + k] = c.idl; want["ic" + k] = c.icd; want["in" + k] = c.inm || undefined; want["ia" + k] = c.iau || undefined; });
+    let ch = false;
+    for (const n of ["2", "3"]) for (const p of ["id", "ic", "in", "ia"]) { const k = p + n, v = want[k]; if ((cfg[k] || undefined) !== v) { if (v) cfg[k] = v; else delete cfg[k]; ch = true; } }
+    if (ch && typeof sendCfgSoon === "function") sendCfgSoon();
+  } catch (e) { }
+}, 900);
+
+// ---- 描く：センターのうしろに2人目・3人目 ----
+const trail145 = [new WeakMap(), new WeakMap()];
+const follow145 = c => { const L = []; for (const n of ["2", "3"]) { const x = parseIdl124(c["id" + n]); if (x) L.push({ ...x, c: { idl: c["id" + n], icd: c["ic" + n], inm: c["in" + n], iau: c["ia" + n] } }); } return L; };
+F145.follow = follow145;
+{
+  const _de = drawEnt;
+  drawEnt = function (e) {
+    const r = _de.apply(this, arguments);
+    try {
+      const c = e === player ? cfg : e && e.kind === "remote" ? e.cfg : null;
+      if (!c || !c.id2 || e.hidden) return r;
+      const x0 = parseIdl124(c); if (!x0 || x0.mode !== "w") return r;
+      let prev = trail124.get(e); if (!prev) return r;
+      const [dx, dy] = DIRS[e.dir] || [0, 1], now = performance.now();
+      follow145(c).slice(0, 2).forEach((x, j) => {
+        // 上下に歩くときはセンターの左右に、左右に歩くときはうしろに1列で
+        const m0 = trail124.get(e), tx = dy ? m0.x + (j ? -13 : 13) : prev.x - dx * 13, ty = dy ? m0.y - dy * 4 : prev.y + (j ? 2 : -1);
+        let t = trail145[j].get(e); if (!t) { t = { x: tx, y: ty }; trail145[j].set(e, t); }
+        t.x += (tx - t.x) * .1; t.y += (ty - t.y) * .1;
+        const mv = Math.abs(tx - t.x) + Math.abs(ty - t.y) > 1.5, fr = mv ? [0, 1, 0, 2][Math.floor((now + j * 90) / 140) % 4] : 0;
+        if (x.c.iau) drawAura144(ctx, Math.round(t.x) + 8, Math.round(t.y) + 8, x.c.iau, now / 1000, 1);
+        ctx.fillStyle = "rgba(20,30,20,.22)"; ctx.fillRect(Math.round(t.x) + 4, Math.round(t.y) + 15, 8, 1);
+        ctx.drawImage(charImg118(lookOf124(x), e.dir, fr), Math.round(t.x), Math.round(t.y) - (fr ? 1 : 0), 16, 16);
+        const fx = fanFx145.get(e); if (fx && fx.j === j && now < fx.until) { ctx.font = "bold 7px sans-serif"; ctx.textAlign = "center"; const w = ctx.measureText(fx.text).width + 6; ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.fillRect(Math.round(t.x) + 8 - w / 2, Math.round(t.y) - 14, w, 9); ctx.fillStyle = "#c83a7a"; ctx.fillText(fx.text, Math.round(t.x) + 8, Math.round(t.y) - 7); ctx.textAlign = "left"; }
+        prev = t;
+      });
+    } catch (err) { ctx.globalAlpha = 1; }
+    return r;
+  };
+}
+// ファンサ：2人目・3人目にも話しかけられる
+const fanFx145 = new WeakMap();
+{
+  const _near = idolNear144;
+  idolNear144 = function () {
+    const L = _near.apply(this, arguments);
+    try {
+      for (const e of remotes.values()) {
+        if (e.rmap !== mapKey() || !e.cfg || !e.cfg.id2) continue;
+        const x0 = parseIdl124(e.cfg); if (!x0 || x0.mode !== "w") continue;
+        follow145(e.cfg).slice(0, 2).forEach((x, j) => {
+          const t = trail145[j].get(e); if (!t) return;
+          const tx = Math.round(t.x / TS), ty = Math.round(t.y / TS), dist = Math.abs(tx - player.x) + Math.abs(ty - player.y);
+          if (dist <= 6) L.push({ e, x, tx, ty, dist, j });
+        });
+      }
+    } catch (e) { }
+    return L.sort((a, b) => a.dist - b.dist);
+  };
+}
+F144.near = () => idolNear144();
+{
+  const _fs = fansa144;
+  fansa144 = function (it) {
+    const r = _fs.apply(this, arguments);
+    try { if (it && Number.isInteger(it.j)) { const fx = fanFx144.get(it.e); if (fx) { fanFx145.set(it.e, { ...fx, j: it.j }); fanFx144.delete(it.e); } } } catch (e) { }
+    return r;
+  };
+  F144.fansa = (...a) => fansa144(...a);
+}
+
+// ---- 画面：プロデュースの画面の上に「事務所」 ----
+setInterval(() => {
+  try {
+    if (!modalOpen || !$("act144") || $("ofc145")) return;
+    const box = document.querySelector("#mbody .id102r"); if (!box) return;
+    const O = ofc145(), d = idol102(); if (d.pick < 0) return;
+    const cards = [0, 1, 2].map(i => {
+      if (i === O.cur) return `<div class="of145 on"><img src="${charIcon13(idolCfg102())}" alt=""><b>${esc(IDOLS102[d.pick].name)}</b><span>センター・合計${total102()}</span></div>`;
+      const x = O.s[i];
+      if (x) return `<button class="of145" type="button" data-sw145="${i}"><img src="${charIcon13(slotLook145(x))}" alt=""><b>${esc(nameOf145(x))}</b><span>合計${tot145(x.d)}・切りかえる</span></button>`;
+      const n = O.s.filter(Boolean).length + 1, cost = SCOUT145[Math.min(2, n)] || SCOUT145[2];
+      return `<button class="of145 add" type="button" data-sc145="${i}" ${world.money < cost ? "disabled" : ""}><b>＋ スカウト</b><span>${n + 0}人目・${fmt(cost)}</span></button>`;
+    }).join("");
+    box.insertAdjacentHTML("afterbegin", `<div id="ofc145"><h4>事務所のアイドル（3人まで）</h4><div class="ofs145">${cards}</div>
+      <label class="row2 w145"><input type="checkbox" id="w145" ${O.walk3 ? "checked" : ""}> 連れて歩くとき、3人みんなでついてくる</label>
+      <p class="mtext small">ライブ・レッスン・対決に出るのはセンター。力・ファン・名前・メイク・オーラ・コーデはアイドルごと、コーデカードは事務所みんなのもの。</p></div>`);
+    box.querySelectorAll("[data-sw145]").forEach(b => b.onclick = () => { if (switch145(+b.dataset.sw145)) { closeModal(); se13("small"); openIdol102(`${IDOLS102[idol102().pick].name}がセンターになった！`); } });
+    box.querySelectorAll("[data-sc145]").forEach(b => b.onclick = () => { closeModal(); openScout145(+b.dataset.sc145); });
+    $("w145").onchange = e => { ofc145().walk3 = e.target.checked; saveWorld(); };
+  } catch (e) { if (window.__komoErr) window.__komoErr(e, "v145 office"); }
+}, 300);
+function openScout145(slot) {
+  const O = ofc145(); if (O.s[slot] || slot === O.cur) { openIdol102(); return; }
+  const n = O.s.filter(Boolean).length + 1, cost = SCOUT145[Math.min(2, n)] || SCOUT145[2];
+  const used = new Set([idol102().pick, ...O.s.filter(Boolean).map(x => x.d.pick)]);
+  openModal("新しいアイドルをスカウト", "dark", body => {
+    body.innerHTML = `<p class="mtext">${n + 0}人目のアイドルをスカウトする（${fmt(cost)}）。はじめは力もファンも0から。コーデカードは事務所のカードをそのまま使えるよ。</p>
+      <div class="id102pick">${IDOLS102.map((I, i) => `<button class="gm92c" type="button" data-sp145="${i}" ${used.has(i) || world.money < cost ? "disabled" : ""}><img src="${charIcon13(I.cfg)}" alt=""><b>${esc(I.base144)}${I.male ? "（男の子）" : ""}</b><span>${used.has(i) ? "もう事務所にいる" : esc(I.desc)}</span></button>`).join("")}</div>
+      <div class="row2"><button class="btn light" type="button" id="sp145bk">もどる</button></div>`;
+    body.querySelectorAll("[data-sp145]").forEach(b => b.onclick = () => {
+      const O2 = ofc145(); if (O2.s[slot] || world.money < cost) return;
+      addMoney(-cost);
+      O2.s[slot] = { d: { pick: +b.dataset.sp145, st: { vo: 0, da: 0, ex: 0 }, fans: 0 }, c: { eq: {}, col: {}, au: [] } };
+      switch145(slot);
+      world.stats.scout145 = (world.stats.scout145 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { }
+      closeModal(); se13("big"); openIdol102(`${IDOLS102[idol102().pick].name}「よろしくおねがいします、プロデューサー！」（センターになった）`);
+    });
+    $("sp145bk").onclick = () => { closeModal(); openIdol102(); };
+  });
+}
+F145.scout = openScout145;
+// えらびなおしは、ほかの子と同じ子にはできない
+{
+  const _rp = openRepick144;
+  openRepick144 = function () {
+    const r = _rp.apply(this, arguments);
+    try { const used = new Set(ofc145().s.filter(Boolean).map(x => x.d.pick)); document.querySelectorAll("[data-rp144]").forEach(b => { if (used.has(+b.dataset.rp144)) { b.disabled = true; const sp = b.querySelector("span"); if (sp) sp.textContent = "もう事務所にいる"; } }); } catch (e) { }
+    return r;
+  };
+}
+
+// ---- 称号・てびき ----
+const TTL145 = [["アイドル事務所", "アイドルを3人そろえる", () => !!world.idols145 && (world.idols145.s || []).filter(Boolean).length >= 2]];
+for (const t of TTL145) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["アイドル事務所（3人）", "s13_latte30", `<ul>
+  <li>プロデュースの画面の上の「事務所のアイドル」で、2人目・3人目をスカウトできる（50,000G・150,000G）</li>
+  <li>ライブ・レッスン・対決に出るのはセンター。ほかの子を押すと、センターを切りかえられる</li>
+  <li>力・ファン・名前・メイク・オーラ・つけているコーデはアイドルごと。コーデカードは事務所みんなのもので、1枚は1人だけがつけられる</li>
+  <li>連れて歩くと、3人みんながうしろをついてくる（1人だけにもできる）。ほかの人にも見えて、どの子にも話しかけてファンサしてもらえる</li></ul>`]);
+CHANGES19.unshift({ v: "0.86.0", date: "2026/11/19", title: "アイドル事務所（3人）", items: [
+  "アイドルを3人までスカウトして、センターを切りかえられる（力・ファン・名前・メイク・オーラ・コーデはアイドルごと）",
+  "連れて歩くと3人みんなでついてくる。ほかの人にも見えて、どの子にもファンサしてもらえる",
+] });
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -30134,5 +30351,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

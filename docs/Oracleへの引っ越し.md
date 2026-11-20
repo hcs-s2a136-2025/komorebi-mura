@@ -1,7 +1,7 @@
 # Oracle Cloud への引っ越し
 
 こもれび村のサーバーを、Render から Oracle Cloud の無料の VM（Always Free）に移す手順です。
-データベースは今の Neon をそのまま使うので、村のデータの引っ越しはありません。
+データベースは、はじめは Neon をそのまま使っていました。2026年11月20日に、VM の中の PostgreSQL（`docker-compose.yml` の `db`）へ引っ越しました（`deploy.sh` の `move_db`。Neon の無料のコンピュート時間を使い切ったため）。
 
 - できあがり：`main` に push すると、GitHub Actions が VM で `deploy/oracle/deploy.sh` を動かして反映する（今の Render と同じ）
 - OS の更新は自動（日本時間 4:30 に、必要なときだけ再起動）。HTTPS の証明書も Caddy が自動で取って更新する

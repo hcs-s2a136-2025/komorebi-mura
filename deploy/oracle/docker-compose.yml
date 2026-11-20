@@ -19,6 +19,29 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 
+  # VM の中のデータベース（2026年11月20日から。前は Neon）。COMPOSE_PROFILES=localdb のときだけ動く（deploy.sh が .env に書く）
+  # パスワードは deploy.sh が .env の LOCAL_DB_PASSWORD に作る。外には出さない（ports なし）
+  db:
+    image: postgres:17-alpine
+    profiles: ["localdb"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: komorebi
+      POSTGRES_USER: komorebi
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:-}
+    # 1GB の VM でも動くように小さく
+    command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=30", "-c", "work_mem=2MB", "-c", "maintenance_work_mem=32MB", "-c", "effective_cache_size=128MB", "-c", "wal_buffers=1MB"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U komorebi -d komorebi"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
   caddy:
     image: caddy:2.8.4
     restart: unless-stopped
@@ -38,5 +61,6 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
 volumes:
+  pgdata:
   caddy_data:
   caddy_config:

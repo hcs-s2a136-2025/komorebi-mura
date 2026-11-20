@@ -3398,7 +3398,7 @@ function showHeartEvent(n, th) {
 
 // ---- gambling links: medals, prize counter, loss limit ----
 const PRIZES = [["f_trophy", 20], ["gem", 8], ["goldbar", 40], ["f_chandelier", 60], ["hat:シルクハット", 80], ["f_piano", 150], ["f_goldstatue", 300]];
-const prizeQty = {}, PRIZE_MAXQ = 9999;
+const prizeQty = {}, PRIZE_MAXQ = 1e9;   // 1回に交換できる数（v0.87.1 で9,999から、持っているメダルぜんぶまで）
 // 着せ替えなど、持ち物に入らない景品（v0.83.0）。PRIZES の id が「名前:中身」のとき、PRIZE_SP[名前](中身) が
 // { name, sub, img(), owned(), give() } を返す（帽子の "hat:" は前からの形のまま）
 const PRIZE_SP = {};
@@ -3419,7 +3419,8 @@ function openPrize() {
     };
     const drawBody = () => {
       body.innerHTML = `<p class="mtext">「勝ったぶんは、ここで形にしていきませんか？」</p>
-      <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、1回に${PRIZE_MAXQ.toLocaleString()}個まで、まとめて交換できます）</span></p>
+      <p class="mtext">メダル <b>${world.medals}</b> 枚　<span class="small">（カジノで勝った額100Gごとに1枚。個数をえらんで、持っているメダルのぶんだけ、まとめて交換できます）</span></p>
+      ${typeof CASH141 === "object" && world.medals >= Math.min(...Object.values(CASH141).map(p => p.medal)) ? `<div class="row2"><button class="btn" type="button" id="pzall">メダルをぜんぶ特殊景品に交換</button></div><p class="mtext small">プラチナ→金→銀の順に、交換できるだけ交換します（銀1つ分より少ないメダルは残ります）。特殊景品はよろず屋で換金できます</p>` : ""}
       <div class="list">${PRIZES.map(([id, c]) => {
         const sp = prizeSp(id);
         if (sp) return `<div class="li"><img src="${sp.img()}" alt=""><span class="nm">${esc(sp.name)}<span class="sub2">メダル${c.toLocaleString()}枚${sp.sub ? "・" + esc(sp.sub) : ""}</span></span><span class="acts">${sp.owned() ? "交換済み" : `<button class="btn" type="button" data-pz="${id}" data-c="${c}" ${world.medals < c ? "disabled" : ""}>交換（${c.toLocaleString()}枚）</button>`}</span></div>`;
@@ -3431,6 +3432,17 @@ function openPrize() {
       body.querySelectorAll("[data-pzu]").forEach(b => b.onclick = () => { const c = +b.dataset.c; prizeQty[b.dataset.pzu] = Math.min(maxQ(c), (prizeQty[b.dataset.pzu] || 1) + 1); draw(["data-pzu", b.dataset.pzu]); });
       body.querySelectorAll("[data-pzx]").forEach(b => b.onclick = () => { prizeQty[b.dataset.pzx] = maxQ(+b.dataset.c); draw(["data-pzx", b.dataset.pzx]); });
       body.querySelectorAll("[data-pzn]").forEach(inp => inp.onchange = () => { const v = Math.floor(+inp.value) || 1; prizeQty[inp.dataset.pzn] = Math.max(1, Math.min(maxQ(+inp.dataset.c), v)); draw(["data-pzn", inp.dataset.pzn]); });
+      const all = body.querySelector("#pzall");
+      if (all) all.onclick = () => {
+        const got = [];
+        for (const [id, p] of Object.entries(CASH141).sort((a, b) => b[1].medal - a[1].medal)) {
+          const q = Math.floor(world.medals / p.medal); if (q <= 0) continue;
+          if (!addItem(id, q)) break;
+          world.medals -= p.medal * q; world.stats.prizes = (world.stats.prizes || 0) + q; got.push(`${p.name}×${q.toLocaleString()}`);
+        }
+        if (!got.length) return;
+        saveWorld(); toast(null, `${got.join("・")}と交換した`); draw();
+      };
       body.querySelectorAll("[data-pz]").forEach(b => b.onclick = () => {
         const id = b.dataset.pz, c = +b.dataset.c, sp = prizeSp(id), hat = id.startsWith("hat:"), q = hat || sp ? 1 : Math.max(1, prizeQty[id] || 1);
         if (world.medals < c * q) return;
@@ -3985,7 +3997,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.0";
+const CLIENT_VERSION = "0.87.1";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -30396,6 +30408,10 @@ CHANGES19.unshift({ v: "0.87.0", date: "2026/11/20", title: "メイクが3面に
   "アイドルのオーラに「リボン」",
   "記録のタブに虫図鑑と化石図鑑",
   "魚図鑑でナポレオンフィッシュが2つあったのを1つにした（南の島でも、みなと町の海でも釣れる）",
+] });
+CHANGES19.unshift({ v: "0.87.1", date: "2026/11/20", title: "景品交換所でメダルをぜんぶ交換できる", items: [
+  "景品交換所で、1回に交換できる数の上限（9,999個）をなくした。「最大」で持っているメダルのぶんだけ交換できる",
+  "「メダルをぜんぶ特殊景品に交換」ボタン（プラチナ→金→銀の順に、交換できるだけ）",
 ] });
 GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
 

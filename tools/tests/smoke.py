@@ -142,6 +142,11 @@ STEPS = [
     ("村にもどる（v139）", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down')"),
     ("掲示板の建物の移動と銅像", f"(() => {{ const g = {G}; g.world.projects.onsen35 = {{ need: {{}}, have: {{}}, done: true, at: [41, 20] }}; g.F139.board(); }})()"),
     ("銅像を置く・虫・ひび", f"(() => {{ const g = {G}; window.KOMO.closeModal(); g.world.decor = g.world.decor || {{}}; g.world.decor['22,10'] = {{ id: 'statue139', o: 0, n: 'てすと', st: {{ p: 1, w: 'やったね', c: {{ hair: 'ロング', hat: 'なし' }} }} }}; g.F139.bugs.push({{ k: 'kabuto', x: 21, y: 11, ph: 0, until: Date.now() + 60000 }}); g.F139.digSpots(); }})()"),
+    # v146：メイク（3面・自分の色・スポイト）・アイドルのメイク・ペットのメイク
+    ("メイク（3面）", f"window.KOMO.closeModal(); {G}.world.money = 999999; {G}.F146.make('me'); {G}.F146.CM.put(10, 12); {G}.F146.CM.view(2); {G}.F146.CM.spoit(15, 5); {G}.F146.CM.put(15, 6)"),
+    ("メイクを仕上げる", f"{G}.F146.CM.go(); if (!{G}.cfg.mk) throw new Error('cfg.mk がない')"),
+    ("アイドルのメイク（3面）", f"window.KOMO.closeModal(); {G}.F102.state().pick = 1; {G}.F146.make('idol'); {G}.F146.CM.put(12, 2)"),
+    ("ペットのメイク", f"window.KOMO.closeModal(); {G}.world.pets = ['cat']; {G}.F146.petMake('cat')"),
     ("村にもどる（最後）", f"window.KOMO.closeModal(); {G}.enter({G}.village2, 20, 9, 'down')"),
     # メニュー（着せ替え・建築・クラフト・村・記録・設定）
     ("メニューの着せ替え", "window.KOMO.closeModal(); document.body.classList.add('menu'); document.getElementById('tab-dress').click()"),

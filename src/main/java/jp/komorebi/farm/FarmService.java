@@ -129,7 +129,11 @@ public class FarmService implements WelcomeContributor {
             ArrayNode o = pets.addArray(); o.add(b); o.add(Math.max(0, Math.min(20, p.path(1).asInt(0)))); o.add(clean(p.path(2).asText(""), 12));
             // 4つ目：着せ替えの服（"h3ct25k0" のような短い英数字。v0.56.0〜）
             String cos = p.path(3).asText("");
-            if (COS.matcher(cos).matches()) o.add(cos);
+            // 5つ目：顔のメイク（16×16マスをちぢめた形。v0.87.0〜）。あるときは4つ目を空でも入れる
+            String pmk = p.path(4).asText("");
+            boolean hasMk = jp.komorebi.ws.Sanitize.mkOk(pmk, jp.komorebi.ws.Sanitize.PMK_CELLS, 400);
+            if (COS.matcher(cos).matches()) o.add(cos); else if (hasMk) o.add("");
+            if (hasMk) o.add(pmk);
         }
         // ビニールハウス：[x, y, [いっしょに使う人のID...]]（4つまで・相手は8人まで。v0.58.0〜）
         ArrayNode gh = f.putArray("gh");

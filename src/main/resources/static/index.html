@@ -1815,6 +1815,27 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 .of145.add { justify-content: center; min-height: 72px; border-style: dashed; }
 .of145:disabled { opacity: .55; cursor: not-allowed; }
 .w145 { align-items: center; gap: 6px; font-size: 13px; }
+
+/* v146: メイクの画面（3面・自分の色・カラーチャート・スポイト）とペットのメイク */
+.mk146 { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+.mk146l { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mk146r { display: flex; flex-direction: column; gap: 6px; align-items: stretch; max-width: 320px; width: 100%; }
+.mk146r .lbl { margin: 2px 0 0; font-size: .72rem; color: #5a4a50; font-weight: bold; }
+#mk146cv { width: min(86vw, 384px); aspect-ratio: 32 / 28; image-rendering: pixelated; border: 3px solid #d88aa2; border-radius: 10px; touch-action: none; cursor: crosshair; background: #fff; }
+#pm146cv { width: min(78vw, 288px); aspect-ratio: 1; image-rendering: pixelated; border: 3px solid #d88aa2; border-radius: 10px; touch-action: none; cursor: crosshair; background: #fff; }
+#mk146cv.spoit146, #pm146cv.spoit146 { cursor: copy; border-color: #5a8ae0; }
+.mk146my .cos62c.empty { opacity: .75; }
+.cos62c i.mk146e { background: #fff; color: #6a5a60; font-style: normal; font-size: 10px; line-height: 14px; text-align: center; }
+.cos62c i.mk146z { background: repeating-linear-gradient(45deg, #fff 0 2px, #f2b8c8 2px 4px); box-shadow: inset 0 0 0 1px #c83a5a; }
+.mk146chart { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
+.mk146chart button { aspect-ratio: 1; min-width: 0; border: 1px solid rgba(0, 0, 0, .18); border-radius: 3px; padding: 0; cursor: pointer; }
+.mk146pick { grid-column: span 12; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .72rem; color: #5a4a50; margin-top: 2px; }
+.mk146pick input { width: 44px; height: 26px; padding: 0; border: 1px solid #c8b8c0; border-radius: 4px; background: #fff; }
+#mk146prev img { width: 56px; height: 56px; }
+.mk146r .cos62pal { grid-template-columns: repeat(3, 1fr); }
+.mk146r .cos62c span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk146r .mk146my { grid-template-columns: repeat(7, 1fr); }
+.mk146my .cos62c { padding: 3px 2px; justify-content: center; gap: 2px; }
 </style>
 
 <header>
@@ -1941,7 +1962,7 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.86.0";
+  const VER = "0.87.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6495,7 +6516,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.86.0";
+const CLIENT_VERSION = "0.87.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -27833,7 +27854,7 @@ drawEnt = function (e) {
     const c = e === player ? cfg : e && e.kind === "remote" ? e.cfg : null;
     const x = c && parseIdl124(c);
     if (x && x.mode === "w" && (map === village || map === port || map.isTown)) {
-      const [dx, dy] = DIRS[e.dir] || [0, 1], tx = e.px - dx * 13 + (dy ? 9 : 0), ty = e.py - dy * 9;
+      const [dx, dy] = DIRS[e.dir] || [0, 1], tx = e.px - dx * 13 + (dy > 0 ? 14 : dy ? 9 : 0), ty = dy > 0 ? e.py + 1 : e.py - dy * 9;   // 下（こちら）向きは、称号にかくれないよう、となりに少し下げて（v0.87.0）
       let t = trail124.get(e); if (!t) { t = { x: tx, y: ty }; trail124.set(e, t); }
       t.x += (tx - t.x) * .12; t.y += (ty - t.y) * .12;
       const mv = Math.abs(tx - t.x) + Math.abs(ty - t.y) > 1.5, fr = mv ? [0, 1, 0, 2][Math.floor(performance.now() / 140) % 4] : 0;
@@ -31829,11 +31850,11 @@ function openRepick144() {
 }
 
 // ---- チェキとブロマイド ----
-const lookCodes144 = c => { const o = {}; for (const k of ["idl", "icd", "iau", "inm", "ipt"]) if (c && typeof c[k] === "string" && c[k]) o[k] = c[k]; return o; };
+const lookCodes144 = c => { const o = {}; for (const k of ["idl", "icd", "iau", "inm", "ipt", "imk", "mpl"]) if (c && typeof c[k] === "string" && c[k]) o[k] = c[k]; return o; };   // imk・mpl はメイク（v0.87.0）
 function addChk144(e) { const o = ic144(); o.chk.unshift(e); o.chk = o.chk.slice(0, 80); saveWorld(); try { checkTitles42(); } catch (x) { } }
 function chekiSelf144(kind) {
   const d = idol102(); if (d.pick < 0) return;
-  const c = { idl: idlAny144(), icd: icdCode144(), iau: iauCode144(1), inm: d.nm || "" };
+  const c = { idl: idlAny144(), icd: icdCode144(), iau: iauCode144(1), inm: d.nm || "", imk: F146.idolMk ? F146.idolMk() || "" : "", mpl: F146.mpl ? F146.mpl() : "" };
   addChk144({ k: kind, o: myName(), nm: IDOLS102[d.pick].name, c: lookCodes144(c), day: world.day, at: Date.now() });
 }
 F144.cheki = (owner, nm, c, why) => { if (!c || !c.idl) return; const o = ic144(); const today = jstDay144(); if (o.chk.some(x => x.k === "c" && x.o === owner && x.dd === today)) return; addChk144({ k: "c", o: owner, nm, c: lookCodes144({ ...c, idl: String(c.idl).slice(0, 3) + "w" + String(c.idl).slice(4) }), day: world.day, dd: today, at: Date.now(), why }); toast(null, `${owner}さんのアイドル「${nm}」のチェキをもらった！（アルバムに入った）`); };
@@ -31856,7 +31877,7 @@ function openAlbum144() {
 
 // ---- オンライン：type "idol" ----
 const sendI144 = m => { if (F8.connected && !WATCH88) send8({ type: "idol", ...m }); };
-const mySummary144 = () => { const d = idol102(); if (d.pick < 0) return null; const ci = coordInfo144(); return { nm: IDOLS102[d.pick].name, ty: ic144().ty, vo: d.st.vo, da: d.st.da, ex: d.st.ex, pw: ci.pw, lk: { idl: idlAny144(), icd: icdCode144(), ...(iauCode144(0) ? { iau: iauCode144(0) } : {}) } }; };
+const mySummary144 = () => { const d = idol102(); if (d.pick < 0) return null; const ci = coordInfo144(); return { nm: IDOLS102[d.pick].name, ty: ic144().ty, vo: d.st.vo, da: d.st.da, ex: d.st.ex, pw: ci.pw, lk: { idl: idlAny144(), icd: icdCode144(), ...(iauCode144(0) ? { iau: iauCode144(0) } : {}), ...(F146.idolMk && F146.idolMk() ? { imk: F146.idolMk(), ...(F146.mpl() ? { mpl: F146.mpl() } : {}) } : {}) } }; };
 F144.summary = mySummary144;
 let lastPut144 = "";
 setInterval(() => { try { if (!F8.connected || WATCH88 || !world.idol102) return; const s = mySummary144(); const j = JSON.stringify(s); if (j !== lastPut144) { lastPut144 = j; sendI144({ a: "put", i: s }); } } catch (e) { } }, 5000);
@@ -32278,7 +32299,7 @@ setInterval(() => {
 
 // ---- 描く：センターのうしろに2人目・3人目 ----
 const trail145 = [new WeakMap(), new WeakMap()];
-const follow145 = c => { const L = []; for (const n of ["2", "3"]) { const x = parseIdl124(c["id" + n]); if (x) L.push({ ...x, c: { idl: c["id" + n], icd: c["ic" + n], inm: c["in" + n], iau: c["ia" + n] } }); } return L; };
+const follow145 = c => { const L = []; for (const n of ["2", "3"]) { const x = parseIdl124(c["id" + n]); if (x) L.push({ ...x, c: { idl: c["id" + n], icd: c["ic" + n], inm: c["in" + n], iau: c["ia" + n], imk: c["i" + n + "m"], mpl: c.mpl } }); } return L; };
 F145.follow = follow145;
 {
   const _de = drawEnt;
@@ -32292,7 +32313,7 @@ F145.follow = follow145;
       const [dx, dy] = DIRS[e.dir] || [0, 1], now = performance.now();
       follow145(c).slice(0, 2).forEach((x, j) => {
         // 上下に歩くときはセンターの左右に、左右に歩くときはうしろに1列で
-        const m0 = trail124.get(e), tx = dy ? m0.x + (j ? -13 : 13) : prev.x - dx * 13, ty = dy ? m0.y - dy * 4 : prev.y + (j ? 2 : -1);
+        const m0 = trail124.get(e), tx = dy > 0 ? (j ? e.px - 14 : m0.x + 14) : dy ? m0.x + (j ? -13 : 13) : prev.x - dx * 13, ty = dy > 0 ? m0.y : dy ? m0.y - dy * 4 : prev.y + (j ? 2 : -1);
         let t = trail145[j].get(e); if (!t) { t = { x: tx, y: ty }; trail145[j].set(e, t); }
         t.x += (tx - t.x) * .1; t.y += (ty - t.y) * .1;
         const mv = Math.abs(tx - t.x) + Math.abs(ty - t.y) > 1.5, fr = mv ? [0, 1, 0, 2][Math.floor((now + j * 90) / 140) % 4] : 0;
@@ -32400,6 +32421,516 @@ CHANGES19.unshift({ v: "0.86.0", date: "2026/11/19", title: "アイドル事務�
   "アイドルを3人までスカウトして、センターを切りかえられる（力・ファン・名前・メイク・オーラ・コーデはアイドルごと）",
   "連れて歩くと3人みんなでついてくる。ほかの人にも見えて、どの子にもファンサしてもらえる",
 ] });
+
+// =================== v146: お便りから（メイクの色・カラーチャート・スポイト・横顔と後ろ姿と髪・アイドルみんなのメイク・ペットのメイク・虫と化石の図鑑・ほか） ===================
+var F146 = {};
+// ---- 細かいメイク：正面・横・後ろの3面 × よこ32×たて28マス（キャラの32ドットの絵ぜんたい。顔だけでなく髪や服にも描ける） ----
+// 1マス＝36進数1文字：0＝なし、1〜f＝決まった色（PAL62）、g〜y＝自分の色（cfg.mpl・19色）、z＝消す（その所の絵を消す）
+// 送るときは、同じ文字のくり返しを大文字（26進数・A＝2回）でちぢめる（サーバーの Sanitize.mkOk と同じ）
+// 自分は cfg.mk、センターのアイドルは cfg.imk、2人目・3人目は cfg.i2m / cfg.i3m。自分の色は cfg.mpl（自分もアイドルもペットもいっしょ）
+const MKW146 = 32, MKH146 = 28, MKV146 = MKW146 * MKH146, MKN146 = MKV146 * 3, MKMAX146 = 3000, PMKN146 = 256, CUST146 = 19;
+const MPLRE146 = /^(?:[0-9a-f]{6}){1,19}$/;
+function mkEnc146(a) {
+  let o = "", i = 0; const n = a.length;
+  while (i < n) {
+    const c = a[i]; let j = i + 1; while (j < n && a[j] === c) j++;
+    o += c; const run = j - i;
+    if (run >= 2) { let v = run - 2, s = ""; do { s = String.fromCharCode(65 + v % 26) + s; v = Math.floor(v / 26); } while (v > 0); o += s; }
+    i = j;
+  }
+  return o;
+}
+const dec146 = new Map();
+function mkDec146(s, cells = MKN146) {
+  if (typeof s !== "string" || !s || s.length > MKMAX146) return null;
+  const key = cells + ":" + s; if (dec146.has(key)) return dec146.get(key);
+  let out = [], n = 0, i = 0, ok = true, any = false;
+  while (i < s.length) {
+    const c = s[i++]; if (!/[0-9a-z]/.test(c)) { ok = false; break; }
+    let run = 1;
+    if (i < s.length && s[i] >= "A" && s[i] <= "Z") { let v = 0; while (i < s.length && s[i] >= "A" && s[i] <= "Z") { v = v * 26 + (s.charCodeAt(i++) - 65); if (v > 100000) { ok = false; break; } } run = v + 2; }
+    if (!ok) break;
+    if (c !== "0") any = true;
+    n += run; if (n > cells) { ok = false; break; }
+    out.push(c.repeat(run));
+  }
+  const r = ok && any && n === cells ? out.join("") : null;
+  if (dec146.size > 300) dec146.clear();
+  dec146.set(key, r); return r;
+}
+const mkOk146 = (s, cells) => !!mkDec146(s, cells);
+// 自分の色（19色まで。空いている所は null）
+const mpl146 = () => { let a = world.mpl146; if (!Array.isArray(a)) a = []; a = a.slice(0, CUST146).map(x => typeof x === "string" && /^#[0-9a-f]{6}$/.test(x) ? x : null); while (a.length < CUST146) a.push(null); world.mpl146 = a; return a; };
+const mplStr146 = a => { a = a || mpl146(); let last = -1; a.forEach((x, i) => { if (x) last = i; }); if (last < 0) return ""; return a.slice(0, last + 1).map(x => x ? x.slice(1) : "000000").join(""); };
+F146.mpl = () => { try { return mplStr146(); } catch (e) { return ""; } };
+const hexRgb146 = h => [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+/** 1マスの色（[r,g,b]）。z と 0 は null */
+function colOf146(ch, mpl) {
+  const v = parseInt(ch, 36); if (!v || v >= 35) return null;
+  if (v <= 15) return PALRGB62[v];
+  const k = (v - 16) * 6; return typeof mpl === "string" && mpl.length >= k + 6 ? hexRgb146(mpl.slice(k, k + 6)) : null;
+}
+const near146 = rgb => { let best = 1, bd = 1e9; for (let i = 1; i <= 15; i++) { const p = PALRGB62[i], d = (p[0] - rgb[0]) ** 2 + (p[1] - rgb[1]) ** 2 + (p[2] - rgb[2]) ** 2; if (d < bd) { bd = d; best = i; } } return best; };
+// 前の版のメイク（顔のまわり 20×18・pt2）を、正面の面にうつす
+function fromPt2146(pt2) {
+  const a = "0".repeat(MKN146).split("");
+  if (typeof pt2 === "string" && pt2.length === 360) for (let j = 0; j < 18; j++) for (let i = 0; i < 20; i++) { const ch = pt2[j * 20 + i]; if (/[1-9a-f]/.test(ch)) a[(4 + j) * MKW146 + 6 + i] = ch; }
+  return a;
+}
+// 「細かいドット」を切っている人と、前の版の人のために：正面の顔のまわりを 10×9 の paint にする
+function paint16From146(M, mpl) {
+  let q = "";
+  for (let j = 0; j < 18; j++) for (let i = 0; i < 20; i++) {
+    const ch = M[(4 + j) * MKW146 + 6 + i];
+    if (ch === "0" || ch === "z") { q += "0"; continue; }
+    const v = parseInt(ch, 36); if (v <= 15) { q += ch; continue; }
+    const rgb = colOf146(ch, mpl); q += rgb ? near146(rgb).toString(16) : "0";
+  }
+  const p = down119(q); return /[1-9a-f]/.test(p) ? p : undefined;
+}
+F146.enc = mkEnc146; F146.dec = mkDec146; F146.fromPt2 = a => mkEnc146(fromPt2146(a));
+
+// ---- 32の絵に描く ----
+const cache146 = new Map(), _ci146 = charImg118;
+charImg118 = function (c, dir, frame) {
+  const M = c && c.mk ? mkDec146(c.mk) : null;
+  if (!M) return _ci146(c && c.mk !== undefined ? { ...c, mk: undefined } : c, dir, frame);
+  if (!F118 || !F118.ready || !F118.on() || typeof CHAR32 === "undefined") return _ci146({ ...c, mk: undefined, pt2: undefined, paint: paint16From146(M, c.mpl) }, dir, frame);
+  const base = _ci146({ ...c, mk: undefined, pt2: undefined, paint: undefined }, dir, frame);
+  if (base.width !== 32) return base;
+  const key = JSON.stringify(c) + dir + frame + gamingShift;
+  const hit = cache146.get(key); if (hit) return hit;
+  const v = dir === "down" ? 0 : dir === "up" ? 2 : 1;
+  let G = M.slice(v * MKV146, (v + 1) * MKV146), front = false;
+  // 横の面に何も描いていなければ、前の版と同じく正面の顔の手前半分を使う
+  if (v === 1 && !/[1-9a-z]/.test(G)) { G = M.slice(0, MKV146); front = true; }
+  const cv = document.createElement("canvas"); cv.width = cv.height = 32; const x = cv.getContext("2d"); x.drawImage(base, 0, 0);
+  if (/[1-9a-z]/.test(G)) {
+    const img = x.getImageData(0, 0, 32, 32), d = img.data;
+    for (let j = 0; j < MKH146; j++) for (let i = 0; i < MKW146; i++) {
+      const ch = G[j * MKW146 + i]; if (ch === "0") continue;
+      if (front && (i > 17 || j < 4 || j > 21 || i < 6)) continue;
+      const X = dir === "right" ? 31 - i : i, k = (j * 32 + X) * 4;
+      if (ch === "z") { d[k + 3] = 0; continue; }
+      const col = colOf146(ch, c.mpl); if (!col) continue;
+      d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+  }
+  if (cache146.size > 600) cache146.clear();
+  cache146.set(key, cv); return cv;
+};
+F118.img = charImg118;
+// みんなの見た目にも通す
+{
+  const _cc = cleanCfg;
+  cleanCfg = function (c) {
+    const o = _cc(c);
+    if (c) { for (const k of ["mk", "imk", "i2m", "i3m"]) if (mkOk146(c[k])) o[k] = c[k]; if (typeof c.mpl === "string" && MPLRE146.test(c.mpl)) o.mpl = c.mpl; }
+    return o;
+  };
+}
+
+// ---- 自分のメイクは world.mk146 がもと（着せ替えの「おまかせ」やセーブの読みこみで消えないように） ----
+const myMk146 = () => mkOk146(world.mk146) ? world.mk146 : null;
+function syncCfg146() {
+  if (world.mk146 !== undefined && world.mk146 !== null && !mkOk146(world.mk146)) world.mk146 = null;
+  const want = { mk: myMk146() || undefined, mpl: mplStr146() || undefined };
+  let ch = false;
+  for (const k of ["mk", "mpl"]) if ((cfg[k] || undefined) !== want[k]) { if (want[k]) cfg[k] = want[k]; else delete cfg[k]; ch = true; }
+  if (want.mk) { const p = paint16From146(mkDec146(want.mk), want.mpl); if (cfg.pt2) { delete cfg.pt2; ch = true; } if ((cfg.paint || undefined) !== p) { if (p) cfg.paint = p; else delete cfg.paint; ch = true; } }
+  if (ch) { player.cfg = cfg; try { changed(); } catch (e) { } if (typeof sendCfgSoon === "function") sendCfgSoon(); }
+}
+setInterval(() => { try { if (world && world.day) syncCfg146(); } catch (e) { } }, 1500);
+
+// ---- アイドル：センター（ic144().mk）と、しまってある子（c.mk）。前の版のメイク（pt2）は、送るときに面にうつす ----
+ICK145.push("mk");
+const idolMk146 = o => o && mkOk146(o.mk) ? o.mk : o && o.pt2 && F119.valid(o.pt2) ? mkEnc146(fromPt2146(o.pt2)) : null;
+{
+  const _look = F144.look;
+  F144.look = () => {
+    const out = _look();
+    try { const o = world.ic144; const mk = o && mkOk146(o.mk) ? o.mk : null; if (mk) { out.mk = mk; const m = mplStr146(); if (m) out.mpl = m; delete out.pt2; delete out.paint; } } catch (e) { }
+    return out;
+  };
+  const _sl = slotLook145;
+  slotLook145 = function (x) {
+    const out = _sl.apply(this, arguments);
+    try { const mk = x && x.c && mkOk146(x.c.mk) ? x.c.mk : null; if (mk) { out.mk = mk; const m = mplStr146(); if (m) out.mpl = m; delete out.pt2; delete out.paint; } } catch (e) { }
+    return out;
+  };
+  const _rm = F144.remote;
+  F144.remote = c => {
+    const out = _rm(c);
+    try { if (c && mkOk146(c.imk)) { out.mk = c.imk; if (typeof c.mpl === "string" && MPLRE146.test(c.mpl)) out.mpl = c.mpl; delete out.pt2; delete out.paint; } } catch (e) { }
+    return out;
+  };
+}
+F146.idolMk = () => world.ic144 ? idolMk146(world.ic144) : null;
+// 連れて歩くとき：センターは imk、2人目・3人目は i2m・i3m
+setInterval(() => {
+  try {
+    if (world.idol102 === undefined) return;
+    const want = {};
+    if (cfg.idl && world.ic144) { want.imk = idolMk146(ic144()) || undefined; }
+    if (cfg.id2 && world.idols145) {
+      const O = ofc145(), L = O.s.map((x, i) => x ? x : null).filter(Boolean).slice(0, 2);
+      L.forEach((x, j) => { want["i" + (j + 2) + "m"] = idolMk146(x.c) || undefined; });
+    }
+    let ch = false;
+    for (const k of ["imk", "i2m", "i3m"]) { const v = want[k]; if ((cfg[k] || undefined) !== v) { if (v) cfg[k] = v; else delete cfg[k]; ch = true; } }
+    // 前の版のアイドルのメイク（ipt・ip2）は、もう送らない（imk に入っている）
+    if (cfg.imk) for (const k of ["ipt", "ip2"]) if (cfg[k]) { delete cfg[k]; ch = true; }
+    if (ch && typeof sendCfgSoon === "function") sendCfgSoon();
+  } catch (e) { }
+}, 950);
+
+// ---- メイクの画面（自分・アイドル）：3面・髪や服にも・決まった色＋自分の色19・カラーチャート・スポイト ----
+const MPRICE146 = 3000;
+// カラーチャート：12色相×4段＋灰色＋肌の色
+const CHART146 = (() => {
+  const L = [];
+  const hsl = (h, s, l) => { s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return "#" + [f(0), f(8), f(4)].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join(""); };
+  for (const l of [82, 68, 52, 36]) for (let h = 0; h < 360; h += 30) L.push(hsl(h, l > 70 ? 80 : 75, l));
+  for (const g of ["#ffffff", "#dcdcdc", "#b4b4b4", "#8c8c8c", "#646464", "#3c3c3c", "#1e1e1e", "#000000"]) L.push(g);
+  for (const s of ["#fde7d6", "#f6d2b4", "#e8b48c", "#c8946a", "#9a6a46", "#6a442a"]) L.push(s);
+  return L;
+})();
+let mk146st = null;
+function openMake146(who) {
+  who = who === "idol" ? "idol" : "me";
+  const isIdol = who === "idol";
+  if (isIdol) { const d = idol102(); if (d.pick < 0) { openIdol102(); return; } }
+  const o = isIdol ? ic144() : null;
+  let start;
+  if (isIdol) start = mkOk146(o.mk) ? mkDec146(o.mk).split("") : o.pt2 && F119.valid(o.pt2) ? fromPt2146(o.pt2) : "0".repeat(MKN146).split("");
+  else start = myMk146() ? mkDec146(myMk146()).split("") : cfg.pt2 && F119.valid(cfg.pt2) ? fromPt2146(cfg.pt2) : validPaint62(cfg.paint) ? fromPt2146(up119(cfg.paint)) : "0".repeat(MKN146).split("");
+  const prev = mk146st;
+  const st = mk146st = { g: start, view: prev ? prev.view : 0, col: prev && prev.col ? prev.col : "1", size: prev ? prev.size : 1, mirror: prev ? prev.mirror : true, tool: "pen", mpl: mpl146().slice(), undo: [] };
+  world.looks146 = Array.isArray(world.looks146) ? world.looks146.slice(0, 3) : [null, null, null]; while (world.looks146.length < 3) world.looks146.push(null);
+  const baseCfg = () => isIdol ? { ...idolCfg102(), mk: undefined, pt2: undefined, paint: undefined } : { ...cfg, mk: undefined, pt2: undefined, paint: undefined };
+  const str = () => st.g.join("");
+  const mplS = () => mplStr146(st.mpl);
+  const withMk = s => /[1-9a-z]/.test(s) ? { ...baseCfg(), mk: mkEnc146(s), mpl: mplS() || undefined } : baseCfg();
+  const VIEWS = [["down", "正面"], ["left", "横"], ["up", "後ろ"]];
+  const CELL = 12, W = MKW146 * CELL, H = MKH146 * CELL;
+  const colCss = ch => { if (ch === "0") return null; const c = colOf146(ch, mplS()); return c ? `rgb(${c[0]},${c[1]},${c[2]})` : null; };
+  const cur = () => isIdol ? (mkOk146(o.mk) ? mkDec146(o.mk) : null) : myMk146() ? mkDec146(myMk146()) : null;
+  const title = isIdol ? "アイドルのメイク" : "COSME COUNTER　─ OMOTESANDO ─";
+  openModal(title, "salon26", body => {
+    const name = isIdol ? esc(IDOLS102[idol102().pick].name) : "お客さま";
+    body.innerHTML = `${isIdol ? `<p class="mtext">${name}のメイク。正面・横・後ろの3つの面に、顔だけでなく髪や服にも描けるよ。</p>` : `<div class="salonhead26"><img src="${charIcon13({ ...DEFAULT, hair: "ロング", hairc: "黒", top: "ジャケット", topc: "生成り", bottom: "スカート", bottomc: "紫" })}" alt=""><div><p class="salonname26">Beauty Advisor  REIKA</p><p>「正面・横・後ろ、それぞれに描けますよ。髪の毛も、上から描いたり「消す」で形を変えたりできます」</p></div></div>`}
+      <div class="mtabs mk146v">${VIEWS.map(([d, n], i) => `<button class="chip" type="button" data-v146="${i}" aria-pressed="${st.view === i}">${n}</button>`).join("")}</div>
+      <div class="mk146">
+        <div class="mk146l"><canvas id="mk146cv" class="fine119" width="${W}" height="${H}"></canvas>
+          <div class="cos62t"><button class="chip" type="button" data-t146="pen" aria-pressed="true">ペン</button><button class="chip" type="button" data-t146="spoit" aria-pressed="false">スポイト</button><button class="chip" type="button" data-sz146="1" aria-pressed="${st.size === 1}">細いペン</button><button class="chip" type="button" data-sz146="2" aria-pressed="${st.size === 2}">太いペン</button><button class="chip" type="button" id="mk146mir" aria-pressed="${st.mirror}">左右対称</button><button class="chip" type="button" id="mk146undo">ひとつ戻す</button><button class="chip" type="button" id="mk146clr">この面を消す</button><button class="chip" type="button" id="mk146cp">正面を横にうつす</button></div></div>
+        <div class="mk146r">
+          <p class="lbl">決まった色</p>
+          <div class="cos62pal" id="mk146base"></div>
+          <p class="lbl">自分の色（19色まで・自分とアイドルとペットでいっしょ）</p>
+          <div class="cos62pal mk146my" id="mk146my"></div>
+          <p class="lbl">カラーチャート（えらんだ「自分の色」に入る）</p>
+          <div class="mk146chart" id="mk146chart">${CHART146.map(h => `<button type="button" data-ch146="${h}" title="${h}" style="background:${h}"></button>`).join("")}<label class="mk146pick">もっとえらぶ<input type="color" id="mk146in" value="#ff7ab0"></label></div>
+          <div class="salonprev26" id="mk146prev"></div>
+          <div class="cos62looks">${world.looks146.map((l, i) => `<div><img src="${mkOk146(l) ? charImg118({ ...baseCfg(), mk: l, mpl: mplS() || undefined }, "down", 0).toDataURL() : charIcon13(baseCfg())}" alt="" class="${mkOk146(l) ? "" : "empty"}"><button class="btn light" type="button" data-ls146="${i}">ほぞん</button><button class="btn light" type="button" data-ll146="${i}" ${mkOk146(l) ? "" : "disabled"}>よびだす</button></div>`).join("")}</div>
+        </div>
+      </div>
+      <p class="mtext small" id="mk146msg">マスをなぞると、えらんだ色がのるよ。「消す（透明）」は、髪や服の絵そのものを消せる。スポイトでマスをさわると、その色をとれる</p>
+      <div class="row2"><button class="btn light" type="button" id="mk146off" ${cur() || (!isIdol && (cfg.paint || cfg.pt2)) || (isIdol && o.pt2) ? "" : "disabled"}>メイクを落とす</button><button class="btn" type="button" id="mk146go">このメイクにする（${fmt(MPRICE146)}）</button>${isIdol ? `<button class="btn light" type="button" id="mk146bk">もどる</button>` : ""}</div>`;
+    const cv = body.querySelector("#mk146cv"), g = cv.getContext("2d"), msg = body.querySelector("#mk146msg");
+    let bd = null;
+    const loadBase = () => {
+      const bc = document.createElement("canvas"); bc.width = bc.height = 32; const bx = bc.getContext("2d"); bx.imageSmoothingEnabled = false;
+      const bim = charImg118(baseCfg(), VIEWS[st.view][0], 0); bx.drawImage(bim, 0, 0, bim.width, bim.height, 0, 0, 32, 32);
+      bd = bx.getImageData(0, 0, 32, 32).data;
+    };
+    const palHtml = () => {
+      body.querySelector("#mk146base").innerHTML = `<button type="button" class="cos62c${st.col === "0" ? " on" : ""}" data-c146="0" title="描いた所を消す"><i class="er"></i><span>もどす</span></button>`
+        + PAL62.slice(1).map((p, k) => { const ch = (k + 1).toString(16); return `<button type="button" class="cos62c${st.col === ch ? " on" : ""}" data-c146="${ch}" title="${p[1]}"><i style="background:${p[0]}"></i><span>${p[1]}</span></button>`; }).join("")
+        + `<button type="button" class="cos62c${st.col === "z" ? " on" : ""}" data-c146="z" title="髪や服の絵を消す"><i class="mk146z"></i><span>消す</span></button>`;
+      body.querySelector("#mk146my").innerHTML = st.mpl.map((h, k) => { const ch = (16 + k).toString(36); return `<button type="button" class="cos62c${st.col === ch ? " on" : ""}${h ? "" : " empty"}" data-c146="${ch}" title="${h || "空き"}">${h ? `<i style="background:${h}"></i>` : `<i class="mk146e">＋</i>`}<span>${k + 1}</span></button>`; }).join("");
+      body.querySelectorAll("[data-c146]").forEach(b => b.onclick = () => {
+        st.col = b.dataset.c146; setTool("pen"); palHtml();
+        const v = parseInt(st.col, 36);
+        if (v >= 16 && v < 35 && !st.mpl[v - 16]) msg.textContent = `自分の色の${v - 15}番は空いているよ。カラーチャートかスポイトで色を入れてね`;
+      });
+    };
+    const setTool = t => { st.tool = t; body.querySelectorAll("[data-t146]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t146 === t))); cv.classList.toggle("spoit146", t === "spoit"); };
+    // 自分の色に入れる：えらんでいる自分の色 → 空いている所 → 1番
+    const putCustom = hex => {
+      hex = hex.toLowerCase();
+      for (let k = 1; k <= 15; k++) if (PAL62[k][0].toLowerCase() === hex) { st.col = k.toString(16); palHtml(); return "決まった色にある色だったよ"; }
+      const same = st.mpl.indexOf(hex); if (same >= 0) { st.col = (16 + same).toString(36); palHtml(); return `自分の色の${same + 1}番と同じ色だよ`; }
+      const v = parseInt(st.col, 36); let k = v >= 16 && v < 35 ? v - 16 : st.mpl.indexOf(null); if (k < 0) k = 0;
+      const used = st.mpl[k] && st.g.includes((16 + k).toString(36));
+      st.mpl[k] = hex; st.col = (16 + k).toString(36); palHtml(); draw();
+      return `自分の色の${k + 1}番に入れたよ${used ? "（この色で描いた所の色も変わる）" : ""}`;
+    };
+    const draw = () => {
+      if (!bd) loadBase();
+      const off = st.view * MKV146;
+      for (let j = 0; j < MKH146; j++) for (let i = 0; i < MKW146; i++) {
+        const ch = st.g[off + j * MKW146 + i], k = (j * 32 + i) * 4;
+        let fill = colCss(ch);
+        if (!fill) fill = ch !== "z" && bd[k + 3] ? `rgb(${bd[k]},${bd[k + 1]},${bd[k + 2]})` : ((i + j) % 2 ? "#f4eef0" : "#ebe2e6");
+        g.fillStyle = fill; g.fillRect(i * CELL, j * CELL, CELL, CELL);
+        if (ch === "z") { g.strokeStyle = "rgba(200,60,90,.55)"; g.beginPath(); g.moveTo(i * CELL + 3, j * CELL + 3); g.lineTo(i * CELL + CELL - 3, j * CELL + CELL - 3); g.stroke(); }
+      }
+      for (let i = 1; i < MKW146; i++) { g.strokeStyle = i % 2 ? "rgba(0,0,0,.06)" : "rgba(0,0,0,.14)"; g.beginPath(); g.moveTo(i * CELL + .5, 0); g.lineTo(i * CELL + .5, H); g.stroke(); }
+      for (let j = 1; j < MKH146; j++) { g.strokeStyle = j % 2 ? "rgba(0,0,0,.06)" : "rgba(0,0,0,.14)"; g.beginPath(); g.moveTo(0, j * CELL + .5); g.lineTo(W, j * CELL + .5); g.stroke(); }
+      if (st.mirror && st.view !== 1) { g.strokeStyle = "rgba(240,90,140,.5)"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); g.setLineDash([]); }
+      const s = str(), c2 = withMk(s);
+      body.querySelector("#mk146prev").innerHTML = ["down", "left", "right", "up"].map(d => `<img src="${charImg118(c2, d, 0).toDataURL()}" alt="">`).join("");
+      const has = /[1-9a-z]/.test(s), enc = has ? mkEnc146(s) : "", now = cur();
+      const same = has && now === s && mplS() === mplStr146();
+      const go = body.querySelector("#mk146go");
+      go.disabled = !has || same || world.money < MPRICE146 || enc.length > MKMAX146;
+      go.textContent = same ? "いまのメイクです" : `このメイクにする（${fmt(MPRICE146)}）`;
+      if (enc.length > MKMAX146) msg.textContent = "細かすぎて、みんなに送れないよ（同じ色が続く所をふやすか、少し消してね）";
+    };
+    let painting = false, last = "";
+    const cellAt = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * MKW146), Math.floor((e.clientY - r.top) / r.height * MKH146)]; };
+    const dot = (i, j, ch) => {
+      if (i < 0 || j < 0 || i >= MKW146 || j >= MKH146) return;
+      const off = st.view * MKV146; st.g[off + j * MKW146 + i] = ch;
+      if (st.mirror && st.view !== 1) st.g[off + j * MKW146 + (MKW146 - 1 - i)] = ch;
+    };
+    const put = (i, j) => {
+      if (i < 0 || j < 0 || i >= MKW146 || j >= MKH146) return;
+      const v = parseInt(st.col, 36); if (v >= 16 && v < 35 && !st.mpl[v - 16]) { msg.textContent = "その自分の色は空いているよ。先に色を入れてね"; return; }
+      if (st.size === 2) { i &= ~1; j &= ~1; }
+      const k = i + "," + j; if (k === last) return; last = k;
+      if (st.size === 2) { dot(i, j, st.col); dot(i + 1, j, st.col); dot(i, j + 1, st.col); dot(i + 1, j + 1, st.col); } else dot(i, j, st.col);
+      draw();
+    };
+    const spoit = (i, j) => {
+      if (i < 0 || j < 0 || i >= MKW146 || j >= MKH146) return;
+      const ch = st.g[st.view * MKV146 + j * MKW146 + i];
+      if (ch !== "0") { st.col = ch; palHtml(); msg.textContent = ch === "z" ? "「消す」をえらんだよ" : "描いた色をとったよ"; setTool("pen"); return; }
+      const k = (j * 32 + i) * 4;
+      if (!bd[k + 3]) { msg.textContent = "そこには色がないよ"; return; }
+      const hex = "#" + [bd[k], bd[k + 1], bd[k + 2]].map(x => x.toString(16).padStart(2, "0")).join("");
+      msg.textContent = "スポイトで色をとった。" + putCustom(hex); setTool("pen");
+    };
+    cv.addEventListener("pointerdown", e => {
+      e.preventDefault(); const [i, j] = cellAt(e);
+      if (st.tool === "spoit") { spoit(i, j); return; }
+      cv.setPointerCapture?.(e.pointerId); st.undo.push([str(), st.mpl.slice()]); if (st.undo.length > 60) st.undo.shift(); painting = true; last = ""; put(i, j);
+    });
+    cv.addEventListener("pointermove", e => { if (painting) put(...cellAt(e)); });
+    const up = () => { painting = false; last = ""; };
+    cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up); cv.addEventListener("pointerleave", up);
+    body.querySelectorAll("[data-v146]").forEach(b => b.onclick = () => { st.view = +b.dataset.v146; bd = null; body.querySelectorAll("[data-v146]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); draw(); });
+    body.querySelectorAll("[data-t146]").forEach(b => b.onclick = () => setTool(b.dataset.t146));
+    body.querySelectorAll("[data-sz146]").forEach(b => b.onclick = () => { st.size = +b.dataset.sz146; body.querySelectorAll("[data-sz146]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+    body.querySelector("#mk146mir").onclick = e => { st.mirror = !st.mirror; e.currentTarget.setAttribute("aria-pressed", String(st.mirror)); draw(); };
+    body.querySelector("#mk146undo").onclick = () => { const p = st.undo.pop(); if (p) { st.g = p[0].split(""); st.mpl = p[1]; palHtml(); draw(); } };
+    body.querySelector("#mk146clr").onclick = () => { st.undo.push([str(), st.mpl.slice()]); for (let k = 0; k < MKV146; k++) st.g[st.view * MKV146 + k] = "0"; draw(); };
+    body.querySelector("#mk146cp").onclick = () => {
+      st.undo.push([str(), st.mpl.slice()]);
+      for (let k = 0; k < MKV146; k++) { const i = k % MKW146; st.g[MKV146 + k] = i <= 17 ? st.g[k] : "0"; }
+      st.view = 1; bd = null; body.querySelectorAll("[data-v146]").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.v146 === 1))); draw();
+      msg.textContent = "正面の左半分を、横の面にうつしたよ（顔の向きに合わせて直してね）";
+    };
+    body.querySelectorAll("[data-ch146]").forEach(b => b.onclick = () => { st.undo.push([str(), st.mpl.slice()]); msg.textContent = putCustom(b.dataset.ch146); setTool("pen"); });
+    body.querySelector("#mk146in").onchange = e => { st.undo.push([str(), st.mpl.slice()]); msg.textContent = putCustom(e.target.value); setTool("pen"); };
+    body.querySelectorAll("[data-ls146]").forEach(b => b.onclick = () => { const s = str(); if (!/[1-9a-z]/.test(s)) { msg.textContent = "まだなにも描いていないよ"; return; } world.looks146[+b.dataset.ls146] = mkEnc146(s); world.mpl146 = st.mpl.slice(); saveWorld(); closeModal(); openMake146(who); });
+    body.querySelectorAll("[data-ll146]").forEach(b => b.onclick = () => { const l = mkDec146(world.looks146[+b.dataset.ll146]); if (!l) return; st.undo.push([str(), st.mpl.slice()]); st.g = l.split(""); draw(); msg.textContent = "保存したメイクをよびだしたよ（「このメイクにする」で仕上げ）"; });
+    body.querySelector("#mk146go").onclick = () => {
+      const s = str(); if (!/[1-9a-z]/.test(s) || world.money < MPRICE146) return;
+      const enc = mkEnc146(s); if (enc.length > MKMAX146) return;
+      addMoney(-MPRICE146); world.mpl146 = st.mpl.slice();
+      if (isIdol) { const O = ic144(); O.mk = enc; delete O.pt2; world.stats.idolMake144 = (world.stats.idolMake144 || 0) + 1; }
+      else { world.mk146 = enc; world.paint119 = null; world.paint62 = null; delete cfg.pt2; world.stats.makeup62 = (world.stats.makeup62 || 0) + 1; }
+      world.stats.make146 = (world.stats.make146 || 0) + 1;
+      syncCfg146(); saveWorld(); try { checkTitles42(); } catch (e) { }
+      closeModal(); toast(null, isIdol ? "メイク完了！ ステージ映えしそう" : "メイク完了！ 「とってもお似合いです」"); try { se13("small"); } catch (e) { }
+      if (isIdol) openIdol102("メイクした");
+    };
+    body.querySelector("#mk146off").onclick = () => {
+      if (isIdol) { const O = ic144(); delete O.mk; delete O.pt2; }
+      else { world.mk146 = null; delete cfg.mk; delete cfg.paint; delete cfg.pt2; world.paint62 = null; world.paint119 = null; try { changed(); } catch (e) { } if (typeof sendCfgSoon === "function") sendCfgSoon(); }
+      saveWorld(); closeModal(); toast(null, "メイクを落として、すっぴんにもどった");
+      if (isIdol) openIdol102("メイクを落とした");
+    };
+    const bk = body.querySelector("#mk146bk"); if (bk) bk.onclick = () => { closeModal(); openIdol102(); };
+    F146.CM = { put: (i, j) => { st.undo.push([str(), st.mpl.slice()]); put(i, j); }, spoit, view: v => body.querySelector(`[data-v146="${v}"]`).click(), go: () => body.querySelector("#mk146go").click(), st };
+    palHtml(); draw();
+  });
+}
+openCosme62 = () => openMake146("me");
+F62.open = openCosme62; F119.open = openCosme62;
+openIdolCosme144 = () => openMake146("idol");
+F144.cosme = openIdolCosme144;
+F146.make = openMake146;
+GUIDE54.forEach(gd => { if (gd[0] === "着せ替え") gd[2] = gd[2].replace("顔のまわり（20×18マス・細いペンと太いペン）にドットで自由にメイクを描ける", "正面・横・後ろの3つの面に、顔のメイクや髪・服までドットで描ける（決まった色15と、カラーチャートやスポイトで作る自分の色19）"); });
+
+// ---- ペットのメイク（16×16。ペットの絵の上に。自分の色も使える。消すはなし） ----
+const PPRICE146 = 1000;
+const pmk146 = () => { const o = world.pmk146 = world.pmk146 && typeof world.pmk146 === "object" && !Array.isArray(world.pmk146) ? world.pmk146 : {}; for (const k of Object.keys(o)) if (!mkOk146(o[k], PMKN146)) delete o[k]; return o; };
+function drawPetMk146(g, px, py, grid, flip, k, mpl) {
+  for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) {
+    const ch = grid[j * 16 + i]; if (ch === "0" || ch === "z") continue;
+    const c = colOf146(ch, mpl); if (!c) continue;
+    g.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; g.fillRect(Math.round(px + (flip ? 15 - i : i) * k), Math.round(py + j * k), k, k);
+  }
+}
+function openPetMake146(id) {
+  const pets = world.pets || []; if (!pets.includes(id)) id = pets[0]; if (!id) return;
+  const sp = IMG[petSpr100(id)];
+  const st = { g: (mkDec146(pmk146()[id], PMKN146) || "0".repeat(PMKN146)).split(""), col: mk146st && mk146st.col && mk146st.col !== "z" ? mk146st.col : "1", tool: "pen", undo: [] };
+  const CELL = 18, W = 16 * CELL;
+  const mpl = mplStr146();
+  openModal("ペットのメイク", "salon26", body => {
+    body.innerHTML = `<p class="mtext">${esc(petNameOf43(id))}の顔や体に、ドットでメイクを描けるよ（${fmt(PPRICE146)}）。オンラインなら、ほかの人にも見える。</p>
+      <div class="mk146 pm146"><div class="mk146l"><canvas id="pm146cv" class="fine119" width="${W}" height="${W}"></canvas>
+        <div class="cos62t"><button class="chip" type="button" data-pt146="pen" aria-pressed="true">ペン</button><button class="chip" type="button" data-pt146="spoit" aria-pressed="false">スポイト</button><button class="chip" type="button" id="pm146undo">ひとつ戻す</button><button class="chip" type="button" id="pm146clr">ぜんぶ消す</button></div></div>
+        <div class="mk146r"><div class="cos62pal" id="pm146pal"></div><p class="mtext small">自分の色は、自分のメイクの画面（表参道のCOSME COUNTER）で作れるよ</p><div class="salonprev26" id="pm146prev"></div></div></div>
+      <p class="mtext small" id="pm146msg">マスをなぞると色がのるよ</p>
+      <div class="row2"><button class="btn light" type="button" id="pm146off" ${pmk146()[id] ? "" : "disabled"}>メイクを落とす</button><button class="btn" type="button" id="pm146go">このメイクにする（${fmt(PPRICE146)}）</button><button class="btn light" type="button" id="pm146bk">もどる</button></div>`;
+    const cv = body.querySelector("#pm146cv"), g = cv.getContext("2d"), msg = body.querySelector("#pm146msg"); g.imageSmoothingEnabled = false;
+    const bc = document.createElement("canvas"); bc.width = bc.height = 16; const bx = bc.getContext("2d"); if (sp) bx.drawImage(sp, 0, 0, 16, 16, 0, 0, 16, 16);
+    const bd = bx.getImageData(0, 0, 16, 16).data;
+    const str = () => st.g.join("");
+    const pal = () => {
+      const my = mpl146();
+      body.querySelector("#pm146pal").innerHTML = `<button type="button" class="cos62c${st.col === "0" ? " on" : ""}" data-pc146="0"><i class="er"></i><span>もどす</span></button>`
+        + PAL62.slice(1).map((p, k) => { const ch = (k + 1).toString(16); return `<button type="button" class="cos62c${st.col === ch ? " on" : ""}" data-pc146="${ch}"><i style="background:${p[0]}"></i><span>${p[1]}</span></button>`; }).join("")
+        + my.map((h, k) => h ? `<button type="button" class="cos62c${st.col === (16 + k).toString(36) ? " on" : ""}" data-pc146="${(16 + k).toString(36)}"><i style="background:${h}"></i><span>${k + 1}</span></button>` : "").join("");
+      body.querySelectorAll("[data-pc146]").forEach(b => b.onclick = () => { st.col = b.dataset.pc146; setTool("pen"); pal(); });
+    };
+    const setTool = t => { st.tool = t; body.querySelectorAll("[data-pt146]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pt146 === t))); cv.classList.toggle("spoit146", t === "spoit"); };
+    const draw = () => {
+      for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) {
+        const ch = st.g[j * 16 + i], k = (j * 16 + i) * 4, c = ch !== "0" ? colOf146(ch, mpl) : null;
+        g.fillStyle = c ? `rgb(${c[0]},${c[1]},${c[2]})` : bd[k + 3] ? `rgb(${bd[k]},${bd[k + 1]},${bd[k + 2]})` : ((i + j) % 2 ? "#f4eef0" : "#ebe2e6");
+        g.fillRect(i * CELL, j * CELL, CELL, CELL);
+      }
+      g.strokeStyle = "rgba(0,0,0,.1)"; for (let i = 1; i < 16; i++) { g.beginPath(); g.moveTo(i * CELL + .5, 0); g.lineTo(i * CELL + .5, W); g.stroke(); g.beginPath(); g.moveTo(0, i * CELL + .5); g.lineTo(W, i * CELL + .5); g.stroke(); }
+      const pv = document.createElement("canvas"); pv.width = pv.height = 64; const pg = pv.getContext("2d"); pg.imageSmoothingEnabled = false;
+      if (sp) pg.drawImage(sp, 0, 0, 16, 16, 0, 0, 64, 64); drawCos100(pg, 0, 0, wearOf100(id), true, 4, 0); drawPetMk146(pg, 0, 0, str(), false, 4, mpl);
+      body.querySelector("#pm146prev").innerHTML = `<img src="${pv.toDataURL()}" alt="" style="width:96px;height:96px;image-rendering:pixelated">`;
+      const has = /[1-9a-y]/.test(str()), go = body.querySelector("#pm146go");
+      go.disabled = !has || world.money < PPRICE146 || (pmk146()[id] && mkDec146(pmk146()[id], PMKN146) === str());
+    };
+    let painting = false;
+    const cellAt = e => { const r = cv.getBoundingClientRect(); return [Math.floor((e.clientX - r.left) / r.width * 16), Math.floor((e.clientY - r.top) / r.height * 16)]; };
+    const put = (i, j) => { if (i < 0 || j < 0 || i > 15 || j > 15) return; st.g[j * 16 + i] = st.col; draw(); };
+    cv.addEventListener("pointerdown", e => {
+      e.preventDefault(); const [i, j] = cellAt(e); if (i < 0 || j < 0 || i > 15 || j > 15) return;
+      if (st.tool === "spoit") {
+        const ch = st.g[j * 16 + i];
+        if (ch !== "0") { st.col = ch; pal(); msg.textContent = "描いた色をとったよ"; setTool("pen"); return; }
+        const k = (j * 16 + i) * 4; if (!bd[k + 3]) { msg.textContent = "そこには色がないよ"; return; }
+        const hex = "#" + [bd[k], bd[k + 1], bd[k + 2]].map(x => x.toString(16).padStart(2, "0")).join(""), my = mpl146();
+        let s = my.indexOf(hex); if (s < 0) { s = my.indexOf(null); if (s < 0) { msg.textContent = "自分の色がいっぱいだよ（メイクの画面で入れかえてね）"; return; } my[s] = hex; saveWorld(); }
+        st.col = (16 + s).toString(36); pal(); setTool("pen"); msg.textContent = `スポイトで色をとった（自分の色の${s + 1}番）`; syncCfg146(); return;
+      }
+      cv.setPointerCapture?.(e.pointerId); st.undo.push(str()); painting = true; put(i, j);
+    });
+    cv.addEventListener("pointermove", e => { if (painting) put(...cellAt(e)); });
+    const up = () => { painting = false; }; cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up); cv.addEventListener("pointerleave", up);
+    body.querySelectorAll("[data-pt146]").forEach(b => b.onclick = () => setTool(b.dataset.pt146));
+    body.querySelector("#pm146undo").onclick = () => { const p = st.undo.pop(); if (p) { st.g = p.split(""); draw(); } };
+    body.querySelector("#pm146clr").onclick = () => { st.undo.push(str()); st.g = "0".repeat(PMKN146).split(""); draw(); };
+    body.querySelector("#pm146go").onclick = () => {
+      const s = str(); if (!/[1-9a-y]/.test(s) || world.money < PPRICE146) return;
+      addMoney(-PPRICE146); pmk146()[id] = mkEnc146(s); world.stats.petMake146 = (world.stats.petMake146 || 0) + 1; farmLast44 = ""; saveWorld(); try { checkTitles42(); } catch (e) { }
+      closeModal(); toast(null, `${petNameOf43(id)}にメイクをした！`); try { se13("small"); } catch (e) { } openDress100("", id, "pet");
+    };
+    body.querySelector("#pm146off").onclick = () => { delete pmk146()[id]; farmLast44 = ""; saveWorld(); closeModal(); openDress100("メイクを落とした", id, "pet"); };
+    body.querySelector("#pm146bk").onclick = () => { closeModal(); openDress100("", id, "pet"); };
+    pal(); draw();
+  });
+}
+F146.petMake = openPetMake146;
+// 着せ替えの「ペット」のタブに、メイクのボタンと、メイクの絵
+setInterval(() => {
+  try {
+    const cv = $("dr100cv"); if (!cv || cv.dataset.pm146) return;
+    cv.dataset.pm146 = "1";
+    const on = document.querySelector("[data-dp100][aria-pressed='true']"), id = on ? on.dataset.dp100 : (world.pets || [])[0]; if (!id) return;
+    const grid = mkDec146(pmk146()[id], PMKN146);
+    if (grid) { const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; drawPetMk146(g, 0, 0, grid, false, 6, mplStr146()); }
+    const row = document.querySelector(".dr100pets");
+    if (row && !$("pm146btn")) row.insertAdjacentHTML("afterend", `<div class="row2"><button class="btn light" type="button" id="pm146btn">顔のメイク（${fmt(PPRICE146)}）</button></div>`);
+    const b = $("pm146btn"); if (b) b.onclick = () => { closeModal(); openPetMake146(id); };
+  } catch (e) { }
+}, 400);
+// 村で描く
+{
+  const _de = drawEnt;
+  drawEnt = function (e) {
+    const r = _de.apply(this, arguments);
+    try {
+      if (!e || e.kind !== "pet" || !e.sprite || !IMG[e.sprite] || IMG[e.sprite].width > 16) return r;
+      let grid = null, mpl = "";
+      if (e.ptype) { grid = mkDec146(pmk146()[e.ptype], PMKN146); mpl = mplStr146(); }
+      else if (e.pmk146) { grid = mkDec146(e.pmk146, PMKN146); const o = e.pmkOwner != null ? remotes.get(e.pmkOwner) : null; mpl = o && o.cfg && typeof o.cfg.mpl === "string" ? o.cfg.mpl : ""; }
+      if (!grid) return r;
+      if (e.flash > 0 && Math.floor(performance.now() / 50) % 2) return r;
+      const hop = e.moving ? (Math.floor(e.step) % 2) : 0;
+      drawPetMk146(ctx, Math.round(e.px), Math.round(e.py) - hop, grid, e.dir === "left", 1, mpl);
+    } catch (x) { }
+    return r;
+  };
+}
+// ほかの人に見せる：ペットの5つ目にメイク
+{
+  const _fs = farmSnap44;
+  farmSnap44 = function () {
+    const s = _fs.apply(this, arguments);
+    try { if (Array.isArray(s.pets)) { const ids = (world.pets || []).filter(t => !petStay35()[t]).slice(0, 20), P = pmk146(); s.pets.forEach((p, i) => { const id = ids[i]; if (id && Array.isArray(p) && p[0] !== "fox" && P[id]) { if (typeof p[3] !== "string") p[3] = ""; p[4] = P[id]; } }); } } catch (e) { }
+    return s;
+  };
+  const _sr = syncRemote44;
+  syncRemote44 = function (pid) { _sr.apply(this, arguments); try { const F = farms44.get(pid), ents = rPets44.get(pid) || []; if (F) F.pets.forEach((p, i) => { if (ents[i] && Array.isArray(p)) { ents[i].pmk146 = typeof p[4] === "string" ? p[4] : ""; ents[i].pmkOwner = pid; } }); } catch (e) { } };
+}
+
+// ---- 虫と化石の図鑑（記録のタブ。つかまえた数は v139 から数えている） ----
+const hm146 = t => { const m = ((t % 1440) + 1440) % 1440; return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`; };
+const bugHint146 = B => `${B.se.length === 4 ? "一年中" : B.se.map(i => SEASONS[i]).join("・")}／${B.t[0] === 0 && B.t[1] === 1440 ? "いつでも" : hm146(B.t[0]) + "〜" + hm146(B.t[1])}${B.rain === 1 ? "／雨の日だけ" : B.rain === 2 ? "／天気は関係なし" : "／雨の日は出ない"}`;
+{
+  const _le = F7.logExtra;
+  F7.logExtra = () => {
+    let h = _le ? _le() : "";
+    try {
+      const M = m139(), bk = Object.keys(BUGS139);
+      h += `<div class="opt"><h3>虫図鑑（${bk.filter(k => M.bugs[k]).length} / ${bk.length}）</h3><div class="dex">${bk.map(k => { const B = BUGS139[k], n = M.bugs[k] | 0; return `<div class="${n ? "" : "no"}" title="${bugHint146(B)}"><img src="${ASSETS["s139_bug_" + k]}" alt="">${n ? esc(B.name) + "<br>×" + n : "？？？"}<br><small>${bugHint146(B)}</small></div>`; }).join("")}</div></div>`;
+      h += `<div class="opt"><h3>化石図鑑（${FOS139.filter(f => M.fos[f.id]).length} / ${FOS139.length}）</h3><div class="dex">${FOS139.map(f => { const n = M.fos[f.id] | 0; return `<div class="${n ? "" : "no"}"><img src="${ASSETS["s139_" + f.id]}" alt="">${n ? esc(f.name) + "<br>×" + n : "？？？"}<br><small>岩を割る・村のひび（つるはし）</small></div>`; }).join("")}</div></div>`;
+    } catch (e) { }
+    return h;
+  };
+}
+
+// ---- 魚図鑑：ナポレオンフィッシュが2つ（みなと町の海と南の島）になっていたのを1つに ----
+{
+  const i = FISH6.findIndex(f => f.n === "ナポレオンフィッシュ" && f.at === "isle");
+  if (i >= 0) FISH6.splice(i, 1);
+  const N = FISH6.find(f => f.n === "ナポレオンフィッシュ");
+  if (N && ITEMS["fish_ナポレオンフィッシュ"]) ITEMS["fish_ナポレオンフィッシュ"].price = N.p;
+  const _pf = pickFish;
+  pickFish = function (at) { if (map && map.kind === "isle109" && Math.random() < 4 / 26) return "ナポレオンフィッシュ"; return _pf.apply(this, arguments); };
+  const _fh = fishHint;
+  fishHint = f => f && f.n === "ナポレオンフィッシュ" ? _fh(f) + "／南の島の海" : _fh(f);
+}
+
+// ---- アイドルのオーラに「リボン」 ----
+AU144.v = { n: "リボン", p: [[0, 0], [1, 0], [0, 1], [1, 1], [2, 1, 1], [3, 0], [4, 0], [3, 1], [4, 1], [1, 2], [3, 2]], mv: "orbit" };
+
+CHANGES19.unshift({ v: "0.87.0", date: "2026/11/20", title: "メイクが3面に・髪も描ける・自分の色・ペットのメイク・虫と化石の図鑑", items: [
+  "メイクを正面・横・後ろの3つの面に描けるようにした。顔だけでなく髪や服の上にも描けて、「消す」で髪の形も変えられる（自分もアイドルも）",
+  "メイクの色に「自分の色」を19色。カラーチャートと、画面の色をとるスポイトで作れる",
+  "ペットの顔にもメイクを描ける（着せ替えの「ペット」から・1,000G）",
+  "アイドルの2人目・3人目を連れて歩くと、メイクがとれていたのを直した。ブロマイド・チェキ・対決の画面にもメイクが出る",
+  "こちら向きに歩くとき、アイドルが称号にかくれないよう、となりを歩くようにした",
+  "アイドルのオーラに「リボン」",
+  "記録のタブに虫図鑑と化石図鑑",
+  "魚図鑑でナポレオンフィッシュが2つあったのを1つにした（南の島でも、みなと町の海でも釣れる）",
+] });
+GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
+
+F146.ready = true;
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -32861,7 +33392,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F146, F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

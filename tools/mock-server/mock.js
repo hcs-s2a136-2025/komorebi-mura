@@ -166,7 +166,19 @@ const idolBy = new Map(), idolOf = v => { if (!idolBy.has(v)) idolBy.set(v, { se
 const idolTr = new Map(); let idolTrSeq = 0; const idolLast = new Map(), idolFanAt = new Map();
 const idolNm = (s, n) => String(s || "").replace(/[\u0000-\u001f\u007f-\u009f<>"&\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]/g, "").trim().slice(0, n);
 const idolCl = (v, a, b) => Math.max(a, Math.min(b, Math.floor(+v || 0)));
-function idolOne(c) { if (!c || typeof c !== "object") return null; const o = { nm: idolNm(c.nm, 10) || "アイドル", ty: idolCl(c.ty, 0, 3), vo: idolCl(c.vo, 0, 300), da: idolCl(c.da, 0, 300), ex: idolCl(c.ex, 0, 300), pw: idolCl(c.pw, 0, 300), lk: {} }; for (const k of ["idl", "icd", "iau"]) { const v = String((c.lk || {})[k] || ""); if (/^[0-9a-z]{1,20}$/.test(v)) o.lk[k] = v; } return o; }
+function idolOne(c) { if (!c || typeof c !== "object") return null; const o = { nm: idolNm(c.nm, 10) || "アイドル", ty: idolCl(c.ty, 0, 3), vo: idolCl(c.vo, 0, 300), da: idolCl(c.da, 0, 300), ex: idolCl(c.ex, 0, 300), pw: idolCl(c.pw, 0, 300), lk: {} }; for (const k of ["idl", "icd", "iau"]) { const v = String((c.lk || {})[k] || ""); if (/^[0-9a-z]{1,20}$/.test(v)) o.lk[k] = v; } const mk = String((c.lk || {}).imk || ""), mpl = String((c.lk || {}).mpl || ""); if (mkOk(mk, 2688, 3000)) { o.lk.imk = mk; if (/^(?:[0-9a-f]{6}){1,19}$/.test(mpl)) o.lk.mpl = mpl; } return o; }
+// 細かいメイク（v0.87.0・Java の Sanitize.mkOk と同じ）：36進数1文字＋くり返しは大文字（26進数・A＝2回）
+function mkOk(s, cells, maxLen) {
+  if (typeof s !== "string" || !s || s.length > maxLen) return false;
+  let n = 0, i = 0, any = false;
+  while (i < s.length) {
+    const c = s[i++]; if (!/[0-9a-z]/.test(c)) return false;
+    let run = 1;
+    if (i < s.length && /[A-Z]/.test(s[i])) { let v = 0; while (i < s.length && /[A-Z]/.test(s[i])) { v = v * 26 + (s.charCodeAt(i++) - 65); if (v > 100000) return false; } run = v + 2; }
+    if (c !== "0") any = true; n += run; if (n > cells) return false;
+  }
+  return n === cells && any;
+}
 const idolTot = i => i.vo + i.da + i.ex + i.pw;
 const IDOL_ST = ["vo", "da", "ex"], IDOL_TYR = [2, 1, 0, -1];
 function idolBattle(a, b) { const s = [a, b], sp = [false, false], wins = [0, 0], tot = [0, 0], rd = [];
@@ -758,7 +770,7 @@ wss.on("connection", s => {
       s.send(JSON.stringify({ type: "farmSteal", ok: true, t, owner, name: f.name, x, y })); bc(f, null);
       for (const o of sessions) if (o.pl && o.pl.id === owner) o.send(JSON.stringify({ type: "farmStolen", items: [[x, y, t, s.pl.name]] })); return; }
     if (m.type === "farm") { const old = farms.get(s.pl.id); let pend = old && old.stolen ? old.stolen : [];
-      const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 20).filter(x => Array.isArray(x)).map(x => [String(x[0]), x[1] | 0, String(x[2] || "").slice(0, 12), ...(/^[a-z0-9]{1,12}$/.test(String(x[3] || "")) ? [String(x[3])] : [])]), gh: (Array.isArray(m.gh) ? m.gh : []).slice(0, 4).filter(g => Array.isArray(g) && g[0] >= 0 && g[1] >= 0 && g[0] <= 200 && g[1] <= 200).map(g => [g[0] | 0, g[1] | 0, (Array.isArray(g[2]) ? g[2] : []).map(x => Math.floor(+x)).filter(x => x > 0).slice(0, 8)]) };
+      const f = { type: "farm", id: s.pl.id, name: s.pl.name, crops: (Array.isArray(m.crops) ? m.crops : []).slice(0, 600), animals: (Array.isArray(m.animals) ? m.animals : []).slice(0, 40), pets: (Array.isArray(m.pets) ? m.pets : []).slice(0, 20).filter(x => Array.isArray(x)).map(x => [String(x[0]), x[1] | 0, String(x[2] || "").slice(0, 12), ...(/^[a-z0-9]{1,12}$/.test(String(x[3] || "")) ? [String(x[3])] : mkOk(x[4], 256, 400) ? [""] : []), ...(mkOk(x[4], 256, 400) ? [x[4]] : [])]), gh: (Array.isArray(m.gh) ? m.gh : []).slice(0, 4).filter(g => Array.isArray(g) && g[0] >= 0 && g[1] >= 0 && g[0] <= 200 && g[1] <= 200).map(g => [g[0] | 0, g[1] | 0, (Array.isArray(g[2]) ? g[2] : []).map(x => Math.floor(+x)).filter(x => x > 0).slice(0, 8)]) };
       pend = pend.filter(p => { const i = f.crops.findIndex(c => c[0] === p[0] && c[1] === p[1] && c[2] === p[2] && (c[3] | 0) >= 2); if (i >= 0) { f.crops.splice(i, 1); return true; } return false; }); if (pend.length) f.stolen = pend;
       farms.set(s.pl.id, f); bc(f, s); }
     if (m.type === "race" && race) { if (m.act === "bet") race.stdin.write(["B", s.pl.id, String(s.pl.name).replace(/\s/g, ""), Math.floor(+m.runner || 0), String(m.kind || "").replace(/\W/g, ""), Math.floor(+m.amount || 0)].join("\t") + "\n"); else if (m.act === "look") race.stdin.write("L\t" + s.pl.id + "\n"); else if (m.act === "host" && s.pl.id > 0) race.stdin.write(["H", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.op || "look").replace(/\W/g, ""), String(m.title || "").replace(/[\t\n\r]/g, ""), Math.floor(+m.purse || 0), String(m.k || "").replace(/\W/g, ""), String(m.cond || "").replace(/\W/g, "")].join("\t") + "\n"); else if (m.act === "own" && s.pl.id > 0) race.stdin.write(["O", s.pl.id, String(s.pl.name).replace(/\s/g, ""), String(m.op || "list").replace(/\W/g, ""), String(m.name || "").replace(/[\t\n\r]/g, ""), String(m.k || "").replace(/\W/g, "")].join("\t") + "\n"); }

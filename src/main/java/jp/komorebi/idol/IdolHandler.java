@@ -34,7 +34,7 @@ import jp.komorebi.world.SharedWorldService;
  * アイドルの対決・コーデカードのトレード・ファンサとはがし・アイドルグランプリ（v0.85.0・村ごと）。type "idol"。
  * 共有の村の "_idol" = {seq, ros:{ID:{n,i}}, box:[対決状], res:{ID:[結果]}, tres:{ID:[トレードの結果]}, pt:{ID:{n,nm,p,wk,wp}}, pd, tops:{週:{id,n,nm,p}}}。
  * <ul>
- *   <li>{"a":"put","i":アイドル} … 自分のアイドルを見せる（返事なし）。アイドル＝{nm,ty 0〜3,vo,da,ex 0〜300,pw コーデの力 0〜300,lk:{idl,icd,iau}}</li>
+ *   <li>{"a":"put","i":アイドル} … 自分のアイドルを見せる（返事なし）。アイドル＝{nm,ty 0〜3,vo,da,ex 0〜300,pw コーデの力 0〜300,lk:{idl,icd,iau,imk,mpl}}</li>
  *   <li>{"a":"list"} … 同じ村のほかの人のアイドル → {"a":"list","list":[{id,owner,i}]}</li>
  *   <li>{"a":"send","to","me"} → 本人に {"ok":"send","c"}、相手に {"ev":"in","c"}（いなければ次の welcome）。1人5通まで送れて10通まで受けとれる・同じ相手に1通・3日で消える</li>
  *   <li>{"a":"cancel"|"no","id"} → 相手に {"ev":"gone","id"} だけ（断ったことは知らせない）</li>
@@ -154,6 +154,9 @@ public class IdolHandler implements MessageHandler, WelcomeContributor {
         o.put("pw", clamp(c.path("pw").asInt(0), 0, POW));
         ObjectNode lk = o.putObject("lk");
         for (String k : new String[] { "idl", "icd", "iau" }) { String v = c.path("lk").path(k).asText(""); if (CODE.matcher(v).matches()) lk.put(k, v); }
+        // メイク（v0.87.0）：imk＝ちぢめたメイク・mpl＝自分の色
+        String mk = c.path("lk").path("imk").asText(""), mpl = c.path("lk").path("mpl").asText("");
+        if (jp.komorebi.ws.Sanitize.mkOk(mk, jp.komorebi.ws.Sanitize.MK_CELLS, jp.komorebi.ws.Sanitize.MK_MAX)) { lk.put("imk", mk); if (jp.komorebi.ws.Sanitize.mplOk(mpl)) lk.put("mpl", mpl); }
         return o;
     }
 

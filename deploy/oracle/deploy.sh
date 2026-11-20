@@ -17,6 +17,14 @@ main() {
   docker compose up -d --build --remove-orphans
   docker image prune -f >/dev/null
   echo "反映した: $(git rev-parse --short HEAD)"
+  # 起動のようすを見る（動いているか・さいごのログ）。アプリが立ち上がるまで少し待つ
+  sleep 75
+  echo "---- コンテナ ----"
+  docker compose ps || true
+  echo "---- メモリ ----"
+  free -m || true
+  echo "---- アプリのログ（さいごの120行） ----"
+  docker compose logs --no-color --tail=120 app 2>&1 | grep -v -i -E 'password|secret|token=' || true
 }
 
 main "$@"

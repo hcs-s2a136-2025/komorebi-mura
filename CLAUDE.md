@@ -1,7 +1,7 @@
 # こもれび村 — 開発メモ（Claude 用）
 
 1枚のHTMLで動くドット絵のスローライフゲームと、それを配る Spring Boot サーバー。
-公開リポジトリ。本番は Oracle Cloud の Always Free の VM（Docker Compose で アプリ＋Caddy＋PostgreSQL 18・`deploy/oracle/`・手順は `docs/Oracleへの引っ越し.md`）。データベースは 2026年11月20日に Neon から VM の中（compose の `db`・profile `localdb`・volume `pgdata18`）へ引っ越した（Neon の無料のコンピュート時間 月100 CU-hours を、時計の保存などで24時間起きっぱなしにして使い切り、つながらなくなったため）。`.env` は `DB_MOVED=1`・`COMPOSE_PROFILES=localdb`・`LOCAL_DB_PASSWORD`、前の Neon の値は `NEON_DATABASE_*` に残してある。`deploy.sh` は反映のたびに VM の中のデータベースを `~/komorebi-backups/` に7つまで取っておき、反映のあとにコンテナ・メモリ・アプリのログ（さいごの120行）を出す（つながらないときは Actions のログを見る）。`main` に push すると GitHub Actions「Oracle へ反映」が VM で `deploy.sh` を動かす（Secrets `ORACLE_HOST` `ORACLE_SSH_KEY`。ないときは何もしない）。VM は Ubuntu 24.04 の Ampere（1 OCPU・6GB）か、つなぎの AMD Micro（1GB。`setup.sh` が `.env` に小さい `JAVA_OPTS` を書く）。Render（`render.yaml`）は前の本番で、止めておく（同じ DB を2つのサーバーで使わない）。
+公開リポジトリ。本番は Oracle Cloud の Always Free の VM（Docker Compose で アプリ＋Caddy＋PostgreSQL 18・`deploy/oracle/`・手順は `docs/Oracleへの引っ越し.md`）。データベースは 2026年11月20日に Neon から VM の中（compose の `db`・profile `localdb`・volume `pgdata18`）へ引っ越した（Neon の無料のコンピュート時間 月100 CU-hours を、時計の保存などで24時間起きっぱなしにして使い切り、つながらなくなったため）。`.env` は `DB_MOVED=1`・`COMPOSE_PROFILES=localdb`・`LOCAL_DB_PASSWORD`、前の Neon の値は `NEON_DATABASE_*` に残してある。VM の引っ越し（Micro → Ampere など）は `deploy/oracle/move-vm.sh`（前の VM で `save`＝アプリを止めて DB と `.env` を `~/komorebi-move.tgz` に・新しい VM で `load`＝`.env` を写して SITE_ADDRESS と JAVA_OPTS をその VM に合わせ、DB を入れて表の数をくらべてから `deploy.sh`。手順は引っ越しの手順書の10）。`deploy.sh` は反映のたびに VM の中のデータベースを `~/komorebi-backups/` に7つまで取っておき、反映のあとにコンテナ・メモリ・アプリのログ（さいごの120行）を出す（つながらないときは Actions のログを見る）。`main` に push すると GitHub Actions「Oracle へ反映」が VM で `deploy.sh` を動かす（Secrets `ORACLE_HOST` `ORACLE_SSH_KEY`。ないときは何もしない）。VM は Ubuntu 24.04 の Ampere（1 OCPU・6GB）か、つなぎの AMD Micro（1GB。`setup.sh` が `.env` に小さい `JAVA_OPTS` を書く）。Render（`render.yaml`）は前の本番で、止めておく（同じ DB を2つのサーバーで使わない）。
 
 **このファイルの約束**：作業を終えるたびに、下の「決まっていること」と「変更履歴」を更新する。
 前と変わったことは、古い記述を**書きかえる**（追記して両方残さない）。このファイルと食いちがうことを頼まれたら、どちらが正しいか確かめてから直す。
@@ -407,6 +407,7 @@
 
 ## 7. 変更履歴（新しい順・1行ずつ）
 
+- （版なし・2026/11/20）VM を引っ越す道具 `deploy/oracle/move-vm.sh`（Micro → Ampere）と手順書の10
 - （版なし・2026/11/20）本番のデータベースを Neon から VM の中の PostgreSQL 18 へ引っ越した（Neon の無料のコンピュート時間を使い切って、だれもつながらなくなったため。deploy.sh が1回だけ pg_dump → pg_restore → 表の数をくらべて切りかえ）・反映のあとにログを出す・反映のたびにデータを取っておく
 - v0.86.0 アイドル事務所（3人までスカウト・センターの切りかえ・3人で連れて歩く・2人目と3人目にもファンサ）（サーバー：cfg 56項目）
 - v0.85.0 アイドルのコーデカード（64種類・パラレル・サイン・図鑑・ガチャ）・カードのトレード・対決状とアイドルグランプリ（スーパーアイドル）・名前・タイプ・メイク・オーラ・服の色・男の子のアイドル2人・ライブのスペシャルアピール・ファンサとはがす・チェキとブロマイド（サーバー：`idol/IdolHandler`・cfg 48項目と `ipt`/`ip2`）

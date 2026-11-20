@@ -135,7 +135,39 @@ GitHub のリポジトリ → **Settings** → **Secrets and variables** → **A
 ## 9. みんなに新しいアドレスを伝える
 
 `https://○○○.onrender.com` は使えなくなるので、新しいアドレス（`https://140-238-1-2.sslip.io`）を友だちに送ってください。
-セーブはサーバー（Neon）にあるので、新しいアドレスでログインすれば、そのまま続きから遊べます。
+セーブはサーバー（VM の中のデータベース）にあるので、新しいアドレスでログインすれば、そのまま続きから遊べます。
+
+---
+
+## 10. Micro（1GB）から Ampere（6GB）へ移る
+
+いまの VM が Micro のときの手順です。データベースは VM の中にあるので、前の VM から新しい VM へ運びます（`deploy/oracle/move-vm.sh`）。
+新しい VM は IP が変わるので、村のアドレスも変わります。
+
+1. **Ampere の VM を作る**：2〜5 をそのまま（Shape は **VM.Standard.A1.Flex・OCPU 1・6GB**）。鍵は前のと別の名前で保存（例：`oracle2.key`）。「Out of capacity」なら時間をおいて何度か
+   - Ampere を作っても、Micro とあわせて無料の枠の中です
+2. **6 と 7 はとばす**（`.env` は前の VM から写すので書かない。`deploy.sh` もまだ流さない）
+3. **前の VM で**、データをまとめる（ここでアプリが止まる＝遊べなくなる。みんなに一声かけてから）：
+   ```bash
+   bash /opt/komorebi-mura/deploy/oracle/move-vm.sh save
+   ```
+4. **自分のパソコンで**、前の VM から受けとって、新しい VM へ送る（IP はそれぞれの VM のものに）：
+   ```powershell
+   scp -i $HOME\.ssh\oracle.key ubuntu@前のIP:komorebi-move.tgz .
+   scp -i $HOME\.ssh\oracle2.key komorebi-move.tgz ubuntu@新しいIP:
+   ```
+   （Mac は `~/.ssh/oracle.key` の形で）。この中には `.env`（パスワード・招待コード）が入っているので、だれにも送らない
+5. **新しい VM で**、入れて動かす：
+   ```bash
+   bash /opt/komorebi-mura/deploy/oracle/move-vm.sh load ~/komorebi-move.tgz
+   ```
+   `.env` を写して、`SITE_ADDRESS` をこの VM の IP の sslip にかえ、Micro 用の小さい `JAVA_OPTS` を外し、データベースを入れて、前の VM と表の数が同じなら `deploy.sh` で動かします。さいごに新しいアドレスが出ます
+6. ブラウザで新しいアドレスを開いて、ログイン・村のようす・管理人室（`/admin`）を確かめる
+7. **GitHub の Secrets を新しい VM にかえる**（8 と同じ。`ORACLE_HOST`＝新しいIP、`ORACLE_SSH_KEY`＝新しい VM で `cat ~/.ssh/komorebi_deploy`）。かえるまでに push すると、前の VM でアプリがまた動き出すので、先にかえる
+8. **前の VM を止める**：コンソールの Instances → 前の VM → **Stop**（1〜2週間なにもなければ **Terminate**）
+9. みんなに新しいアドレスを伝える（9 と同じ）。パソコンと VM の `komorebi-move.tgz` は消す
+
+うまくいかなかったら、前の VM で `cd /opt/komorebi-mura/deploy/oracle && docker compose up -d` とすれば、前のまま遊べます。
 
 ---
 
@@ -145,4 +177,5 @@ GitHub のリポジトリ → **Settings** → **Secrets and variables** → **A
 - **OS の更新**：自動。たまに日本時間 4:30 ごろ、1〜2分止まることがあります
 - **VM が止められないか**：Oracle は「CPU・ネットワーク・メモリのどれも2割より少ない VM」を止めることがあります。この設定ではメモリを2割より多く使うので、ふつうは大丈夫です。もし止められたら、コンソールの Instances から **Start** で動きます
 - **転送量**：コンソールの **Billing & Cost Management** → **Cost Analysis**。月 10TB までは無料
-- **Render に戻すとき**：Oracle 側で `cd /opt/komorebi-mura/deploy/oracle && docker compose down`、Render で **Resume**
+- **データの控え**：反映のたびに `~/komorebi-backups/` に7つまで取っておきます
+- **Render に戻すとき**：もうデータベースが VM の中にあるので、そのままでは戻せません（Render は前の Neon につながります）

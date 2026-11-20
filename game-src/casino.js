@@ -242,11 +242,11 @@ function setupSlot(cb, body) {
     if (payout > total) { flash = big ? 1 : .4; for (let i = 0; i < (big ? 40 : 12); i++) coins.push({ x: 30, y: 30, vx: (Math.random() - .5) * 70, vy: -40 - Math.random() * 40 }); }
     refreshMoney(body); S.busy = false; updTotal();
     if (autoOn()) {
-      if (big || jp || kind === "kaku") { autoEl.checked = false; res.textContent = msg + "　（大きい当たりなので、オートを止めたよ）"; }
+      if (big || jp || kind === "kaku") autoEl.checked = false;
       else setTimeout(() => {
         if (!autoOn() || !cb.isConnected || S.busy) return;
         cb.querySelector("#spin").click();
-        if (!S.busy) { autoEl.checked = false; res.textContent += "（オートを止めたよ）"; }
+        if (!S.busy) autoEl.checked = false;
       }, payout > total ? 1500 : 900);
     }
   }

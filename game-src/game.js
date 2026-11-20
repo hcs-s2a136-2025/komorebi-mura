@@ -3997,7 +3997,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.2";
+const CLIENT_VERSION = "0.87.3";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -30448,13 +30448,13 @@ setInterval(() => {
     const Lv = F95.live;
     if (Lv && Lv.S && !Lv.au147) {
       Lv.au147 = true;
-      if (F147.on && (BIG95.includes(Lv.S.flag) || Lv.S.ev)) { F147.on = false; F147.stopped = Lv.S; toast(null, "大きい当たりなので、オートを止めたよ"); }
+      if (F147.on && (BIG95.includes(Lv.S.flag) || Lv.S.ev)) { F147.on = false; F147.stopped = Lv.S; }
     }
     if (F147.on && !Lv && !go.disabled && !document.querySelector(".pay78, #pay78")) {
       const now = Date.now(); if (now - (F147.last || 0) < 1400) return; F147.last = now;
       go.click();
     }
-    if (F147.on && !Lv && go.disabled && cash78().n < V.bet) { F147.on = false; toast(null, "現金が足りないので、オートを止めたよ"); }
+    if (F147.on && !Lv && go.disabled && cash78().n < V.bet) F147.on = false;
   } catch (e) { }
 }, 300);
 

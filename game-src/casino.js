@@ -92,7 +92,7 @@ function setupSlot(cb, body) {
     <div class="row2 stops"><button class="btn light" type="button" data-stop="0">STOP</button><button class="btn light" type="button" data-stop="1">STOP</button><button class="btn light" type="button" data-stop="2">STOP</button></div>
     <div class="kkbar84" id="kkbar" hidden></div><div class="result" id="res">ラインと賭け金を決めてスピン</div>
     <div class="betrow"><span class="lbl" style="margin:0">ライン</span>${[1, 3, 5].map(n => `<button class="chip" type="button" data-lines="${n}" aria-pressed="${slot.lines === n}">${n}ライン</button>`).join("")}
-      <label class="chk"><input type="checkbox" id="meoshi"> 目押しする</label></div>
+      <label class="chk"><input type="checkbox" id="meoshi"> 目押しする</label>${K.autoOk && K.autoOk() ? `<label class="chk"><input type="checkbox" id="autosl"> オート</label>` : ""}</div>
     ${betRow("bet", "1ラインの賭け金", Math.max(1, Math.min(S.lastBet || 20, K.world.money || 1)))}
     <div class="row2"><button class="btn" type="button" id="spin">スピン</button><span class="mtext" id="total"></span><button class="chip sechip" type="button" id="seBtn" aria-pressed="${SFX.on}">効果音 ${SFX.on ? "ON" : "OFF"}</button></div>
     <details class="paytable"><summary>配当表とルール</summary>
@@ -173,6 +173,10 @@ function setupSlot(cb, body) {
   let cur = null;
   cb.querySelectorAll("[data-stop]").forEach(b => b.onclick = () => { if (cur && !frozen && !cur.lockStop && cb.querySelector("#meoshi").checked) stopReel(+b.dataset.stop); });
   cb.querySelector("#spin2").onclick = () => cb.querySelector("#spin").click();
+  // オート（えらばれた人だけ・v0.87.2）：同じ賭け金でスピンをくり返す。大きい当たり・割り込みでは止まる
+  const autoEl = cb.querySelector("#autosl");
+  const autoOn = () => !!(autoEl && autoEl.checked);
+  if (autoEl) autoEl.onchange = () => { if (autoEl.checked) { cb.querySelector("#meoshi").checked = false; if (!S.busy) cb.querySelector("#spin").click(); } };
   cb.querySelector("#spin").onclick = () => {
     if (S.busy) return;
     const per = readBet(cb); const res = cb.querySelector("#res");
@@ -185,7 +189,7 @@ function setupSlot(cb, body) {
     const kkOn = slotEv84().kk > 0, kind = K.slotForce || rollSlotEv84(kkOn); K.slotForce = null; zenSym = null;
     cur = { per, total, kind, kk: kkOn, mult: kind === "freeze" ? pickW84(FREEZE_PRIZE84) : 0, lockStop: kind === "freeze" }; SFX.lever(); SFX.spinStart();
     reels.forEach((r, i) => { r.target = rnd(21); r.spinning = true; r.remain = -1; r.speed = 16; });
-    if (!cb.querySelector("#meoshi").checked) autoTimers = [700, 1100, 1500].map((t, i) => setTimeout(() => stopReel(i), t));
+    if (!cb.querySelector("#meoshi").checked || autoOn()) autoTimers = [700, 1100, 1500].map((t, i) => setTimeout(() => stopReel(i), t));
     else autoTimers = [setTimeout(() => [0, 1, 2].forEach(stopReel), 8000)];
     if (kind === "freeze") autoTimers.push(setTimeout(startFreeze, 650));
   };
@@ -237,6 +241,14 @@ function setupSlot(cb, body) {
     cb.querySelector("#reach").hidden = true;
     if (payout > total) { flash = big ? 1 : .4; for (let i = 0; i < (big ? 40 : 12); i++) coins.push({ x: 30, y: 30, vx: (Math.random() - .5) * 70, vy: -40 - Math.random() * 40 }); }
     refreshMoney(body); S.busy = false; updTotal();
+    if (autoOn()) {
+      if (big || jp || kind === "kaku") { autoEl.checked = false; res.textContent = msg + "　（大きい当たりなので、オートを止めたよ）"; }
+      else setTimeout(() => {
+        if (!autoOn() || !cb.isConnected || S.busy) return;
+        cb.querySelector("#spin").click();
+        if (!S.busy) { autoEl.checked = false; res.textContent += "（オートを止めたよ）"; }
+      }, payout > total ? 1500 : 900);
+    }
   }
   draw(performance.now());
 }

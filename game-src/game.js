@@ -3997,7 +3997,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.1";
+const CLIENT_VERSION = "0.87.2";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -6941,8 +6941,12 @@ F7.openChanges = since => {
 {
   const seen = store.get(SEEN19);
   const played = !!(world.tut && world.tut.done);
-  if (seen && vcmp19(CLIENT_VERSION, seen) > 0 && CHANGES19.some(c => vcmp19(c.v, seen) > 0)) F7.pending.push({ kind: "custom", show: () => F7.openChanges(seen) });
-  else if (!seen && played) F7.pending.push({ kind: "custom", show: () => F7.openChanges("0.9.7") });
+  // あとのモジュールが CHANGES19 に unshift で足す版があるので、ぜんぶ読みこんでから見る（v0.87.2。前はここで見ていて、
+  // v0.85.0 から先の履歴が「まだない」ことになり、アップデートのお知らせが出なかった）
+  setTimeout(() => {
+    if (seen && vcmp19(CLIENT_VERSION, seen) > 0 && CHANGES19.some(c => vcmp19(c.v, seen) > 0)) F7.pending.push({ kind: "custom", show: () => F7.openChanges(seen) });
+    else if (!seen && played) F7.pending.push({ kind: "custom", show: () => F7.openChanges("0.9.7") });
+  }, 0);
   store.set(SEEN19, CLIENT_VERSION);
 }
 const _renderSettings19 = F7.renderSettings;
@@ -30413,9 +30417,46 @@ CHANGES19.unshift({ v: "0.87.1", date: "2026/11/20", title: "景品交換所で�
   "景品交換所で、1回に交換できる数の上限（9,999個）をなくした。「最大」で持っているメダルのぶんだけ交換できる",
   "「メダルをぜんぶ特殊景品に交換」ボタン（プラチナ→金→銀の順に、交換できるだけ）",
 ] });
+CHANGES19.unshift({ v: "0.87.2", date: "2026/11/20", title: "アップデートのお知らせが出ないのを直した", items: [
+  "v0.85.0 から、新しい版に入れかわっても「新しくなったこと」のお知らせが出ていなかったのを直した",
+] });
 GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
 
 F146.ready = true;
+
+// =================== v147: えらばれた人だけのスロットのオート ===================
+var F147 = {};
+// オートが使える人（こもれび村の人のID）。足すときはここに。つないでいないときは、前につないだときのID（onl.id）で見る
+const AUTO147 = [1];
+const autoOk147 = () => { const id = (F8.connected && F8.myId && F8.myId()) || (onl && onl.id) || 0; return AUTO147.includes(id); };
+K.autoOk = autoOk147;
+F147.ok = autoOk147;
+// VIPの高レートスロット：おまかせのとき「オート」。スピンのたびに、当たりの種類（大きい役・フリーズ・確変・全回転・AT）を見て、出たら次は回さない
+F147.on = false;
+setInterval(() => {
+  try {
+    const go = $("vs95go"), body = go && go.closest(".mbody");
+    // スピンのたびに画面を開きなおすので、少しのあいだ見えなくても止めない（3秒より長くなければ）
+    if (!go) { if (F147.on && Date.now() - (F147.seen || 0) > 3000) F147.on = false; return; }
+    F147.seen = Date.now();
+    if (!autoOk147()) return;
+    const V = vs95();
+    let box = $("au147");
+    if (!box && V.mode === "auto") { go.parentElement.insertAdjacentHTML("beforeend", `<label class="chk au147"><input type="checkbox" id="au147"${F147.on ? " checked" : ""}> オート</label>`); box = $("au147"); box.onchange = () => { F147.on = box.checked; }; }
+    if (box) box.checked = F147.on;
+    if (V.mode !== "auto") { F147.on = false; return; }
+    const Lv = F95.live;
+    if (Lv && Lv.S && !Lv.au147) {
+      Lv.au147 = true;
+      if (F147.on && (BIG95.includes(Lv.S.flag) || Lv.S.ev)) { F147.on = false; F147.stopped = Lv.S; toast(null, "大きい当たりなので、オートを止めたよ"); }
+    }
+    if (F147.on && !Lv && !go.disabled && !document.querySelector(".pay78, #pay78")) {
+      const now = Date.now(); if (now - (F147.last || 0) < 1400) return; F147.last = now;
+      go.click();
+    }
+    if (F147.on && !Lv && go.disabled && cash78().n < V.bet) { F147.on = false; toast(null, "現金が足りないので、オートを止めたよ"); }
+  } catch (e) { }
+}, 300);
 
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
@@ -30877,5 +30918,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F146, F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F147, F146, F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();

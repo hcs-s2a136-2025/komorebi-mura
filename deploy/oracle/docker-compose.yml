@@ -22,7 +22,7 @@ services:
   # VM の中のデータベース（2026年11月20日から。前は Neon）。COMPOSE_PROFILES=localdb のときだけ動く（deploy.sh が .env に書く）
   # パスワードは deploy.sh が .env の LOCAL_DB_PASSWORD に作る。外には出さない（ports なし）
   db:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     profiles: ["localdb"]
     restart: unless-stopped
     environment:
@@ -32,7 +32,8 @@ services:
     # 1GB の VM でも動くように小さく
     command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=30", "-c", "work_mem=2MB", "-c", "maintenance_work_mem=32MB", "-c", "effective_cache_size=128MB", "-c", "wal_buffers=1MB"]
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # 18 からは /var/lib/postgresql の下に版ごとのフォルダを作る（Neon も 18）
+      - pgdata18:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U komorebi -d komorebi"]
       interval: 5s
@@ -61,6 +62,6 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
 volumes:
-  pgdata:
+  pgdata18:
   caddy_data:
   caddy_config:

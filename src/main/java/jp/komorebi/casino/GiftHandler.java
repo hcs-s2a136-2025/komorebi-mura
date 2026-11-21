@@ -19,7 +19,8 @@ import jp.komorebi.ws.PlayerSession;
 @Component
 public class GiftHandler implements MessageHandler {
 
-    public static final long MAX = 100_000;
+    /** 上限なし（v0.87.5）。画面の所持金がぴったり数えられる 2^53−1 まで */
+    public static final long MAX = 9_007_199_254_740_991L;
     private final Map<Long, Long> last = new ConcurrentHashMap<>();
 
     @Override
@@ -33,7 +34,7 @@ public class GiftHandler implements MessageHandler {
         String reqId = msg.path("rid").asText("");
         if (reqId.length() > 20) reqId = reqId.substring(0, 20);
         if (to < 0 || to == from.playerId() || amount <= 0 || amount > MAX) {
-            hub.send(from, hub.json().createObjectNode().put("type", "giftNg").put("rid", reqId).put("text", "渡せる額は1〜100,000Gだよ"));
+            hub.send(from, hub.json().createObjectNode().put("type", "giftNg").put("rid", reqId).put("text", "渡せる額は1G以上だよ"));
             return;
         }
         long now = System.currentTimeMillis();

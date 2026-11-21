@@ -3997,7 +3997,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.4";
+const CLIENT_VERSION = "0.87.5";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -5556,18 +5556,21 @@ K.jpWon = amount => { if (F8.connected) send8({ type: "jpWin", amount }); };
 
 // ---------- お小遣い（向かい合ってⒶ） ----------
 const giftWait14 = new Map();
+// 上限なし（v0.87.5。前は1回100,000G）。所持金は数なので、ぴったり数えられるいちばん大きい数（2^53−1）までにしておく。サーバーの GiftHandler.MAX と同じ
+const GIFT_MAX14 = Number.MAX_SAFE_INTEGER;
 function openGift14(e) {
   openModal(`${e.name}にお小遣いを渡す`, "shop", body => {
-    body.innerHTML = `<div class="say13"><img src="${charImg118(cleanCfg(e.cfg), "down", 0).toDataURL()}" alt=""><p>${esc(e.name)}に、お金を渡せるよ。届いたら自分の所持金から引かれます。</p></div>
+    body.innerHTML = `<div class="say13"><img src="${charImg118(cleanCfg(e.cfg), "down", 0).toDataURL()}" alt=""><p>${esc(e.name)}に、お金を渡せるよ。届いたら自分の所持金から引かれます。上限はなくて、持っているぶんまで渡せるよ。</p></div>
       <p class="mtext">所持金 <b>${fmt(world.money)}</b></p>
-      <div class="row2">${[100, 500, 1000, 5000].map(v => `<button class="chip" type="button" data-gv="${v}" ${world.money < v ? "disabled" : ""}>${fmt(v)}</button>`).join("")}</div>
-      <label class="lbl" for="giftN">渡す金額</label><input id="giftN" type="number" min="1" max="100000" step="1" value="${Math.min(500, world.money)}">
+      <div class="row2">${[1000, 10000, 100000, 1000000, 100000000].map(v => `<button class="chip" type="button" data-gv="${v}" ${world.money < v ? "disabled" : ""}>${fmt(v)}</button>`).join("")}<button class="chip" type="button" data-gv="all" ${world.money < 1 ? "disabled" : ""}>ぜんぶ</button></div>
+      <label class="lbl" for="giftN">渡す金額</label><input id="giftN" type="number" inputmode="numeric" min="1" step="1" value="${Math.min(500, world.money)}">
       <p class="mtext small" id="giftMsg"></p><div class="row2"><button class="btn" type="button" id="giftGo" ${world.money < 1 ? "disabled" : ""}>渡す</button></div>`;
     const inp = body.querySelector("#giftN"), msg = body.querySelector("#giftMsg");
-    body.querySelectorAll("[data-gv]").forEach(b => b.onclick = () => { inp.value = b.dataset.gv; });
+    body.querySelectorAll("[data-gv]").forEach(b => b.onclick = () => { inp.value = b.dataset.gv === "all" ? Math.min(world.money, GIFT_MAX14) : b.dataset.gv; });
     body.querySelector("#giftGo").onclick = () => {
       const v = Math.floor(Number(inp.value) || 0);
-      if (v < 1 || v > 100000) { msg.textContent = "1〜100,000Gで決めてね"; return; }
+      if (v < 1) { msg.textContent = "1G以上で決めてね"; return; }
+      if (v > GIFT_MAX14) { msg.textContent = `いちどに渡せるのは ${fmt(GIFT_MAX14)} までだよ`; return; }
       if (v > world.money) { msg.textContent = "所持金が足りないみたい"; return; }
       if (!F8.connected) { msg.textContent = "いまはオンラインにつながっていないよ"; return; }
       const rid = Math.random().toString(36).slice(2, 10);
@@ -5595,7 +5598,7 @@ handle8 = m => {
     if (typeof m.pot === "number") { world.jackpot = m.pot; K.jpS = jpS(m.ps); }
     if (m.winner && m.by !== onl.id) toast("seven", `${String(m.winner).slice(0, 8)}がスロットでジャックポット ${jpS(m.wonS) ? jpS(m.wonS).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " G" : fmt(m.won || 0)}！`);
   } else if (m.type === "gift") {
-    const v = Math.max(0, Math.min(100000, Math.floor(+m.amount || 0))); if (!v) return;
+    const v = Math.max(0, Math.min(GIFT_MAX14, Math.floor(+m.amount || 0))); if (!v) return;
     addMoney(v); toast("coin", `${String(m.name || "だれか").slice(0, 8)}から お小遣い ${fmt(v)} をもらった！`); se13("win"); saveWorld();
   } else if (m.type === "giftOk") {
     const w = giftWait14.get(m.rid); if (!w) return; giftWait14.delete(m.rid);
@@ -30424,6 +30427,9 @@ CHANGES19.unshift({ v: "0.87.2", date: "2026/11/20", title: "アップデート�
 ] });
 CHANGES19.unshift({ v: "0.87.4", date: "2026/11/21", title: "ジャックポットが約9,007兆Gで止まっていたのを直した", items: [
   "スロットのジャックポットが 9,007,199,254,740,991 G から増えなくなっていたのを直した（上限なしで、ぴったりの額を出す）",
+] });
+CHANGES19.unshift({ v: "0.87.5", date: "2026/11/21", title: "お小遣いを上限なしで渡せる", items: [
+  "友だちと向かい合ってⒶで渡すお小遣いの、1回100,000Gの上限をなくした。持っているぶんまで渡せる（「ぜんぶ」のボタンも）",
 ] });
 GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
 

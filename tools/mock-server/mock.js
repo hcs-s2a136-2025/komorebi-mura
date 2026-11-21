@@ -744,7 +744,7 @@ wss.on("connection", s => {
     if (m.type === "jp") { const n = Math.floor(+m.add || 0); if (n > 0) { jackpot = BigInt(jackpot) + BigInt(Math.min(n, Number.MAX_SAFE_INTEGER)); bc({ type: "jp", pot: Number(jackpot), ps: String(jackpot) }); } }
     if (m.type === "jpWin") { const won = BigInt(jackpot); jackpot = 3000n; bc({ type: "jp", pot: 3000, ps: "3000", won: Number(won), wonS: String(won), by: s.pl.id, winner: s.pl.name }); }
     if (m.type === "gift") { const to = +m.to, amt = +m.amount, rid = String(m.rid || "").slice(0, 20); const t = [...sessions].find(o => o.pl && o.pl.id === to);
-      if (!(amt > 0 && amt <= 100000) || to === s.pl.id) s.send(JSON.stringify({ type: "giftNg", rid, text: "渡せる額は1〜100,000Gだよ" }));
+      if (!(amt > 0 && amt <= Number.MAX_SAFE_INTEGER) || to === s.pl.id) s.send(JSON.stringify({ type: "giftNg", rid, text: "渡せる額は1G以上だよ" }));
       else if (!t) s.send(JSON.stringify({ type: "giftNg", rid, text: "相手がいまつないでいないみたい" }));
       else { t.send(JSON.stringify({ type: "gift", from: s.pl.id, name: s.pl.name, amount: amt })); s.send(JSON.stringify({ type: "giftOk", rid, to, amount: amt })); } }
     if (m.type === "ev") { const me = s.pl.id, send = o => s.send(JSON.stringify(o));

@@ -120,10 +120,11 @@ class KomorebiApplicationTests {
 
     @Test
     void jackpotIsShared() {
-        long before = jackpot.pot();
-        assertThat(jackpot.add(30)).isEqualTo(before + 30);
-        assertThat(jackpot.win()).isEqualTo(before + 30);
-        assertThat(jackpot.pot()).isEqualTo(JackpotService.START);
+        java.math.BigInteger before = jackpot.pot();
+        java.math.BigInteger after = before.add(java.math.BigInteger.valueOf(30));
+        assertThat(jackpot.add(30)).isEqualTo(after);
+        assertThat(jackpot.win()).isEqualTo(after);
+        assertThat(jackpot.pot()).isEqualTo(java.math.BigInteger.valueOf(JackpotService.START));
     }
 
     @Test

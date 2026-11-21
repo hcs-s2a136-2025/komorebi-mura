@@ -148,6 +148,7 @@
 
 **確かめ方**
 - この作業環境では Maven Central に届かないので `mvn` は使えない。Java は `tools/javacheck/check_all.sh` で全体の型を確かめ、本番のビルドは VM にまかせる（報告で反映の確認をお願いする）
+- `check_all.sh` は `src/test/java` を見ない。でも VM のビルド（`mvn package`）はテストのコードもコンパイルするので、サーバーのメソッドの型や引数を変えたら `grep -rn 名前 src/test/java` でテストも直す（v0.87.4 で `JackpotService.pot()` を BigInteger にして、テストが long のままで反映が止まった）
 - SQL（Flyway の `db/migration/V*.sql`）は、入っている PostgreSQL 16 で確かめられる（root では動かないので postgres ユーザーで `initdb` と `pg_ctl` → `psql -f` で V1 から順に流す）。ローカルの H2 とも通る書き方にする（`ALTER COLUMN … SET DATA TYPE`・`ALTER COLUMN id RESTART WITH`）
 - `python3 tools/tests/smoke.py` … PC・スマホ縦・スマホ横で主な場所と画面を回す。新しい場所や画面を足したら STEPS に足す
 - `python3 tools/tests/villages.py` … 村を作る（こもれび村の人が「村」アプリから）・合言葉だけで入る（招待コードなし）・村ごとのチャットと共有の村・村長・キャラの切りかえ・全部の村の番付・見学を確かめる（先に `cd tools/mock-server && npm install`）

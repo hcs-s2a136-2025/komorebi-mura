@@ -5,7 +5,7 @@ const rnd = n => Math.floor(Math.random() * n);
 const S = { busy: false };
 K.casinoBusy = () => S.busy;
 
-function moneyLine() { return `所持金 <b>${fmt(K.world.money)}</b>　ジャックポット <b>${fmt(K.world.jackpot)}</b>　メダル <b>${K.world.medals || 0}</b>`; }
+function moneyLine() { return `所持金 <b>${fmt(K.world.money)}</b>　ジャックポット <b>${K.jpS ? K.jpS.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " G" : fmt(K.world.jackpot)}</b>　メダル <b>${K.world.medals || 0}</b>`; }
 function refreshMoney(body) { const m = body.querySelector(".cz-money"); if (m) m.innerHTML = moneyLine(); }
 function betRow(id = "bet", label = "賭け金", def) {
   const v = def ?? Math.max(1, Math.min(S.lastBet || 100, K.world.money || 1));
@@ -185,7 +185,7 @@ function setupSlot(cb, body) {
     if (K.betAllowed && !K.betAllowed(total)) { res.textContent = K.betMsg(); res.className = "result"; return; }
     S.lastBet = per; S.busy = true; wins = []; res.className = "result"; res.textContent = "……";
     cb.querySelector("#reach").hidden = true;
-    K.addMoney(-total); { const jpa = Math.ceil(total * .03); if (!(K.jpAdd && K.jpAdd(jpa))) K.world.jackpot += jpa; } refreshMoney(body);
+    K.addMoney(-total); { const jpa = Math.ceil(total * .03); if (!(K.jpAdd && K.jpAdd(jpa))) { K.world.jackpot += jpa; K.jpS = null; } } refreshMoney(body);
     const kkOn = slotEv84().kk > 0, kind = K.slotForce || rollSlotEv84(kkOn); K.slotForce = null; zenSym = null;
     cur = { per, total, kind, kk: kkOn, mult: kind === "freeze" ? pickW84(FREEZE_PRIZE84) : 0, lockStop: kind === "freeze" }; SFX.lever(); SFX.spinStart();
     reels.forEach((r, i) => { r.target = rnd(21); r.spinning = true; r.remain = -1; r.speed = 16; });
@@ -231,7 +231,7 @@ function setupSlot(cb, body) {
     kkSync();
     const center = LINES[0].map((row, r) => cellAt(r, reels[r].target, row));
     if (slot.lines === 5 && center.every(s => s === "7")) {
-      const jpAmt = K.world.jackpot; payout += jpAmt; msg = `ジャックポット！！ +${fmt(payout)}`; K.world.stats.jackpots++; K.world.jackpot = 3000; big = true; if (K.jpWon) K.jpWon(jpAmt);
+      const jpAmt = K.world.jackpot; payout += jpAmt; msg = `ジャックポット！！ +${fmt(payout)}`; K.world.stats.jackpots++; K.world.jackpot = 3000; K.jpS = null; big = true; if (K.jpWon) K.jpWon(jpAmt);
     }
     K.gambleResult(total, payout, true);
     SFX.spinStop();

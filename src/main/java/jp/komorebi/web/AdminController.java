@@ -88,7 +88,7 @@ public class AdminController {
         List<PlayerRow> rows = players.listAll().stream()
             .map(p -> new PlayerRow(p.getId(), p.getName(), p.hasPass(), p.getLastSeen(), sizes.getOrDefault(p.getId(), 0))).toList();
         model.addAttribute("players", rows);
-        model.addAttribute("jackpot", jackpot.pot());
+        model.addAttribute("jackpot", jackpot.pot().toString());
         int t = (int) Math.min(1439, clock.time());
         model.addAttribute("clockText", String.format("%d日目 %d:%02d（現実の1秒でゲーム内%.1f分・1日 約%d分）", clock.day(), t / 60, t % 60, clock.rate(), Math.round(1080 / clock.rate() / 60)));
         return "admin/index";

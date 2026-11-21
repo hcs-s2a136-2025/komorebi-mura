@@ -31,7 +31,8 @@ public class JackpotHandler implements MessageHandler {
     public void handle(PlayerSession from, JsonNode msg, GameSocketHandler hub) {
         long add = msg.path("add").asLong(0);
         if (add <= 0) return;
-        long pot = jackpot.add(Math.min(add, JackpotService.MAX));
-        hub.broadcast(hub.json().createObjectNode().put("type", "jp").put("pot", pot), null);
+        var o = hub.json().createObjectNode().put("type", "jp");
+        JackpotService.put(o, "pot", "ps", jackpot.add(add));
+        hub.broadcast(o, null);
     }
 }

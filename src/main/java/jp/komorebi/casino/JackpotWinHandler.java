@@ -25,8 +25,11 @@ public class JackpotWinHandler implements MessageHandler {
 
     @Override
     public void handle(PlayerSession from, JsonNode msg, GameSocketHandler hub) {
-        long won = jackpot.win();
-        hub.broadcast(hub.json().createObjectNode().put("type", "jp").put("pot", jackpot.pot())
-            .put("won", won).put("by", from.playerId()).put("winner", from.name()), null);
+        var won = jackpot.win();
+        var o = hub.json().createObjectNode().put("type", "jp");
+        JackpotService.put(o, "pot", "ps", jackpot.pot());
+        JackpotService.put(o, "won", "wonS", won);
+        o.put("by", from.playerId()).put("winner", from.name());
+        hub.broadcast(o, null);
     }
 }

@@ -3997,7 +3997,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.3";
+const CLIENT_VERSION = "0.87.4";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -5588,10 +5588,12 @@ const _handle14 = handle8;
 handle8 = m => {
   if (m.type === "error" && m.code === "auth") { authLost14(); return; }
   _handle14(m);
-  if (m.type === "welcome") { if (typeof m.jackpot === "number") world.jackpot = m.jackpot; }
+  // ジャックポットは 2^53 をこえるとサーバーが文字列（jackpotS・ps）でもぴったりの額を送る（v0.87.4）。表示は K.jpS、払い戻しの計算は数のまま
+  const jpS = v => typeof v === "string" && /^\d{1,61}$/.test(v) ? v : null;
+  if (m.type === "welcome") { if (typeof m.jackpot === "number") world.jackpot = m.jackpot; K.jpS = jpS(m.jackpotS); }
   else if (m.type === "jp") {
-    if (typeof m.pot === "number") world.jackpot = m.pot;
-    if (m.winner && m.by !== onl.id) toast("seven", `${String(m.winner).slice(0, 8)}がスロットでジャックポット ${fmt(m.won || 0)}！`);
+    if (typeof m.pot === "number") { world.jackpot = m.pot; K.jpS = jpS(m.ps); }
+    if (m.winner && m.by !== onl.id) toast("seven", `${String(m.winner).slice(0, 8)}がスロットでジャックポット ${jpS(m.wonS) ? jpS(m.wonS).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " G" : fmt(m.won || 0)}！`);
   } else if (m.type === "gift") {
     const v = Math.max(0, Math.min(100000, Math.floor(+m.amount || 0))); if (!v) return;
     addMoney(v); toast("coin", `${String(m.name || "だれか").slice(0, 8)}から お小遣い ${fmt(v)} をもらった！`); se13("win"); saveWorld();
@@ -30419,6 +30421,9 @@ CHANGES19.unshift({ v: "0.87.1", date: "2026/11/20", title: "景品交換所で�
 ] });
 CHANGES19.unshift({ v: "0.87.2", date: "2026/11/20", title: "アップデートのお知らせが出ないのを直した", items: [
   "v0.85.0 から、新しい版に入れかわっても「新しくなったこと」のお知らせが出ていなかったのを直した",
+] });
+CHANGES19.unshift({ v: "0.87.4", date: "2026/11/21", title: "ジャックポットが約9,007兆Gで止まっていたのを直した", items: [
+  "スロットのジャックポットが 9,007,199,254,740,991 G から増えなくなっていたのを直した（上限なしで、ぴったりの額を出す）",
 ] });
 GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
 

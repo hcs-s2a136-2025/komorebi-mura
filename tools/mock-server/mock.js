@@ -5,7 +5,7 @@
 const http = require("http"), fs = require("fs"), crypto = require("crypto"), { WebSocketServer } = require("ws");
 const INDEX = process.argv[2], PORT = +process.argv[3] || 8099, VERSION = process.argv[4] || "0.8.0";
 const players = new Map(), threads = []; let pid = 1, tid = 1;
-const accounts = []; const saves = new Map(); let jackpot = 3000; const deletedTokens = new Set(); const farms = new Map();
+const accounts = []; const saves = new Map(); let jackpot = 3000n; const deletedTokens = new Set(); const farms = new Map();
 // 建てた家の中身（HouseBook.java と同じ約束）
 const rooms = new Map(); const KEYRE = /^(\d{1,3},\d{1,3}|home)$/, ITEMRE = /^[\p{L}\p{N}_:\-]{1,32}$/u;
 const houseOf = k => k === "home" ? { open: true, ownerId: -1 } : (shared.houses || {})[k] || null;
@@ -579,7 +579,7 @@ const server = http.createServer(async (req, res) => {
   if (p === "/mock/players") return json(res, 200, accounts.filter(a => !a.deleted).map(a => ({ id: a.id, name: a.name })));
   if (p === "/mock/saves") return json(res, 200, Object.fromEntries([...saves].map(([k, v]) => [k, { rev: v.rev, size: v.doc.length }])));
   if (p === "/mock/day") { const d = +u.searchParams.get("d"); if (d >= 1) { clock.day = d; if (u.searchParams.get("t")) clock.start = Date.now() - (+u.searchParams.get("t") - 360) / RATE * 1000; for (const o of sessions) o.pl && o.send(JSON.stringify({ type: "clock", ...cstate(), reason: "mock" })); } return json(res, 200, cstate()); }
-  if (p === "/mock/jackpot") return json(res, 200, { jackpot });
+  if (p === "/mock/jackpot") { if (u.searchParams.get("set")) jackpot = BigInt(u.searchParams.get("set")); return json(res, 200, { jackpot: String(jackpot) }); }
   if (p.startsWith("/mock/reply")) { const t = threads.find(t => t.id === +u.searchParams.get("id")); t.messages.push({ sender: "ADMIN", body: u.searchParams.get("body"), createdAt: new Date().toISOString() }); t.playerUnread = true; t.status = "WIP"; for (const s of sessions) if (s.pl && s.pl.id === t.player.id) s.send(JSON.stringify({ type: "feedbackReply", threadId: t.id, title: t.title })); return json(res, 200, {}); }
   if (p === "/mock/threads") return json(res, 200, threads.map(view));
   if (p === "/mock/idolsup") { const d = idolOf(+u.searchParams.get("v") || 1), top = idolLeader(d, idolWeek(0)); if (top) d.tops[idolWeek(1)] = top; return json(res, 200, { sup: top }); }
@@ -668,7 +668,7 @@ wss.on("connection", s => {
       const v = watchTokens.get(m.token); if (!v) { s.send(JSON.stringify({ type: "error", code: "watch", text: "見学の期限が切れたみたい" })); return s.close(); }
       s.pl = { id: -(watchN++), name: "管理人（見学）", village: v }; s.watch = true; useV(v); Object.assign(s, { map: "village", x: 0, y: 0, dir: "down" });
       const V = villages.find(x => x.id === v) || villages[0];
-      return s.send(JSON.stringify({ type: "welcome", version: VERSION, watch: true, you: { id: s.pl.id, name: s.pl.name }, village: { id: V.id, name: V.name, main: V.id === 1 }, players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === v).map(desc), world: shared, worldEpoch: epoch, chat: chat.filter(c => (c.v || 1) === v).slice(-30), clock: cstate(), raid: raidState(v), jackpot, farms: [...farms].filter(([id]) => (accounts.find(a => a.id === id) || {}).village === v || (v === 1 && !(accounts.find(a => a.id === id) || {}).village)).map(([, f]) => f) }));
+      return s.send(JSON.stringify({ type: "welcome", version: VERSION, watch: true, you: { id: s.pl.id, name: s.pl.name }, village: { id: V.id, name: V.name, main: V.id === 1 }, players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === v).map(desc), world: shared, worldEpoch: epoch, chat: chat.filter(c => (c.v || 1) === v).slice(-30), clock: cstate(), raid: raidState(v), jackpot: Number(jackpot), jackpotS: String(jackpot), farms: [...farms].filter(([id]) => (accounts.find(a => a.id === id) || {}).village === v || (v === 1 && !(accounts.find(a => a.id === id) || {}).village)).map(([, f]) => f) }));
     }
     if (s.watch && m.type !== "ping") return;
     if (!s.pl) {
@@ -676,7 +676,7 @@ wss.on("connection", s => {
       const pl = players.get(m.token); if (!pl) { s.send(JSON.stringify({ type: "error", code: deletedTokens.has(m.token) ? "deleted" : "auth" })); return s.close(); }
       s.pl = pl; useV(vOf(pl)); Object.assign(s, { map: m.map, x: m.x, y: m.y, dir: m.dir, cfg: m.cfg });
       const V = villages.find(x => x.id === vOf(pl)) || villages[0];
-      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, worldGen: genBy.get(vOf(pl)) || 0, ...((aucOf(vOf(pl)).pend[pl.id] || []).length ? { auc: { pay: aucOf(vOf(pl)).pend[pl.id] } } : {}), ...(regrowBy.get(vOf(pl)) ? { regrow: regrowBy.get(vOf(pl)) } : {}), ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...idolWelcome(pl), ...tnyWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot, ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
+      s.send(JSON.stringify({ type: "welcome", version: VERSION, you: { id: pl.id, name: pl.name }, village: vView(V, pl), players: [...sessions].filter(o => o !== s && o.pl && !o.watch && vOf(o.pl) === vOf(pl)).map(desc), world: shared, worldEpoch: epoch, worldGen: genBy.get(vOf(pl)) || 0, ...((aucOf(vOf(pl)).pend[pl.id] || []).length ? { auc: { pay: aucOf(vOf(pl)).pend[pl.id] } } : {}), ...(regrowBy.get(vOf(pl)) ? { regrow: regrowBy.get(vOf(pl)) } : {}), ...(mjPending.has(pl.id) ? { mjPay: mjPending.get(pl.id) } : {}), ...(adminPending.has(pl.id) ? { adminPay: adminPending.get(pl.id) } : {}), ...(giftPending.has(pl.id) ? { adminGift: giftPending.get(pl.id) } : {}), ...(cashPend.has(pl.id) ? { cash77: cashPend.get(pl.id) } : {}), ...(jobPend.has(pl.id) ? { job93: jobPend.get(pl.id) } : {}), ...(ev ? { event: evNode(ev, pl.id) } : {}), evRewards: evRewards.get(pl.id) || [], chat: chat.filter(c => (c.v || 1) === vOf(pl)).slice(-30), clock: cstate(), raid: raidState(vOf(pl)), ...((d => (dmPend.delete(pl.id), d ? { dm: d } : {}))(dmPend.get(pl.id))), ...duelWelcome(pl), ...idolWelcome(pl), ...tnyWelcome(pl), ...(aquaOf(vOf(pl)).fund > 0 ? { aqua: (({ top, ...x }) => x)(aquaSt(aquaOf(vOf(pl)))) } : {}), jackpot: Number(jackpot), jackpotS: String(jackpot), ...(raceLast ? { race: raceLast } : {}), ...(sdLast ? { sd: sdLast } : {}), raceResults, farms: [...farms].filter(([id]) => id !== pl.id && vOf(accounts.find(a => a.id === id)) === vOf(pl)).map(([, f]) => f), ...(farms.get(pl.id)?.stolen?.length ? { farmStolen: farms.get(pl.id).stolen } : {}) }));
       mjPending.delete(pl.id); adminPending.delete(pl.id); giftPending.delete(pl.id); cashPend.delete(pl.id); jobPend.delete(pl.id);
       return bc({ type: "join", player: desc(s) }, s);
     }
@@ -740,8 +740,9 @@ wss.on("connection", s => {
         s.send(JSON.stringify({ type: "crank", board: { all: part("a", "all"), week: part("w", "week"), me, from, to: today } }));
       }
     }
-    if (m.type === "jp") { const n = +m.add || 0; if (n > 0) { jackpot = Math.min(Number.MAX_SAFE_INTEGER, jackpot + n); bc({ type: "jp", pot: jackpot }); } }
-    if (m.type === "jpWin") { const won = jackpot; jackpot = 3000; bc({ type: "jp", pot: jackpot, won, by: s.pl.id, winner: s.pl.name }); }
+    // ジャックポットは BigInt（Java の JackpotService と同じ・v0.87.4）。pot はだいたいの数・ps はぴったりの文字列
+    if (m.type === "jp") { const n = Math.floor(+m.add || 0); if (n > 0) { jackpot = BigInt(jackpot) + BigInt(Math.min(n, Number.MAX_SAFE_INTEGER)); bc({ type: "jp", pot: Number(jackpot), ps: String(jackpot) }); } }
+    if (m.type === "jpWin") { const won = BigInt(jackpot); jackpot = 3000n; bc({ type: "jp", pot: 3000, ps: "3000", won: Number(won), wonS: String(won), by: s.pl.id, winner: s.pl.name }); }
     if (m.type === "gift") { const to = +m.to, amt = +m.amount, rid = String(m.rid || "").slice(0, 20); const t = [...sessions].find(o => o.pl && o.pl.id === to);
       if (!(amt > 0 && amt <= 100000) || to === s.pl.id) s.send(JSON.stringify({ type: "giftNg", rid, text: "渡せる額は1〜100,000Gだよ" }));
       else if (!t) s.send(JSON.stringify({ type: "giftNg", rid, text: "相手がいまつないでいないみたい" }));

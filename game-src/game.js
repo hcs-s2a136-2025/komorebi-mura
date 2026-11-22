@@ -3997,7 +3997,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.5";
+const CLIENT_VERSION = "0.87.6";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -27896,6 +27896,9 @@ DECOR27.statue139 = { name: "銅像", price: 0, solid: true, tall: true, img: "d
 ITEMS.deco_statue139 = { name: "銅像（自分の像）", icon: "d139_statue", price: 0, place: "decor", decor: "statue139" };
 function statueData139() {
   const c = {}; for (const k of ST_KEYS139) if (typeof cfg[k] === "string" && cfg[k].length <= 20) c[k] = cfg[k];
+  // メイク（v0.87.6）：3面の細かいメイクと自分の色も像にのせる（銅色になるので、形と明るさが出る）。サーバーの statue() が mkOk・mplOk で通す
+  if (typeof cfg.mk === "string" && cfg.mk && cfg.mk.length <= 3000) c.mk = cfg.mk;
+  if (c.mk && typeof cfg.mpl === "string" && /^[0-9a-f]{6,114}$/.test(cfg.mpl)) c.mpl = cfg.mpl;
   return { p: Math.max(0, Math.min(POSE139.length - 1, m139().pose | 0)), w: String(m139().word || "").slice(0, 20), c };
 }
 F139.decorExtra = id => id === "statue139" ? { st: statueData139() } : null;
@@ -28023,10 +28026,10 @@ function boardExtra139(msg) {
     <h3 class="lbl">銅像を建てる</h3>
     <p class="mtext small">${fmt(STATUE_COST139)} で、自分の銅像を作れる（1人1体）。できた銅像は、飾りと同じように、村の好きな場所に置ける（向いてⒶで片付け）。</p>
     <div class="stpv139"><canvas id="pv139" width="144" height="210" role="img" aria-label="銅像のプレビュー（${POSE139[M.pose | 0] || POSE139[0]}）"></canvas>
-      <div><p class="mtext small"><b>プレビュー</b>：いまの見た目とポーズで、こうなるよ。服や髪を変えてから作ると、その姿の像になる。</p>
+      <div><p class="mtext small"><b>プレビュー</b>：いまの見た目とポーズで、こうなるよ。服や髪やメイクを変えてから作ると、その姿の像になる。置いてある像は「ポーズと一言を変える」で、いまの見た目（メイクも）に変わるよ。</p>
       <div class="row" style="flex-wrap:wrap">${POSE139.map((n, i) => `<button class="chip" type="button" data-ps139="${i}" aria-pressed="${(M.pose | 0) === i}">${n}</button>`).join("")}</div></div></div>
     <div class="row"><input id="sw139" style="width:100%;box-sizing:border-box;padding:8px 10px;border:2px solid #8a6a48;border-radius:8px;background:#fffaf0;color:#3a2a1c;font:inherit" maxlength="20" placeholder="台座に入れる一言（20文字まで）" value="${esc(String(M.word || ""))}" autocomplete="off"></div>
-    <div class="row2">${M.statue ? `<button class="btn" type="button" id="sr139">ポーズと一言を変える</button>` : `<button class="btn" type="button" id="sb139">銅像を作る（${fmt(STATUE_COST139)}）</button>`}</div>`;
+    <div class="row2">${M.statue ? `<button class="btn" type="button" id="sr139">ポーズと一言を変える（いまの見た目にする）</button>` : `<button class="btn" type="button" id="sb139">銅像を作る（${fmt(STATUE_COST139)}）</button>`}</div>`;
   box.querySelectorAll("[data-mv139]").forEach(b => b.onclick = () => { const e = moveProj139(b.dataset.mv139); if (!e) { closeModal(); toast("p35_" + b.dataset.mv139, `${PROJ35[b.dataset.mv139].name}を、ここへ移した`); } else boardExtra139(e); });
   try { // プレビュー：台座と像を6倍で
     const pv = box.querySelector("#pv139"), c = pv.getContext("2d"), im = statueImg139(statueData139()); c.imageSmoothingEnabled = false; c.clearRect(0, 0, 144, 210);
@@ -30430,6 +30433,9 @@ CHANGES19.unshift({ v: "0.87.4", date: "2026/11/21", title: "ジャックポッ�
 ] });
 CHANGES19.unshift({ v: "0.87.5", date: "2026/11/21", title: "お小遣いを上限なしで渡せる", items: [
   "友だちと向かい合ってⒶで渡すお小遣いの、1回100,000Gの上限をなくした。持っているぶんまで渡せる（「ぜんぶ」のボタンも）",
+] });
+CHANGES19.unshift({ v: "0.87.6", date: "2026/11/22", title: "銅像にメイクがのる", items: [
+  "自分の銅像に、メイク（正面・横・後ろ・髪の形も）がのるようになった。もう置いてある像は、掲示板の「共同プロジェクト」の下の「ポーズと一言を変える（いまの見た目にする）」を押すと、いまのメイクになるよ",
 ] });
 GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
 

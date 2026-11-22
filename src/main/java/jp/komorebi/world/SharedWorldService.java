@@ -37,7 +37,7 @@ public class SharedWorldService implements WelcomeContributor {
     public static final Set<String> LAYERS = Set.of("terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths",
         "stakes", "tilled", "houses", "quarry", "meta", "decor", "ccrops", "cfarm");
     private static final Pattern KEY = Pattern.compile("[A-Za-z0-9,:_\\-]{1,24}");
-    private static final int MAX_VALUE = 600, MAX_HOUSE = 2400, MAX_KEYS = 6000, MAX_DOC = 990_000;
+    private static final int MAX_VALUE = 600, MAX_HOUSE = 2400, MAX_STATUE = 4000, MAX_KEYS = 6000, MAX_DOC = 990_000;
 
     private final JdbcTemplate jdbc;
     private final ObjectMapper om;
@@ -163,7 +163,9 @@ public class SharedWorldService implements WelcomeContributor {
                 v = NullNode.getInstance();
             } else {
                 // 家は合鍵（20人まで）を持つので、ほかより長くてよい
-                if (v.toString().length() > ("houses".equals(l) ? MAX_HOUSE : MAX_VALUE)) continue;
+                // 銅像はメイク（3面・3,000字まで）をのせるので長くてよい（v0.87.6）
+                int max = "houses".equals(l) ? MAX_HOUSE : "decor".equals(l) && "statue139".equals(v.path("id").asText("")) ? MAX_STATUE : MAX_VALUE;
+                if (v.toString().length() > max) continue;
                 if (!layer.has(k) && layer.size() >= MAX_KEYS) continue;
                 layer.set(k, v);
             }
@@ -314,9 +316,14 @@ public class SharedWorldService implements WelcomeContributor {
         ObjectNode c = o.putObject("c");
         if (in.path("c").isObject()) {
             var f = in.path("c").fields();
-            while (f.hasNext() && c.size() < 16) {
+            while (f.hasNext() && c.size() < 18) {
                 var e = f.next();
-                if (!e.getValue().isTextual() || !ST_KEY.matcher(e.getKey()).matches() || !ST_VAL.matcher(e.getValue().asText()).matches()) continue;
+                if (!e.getValue().isTextual()) continue;
+                String sv = e.getValue().asText();
+                // メイク（v0.87.6）：見た目の設定と同じ形だけ通す
+                if ("mk".equals(e.getKey())) { if (jp.komorebi.ws.Sanitize.mkOk(sv, jp.komorebi.ws.Sanitize.MK_CELLS, jp.komorebi.ws.Sanitize.MK_MAX)) c.put("mk", sv); continue; }
+                if ("mpl".equals(e.getKey())) { if (jp.komorebi.ws.Sanitize.mplOk(sv)) c.put("mpl", sv); continue; }
+                if (!ST_KEY.matcher(e.getKey()).matches() || !ST_VAL.matcher(sv).matches()) continue;
                 c.put(e.getKey(), e.getValue().asText());
             }
         }

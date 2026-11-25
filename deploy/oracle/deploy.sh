@@ -85,6 +85,27 @@ backup_db() {
   else rm -f "$f"; echo "（取っておけなかった）"; fi
 }
 
+# 共有の村の中身を数える（2026/11/25・道や木が消えた件の調べ）。いまのデータベースと、取っておいたバックアップの両方
+SW_SQL="select id, length(doc) as chars, updated_at, (select string_agg(k || '=' || case when jsonb_typeof(doc::jsonb->k)='object' then (select count(*) from jsonb_object_keys(doc::jsonb->k))::text else jsonb_typeof(doc::jsonb->k) end, ' ' order by k) from jsonb_object_keys(doc::jsonb) k where k in ('terrain','trees','saplings','rocks','paths','fences','houses','decor','bridges','meta','cfarm','_gen','_epoch')) as layers from shared_world order by id"
+diag_world() {
+  [ "$(envget DB_MOVED)" = "1" ] || return 0
+  echo "---- 共有の村（いま） ----"
+  docker compose exec -T db psql -tA -F ' | ' -U komorebi -d komorebi -c "$SW_SQL" 2>&1 | cut -c1-600 || true
+  echo "---- 前のアプリのログの、共有の村の警告 ----"
+  docker compose logs --no-color app 2>&1 | grep -E '共有の村|大きすぎ|読めなかった|renew|新しくする' | tail -20 || true
+  echo "---- 取っておいたバックアップの共有の村 ----"
+  docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP DATABASE IF EXISTS komorebi_bk" >/dev/null 2>&1 || true
+  local f
+  for f in $(ls -1t "$HOME"/komorebi-backups/*.dump 2>/dev/null | head -12); do
+    docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP DATABASE IF EXISTS komorebi_bk" >/dev/null 2>&1
+    docker compose exec -T db psql -q -U komorebi -d komorebi -c "CREATE DATABASE komorebi_bk" >/dev/null 2>&1 || continue
+    docker compose exec -T db pg_restore -U komorebi -d komorebi_bk --no-owner --no-privileges -t shared_world < "$f" >/dev/null 2>&1 || true
+    echo "  $(basename "$f")："
+    docker compose exec -T db psql -tA -F ' | ' -U komorebi -d komorebi_bk -c "$SW_SQL" 2>&1 | cut -c1-600 | sed 's/^/    /' || true
+  done
+  docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP DATABASE IF EXISTS komorebi_bk" >/dev/null 2>&1 || true
+}
+
 main() {
   exec 9>/tmp/komorebi-deploy.lock
   flock 9
@@ -98,6 +119,7 @@ main() {
   fi
   local moved=0
   move_db || moved=1
+  diag_world || true
   backup_db || true
   docker compose up -d --build --remove-orphans
   docker image prune -f >/dev/null

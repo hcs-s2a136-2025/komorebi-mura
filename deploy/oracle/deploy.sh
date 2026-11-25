@@ -106,6 +106,43 @@ diag_world() {
   docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP DATABASE IF EXISTS komorebi_bk" >/dev/null 2>&1 || true
 }
 
+# 2026/11/25 に消えた、こもれび村（村1）の地形・道・柵・橋・杭・苗木・畑・木・岩・採石場を、その朝のバックアップから1回だけ戻す。
+# アプリは共有の村をメモリに持って10秒ごとに保存するので、止めているあいだに書きかえる。家と飾りなど、ほかはいまのまま。
+# 地形・道・柵などは「バックアップ＋いま」（同じ場所はいまの値）、木・岩・採石場はバックアップのまま（いまは最初の数しかない）。
+RESTORE_MARK="$HOME/.komorebi-restore-20261125"
+RESTORE_DUMP="$HOME/komorebi-backups/komorebi-20261125-0032.dump"
+RESTORE_SQL="UPDATE shared_world s SET doc = (s.doc::jsonb || jsonb_build_object(
+  'terrain',  coalesce(b.d->'terrain','{}'::jsonb)  || coalesce(s.doc::jsonb->'terrain','{}'::jsonb),
+  'bridges',  coalesce(b.d->'bridges','{}'::jsonb)  || coalesce(s.doc::jsonb->'bridges','{}'::jsonb),
+  'fences',   coalesce(b.d->'fences','{}'::jsonb)   || coalesce(s.doc::jsonb->'fences','{}'::jsonb),
+  'paths',    coalesce(b.d->'paths','{}'::jsonb)    || coalesce(s.doc::jsonb->'paths','{}'::jsonb),
+  'stakes',   coalesce(b.d->'stakes','{}'::jsonb)   || coalesce(s.doc::jsonb->'stakes','{}'::jsonb),
+  'saplings', coalesce(b.d->'saplings','{}'::jsonb) || coalesce(s.doc::jsonb->'saplings','{}'::jsonb),
+  'tilled',   coalesce(b.d->'tilled','{}'::jsonb)   || coalesce(s.doc::jsonb->'tilled','{}'::jsonb),
+  'trees',    coalesce(b.d->'trees', s.doc::jsonb->'trees', '{}'::jsonb),
+  'rocks',    coalesce(b.d->'rocks', s.doc::jsonb->'rocks', '{}'::jsonb),
+  'quarry',   coalesce(b.d->'quarry', s.doc::jsonb->'quarry', '{}'::jsonb)))::text, updated_at = now()
+  FROM (SELECT doc::jsonb AS d FROM shared_world_bk WHERE id = 1) b WHERE s.id = 1"
+restore_world() {
+  [ "$(envget DB_MOVED)" = "1" ] || return 0
+  [ -f "$RESTORE_MARK" ] && return 0
+  [ -f "$RESTORE_DUMP" ] || { echo "（戻すためのバックアップがない：$RESTORE_DUMP）"; return 0; }
+  local paths
+  paths=$(docker compose exec -T db psql -tA -U komorebi -d komorebi -c "select (select count(*) from jsonb_object_keys(coalesce(doc::jsonb->'paths','{}'::jsonb))) from shared_world where id=1" 2>/dev/null | tr -d '[:space:]')
+  if [ "${paths:-x}" != "0" ]; then echo "（村1の道が ${paths:-?} こあるので、戻さない）"; touch "$RESTORE_MARK"; return 0; fi
+  echo "---- 村1の地形・道・柵・木などを、$(basename "$RESTORE_DUMP") から戻す ----"
+  docker compose stop app || true
+  docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP TABLE IF EXISTS shared_world_bk" >/dev/null
+  docker compose exec -T db pg_restore -f - --no-owner --no-privileges -t shared_world < "$RESTORE_DUMP" \
+    | sed -e 's/public\.shared_world\b/public.shared_world_bk/g' -e '/^ALTER TABLE .*OWNER/d' \
+    | docker compose exec -T db psql -q -U komorebi -d komorebi >/dev/null
+  if docker compose exec -T db psql -q -U komorebi -d komorebi -c "$RESTORE_SQL"; then
+    touch "$RESTORE_MARK"; echo "戻した"
+  else echo "!! 戻せなかった（そのまま）"; fi
+  docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP TABLE IF EXISTS shared_world_bk" >/dev/null || true
+  docker compose exec -T db psql -tA -F ' | ' -U komorebi -d komorebi -c "$SW_SQL" 2>&1 | cut -c1-600 || true
+}
+
 main() {
   exec 9>/tmp/komorebi-deploy.lock
   flock 9
@@ -121,6 +158,7 @@ main() {
   move_db || moved=1
   diag_world || true
   backup_db || true
+  restore_world || true
   docker compose up -d --build --remove-orphans
   docker image prune -f >/dev/null
   echo "反映した: $(git rev-parse --short HEAD)"

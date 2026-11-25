@@ -3898,7 +3898,10 @@ function parseSave(text) {
 }
 function loadSave(obj, label) {
   pushBackup(label || "読み込む前");
-  world = obj.world; ensureV6(); ensureV7();
+  // 共有の村とつながっているあいだは、地形・道・木・家などはサーバーの物が正しい。読みこんだセーブの古い（まっさらの）中身で上書きしない
+  // （v0.87.8。前は、ここで入れかわった分を「消した」とサーバーへ送ってしまい、村の道や木が消えた）
+  { const old = world; world = obj.world; if (F11.synced && typeof F14 !== "undefined" && F14.keepShared) F14.keepShared(old, world); }
+  ensureV6(); ensureV7();
   dg = null; port = null; interior = null; petEnts = []; animalEnts = []; syncPets(); syncAnimals();
   collector.active = false; roomKey = "home"; room = makeRoomMap("home"); lastBack = [7, 7];
   laborRocks = world.labor ? new Set(LABOR_ROCKS.map(([x, y]) => x + "," + y)) : new Set();
@@ -3997,7 +4000,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.7";
+const CLIENT_VERSION = "0.87.8";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -4583,7 +4586,10 @@ function onWelcomeWorld(snap, epoch) {
     }
     world.sharedEpoch = epoch; saveWorld();
   }
-  const pending = F11.synced ? diffShared() : [];
+  let pending = F11.synced ? diffShared() : [];
+  // つないでいないあいだに消した物は、ふつう数こ。たくさんあるときは手元のセーブが入れかわった（まっさら・古い）ときなので、消すのは送らない（v0.87.8）
+  const dels = pending.filter(e => e.v == null).length;
+  if (dels > 30) pending = pending.filter(e => e.v != null);
   F11.synced = false;
   if (!snap || !SH_LAYERS.some(L => Object.keys(snap[L] || {}).length)) {
     shLast = {}; F11.synced = true; sendEdits(diffShared());
@@ -30442,6 +30448,10 @@ CHANGES19.unshift({ v: "0.87.6", date: "2026/11/22", title: "銅像にメイク�
 ] });
 CHANGES19.unshift({ v: "0.87.7", date: "2026/11/25", title: "VIPのスロットで100枚賭け", items: [
   "VIPルームの高レートスロットで、1回100枚を賭けられるようになった（払い戻しは最大10,000枚。お札が9,999枚をこえた分は口座に入るよ）",
+] });
+CHANGES19.unshift({ v: "0.87.8", date: "2026/11/25", title: "消えた道や木をもどした", items: [
+  "こもれび村の地形・道・柵・橋・木・岩などが、最初の状態にもどってしまっていたのを、その朝の分までもどした（家と飾りはそのまま）",
+  "セーブを読みこみなおしたときなどに、村の地形や道をまちがえて消してしまわないようにした",
 ] });
 GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
 

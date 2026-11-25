@@ -87,6 +87,30 @@ public class SharedWorldService implements WelcomeContributor {
      * 編集をまとめて反映する。飾り（decor）は、置いた人（o）だけが変えたり片付けたりできる。
      * 認められなかった変更は rejected に「いまの本当の値」として入れる（送ってきた人の画面を元に戻すため）。
      */
+    /**
+     * 持ち主のないもの（地形・道・柵・橋・木・苗木・岩・杭）を消す変更は、1人1分に {@value #DEL_MAX} こまで（v0.87.8）。
+     * 2026/11/25、ある人の画面がまっさらのセーブを読みなおして、村の地形・道・柵・木をまとめて消す変更を送ってしまったため。
+     * こえた分は受けとらず、送ってきた人に「いまの本当の値」を返す（画面がもとにもどる）。
+     */
+    private static final Set<String> GUARD_DEL = Set.of("terrain", "bridges", "trees", "saplings", "rocks", "fences", "paths", "stakes");
+    private static final int DEL_MAX = 40;
+    private final Map<String, long[]> delCount = new java.util.HashMap<>();
+    private boolean delAllowed(long playerId) {
+        if (playerId <= 0) return true;
+        String key = Villages.current() + ":" + playerId;
+        long now = System.currentTimeMillis();
+        long[] c = delCount.computeIfAbsent(key, x -> new long[] {now, 0});
+        if (now - c[0] > 60_000) { c[0] = now; c[1] = 0; }
+        if (c[1] >= DEL_MAX) {
+            if (c[1] == DEL_MAX) log.warn("共有の村（村{}）：{}（{}）がまとめて消そうとしたので止めた", Villages.current(), name0(playerId), playerId);
+            c[1]++;
+            return false;
+        }
+        c[1]++;
+        return true;
+    }
+    private static String name0(long id) { return "id" + id; }
+
     public synchronized ArrayNode apply(JsonNode list, long playerId, String name, ArrayNode rejected) {
         ArrayNode out = om.createArrayNode();
         if (list == null || !list.isArray()) return out;
@@ -159,6 +183,10 @@ public class SharedWorldService implements WelcomeContributor {
                 }
             }
             if (v == null || v.isNull()) {
+                if (GUARD_DEL.contains(l) && layer.has(k) && !delAllowed(playerId)) {
+                    if (rejected != null) { ObjectNode r = rejected.addObject().put("l", l).put("k", k); r.set("v", layer.get(k).deepCopy()); }
+                    continue;
+                }
                 if (layer.remove(k) == null) continue;
                 v = NullNode.getInstance();
             } else {

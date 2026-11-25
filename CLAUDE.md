@@ -1,7 +1,7 @@
 # こもれび村 — 開発メモ（Claude 用）
 
 1枚のHTMLで動くドット絵のスローライフゲームと、それを配る Spring Boot サーバー。
-公開リポジトリ。本番は Oracle Cloud の Always Free の VM（Docker Compose で アプリ＋Caddy＋PostgreSQL 18・`deploy/oracle/`・手順は `docs/Oracleへの引っ越し.md`）。データベースは 2026年11月20日に Neon から VM の中（compose の `db`・profile `localdb`・volume `pgdata18`）へ引っ越した（Neon の無料のコンピュート時間 月100 CU-hours を、時計の保存などで24時間起きっぱなしにして使い切り、つながらなくなったため）。`.env` は `DB_MOVED=1`・`COMPOSE_PROFILES=localdb`・`LOCAL_DB_PASSWORD`、前の Neon の値は `NEON_DATABASE_*` に残してある。VM の引っ越し（Micro → Ampere など）は `deploy/oracle/move-vm.sh`（前の VM で `save`＝アプリを止めて DB と `.env` を `~/komorebi-move.tgz` に・新しい VM で `load`＝`.env` を写して SITE_ADDRESS と JAVA_OPTS をその VM に合わせ、DB を入れて表の数をくらべてから `deploy.sh`。手順は引っ越しの手順書の10）。`deploy.sh` は反映のたびに VM の中のデータベースを `~/komorebi-backups/` に7つまで取っておき、反映のあとにコンテナ・メモリ・アプリのログ（さいごの120行）を出す（つながらないときは Actions のログを見る）。`main` に push すると GitHub Actions「Oracle へ反映」が VM で `deploy.sh` を動かす（Secrets `ORACLE_HOST` `ORACLE_SSH_KEY`。ないときは何もしない）。VM は Ubuntu 24.04 の Ampere（1 OCPU・6GB）か、つなぎの AMD Micro（1GB。`setup.sh` が `.env` に小さい `JAVA_OPTS` を書く）。Render（`render.yaml`）は前の本番で、止めておく（同じ DB を2つのサーバーで使わない）。
+公開リポジトリ。本番は Oracle Cloud の Always Free の VM（Docker Compose で アプリ＋Caddy＋PostgreSQL 18・`deploy/oracle/`・手順は `docs/Oracleへの引っ越し.md`）。データベースは 2026年11月20日に Neon から VM の中（compose の `db`・profile `localdb`・volume `pgdata18`）へ引っ越した（Neon の無料のコンピュート時間 月100 CU-hours を、時計の保存などで24時間起きっぱなしにして使い切り、つながらなくなったため）。`.env` は `DB_MOVED=1`・`COMPOSE_PROFILES=localdb`・`LOCAL_DB_PASSWORD`、前の Neon の値は `NEON_DATABASE_*` に残してある。VM の引っ越し（Micro → Ampere など）は `deploy/oracle/move-vm.sh`（前の VM で `save`＝アプリを止めて DB と `.env` を `~/komorebi-move.tgz` に・新しい VM で `load`＝`.env` を写して SITE_ADDRESS と JAVA_OPTS をその VM に合わせ、DB を入れて表の数をくらべてから `deploy.sh`。手順は引っ越しの手順書の10）。`deploy.sh` は反映のたびに、共有の村のレイヤーの数（いまと、取っておいたバックアップぜんぶ・`diag_world`）を出し、VM の中のデータベースを `~/komorebi-backups/` に7つまで取っておき、反映のあとにコンテナ・メモリ・アプリのログ（さいごの120行）を出す（つながらないときは Actions のログを見る）。`main` に push すると GitHub Actions「Oracle へ反映」が VM で `deploy.sh` を動かす（Secrets `ORACLE_HOST` `ORACLE_SSH_KEY`。ないときは何もしない）。VM は Ubuntu 24.04 の Ampere（1 OCPU・6GB）か、つなぎの AMD Micro（1GB。`setup.sh` が `.env` に小さい `JAVA_OPTS` を書く）。Render（`render.yaml`）は前の本番で、止めておく（同じ DB を2つのサーバーで使わない）。
 
 **このファイルの約束**：作業を終えるたびに、下の「決まっていること」と「変更履歴」を更新する。
 前と変わったことは、古い記述を**書きかえる**（追記して両方残さない）。このファイルと食いちがうことを頼まれたら、どちらが正しいか確かめてから直す。
@@ -111,6 +111,8 @@
 - 管理人室の画面（Thymeleaf 3.1）では `T(java...)` の static 呼び出しが使えない（500 になる）。日時の文字や表示用の値はコントローラーで作って record で渡し、テンプレートでは JSON にもさわらない（`AdminRaidController` が見本）
 - 管理人室のお便り（v0.83.0）：一覧の行の右のボタンで1押しで状態を変える（`POST /admin/threads/{id}/status` に `back=list`・`fs`・`fc`＝一覧のしぼりこみ。一覧の `#letters` へもどる）。左のチェックでえらんで `POST /admin/threads/status`（`ids`）でまとめて。行の中にフォームを入れ子にできないので、一覧の上の空のフォーム `#qst` に `form` 属性と `formaction` でつなぐ。お便りの画面は状態のボタン4つと、返事の「送ったら対応済みにする」（`done=1`）
 - 管理人室のコントローラーを新しいパッケージに置いたら、`AdminVillageAdvice` の `basePackages` に足す。足さないと `adminVillage` が村ではなく番号（Long）のまま村の帯に渡って 500 になる（v0.60.3）
+- 共有の村の見はり（v0.87.8）：持ち主のないもの（地形・道・柵・橋・木・苗木・岩・杭＝`GUARD_DEL`）を消す edits は、1人1分に40こまで（`delAllowed`）。こえた分は受けとらず、送った人に「いまの値」を返す（画面がもどる）。mock も同じ（`DEL_GUARD`・`delOk`）。2026/11/25 に、だれかの画面がまっさらの世界から差分を送って、村1の地形506・道64・柵52・橋3・木213→30・岩46→22 が消えた（家と飾りは持ち主の見はりで残った）
+- 画面の守り（v0.87.8）：`loadSave` は、共有の村とつながっているあいだ（`F11.synced`）、共有の分（`SHARED_KEYS14`）を前の world から引きつぐ（`F14.keepShared`）。welcome の `onWelcomeWorld` は、つないでいないあいだの差分（pending）に消すものが30こをこえたら、消すものは送らない。**`F11.synced` は切れてもつなぎ直すまで true のまま**（つないでいないあいだの変更を送るため）なので、world をまるごと入れかえるところを足したら、共有の分を引きつぐ
 - 共有の村の1つの値は600字まで（`MAX_VALUE`）。`houses` だけは合鍵（20人）があるので2,400字まで（`MAX_HOUSE`）
 - スマホのゲームのランキング（`GameRankService`）：管理人室の「ゲームのランキング」（`/admin/rank`）でえらんだ人は `_gamerankHidden`（村ごと）に入り、`board()` はその人を**見ている本人以外**の名前の表から外す（本人には今までどおり出る。スコアは消さない。週間3位のコインのごほうびは本人から見た順位で決まる）。mock は `/mock/rankhide?id=&hide=1|0`
 - **転送量（前の Render の Hobby は月5GBで止まった。v0.70.1。Oracle は月10TBまで無料）**：いちばん大きかったのは、畑のようす（`farmSnap44`・作物600こまで＋家畜＋ペット）を全員に中継すること。クライアントは家畜の位置が変わるたびに2.5秒ごとに送っていた。今は、作物・家畜の数と名前・ペット・ビニールハウスが変わったときだけ（10秒に1回まで・位置だけの変化は送らない）、何も変わらなくても60秒に1回（`farmLast44 = ""` に戻すと、すぐ2.5秒あとに送る）。**村ぜんたいに中継するメッセージを足すときは、頻度と大きさを必ず考える**
@@ -418,6 +420,7 @@
 
 ## 7. 変更履歴（新しい順・1行ずつ）
 
+- v0.87.8 こもれび村の地形・道・柵・橋・木・岩が最初にもどっていたのを、その朝のバックアップ（`komorebi-20261125-0032.dump`）からもどした（`deploy.sh` の `restore_world`・1回だけ・`~/.komorebi-restore-20261125`）・セーブを読みなおしても共有の村を上書きしない・まとめて消す edits をサーバーが止める（サーバー：`SharedWorldService.delAllowed`）
 - v0.87.7 VIPの高レートスロットに1回100枚の賭け（払い戻しの上限は賭けた枚数×100まで）（サーバー変更なし）
 - v0.87.6 自分の銅像にメイク（3面・髪の形）がのる。置いてある像は「ポーズと一言を変える（いまの見た目にする）」で（サーバー：銅像の `st.c` に `mk`・`mpl`・長さ4,000字）
 - v0.87.5 お小遣い（向かい合ってⒶ・`gift`）の1回100,000Gの上限をなくした（2^53−1 まで・「ぜんぶ」のボタン）（サーバー：`GiftHandler.MAX`）

@@ -3997,7 +3997,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.6";
+const CLIENT_VERSION = "0.87.7";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -18153,7 +18153,7 @@ var F95 = {};
 //           小さい役（コイン・タイ・トマト）は、台が引きこんでそろえる。はずれのときは、どんなに上手でもそろわない。
 //           目押しの大きい役だけ当たりを1.05倍にしてあるので、取りこぼしなしで還元率は約97%（おまかせは約95%）。上手な人ほど勝ちすぎる、にはならない。
 // 勝ち負けは settle91（v91）を通す：番付・負け上限・メダル・会員ランクは、本物のお札で賭けた分だけ数える。払い戻しは最大 5,000 枚。
-const BETS95 = [5, 10, 20, 50], MAXPAY95 = 5000, SLIDE95 = 4, N95 = 21, SPEED95 = 19, KK95 = 8;
+const BETS95 = [5, 10, 20, 50, 100], MAXPAY95 = 5000, SLIDE95 = 4, N95 = 21, SPEED95 = 19, KK95 = 8;
 // 目押しのときのリールの速さ（v120：19→11。ゆっくりにして、絵柄を見て押せるように）と、絵柄ごとのマスの色（v120：金色の絵柄が見分けやすいように）
 const SPEED_ME95 = 11, BG95 = { A: "#ffe27a", "7": "#ffb3c0", B: "#ffc98a", L: "#c8f08a", F: "#a8d8ff", N: "#dcc4ff", M: "#fff8e8" };
 const SYM95 = { A: "s95_acorn", "7": "seven", B: "goldbar", L: "coin", F: "fish_タイ", N: "s95_bell", M: "cabbage" };
@@ -18383,6 +18383,8 @@ function newSpin95(bet, mode, paid) {
   S.rev = mode !== "meoshi" && !S.zen && (flag === "7" || flag === "A") && (F95.forceRev != null ? F95.forceRev : Math.random() < .45); F95.forceRev = null;
   return S;
 }
+/** 払い戻しの上限（v0.87.7）：5,000枚か、賭けた枚数×100の大きいほう。100枚賭けでも金のどんぐりが削られない（50枚と同じ割合） */
+function capOf95(bet) { return Math.max(MAXPAY95, (bet | 0) * 100); }
 /** 止まった位置から払い戻しを決める */
 function calc95(S) {
   const t = S.tops.map(x => x == null ? 0 : x);
@@ -18391,9 +18393,10 @@ function calc95(S) {
   else { const r = lines95(t); if (r.length) { line = r[0][0]; sym = r[0][1]; lines = [line]; pay = PAY95[sym] * S.bet * (S.kk ? 2 : 1); } }
   const bonus = S.ev === "freeze" ? S.bet * S.fm : 0;
   const raw = pay + bonus;
-  return { pay: Math.min(MAXPAY95, raw), capped: raw > MAXPAY95, line, sym, lines, bonus, lineBase: pay };
+  const cap = capOf95(S.bet);
+  return { pay: Math.min(cap, raw), capped: raw > cap, line, sym, lines, bonus, lineBase: pay };
 }
-F95.calc = calc95; F95.newSpin = newSpin95;
+F95.calc = calc95; F95.newSpin = newSpin95; F95.cap = bet => capOf95(bet);
 /** 決着：払い戻しに村の偽札がまざるか聞いてから、settle91 で番付・負け上限・卓の上まで */
 function settle95(S, done) {
   const R = calc95(S), st = world.stats, V = vs95();
@@ -18584,7 +18587,7 @@ function openSlot95(arg) {
       const ordT = S.oshi ? S.oshi.map(i => "左中右"[i]).join("→") : "";
       const head = S.zen ? `全回転！！ ${SN95[S.zen]}が5ラインぜんぶにそろった` : r.sym === "N" ? `ナビどおり！ ${LNN95[r.line]}にベルがそろった${S.kk ? "（確変2倍）" : ""}` : r.sym ? `${LNN95[r.line]}に${SN95[r.sym]}がそろった${S.kk ? "（確変2倍）" : ""}` : S.oshiMiss ? `押し順ベル……押し順がちがった（正解は ${ordT}）` : S.lost ? "……取りこぼし。何かがそろいそうだった" : "はずれ…";
       const fz = r.bonus ? `　フリーズのボーナス ×${S.fm}` : "";
-      const text = r.pay ? `${head}${fz}　${billTxt78(r.pay)}（${fmt(r.pay * BILL78)}）${r.capped ? "（上限5,000枚）" : ""}${r.credit ? "。" + payText91(r.pay, r.credit) : ""}` : `${head}${fz}　${billTxt78(S.bet)} を失った`;
+      const text = r.pay ? `${head}${fz}　${billTxt78(r.pay)}（${fmt(r.pay * BILL78)}）${r.capped ? `（上限${capOf95(S.bet).toLocaleString("ja-JP")}枚）` : ""}${r.credit ? "。" + payText91(r.pay, r.credit) : ""}` : `${head}${fz}　${billTxt78(S.bet)} を失った`;
       Lv.win = r.lines; Lv.flash = r.pay > S.bet ? 1 : 0;
       if (S.ev === "kaku") { banner95("確変突入！", `次の${KK95}回、そろった配当が2倍`, 2000, "kk"); luna95("kaku"); try { SFX.big(); } catch (e) { } }
       if (S.ev === "at") { world.stats.vipAt95 = (world.stats.vipAt95 || 0) + 1; banner95("AT突入！！", `ベルラッシュ ${AT_LEN95}回`, 2200, "kk"); luna95("at"); try { SFX.big(); } catch (e) { } acornRain95(2400, 70); }
@@ -18682,7 +18685,7 @@ function payHtml95() {
   const P = FLAGP95.auto, M = FLAGP95.meoshi, pct = p => (p * 100 >= 1 ? (p * 100).toFixed(1) : (p * 100).toFixed(2)) + "%";
   return `<div class="pay">${Object.entries(PAY95).map(([s, m]) => `<span><img src="${ASSETS[SYM95[s]]}" alt="" style="background:${BG95[s]};border-radius:3px">${esc(SN95[s])}×3　${m}倍</span>`).join("")}</div>
     <table class="vs95tb"><tr><th>役</th><th>おまかせ</th><th>目押し</th></tr>${P.map(([s, p], i) => `<tr><td>${esc(SN95[s])}</td><td>${pct(p)}</td><td>${pct(M[i][1])}</td></tr>`).join("")}</table>
-    <p class="mtext small">5ライン固定。1回に賭けた枚数×倍率が払い戻し（最大${MAXPAY95.toLocaleString("ja-JP")}枚）。当たりはスピンした瞬間に決まり、リールはそれに合わせて止まる。<b>おまかせ</b>は当たりを必ずそろえる（還元率 約95%）。<b>目押し</b>は、大きい役（金のどんぐり・7・金塊）が当たっていると、ランプとルナが「狙え」と教えてくれる。大きい役は押した位置から4コマまでしかすべらないので、その絵柄が見えているうちに押さないとそろわない（取りこぼし）。小さい役は台が引きこんでそろえる。目押しの大きい役は当たりが1.05倍なので、取りこぼしなしで約97%。はずれのときは、どう押してもそろわない。</p>
+    <p class="mtext small">5ライン固定。1回に賭けた枚数×倍率が払い戻し（最大${MAXPAY95.toLocaleString("ja-JP")}枚。100枚賭けは最大10,000枚・お札が9,999枚をこえた分は口座へ）。当たりはスピンした瞬間に決まり、リールはそれに合わせて止まる。<b>おまかせ</b>は当たりを必ずそろえる（還元率 約95%）。<b>目押し</b>は、大きい役（金のどんぐり・7・金塊）が当たっていると、ランプとルナが「狙え」と教えてくれる。大きい役は押した位置から4コマまでしかすべらないので、その絵柄が見えているうちに押さないとそろわない（取りこぼし）。小さい役は台が引きこんでそろえる。目押しの大きい役は当たりが1.05倍なので、取りこぼしなしで約97%。はずれのときは、どう押してもそろわない。</p>
     <p class="mtext small"><b>押し順ベル</b>：ベルは、3つのリールを決まった順番（6とおり）で止めたときだけそろう（賭け金の2倍）。押し順はナビが①②③で教えてくれる（目押しはそのとおりに押す・おまかせは台がその順に止める）。<b>AT</b>（ベルラッシュ）のあいだは、ベルが約4割の回で当たる。</p>
     <p class="mtext small"><b>特別な割り込み</b>（ごくまれ）：フリーズ＝賭け金の10・20・50倍のボーナス／確変＝次の${KK95}回、そろった配当が2倍／AT＝次の${AT_LEN95}回、ベルラッシュ（AT中に7か金のどんぐりで +${AT_ADD95}回の上乗せ）／全回転＝9マスぜんぶ同じ絵柄（5ラインぜんぶ当たり）。スピンのときに青・赤・虹に光ったら予告（虹は確定）。おまかせの7と金のどんぐりは、いちど外れたように見えて、逆回転でそろうことも。</p>`;
 }
@@ -30436,6 +30439,9 @@ CHANGES19.unshift({ v: "0.87.5", date: "2026/11/21", title: "お小遣いを上�
 ] });
 CHANGES19.unshift({ v: "0.87.6", date: "2026/11/22", title: "銅像にメイクがのる", items: [
   "自分の銅像に、メイク（正面・横・後ろ・髪の形も）がのるようになった。もう置いてある像は、掲示板の「共同プロジェクト」の下の「ポーズと一言を変える（いまの見た目にする）」を押すと、いまのメイクになるよ",
+] });
+CHANGES19.unshift({ v: "0.87.7", date: "2026/11/25", title: "VIPのスロットで100枚賭け", items: [
+  "VIPルームの高レートスロットで、1回100枚を賭けられるようになった（払い戻しは最大10,000枚。お札が9,999枚をこえた分は口座に入るよ）",
 ] });
 GUIDE54.push(["メイク（3つの面と自分の色）", "s139_bug_age", `<ul><li>表参道の COSME COUNTER（アイドルはプロデュースの「メイク」）で、正面・横・後ろの3つの面に描ける</li><li>顔のまわりだけでなく、髪や服の上にも描ける。「消す」をぬると、その所の絵が消えるので、髪の形も変えられる</li><li>「自分の色」は19色まで。カラーチャートからえらぶか、スポイトでマスをさわってとる。自分・アイドル・ペットのメイクでいっしょに使う</li><li>横の面に何も描いていないときは、正面の顔の手前半分が横顔に出る。「正面を横にうつす」で写してから直すと楽</li><li>ペットのメイクは、着せ替えの「ペット」のタブから</li></ul>`]);
 

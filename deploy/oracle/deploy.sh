@@ -86,7 +86,7 @@ backup_db() {
 }
 
 # 共有の村の中身を数える（2026/11/25・道や木が消えた件の調べ）。いまのデータベースと、取っておいたバックアップの両方
-SW_SQL="select id, length(doc) as chars, updated_at, (select string_agg(k || '=' || case when jsonb_typeof(doc::jsonb->k)='object' then (select count(*) from jsonb_object_keys(doc::jsonb->k))::text else jsonb_typeof(doc::jsonb->k) end, ' ' order by k) from jsonb_object_keys(doc::jsonb) k where k in ('terrain','trees','saplings','rocks','paths','fences','houses','decor','bridges','meta','cfarm','_gen','_epoch')) as layers from shared_world order by id"
+SW_SQL="select id, length(doc) as chars, updated_at, (select string_agg(k || '=' || case when jsonb_typeof(doc::jsonb->k)='object' then (select count(*) from jsonb_object_keys(doc::jsonb->k))::text else jsonb_typeof(doc::jsonb->k) end, ' ' order by k) from jsonb_object_keys(doc::jsonb) k where k in ('terrain','trees','saplings','rocks','paths','fences','houses','decor','bridges','meta','cfarm','ccrops','tilled','_gen','_epoch')) as layers from shared_world order by id"
 diag_world() {
   [ "$(envget DB_MOVED)" = "1" ] || return 0
   echo "---- 共有の村（いま） ----"
@@ -143,6 +143,27 @@ restore_world() {
   docker compose exec -T db psql -tA -F ' | ' -U komorebi -d komorebi -c "$SW_SQL" 2>&1 | cut -c1-600 || true
 }
 
+# 2回目（同じ日）：meta（共同プロジェクトの進み具合など）と共同農園の作物（ccrops）も同じ事故で減っていたので、「バックアップ＋いま」でもどす
+RESTORE2_MARK="$HOME/.komorebi-restore-20261125-meta"
+RESTORE2_SQL="UPDATE shared_world s SET doc = (s.doc::jsonb || jsonb_build_object(
+  'meta',   coalesce(b.d->'meta','{}'::jsonb)   || coalesce(s.doc::jsonb->'meta','{}'::jsonb),
+  'ccrops', coalesce(b.d->'ccrops','{}'::jsonb) || coalesce(s.doc::jsonb->'ccrops','{}'::jsonb)))::text, updated_at = now()
+  FROM (SELECT doc::jsonb AS d FROM shared_world_bk WHERE id = 1) b WHERE s.id = 1"
+restore_meta() {
+  [ "$(envget DB_MOVED)" = "1" ] || return 0
+  [ -f "$RESTORE2_MARK" ] && return 0
+  [ -f "$RESTORE_DUMP" ] || return 0
+  echo "---- 村1の meta と共同農園の作物を、$(basename "$RESTORE_DUMP") と合わせる ----"
+  docker compose stop app || true
+  docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP TABLE IF EXISTS shared_world_bk" >/dev/null 2>&1
+  docker compose exec -T db pg_restore -f - --no-owner --no-privileges -t shared_world < "$RESTORE_DUMP" \
+    | sed -e 's/public\.shared_world\b/public.shared_world_bk/g' -e '/^ALTER TABLE .*OWNER/d' \
+    | docker compose exec -T db psql -q -U komorebi -d komorebi >/dev/null
+  if docker compose exec -T db psql -q -U komorebi -d komorebi -c "$RESTORE2_SQL"; then touch "$RESTORE2_MARK"; echo "合わせた"; else echo "!! 合わせられなかった（そのまま）"; fi
+  docker compose exec -T db psql -q -U komorebi -d komorebi -c "DROP TABLE IF EXISTS shared_world_bk" >/dev/null 2>&1 || true
+  docker compose exec -T db psql -tA -F ' | ' -U komorebi -d komorebi -c "$SW_SQL" 2>&1 | cut -c1-600 || true
+}
+
 main() {
   exec 9>/tmp/komorebi-deploy.lock
   flock 9
@@ -159,6 +180,7 @@ main() {
   diag_world || true
   backup_db || true
   restore_world || true
+  restore_meta || true
   docker compose up -d --build --remove-orphans
   docker image prune -f >/dev/null
   echo "反映した: $(git rev-parse --short HEAD)"

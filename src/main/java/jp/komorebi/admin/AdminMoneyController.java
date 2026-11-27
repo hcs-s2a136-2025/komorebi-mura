@@ -1,5 +1,6 @@
 package jp.komorebi.admin;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.List;
 
@@ -40,19 +41,54 @@ public class AdminMoneyController {
 
     /** save=普通預金、fixed=定期預金の合計、debt=借金（返す額）の合計。セーブがなければ money は null */
     /** cash＝現金（1,000G札）の枚数、fake＝そのうち本人が偽札だとわかっている枚数、pendingCash＝届いていないお札の枚数 */
-    public record Row(Long id, String name, Long money, long save, long fixed, long debt, Instant savedAt, boolean online, long pending,
+    /** 額は京・垓までふえたので（v0.89.0）、long でなく BigInteger で持つ。前は long の上限（約922京）で止まり、合計がマイナスになった */
+    public record Row(Long id, String name, BigInteger money, BigInteger save, BigInteger fixed, BigInteger debt, Instant savedAt, boolean online, long pending,
                       long cash, long fake, long pendingCash) {
         public long cashG() { return cash * 1000; }
-        public long bank() { return save + fixed; }
-        public long net() { return (money == null ? 0 : money) + cashG() + save + fixed - debt; }
+        public BigInteger bank() { return save.add(fixed); }
+        public BigInteger net() { return (money == null ? BigInteger.ZERO : money).add(BigInteger.valueOf(cashG())).add(save).add(fixed).subtract(debt); }
+        public String moneyS() { return money == null ? "" : fmt(money); }
+        public String saveS() { return fmt(save); }
+        public String fixedS() { return fmt(fixed); }
+        public String bankS() { return fmt(bank()); }
+        public String debtS() { return fmt(debt); }
+        public String netS() { return fmt(net()); }
+        public String moneyJ() { return money == null ? "" : jp(money); }
+        public String netJ() { return jp(net()); }
+        public boolean bankPos() { return bank().signum() > 0; }
     }
+
+    static String fmt(BigInteger v) { return String.format("%,d", v); }
+
+    /** 大きい額を「約 6.02垓」のように（1兆より小さければ空） */
+    static String jp(BigInteger v) {
+        String[] u = { "垓", "京", "兆" };
+        BigInteger[] b = { BigInteger.TEN.pow(20), BigInteger.TEN.pow(16), BigInteger.TEN.pow(12) };
+        BigInteger a = v.abs();
+        for (int i = 0; i < u.length; i++) if (a.compareTo(b[i]) >= 0) {
+            java.math.BigDecimal x = new java.math.BigDecimal(v).divide(new java.math.BigDecimal(b[i]), 2, java.math.RoundingMode.DOWN);
+            return "約 " + x.stripTrailingZeros().toPlainString() + u[i];
+        }
+        return "";
+    }
+
+    /** セーブの数（ふつうの数・1e20 のような形）を BigInteger に。こわれていれば 0 */
+    static BigInteger num(JsonNode n) {
+        if (n == null || !n.isNumber()) return BigInteger.ZERO;
+        try {
+            return n.isIntegralNumber() ? n.bigIntegerValue() : n.decimalValue().toBigInteger();
+        } catch (Exception e) {
+            return BigInteger.ZERO;
+        }
+    }
+    static BigInteger pos(JsonNode n) { return num(n).max(BigInteger.ZERO); }
 
     @GetMapping
     public String page(Model model) {
         var pend = gifts.pending();
         List<Row> rows = players.listAll().stream().map(p -> {
-            Long money = null;
-            long save = 0, fixed = 0, debt = 0, cash = 0, fake = 0;
+            BigInteger money = null, save = BigInteger.ZERO, fixed = BigInteger.ZERO, debt = BigInteger.ZERO;
+            long cash = 0, fake = 0;
             Instant at = null;
             var s = saves.load(p.getId());
             if (s.isPresent()) {
@@ -60,11 +96,11 @@ public class AdminMoneyController {
                 try {
                     JsonNode doc = om.readTree(s.get().doc());
                     JsonNode m = doc.path("world").path("money");
-                    if (m.isNumber()) money = m.asLong();
+                    if (m.isNumber()) money = num(m);
                     JsonNode bank = doc.path("world").path("bank");
-                    save = Math.max(0, bank.path("save").asLong(0));
-                    for (JsonNode f : bank.path("fixed")) fixed += Math.max(0, f.path("amt").asLong(0));
-                    for (JsonNode l : doc.path("world").path("loans")) debt += Math.max(0, l.path("owed").asLong(0));
+                    save = pos(bank.path("save"));
+                    for (JsonNode f : bank.path("fixed")) fixed = fixed.add(pos(f.path("amt")));
+                    for (JsonNode l : doc.path("world").path("loans")) debt = debt.add(pos(l.path("owed")));
                     JsonNode c = doc.path("world").path("cash78");
                     cash = Math.max(0, c.path("n").asLong(0));
                     fake = Math.max(0, Math.min(cash, c.path("fk").asLong(0)));

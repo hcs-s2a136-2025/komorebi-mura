@@ -1965,7 +1965,7 @@ input.pzq { width: 4.6em; min-width: 0; padding: 4px 4px; text-align: center; fo
 <script>
 // 起動できなかったときに、真っ暗なままにしないで、何が起きたかを画面に出す（管理人に送ることもできる）
 (() => {
-  const VER = "0.88.0";
+  const VER = "0.89.0";
   const errs = [];
   let shown = false, burst = [];
   const fmtErr = e => {
@@ -6534,7 +6534,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.88.0";
+const CLIENT_VERSION = "0.89.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -33253,6 +33253,663 @@ CHANGES19.unshift({ v: "0.88.0", date: "2026/11/27", title: "追いかけっこ"
 ] });
 F148.ready = true;
 
+// =================== v149: 宇宙開発・月面・大富豪（称号とオーラ）・村ジャンボ宝くじ・南の島の別荘・ドッグラン ===================
+// お金をたくさん持つ人がふえたので（300京〜6垓）、大きな額を気持ちよく使える遊びをまとめて足す（v0.89.0）。
+// 宇宙開発と宝くじはサーバー（jp.komorebi.space の SpaceService・LotteryService）。額は「兆」の単位（1兆G＝1）でやりとりする。
+// 称号・オーラ・別荘・月のお店・ドッグランは画面だけ（サーバー変更なし）。
+var F149 = { sp: null, lot: null, wait: "", waitAt: 0, waitT: 0, msg: "", lmsg: "", lwait: "", lwaitN: 0, tab: "title", pets: [], rp: new Map(), ball: null, hold: false };
+const CHO149 = 1e12, KEI149 = 1e16, GAI149 = 1e20, LOTP149 = 1e11;
+function jp149(n) {
+  n = Number(n) || 0; const a = Math.abs(n);
+  for (const [b, u] of [[1e20, "垓"], [1e16, "京"], [1e12, "兆"], [1e8, "億"], [1e4, "万"]]) if (a >= b) {
+    const v = n / b; return (v >= 1000 ? Math.floor(v).toLocaleString("ja-JP") : (Math.floor(v * 100) / 100).toLocaleString("ja-JP", { maximumFractionDigits: 2 })) + u;
+  }
+  return Math.round(n).toLocaleString("ja-JP");
+}
+const G149 = n => jp149(n) + " G";
+F149.jp = jp149;
+const rid149 = () => Math.random().toString(36).slice(2, 10);
+const send149 = o => { if (WATCH88 || !F8.connected) return false; send8(o); return true; };
+function w149() {
+  const w = world.r149 = world.r149 && typeof world.r149 === "object" ? world.r149 : {};
+  for (const [k, v] of [["t", {}], ["lp", {}], ["vx", {}], ["rk", {}], ["dr", {}]]) if (!w[k] || typeof w[k] !== "object") w[k] = v;
+  for (const k of ["moon", "best", "villa", "lotN", "lotWin", "base", "fetch", "visit"]) w[k] = +w[k] || 0;
+  return w;
+}
+F149.w = w149;
+const SPACE149 = ["発射台", "ロケット", "月へ出発", "月面基地", "火星へ", "木星へ", "土星へ", "天王星へ", "海王星へ", "銀河の果てへ"];
+const stName149 = i => SPACE149[i] || `銀河のかなた（${i - SPACE149.length + 1}）`;
+const spLv149 = () => (F149.sp && +F149.sp.lv) || 0;
+F149.lv = spLv149;
+// 自分の寄付の合計の節目（兆）
+const MS149 = [[1e4, "宇宙の後援者", "1京"], [1e5, "ロケットの支え手", "10京"], [1e6, "星の開拓者", "100京"], [1e8, "銀河のパトロン", "1垓"], [1e9, "宇宙の創造主", "10垓"]];
+
+// ---------- 絵 ----------
+{
+  const P = (k, w, h, fn, o) => { IMG[k] = pix13(w, h, fn, o); ASSETS[k] = IMG[k].toDataURL(); };
+  P("s149_desk", 32, 24, (s, r) => { r(0, 8, 32, 16, C13["#d8dce4"]); r(0, 8, 32, 2, C13["#f2f4f8"]); r(2, 0, 12, 9, C13["#2a3448"]); r(3, 1, 10, 6, C13["#6ad0ff"]); r(18, 0, 12, 9, C13["#2a3448"]); r(19, 1, 10, 6, C13["#8affb0"]); for (let i = 0; i < 5; i++) s(4 + i * 6, 13, C13[i % 2 ? "#ff5a5a" : "#ffd24a"]); r(4, 17, 24, 2, C13["#9aa4b8"]); });
+  P("s149_mon", 16, 34, (s, r) => { r(2, 26, 12, 8, C13["#8a8a96"]); r(2, 26, 12, 1, C13["#b0b0bc"]); r(4, 2, 8, 24, C13["#c8ccd8"]); r(4, 2, 8, 1, C13["#eef0f6"]); for (let y = 6; y < 22; y += 3) r(5, y, 6, 1, C13["#7a8096"]); s(7, 1, C13["#ffd24a"]); s(8, 0, C13["#ffd24a"]); s(8, 1, C13["#fff0a0"]); }, true);
+  // 発射台とロケット（段階ごと）
+  const pad = (s, r) => { r(0, 60, 64, 12, C13["#6a7080"]); r(0, 60, 64, 2, C13["#9aa0b0"]); for (let x = 2; x < 64; x += 8) r(x, 64, 4, 2, C13["#ffd24a"]); r(4, 8, 4, 52, C13["#c84a3a"]); for (let y = 10; y < 60; y += 6) { r(4, y, 10, 1, C13["#8a2a22"]); } r(8, 14, 8, 2, C13["#c84a3a"]); r(8, 34, 8, 2, C13["#c84a3a"]); };
+  const rocket = (s, r, flag) => { r(26, 12, 12, 44, C13["#f4f6fa"]); r(26, 12, 2, 44, C13["#ffffff"]); r(35, 12, 3, 44, C13["#c8ccd8"]); for (let y = 0; y < 10; y++) r(32 - Math.ceil(y * .6), 2 + y, Math.ceil(y * 1.2) + 1, 1, C13["#e84a4a"]); r(29, 22, 6, 6, C13["#2a3448"]); r(30, 23, 4, 4, C13["#6ad0ff"]); r(26, 40, 12, 2, C13["#e84a4a"]); r(20, 46, 6, 10, C13["#e84a4a"]); r(38, 46, 6, 10, C13["#e84a4a"]); r(28, 56, 8, 4, C13["#4a4e5a"]);
+    if (flag) { r(44, 4, 1, 14, C13["#5a5a66"]); r(45, 4, 14, 8, C13["#ffd24a"]); r(47, 6, 3, 3, C13["#fff6c8"]); } };
+  P("s149_rk0", 64, 72, (s, r) => { r(0, 60, 64, 12, C13["#8a7a5a"]); r(6, 40, 20, 20, C13["#d8b860"]); r(6, 40, 20, 2, C13["#f2d890"]); r(14, 30, 2, 12, C13["#6a5a40"]); r(8, 26, 18, 6, C13["#f4f0e0"]); r(30, 52, 24, 8, C13["#a09070"]); r(34, 44, 16, 8, C13["#b8a888"]); });
+  P("s149_rk1", 64, 72, (s, r) => pad(s, r));
+  P("s149_rk2", 64, 72, (s, r) => { pad(s, r); rocket(s, r, false); });
+  P("s149_rk3", 64, 72, (s, r) => { pad(s, r); rocket(s, r, true); });
+  P("s149_rkm", 32, 48, (s, r) => { r(10, 6, 12, 34, C13["#f4f6fa"]); r(19, 6, 3, 34, C13["#c8ccd8"]); for (let y = 0; y < 8; y++) r(16 - Math.ceil(y * .7), y, Math.ceil(y * 1.4) + 1, 1, C13["#e84a4a"]); r(13, 14, 6, 6, C13["#2a3448"]); r(14, 15, 4, 4, C13["#6ad0ff"]); r(4, 30, 6, 12, C13["#e84a4a"]); r(22, 30, 6, 12, C13["#e84a4a"]); r(2, 42, 6, 2, C13["#8a8a96"]); r(24, 42, 6, 2, C13["#8a8a96"]); });
+  P("s149_earth", 40, 40, (s, r) => { ell13(s, 20, 20, 17, 17, C13["#3a7ad8"]); ell13(s, 14, 14, 6, 4, C13["#5aba6a"]); ell13(s, 26, 24, 7, 5, C13["#5aba6a"]); ell13(s, 22, 10, 3, 2, C13["#f4f6fa"]); ell13(s, 12, 28, 4, 2, C13["#f4f6fa"]); for (let i = 0; i < 9; i++) s(28 + (i % 3), 30 + Math.floor(i / 3), C13["#2a5ab0"]); });
+  P("s149_base", 64, 44, (s, r) => { r(0, 20, 64, 24, C13["#c8ccd8"]); r(0, 20, 64, 2, C13["#eef0f6"]); ell13(s, 32, 20, 22, 14, C13["#dfe4ee"]); ell13(s, 32, 18, 16, 9, C13["#aee6ff"]); r(26, 30, 12, 14, C13["#3a4458"]); r(28, 32, 8, 12, C13["#6ad0ff"]); for (const x of [6, 50]) { r(x, 26, 8, 6, C13["#2a3448"]); r(x + 1, 27, 6, 4, C13["#ffd24a"]); } r(58, 0, 1, 20, C13["#5a5a66"]); r(59, 0, 5, 3, C13["#ff5a5a"]); });
+  P("s149_shop", 32, 30, (s, r) => { r(0, 12, 32, 18, C13["#b8bcc8"]); r(0, 4, 32, 9, C13["#4a6ad8"]); for (let x = 0; x < 32; x += 8) r(x, 4, 4, 9, C13["#f4f6fa"]); r(4, 18, 24, 8, C13["#2a3448"]); r(6, 19, 20, 6, C13["#8affb0"]); });
+  P("s149_rock", 16, 16, (s, r) => { ell13(s, 8, 10, 6, 4, C13["#a8acbc"]); ell13(s, 7, 9, 3, 2, C13["#d8dce8"]); s(10, 9, C13["#6ad0ff"]); s(5, 11, C13["#c8f0ff"]); });
+  P("moonrock149", 16, 16, (s, r) => { ell13(s, 8, 9, 6, 5, C13["#a8acbc"]); ell13(s, 7, 8, 3, 2, C13["#e0e4f0"]); s(10, 8, C13["#6ad0ff"]); s(5, 11, C13["#c8f0ff"]); s(9, 11, C13["#8a8e9e"]); });
+  P("s149_sign", 16, 20, (s, r) => { r(7, 8, 2, 12, C13["#7a5232"]); r(1, 1, 14, 9, C13["#f2e2b8"]); r(1, 1, 14, 1, C13["#fff6d8"]); r(3, 4, 10, 1, C13["#7a5232"]); r(3, 6, 7, 1, C13["#7a5232"]); });
+  // 別荘（段階ごと）
+  P("s149_v1", 32, 30, (s, r) => { r(3, 14, 26, 16, C13["#c89a5a"]); for (let y = 16; y < 30; y += 3) r(3, y, 26, 1, C13["#a07a42"]); for (let y = 0; y < 13; y++) r(16 - y - 2, 2 + y, (y + 2) * 2, 1, C13[y % 3 ? "#e8d48a" : "#c8b060"]); r(13, 21, 6, 9, C13["#6a4a2a"]); r(6, 18, 5, 4, C13["#aee6ff"]); });
+  P("s149_v2", 48, 34, (s, r) => { r(2, 14, 44, 20, C13["#f2e8d8"]); r(2, 14, 44, 2, C13["#ffffff"]); for (let y = 0; y < 13; y++) r(24 - y * 2 - 2, 1 + y, y * 4 + 4, 1, C13[y % 2 ? "#3a8ab8" : "#4a9ac8"]); r(20, 22, 8, 12, C13["#8a5a32"]); for (const x of [6, 34]) { r(x, 19, 8, 6, C13["#aee6ff"]); r(x, 19, 8, 1, C13["#ffffff"]); } r(2, 30, 44, 4, C13["#d8c8a8"]); });
+  P("s149_v3", 48, 40, (s, r) => { r(0, 16, 48, 24, C13["#ffffff"]); r(0, 16, 48, 2, C13["#f0f4f8"]); r(0, 10, 48, 6, C13["#e8d4a8"]); r(0, 10, 48, 1, C13["#fff0c8"]); r(4, 20, 40, 10, C13["#aee6ff"]); for (let x = 4; x < 44; x += 8) r(x, 20, 1, 10, C13["#ffffff"]); r(20, 30, 8, 10, C13["#c89a5a"]); r(0, 36, 48, 4, C13["#6ad0e8"]); r(2, 37, 44, 2, C13["#aef0ff"]); });
+  P("s149_v4", 64, 44, (s, r) => { for (let x = 0; x < 64; x += 6) r(x + 2, 30, 2, 14, C13["#8a6a42"]); r(0, 28, 64, 4, C13["#c8a070"]); r(4, 12, 56, 16, C13["#ffffff"]); r(2, 6, 60, 7, C13["#d8c09a"]); for (let y = 0; y < 6; y++) r(30 - y * 5, y, y * 10 + 4, 1, C13["#e8d4a8"]); r(8, 16, 48, 8, C13["#aee6ff"]); for (let x = 8; x < 56; x += 8) r(x, 16, 1, 8, C13["#ffffff"]); r(28, 18, 8, 10, C13["#c89a5a"]); r(0, 40, 64, 4, C13["#3a9ad8"]); });
+  P("s149_tower", 16, 42, (s, r) => { r(3, 10, 2, 32, C13["#8a6a42"]); r(11, 10, 2, 32, C13["#8a6a42"]); for (let y = 14; y < 42; y += 6) r(3, y, 10, 1, C13["#a08458"]); r(1, 6, 14, 5, C13["#c89a5a"]); r(1, 0, 14, 6, C13["#e8d48a"]); r(6, 1, 3, 3, C13["#ff5a5a"]); });
+  // ドッグラン
+  P("s149_ballbox", 16, 16, (s, r) => { r(2, 6, 12, 10, C13["#c89a5a"]); r(2, 6, 12, 2, C13["#e8c48a"]); for (const [x, c] of [[4, "#ff5a5a"], [8, "#ffd24a"], [11, "#5aa0ff"]]) ell13(s, x, 5, 2, 2, C13[c]); });
+  P("s149_tap", 16, 24, (s, r) => { r(6, 6, 4, 14, C13["#9aa4b8"]); r(4, 4, 8, 3, C13["#c8ccd8"]); r(2, 18, 12, 6, C13["#8a8a96"]); r(3, 19, 10, 3, C13["#6ad0ff"]); });
+  P("s149_hoop", 16, 20, (s, r) => { r(1, 8, 2, 12, C13["#e84a4a"]); r(13, 8, 2, 12, C13["#e84a4a"]); r(1, 8, 14, 2, C13["#ffd24a"]); });
+  P("s149_stand", 32, 28, (s, r) => { r(0, 12, 32, 16, C13["#e8c48a"]); r(0, 4, 32, 9, C13["#ff8ab0"]); for (let x = 0; x < 32; x += 8) r(x, 4, 4, 9, C13["#fff6f0"]); r(10, 16, 12, 6, C13["#8a5a32"]); ell13(s, 16, 19, 3, 2, C13["#f2d8a0"]); });
+}
+// 地面のタイル
+{
+  const _it = intTile;
+  intTile = function (name) {
+    if (!/^@(sc|scl|moon\d|crater|space|drf|drg)$/.test(name)) return _it.apply(this, arguments);
+    if (intCache.has(name)) return intCache.get(name);
+    const c = document.createElement("canvas"); c.width = c.height = 16; const x = c.getContext("2d");
+    const R = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
+    if (name === "@sc") { R("#b8bcc4", 0, 0, 16, 16); R("#a8acb4", 0, 0, 16, 1); R("#a8acb4", 0, 0, 1, 16); R("#c8ccd4", 5, 6, 2, 1); R("#a0a4ac", 11, 11, 2, 1); }
+    if (name === "@scl") { R("#9aa0aa", 0, 0, 16, 16); R("#ffd24a", 0, 7, 16, 2); R("#8a909a", 0, 0, 16, 1); }
+    if (/^@moon/.test(name)) { const k = +name.slice(5); R("#c4c6cc", 0, 0, 16, 16); R("#b4b6bc", k * 4, 3 + k * 3, 3, 2); R("#d4d6dc", 10 - k * 3, 11, 2, 1); R("#aeb0b8", 2 + k * 5, 13 - k * 2, 2, 2); }
+    if (name === "@crater") { R("#c4c6cc", 0, 0, 16, 16); R("#9a9ca4", 2, 4, 12, 9); R("#aeb0b8", 3, 5, 10, 7); R("#8a8c94", 3, 5, 10, 2); R("#dcdee4", 2, 13, 12, 1); }
+    if (name === "@space") { R("#0a0c1e", 0, 0, 16, 16); for (const [a, b] of [[3, 2], [11, 5], [7, 11], [14, 13], [1, 9]]) R("#ffffff", a, b, 1, 1); R("#8ab0ff", 9, 1, 1, 1); }
+    if (name === "@drf") { R("#6aa84a", 0, 0, 16, 16); R("#8a5a32", 0, 6, 16, 2); R("#8a5a32", 0, 11, 16, 2); for (const a of [1, 8]) R("#a07040", a, 3, 3, 12); R("#c89060", 1, 3, 3, 1); R("#c89060", 8, 3, 3, 1); }
+    if (name === "@drg") { R("#7ac05a", 0, 0, 16, 16); R("#8ad06a", 3, 4, 2, 1); R("#6aa84a", 10, 9, 2, 1); R("#8ad06a", 12, 2, 1, 2); R("#6aa84a", 5, 13, 1, 2); }
+    intCache.set(name, c); return c;
+  };
+}
+
+// ---------- 月の魚・月の石・家具 ----------
+const FISH149 = [
+  { n: "月のウサギウオ", w: 10, p: 5000, spr: fishSpr17("#e8e8f4", "#ffffff", "#ffb0c8", (s, r) => { r(4, 3, 1, 3, C17("#ffd0e0")); r(6, 3, 1, 3, C17("#ffd0e0")); }) },
+  { n: "静かの海のクラゲ", w: 6, p: 12000, spr: (s, r) => { r(4, 4, 8, 5, C17("#c8b8ff")); r(5, 3, 6, 1, C17("#e8dcff")); for (const x of [5, 7, 9, 11]) r(x, 9, 1, 4 + (x % 3), C17("#a898e8")); s(6, 6, C17("#ffffff")); } },
+  { n: "かぐやエンゼル", w: 2, p: 50000, spr: fishSpr17("#ffe68a", "#fff6d0", "#ffb84a", (s, r) => { r(7, 4, 2, 8, C17("#ffffff")); s(10, 6, C17("#ff8ab0")); }) },
+];
+for (const f of FISH149) { addSpr17("fish_" + f.n, f.spr); FISH6.push({ n: f.n, at: "moon", w: f.w, p: f.p }); ITEMS["fish_" + f.n] = { name: f.n, icon: "fish_" + f.n, price: f.p, fish: true, food: 10 }; }
+{
+  const _pf = pickFish; pickFish = function (at) { if (map && map.townId === "moon149") at = "moon"; return _pf.call(this, at); };
+  const _fh = fishHint; fishHint = f => f && f.at === "moon" ? "月面の泉（宇宙センターからロケットで）" : _fh(f);
+}
+ITEMS.moonrock149 = { name: "月の石", icon: "moonrock149", price: 3000 };
+// 月と別荘の家具（値段はお店で決める。ITEMS の price は売るときの値段なので、低くしておく）
+const FURN149 = {
+  moonlamp149: { name: "月の石のランプ", w: 1, h: 1, oy: -8, ih: 24, spr: (s, r) => { r(6, 16, 4, 8, C13["#8a8a96"]); r(3, 22, 10, 2, C13["#6a6a76"]); ell13(s, 8, 9, 6, 6, C13["#e8ecff"]); ell13(s, 7, 8, 3, 3, C13["#ffffff"]); s(10, 11, C13["#aee6ff"]); } },
+  globe149: { name: "地球のテラリウム", w: 1, h: 1, oy: -10, ih: 26, spr: (s, r) => { r(3, 20, 10, 6, C13["#8a6a42"]); ell13(s, 8, 11, 7, 8, C13["#d8f0ff"]); ell13(s, 8, 12, 4, 4, C13["#3a7ad8"]); s(7, 11, C13["#5aba6a"]); s(9, 13, C13["#5aba6a"]); } },
+  moonbed149: { name: "月面のベッド", w: 2, h: 2, oy: -4, ih: 36, spr: (s, r) => { r(1, 8, 30, 26, C13["#c8ccd8"]); r(1, 8, 30, 2, C13["#eef0f6"]); r(3, 12, 26, 8, C13["#f4f6fa"]); r(3, 20, 26, 12, C13["#4a5aa8"]); for (const [a, b] of [[6, 23], [14, 27], [22, 24], [26, 29], [10, 29]]) s(a, b, C13["#ffffff"]); ell13(s, 24, 4, 5, 4, C13["#fff0a0"]); } },
+  rocket149: { name: "ロケットの模型", w: 1, h: 1, oy: -12, ih: 28, spr: (s, r) => { r(6, 4, 4, 18, C13["#f4f6fa"]); r(7, 0, 2, 4, C13["#e84a4a"]); r(3, 16, 3, 6, C13["#e84a4a"]); r(10, 16, 3, 6, C13["#e84a4a"]); s(7, 8, C13["#6ad0ff"]); r(4, 24, 8, 4, C13["#5a5a66"]); } },
+  capsule149: { name: "宇宙カプセル", w: 2, h: 2, oy: -4, ih: 36, spr: (s, r) => { ell13(s, 16, 18, 14, 14, C13["#e8ecf4"]); ell13(s, 16, 15, 9, 8, C13["#aee6ff"]); ell13(s, 13, 12, 3, 2, C13["#ffffff"]); r(4, 30, 24, 4, C13["#6a7080"]); } },
+  mars149: { name: "火星儀", w: 1, h: 1, oy: -10, ih: 26, spr: (s, r) => { r(3, 20, 10, 6, C13["#5a5a66"]); ell13(s, 8, 11, 6, 6, C13["#d8603a"]); ell13(s, 6, 9, 2, 2, C13["#f0905a"]); s(10, 13, C13["#a8402a"]); } },
+  parasol149: { name: "ビーチパラソルとチェア", w: 2, h: 1, oy: -14, ih: 30, spr: (s, r) => { r(15, 6, 2, 22, C13["#e8e8e8"]); for (let y = 0; y < 7; y++) r(16 - (y * 2 + 2), y, (y * 2 + 2) * 2, 1, C13[y % 2 ? "#ff6a6a" : "#ffffff"]); r(2, 22, 12, 3, C13["#5ab0e8"]); r(2, 25, 2, 4, C13["#c8c8c8"]); r(12, 25, 2, 4, C13["#c8c8c8"]); } },
+  boat149: { name: "白いヨットの模型", w: 1, h: 1, oy: -12, ih: 28, spr: (s, r) => { r(7, 2, 1, 18, C13["#8a6a42"]); for (let y = 0; y < 14; y++) r(8, 3 + y, Math.ceil(y * .5) + 1, 1, C13["#ffffff"]); r(2, 20, 12, 3, C13["#3a7ad8"]); r(3, 23, 10, 2, C13["#2a5ab0"]); } },
+  scope149: { name: "展望台の望遠鏡", w: 1, h: 1, oy: -10, ih: 26, spr: (s, r) => { r(7, 12, 2, 12, C13["#5a5a66"]); r(3, 22, 10, 2, C13["#4a4a56"]); r(2, 6, 12, 5, C13["#c8a050"]); r(1, 6, 2, 5, C13["#ffe68a"]); } },
+};
+for (const [k, f] of Object.entries(FURN149)) {
+  const img = "s149f_" + k; IMG[img] = pix13(f.w * 16, f.ih, f.spr); ASSETS[img] = IMG[img].toDataURL();
+  FURN[k] = { name: f.name, w: f.w, h: f.h, oy: f.oy, price: 5000, img };
+  ITEMS["f_" + k] = { name: f.name, icon: img, furn: k, price: 5000 };
+}
+{ const _h = F7.hideFurn; F7.hideFurn = k => k in FURN149 || _h(k); }
+
+// ---------- 富豪のオーラ ----------
+const RAURA149 = {
+  a: { name: "黄金の雨のオーラ", item: "aura_rain149", how: "rich", cost: 30 * KEI149, cols: ["#fff0a0", "#ffd24a", "#f2a830", "#ffffff"],
+    draw(t, cx, cy) { for (let i = 0; i < 10; i++) { const k = fr142(t * .7 + i * .137), x = cx - 13 + (i * 29 % 27) + Math.sin(t * 2 + i) * 1.5, y = cy - 16 + k * 30; px142(x, y, this.cols[i % 4], Math.sin(k * Math.PI), i % 3 ? 1 : 2, 2); } } },
+  b: { name: "札束の竜巻のオーラ", item: "aura_bills149", how: "rich", cost: 100 * KEI149, cols: ["#7ac06a", "#a8e090", "#e8f6d8", "#ffd24a"],
+    draw(t, cx, cy) { for (let i = 0; i < 8; i++) { const a = t * 3.2 + i * .785, h = ((t * .6 + i / 8) % 1), r = 4 + h * 9, x = cx + Math.cos(a) * r, y = cy + 10 - h * 24; px142(x - 1, y, this.cols[i % 3], Math.sin(h * Math.PI), 3, 2); if (i % 3 === 0) px142(x, y, this.cols[3], Math.sin(h * Math.PI) * .8, 1, 1); } } },
+  c: { name: "星雲のオーラ", item: "aura_nebula149", how: "rich", cost: GAI149, cols: ["#b88aff", "#ff8ad8", "#8ac8ff", "#ffffff"],
+    draw(t, cx, cy) { for (let i = 0; i < 14; i++) { const a = i * .449 + t * .35, r = 6 + (i % 5) * 2.2 + Math.sin(t + i) * 1.2, x = cx + Math.cos(a) * r * 1.3, y = cy + Math.sin(a) * r * .8; px142(x, y, this.cols[i % 4], .25 + .35 * (1 + Math.sin(t * 2 + i)) / 2, i % 4 === 3 ? 1 : 2, i % 4 === 3 ? 1 : 2); } } },
+  d: { name: "銀河のオーラ", item: "aura_galaxy149", how: "rich", cost: 5 * GAI149, moon: true, cols: ["#ffffff", "#fff0a0", "#8ab0ff", "#e0b8ff", "#6ad0ff"],
+    draw(t, cx, cy) { for (let arm = 0; arm < 2; arm++) for (let i = 0; i < 9; i++) { const a = t * 1.2 + arm * Math.PI + i * .42, r = 2 + i * 1.6, x = cx + Math.cos(a) * r * 1.4, y = cy + 2 + Math.sin(a) * r * .55; px142(x, y, this.cols[(i + arm) % 5], 1 - i / 11, i < 3 ? 2 : 1, 1); } px142(cx - 1, cy + 1, "#fff6d0", .9, 3, 2); } },
+};
+Object.assign(AURA139, RAURA149);
+for (const [k, a] of Object.entries(RAURA149)) {
+  const key = "s139_aura_" + k;
+  IMG[key] = pix13(16, 16, (s, r) => { const c = a.cols.map(h => C13[h]); for (let i = 0; i < 12; i++) { const t = i / 12 * 6.283, x = Math.round(8 + Math.cos(t) * 5), y = Math.round(8 + Math.sin(t) * 5); s(x, y, c[i % c.length]); } r(7, 7, 2, 2, c[0]); });
+  ASSETS[key] = IMG[key].toDataURL();
+}
+// 富豪の称号（1回払い・見た目と名誉だけ）
+const RTITLE149 = [["十京長者", 10 * KEI149], ["百京の主", 100 * KEI149], ["一垓の大富豪", GAI149], ["十垓の帝王", 10 * GAI149], ["宇宙の大富豪", 3 * GAI149, true]];
+
+// ---------- 宇宙開発の画面 ----------
+const spOk149 = () => F8.connected && !WATCH88;
+function openSpace149() { F149.msg = ""; openModal("宇宙開発", "dark", () => renderSpace149()); send149({ type: "space", a: "look" }); }
+F149.open = openSpace149;
+function renderSpace149() {
+  const body = $("mbody"); if (!body || $("mtitle").textContent !== "宇宙開発") return;
+  const st = F149.sp, lv = spLv149();
+  const fund = st ? Number(st.fund || 0) : 0, goal = st && st.goal ? Number(st.goal) : 0, stage = st && st.stage ? Number(st.stage) : 0, prevGoal = goal - stage;
+  const pc = goal > 0 ? Math.max(0, Math.min(100, (fund - prevGoal) / stage * 100)) : 0;
+  const my = st && st.my != null ? Number(st.my) : 0, nextMs = MS149.find(m => my < m[0]);
+  const steps = SPACE149.slice(0, Math.max(6, lv + 2)).map((n, i) => `<span class="chip" style="pointer-events:none;${i < lv ? "background:#3a7a5a;color:#fff" : i === lv ? "background:#c8a040;color:#2a2010" : ""}">${i < lv ? "✓ " : ""}${esc(stName149(i))}</span>`).join(" ");
+  body.innerHTML = `<p class="mtext">村のみんなで寄付して、ロケットを月へ。月に着いたら、宇宙センターのロケットで<b>月面</b>へ行けるよ。その先は火星、木星……と、どこまでも続く。</p>
+    <div class="row" style="flex-wrap:wrap;gap:4px">${steps}</div>
+    ${st ? `<h3 class="lbl">いま：「${esc(stName149(lv))}」をめざしている</h3>
+    <div style="background:#1a2030;border-radius:6px;height:16px;overflow:hidden;margin:4px 0"><div style="height:100%;width:${pc.toFixed(1)}%;background:linear-gradient(90deg,#6ad0ff,#ffd24a)"></div></div>
+    <div class="stat"><span>この段階</span><b>${G149(Math.max(0, fund - prevGoal) * CHO149)} / ${G149(stage * CHO149)}</b><span>寄付した人（この段階）</span><b>${st.dn || 0} / ${st.need || 3} 人${(st.dn || 0) >= (st.need || 3) ? " ✓" : ""}</b><span>村のぜんぶの寄付</span><b>${G149(fund * CHO149)}</b><span>あなたの寄付</span><b>${G149(my * CHO149)}</b></div>
+    <p class="mtext small">段階は、額がたまって、<b>その段階のあいだに3人以上</b>が寄付すると進むよ（ひとりでは月に行けない）。${nextMs ? `つぎの節目：あなたの寄付が ${nextMs[2]} になると、称号「${nextMs[1]}」。` : "節目の称号は、ぜんぶそろった！"}</p>
+    ${F149.msg ? `<p class="mtext"><b>${esc(F149.msg)}</b></p>` : ""}
+    ${spOk149() ? `<h3 class="lbl">寄付する（所持金 ${G149(world.money)}）</h3>
+      <div class="row" style="flex-wrap:wrap;gap:4px">${[[1, "1京"], [10, "10京"], [100, "100京"], [10000, "1垓"], [100000, "10垓"]].map(([k, n]) => `<button class="chip" type="button" data-sp149="${k}" ${world.money < k * KEI149 || F149.wait ? "disabled" : ""}>${n}</button>`).join("")}</div>
+      <div class="row"><input id="sp149n" type="number" min="1" max="100000" step="1" inputmode="numeric" placeholder="京の数（1〜100,000）" style="flex:1;min-width:0"><span class="mtext">京</span><button class="btn" type="button" id="sp149go" ${F149.wait ? "disabled" : ""}>寄付する</button></div>
+      <p class="mtext small">1回に1京から10垓（100,000京）まで。何回でも寄付できるよ。</p>` : `<p class="mtext">寄付は、オンラインのときだけできるよ。</p>`}
+    ${st.top && st.top.length ? `<h3 class="lbl">寄付の番付（${st.k || st.top.length}人）</h3><div class="list">${st.top.map((x, i) => `<div class="li"><span class="nm">${i + 1}. ${esc(x.n)}<span class="sub2">${G149(Number(x.t) * CHO149)}</span></span></div>`).join("")}</div>` : ""}`
+    : `<p class="mtext">${spOk149() ? "読みこみ中…" : "宇宙開発のようすは、オンラインのときに見られるよ。"}</p>`}
+    <div class="row2"><button class="btn light" type="button" id="sp149bus" ${map === village || (map && map.isTown) || (port && map === port) ? "" : "disabled"}>宇宙センターへ（バス ${fmt(10000)}）</button><button class="btn light" type="button" id="sp149c">とじる</button></div>`;
+  const give = k => {
+    k = Math.floor(+k || 0); if (k < 1 || k > 100000) { F149.msg = "1〜100,000京で入れてね"; renderSpace149(); return; }
+    if (world.money < k * KEI149) { F149.msg = "所持金が足りないよ"; renderSpace149(); return; }
+    F149.wait = rid149(); F149.waitAt = Date.now(); F149.waitT = k * 10000; F149.msg = "";
+    if (!send149({ type: "space", a: "give", t: k * 10000, rid: F149.wait })) { F149.wait = ""; F149.msg = "いまは送れなかった"; }
+    renderSpace149();
+  };
+  body.querySelectorAll("[data-sp149]").forEach(b => b.onclick = () => give(b.dataset.sp149));
+  const go = body.querySelector("#sp149go"); if (go) go.onclick = () => give(body.querySelector("#sp149n").value);
+  body.querySelector("#sp149bus").onclick = () => { if (world.money < 10000) { toast(null, "運賃が足りないよ"); return; } closeModal(); goTo13("space149"); };
+  body.querySelector("#sp149c").onclick = () => closeModal();
+}
+setInterval(() => { if (F149.wait && Date.now() - F149.waitAt > 10000) { F149.wait = ""; F149.msg = "返事が来なかった。もう一度ためしてね"; if (modalOpen) renderSpace149(); } if (F149.lwait && Date.now() - F149.lwaitAt > 10000) { F149.lwait = ""; F149.lmsg = "返事が来なかった。もう一度ためしてね"; if (modalOpen) renderRich149(); } }, 2000);
+
+// ---------- 大富豪の画面（称号・オーラ・宝くじ・別荘） ----------
+function openRich149(tab) {
+  if (tab) F149.tab = tab; F149.lmsg = "";
+  openModal("大富豪", "dark", () => renderRich149());
+  if (F149.tab === "lot") send149({ type: "lot", a: "look" });
+}
+F149.rich = openRich149;
+function renderRich149() {
+  const body = $("mbody"); if (!body || $("mtitle").textContent !== "大富豪") return;
+  const W = w149(), tab = F149.tab, lv = spLv149();
+  const tabs = [["title", "称号"], ["aura", "オーラ"], ["lot", "宝くじ"], ["villa", "別荘"]].map(([k, n]) => `<button class="chip" type="button" data-rt149="${k}" aria-pressed="${tab === k}">${n}</button>`).join("");
+  let h = `<div class="mtabs">${tabs}</div><p class="mtext small">所持金 <b>${G149(world.money)}</b>（${fmt(world.money)}）</p>`;
+  if (tab === "title") {
+    h += `<p class="mtext">見た目と名誉だけの、大富豪の称号。買うと、称号の一覧からえらべるよ（ほかの人にも見える）。</p><div class="list">${RTITLE149.map(([n, c, moon]) => {
+      const have = !!W.t[n], lock = moon && lv < 3;
+      return `<div class="li"><span class="nm">「${esc(n)}」<span class="sub2">${G149(c)}${lock ? "・村が月に着いたら買える" : ""}${have ? "・持っている" : ""}</span></span><span class="acts">${have ? "✓" : `<button class="btn" type="button" data-rtb149="${esc(n)}" ${world.money < c || lock ? "disabled" : ""}>買う</button>`}</span></div>`;
+    }).join("")}</div>`;
+  } else if (tab === "aura") {
+    const M = m139();
+    h += `<p class="mtext">大富豪のオーラ。買ったら着せ替えの「小物」のオーラの段で、つけ外しできるよ。</p><div class="list">${Object.entries(RAURA149).map(([k, a]) => {
+      const have = M.aura.includes(k), lock = a.moon && lv < 3;
+      return `<div class="li"><img src="${ASSETS["s139_aura_" + k]}" alt=""><span class="nm">${esc(a.name)}<span class="sub2">${G149(a.cost)}${lock ? "・村が月に着いたら買える" : ""}${have ? "・持っている" : ""}</span></span><span class="acts">${have ? `<button class="btn light" type="button" data-raw149="${k}">${cfg.aura === k ? "つけている" : "つける"}</button>` : `<button class="btn" type="button" data-rab149="${k}" ${world.money < a.cost || lock ? "disabled" : ""}>買う</button>`}</span></div>`;
+    }).join("")}</div>`;
+  } else if (tab === "lot") {
+    const L = F149.lot, dt = L && L.draw ? new Date(L.draw) : null;
+    h += `<p class="mtext"><b>村ジャンボ宝くじ</b>：1枚 ${G149(LOTP149)}。毎週<b>日曜の21時</b>に抽選。売り上げの3割が1等（1本）、1%ずつが2等（10本）。のこりは消えるよ。1等は「1億枚に1本」なので、出ない週は次の週に持ちこして育っていく。</p>`;
+    if (!spOk149()) h += `<p class="mtext">宝くじは、オンラインのときだけ買えるよ。</p>`;
+    else if (!L) h += `<p class="mtext">読みこみ中…</p>`;
+    else {
+      h += `<div class="stat"><span>つぎの抽選</span><b>${dt ? `${dt.getMonth() + 1}/${dt.getDate()} ${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}` : "-"}</b><span>今週の売り上げ</span><b>${(L.sold || 0).toLocaleString("ja-JP")} 枚（${G149(Number(L.sold || 0) * LOTP149)}）</b><span>1等（予想）</span><b>${G149(Number(L.pot1 || 0))}</b><span>2等（1本）</span><b>${G149(Number(L.pot2 || 0))}</b><span>あなたの今週の枚数</span><b>${(L.mine || 0).toLocaleString("ja-JP")} 枚</b></div>
+        ${F149.lmsg ? `<p class="mtext"><b>${esc(F149.lmsg)}</b></p>` : ""}
+        <div class="row" style="flex-wrap:wrap;gap:4px">${[[1, "1枚"], [100, "100枚"], [10000, "1万枚"], [1000000, "100万枚"], [100000000, "1億枚"]].map(([n, l]) => `<button class="chip" type="button" data-lb149="${n}" ${world.money < n * LOTP149 || F149.lwait ? "disabled" : ""}>${l}（${G149(n * LOTP149)}）</button>`).join("")}</div>
+        <div class="row"><input id="lb149n" type="number" min="1" max="100000000" step="1" inputmode="numeric" placeholder="枚数（1回に1億枚まで）" style="flex:1;min-width:0"><button class="btn" type="button" id="lb149go" ${F149.lwait ? "disabled" : ""}>買う</button></div>
+        <p class="mtext small">1週に1人10億枚まで。当せん金は、つないでいなくても次に来たときに届くよ。</p>`;
+      if (L.last && L.last.length) h += `<h3 class="lbl">これまでの抽選</h3><div class="list">${L.last.map(r => `<div class="li"><span class="nm">第${r.id}回（${(r.sold || 0).toLocaleString("ja-JP")}枚）<span class="sub2">${r.w1 ? `1等：${esc(r.w1.n)}さん ${G149(Number(r.w1.g))}` : `1等は出なかった（${G149(Number(r.carryOut || 0))} を持ちこし）`}${r.w2 && r.w2.length ? `・2等 ${r.w2.length}本（${[...new Set(r.w2.map(x => x.n))].map(esc).join("・")}）` : ""}</span></span></div>`).join("")}</div>`;
+    }
+  } else if (tab === "villa") {
+    const v = W.villa, cur = VILLA149[v - 1], nx = VILLA149[v];
+    h += `<p class="mtext">南の島に、自分だけの別荘を建てられる。中は家と同じように模様替えができるよ。島へは、みなと町の桟橋の先の船で。</p>
+      <div class="stat"><span>いまの別荘</span><b>${cur ? esc(cur[0]) : "まだない"}</b>${cur ? `<span>広さ</span><b>${villaRoom149().w}×${villaRoom149().h}</b>` : ""}</div>
+      ${nx ? `<div class="list"><div class="li"><span class="nm">${v ? "建てかえる" : "建てる"}：${esc(nx[0])}<span class="sub2">${G149(nx[1])}・広さ ${nx[2]}×${nx[3]}</span></span><span class="acts"><button class="btn" type="button" id="vb149" ${world.money < nx[1] ? "disabled" : ""}>${v ? "建てかえる" : "建てる"}</button></span></div></div>` : `<p class="mtext">いちばん大きな別荘だよ。</p>`}
+      ${v ? `<h3 class="lbl">設備（1つ ${G149(GAI149)}）</h3><div class="list">${Object.entries(VX149).map(([k, [n, d, f]]) => `<div class="li"><img src="${ASSETS[FURN[f].img]}" alt=""><span class="nm">${esc(n)}<span class="sub2">${esc(d)}${W.vx[k] ? "・ある" : ""}</span></span><span class="acts">${W.vx[k] ? "✓" : `<button class="btn" type="button" data-vx149="${k}" ${world.money < GAI149 ? "disabled" : ""}>つける</button>`}</span></div>`).join("")}</div>` : ""}`;
+  }
+  h += `<div class="row2"><button class="btn light" type="button" id="rc149">とじる</button></div>`;
+  body.innerHTML = h;
+  body.querySelectorAll("[data-rt149]").forEach(b => b.onclick = () => { F149.tab = b.dataset.rt149; F149.lmsg = ""; if (F149.tab === "lot") send149({ type: "lot", a: "look" }); renderRich149(); });
+  body.querySelectorAll("[data-rtb149]").forEach(b => b.onclick = () => {
+    const T = RTITLE149.find(x => x[0] === b.dataset.rtb149); if (!T || W.t[T[0]] || world.money < T[1] || (T[2] && spLv149() < 3)) return;
+    addMoney(-T[1]); W.t[T[0]] = Date.now(); world.stats.rich149 = (world.stats.rich149 || 0) + 1; saveWorld(); try { checkTitles42(); } catch (e) { } se13("win");
+    F7.notify(`称号「${T[0]}」を手に入れた！ 村タブの称号からえらべるよ`, null); try { cloudPush14(true); } catch (e) { } renderRich149();
+  });
+  body.querySelectorAll("[data-rab149]").forEach(b => b.onclick = () => {
+    const k = b.dataset.rab149, A = RAURA149[k], M = m139(); if (!A || M.aura.includes(k) || world.money < A.cost || (A.moon && spLv149() < 3)) return;
+    addMoney(-A.cost); M.aura.push(k); cfg.aura = k; M.on = k; player.cfg = cfg; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon();
+    world.stats.rich149 = (world.stats.rich149 || 0) + 1; saveWorld(); se13("win"); toast(null, `${A.name}を手に入れた！`); try { cloudPush14(true); } catch (e) { } renderRich149();
+  });
+  body.querySelectorAll("[data-raw149]").forEach(b => b.onclick = () => { const k = b.dataset.raw149, M = m139(); if (cfg.aura === k) { delete cfg.aura; M.on = ""; } else { cfg.aura = k; M.on = k; } player.cfg = cfg; changed(); if (typeof sendCfgSoon === "function") sendCfgSoon(); saveWorld(); renderRich149(); });
+  const buy = n => {
+    n = Math.floor(+n || 0); if (n < 1 || n > 100000000) { F149.lmsg = "1〜1億枚で入れてね"; renderRich149(); return; }
+    if (world.money < n * LOTP149) { F149.lmsg = "所持金が足りないよ"; renderRich149(); return; }
+    F149.lwait = rid149(); F149.lwaitAt = Date.now(); F149.lwaitN = n; F149.lmsg = "";
+    if (!send149({ type: "lot", a: "buy", n, rid: F149.lwait })) { F149.lwait = ""; F149.lmsg = "いまは送れなかった"; }
+    renderRich149();
+  };
+  body.querySelectorAll("[data-lb149]").forEach(b => b.onclick = () => buy(b.dataset.lb149));
+  const lg = body.querySelector("#lb149go"); if (lg) lg.onclick = () => buy(body.querySelector("#lb149n").value);
+  const vb = body.querySelector("#vb149"); if (vb) vb.onclick = () => buildVilla149();
+  body.querySelectorAll("[data-vx149]").forEach(b => b.onclick = () => buyVx149(b.dataset.vx149));
+  body.querySelector("#rc149").onclick = () => closeModal();
+}
+
+// ---------- 宇宙と宝くじのメッセージ ----------
+function lotPay149(list) {
+  const W = w149(); const got = [];
+  for (const p of Array.isArray(list) ? list : []) {
+    if (!p || !p.pid) continue; got.push(p.pid);
+    if (W.lp[p.pid]) continue; W.lp[p.pid] = Date.now();
+    const g = Number(p.g) || 0; if (g > 0) addMoney(g);
+    if (p.why === "win1") { W.lotWin++; se13("win"); F7.notify(`村ジャンボ宝くじ、1等が当たった！！ ${G149(g)}`, null); }
+    else toast("coin", `宝くじの2等が当たった！ +${G149(g)}`);
+  }
+  const ks = Object.keys(W.lp); if (ks.length > 200) ks.sort((a, b) => W.lp[a] - W.lp[b]).slice(0, ks.length - 200).forEach(k => delete W.lp[k]);
+  if (got.length) { saveWorld(); try { checkTitles42(); } catch (e) { } try { cloudPush14(true); } catch (e) { } send149({ type: "lot", a: "ack", pids: got }); }
+}
+{
+  const _h = handle8;
+  handle8 = m => {
+    if (m && m.type === "space") {
+      if (m.st) { F149.sp = m.st; const my = Number(m.st.my); if (m.st.my != null && my > w149().best) { w149().best = my; saveWorld(); try { checkTitles42(); } catch (e) { } } }
+      if (m.ok === "give" && m.rid === F149.wait) {
+        const t = +m.t || F149.waitT; F149.wait = ""; addMoney(-t * CHO149); world.stats.space149 = (world.stats.space149 || 0) + 1; saveWorld();
+        F149.msg = `${G149(t * CHO149)}を寄付した。ありがとう！`; try { cloudPush14(true); } catch (e) { }
+      }
+      if (m.ng && (!m.rid || m.rid === F149.wait)) { F149.wait = ""; F149.msg = String(m.ng); }
+      if (m.ev === "give") toast(null, `${m.n}さんが、宇宙開発に ${G149((+m.t || 0) * CHO149)} 寄付した`);
+      if (m.ev === "up") { se13("win"); F7.notify(`宇宙開発が進んだ！「${stName149((+m.lv || 1) - 1)}」ができあがった${+m.lv >= 3 ? "。宇宙センターのロケットで月へ行けるよ" : ""}`, null); refreshSpace149(); }
+      if (modalOpen) renderSpace149();
+      return;
+    }
+    if (m && m.type === "lot") {
+      if (m.st) F149.lot = m.st;
+      if (m.ok === "buy" && m.rid === F149.lwait) {
+        const n = +m.n || F149.lwaitN; F149.lwait = ""; addMoney(-n * LOTP149); w149().lotN += n; world.stats.lot149 = (world.stats.lot149 || 0) + n; saveWorld();
+        F149.lmsg = `${n.toLocaleString("ja-JP")}枚買った。日曜の21時をおたのしみに！`; try { checkTitles42(); } catch (e) { } try { cloudPush14(true); } catch (e) { }
+      }
+      if (m.ng && (!m.rid || m.rid === F149.lwait)) { F149.lwait = ""; F149.lmsg = String(m.ng); }
+      if (m.ev === "pay") lotPay149(m.pay);
+      if (m.ev === "draw" && m.res) { const r = m.res; F7.notify(`村ジャンボ宝くじ 第${r.id}回の抽選！ ${r.w1 ? `1等は ${r.w1.n}さん（${G149(Number(r.w1.g))}）` : "1等は出なかった（次の週に持ちこし）"}`, null); send149({ type: "lot", a: "look" }); }
+      if (modalOpen) renderRich149();
+      return;
+    }
+    _h(m);
+    if (m && m.type === "welcome") {
+      F149.wait = ""; F149.lwait = "";
+      if (m.space) F149.sp = { ...(F149.sp || {}), lv: +m.space.lv || 0, fund: String(m.space.fund || "0") }; else F149.sp = null;
+      if (m.lot && m.lot.pay) setTimeout(() => lotPay149(m.lot.pay), 4500);
+      setTimeout(() => { send149({ type: "space", a: "look" }); refreshSpace149(); }, 2500);
+    }
+  };
+}
+
+// ---------- 町（宇宙センター・月面・ドッグラン） ----------
+TOWNS13.space149 = { name: "宇宙センター", fare: 10000, desc: "村のみんなの寄付で、ロケットを月へ", shops: [], props: [], people: [], tiles: ["@sc", "@sc", "@sc", "@sc", "@sc"], sky: "city" };
+TOWNS13.moon149 = { name: "月面", fare: 0, desc: "宇宙センターのロケットで", shops: [], props: [], people: [], tiles: ["@moon0", "@moon0", "@moon0", "@moon0", "@moon0"], sky: "city" };
+TOWNS13.dogrun149 = { name: "ドッグラン", fare: 300, desc: "ペットと思いきり遊べる広場", shops: [], props: [], people: [], tiles: ["@drg", "@drg", "@drg", "@drg", "@drg"], sky: "city" };
+DEST13.push(["space149", "宇宙センター", 10000, TOWNS13.space149.desc], ["dogrun149", "ドッグラン", 300, TOWNS13.dogrun149.desc]);
+function townBase149(id, w, h, fill) {
+  const m = blankMap(w, h, TOWNS13[id].name);
+  m.isTown = true; m.townId = id; m.statics = []; m.interact = {}; m.labels = []; m.objs = []; m.doorsT = {}; m.night = false; m.music = "village"; m.glows = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m.ground[y][x] = fill(x, y);
+  m.obj = (img, x, y, tiles, fn, label, oy = 0) => { const im = IMG[img]; const o = { img, x: x * TS, y: (y + 1) * TS - im.height + oy, sortY: (y + 1) * TS - 1 }; m.objs.push(o); (tiles || []).forEach(([a, b]) => { m.base[b][a] = true; if (fn) m.interact[a + "," + b] = fn; }); if (label) m.labels.push({ x: x * TS + im.width / 2, y: (y + 1) * TS - im.height - 4 + oy, text: label }); return o; };
+  return m;
+}
+function busStop149(m) { m.objs.push({ img: "busstop", x: 1 * TS, y: 4 * TS - 8, sortY: 5 * TS }); m.base[4][1] = true; m.interact["1,4"] = () => openBus13(); m.labels.push({ x: 1 * TS + 8, y: 4 * TS - 14, text: "バス停" }); }
+function makeSpace149() {
+  const w = 30, h = 16, m = townBase149("space149", w, h, (x, y) => y < 2 ? "@space" : (y >= 3 && y <= 11 && x >= 16 && x <= 25) ? "@scl" : "@sc");
+  for (let x = 0; x < w; x++) { m.base[0][x] = m.base[1][x] = true; m.base[h - 1][x] = true; } for (let y = 0; y < h; y++) m.base[y][0] = m.base[y][w - 1] = true;
+  busStop149(m);
+  m.obj("s149_desk", 6, 5, [[6, 5], [7, 5]], () => openSpace149(), "宇宙開発の受付");
+  const L = spLv149();
+  m.rk = m.obj("s149_rk" + Math.min(3, L), 17, 10, [[17, 10], [18, 10], [19, 10], [20, 10], [17, 9], [18, 9], [19, 9], [20, 9]], () => rocket149(), "ロケット");
+  m.obj("s149_mon", 10, 10, [[10, 10]], () => openMonument149(), "寄付の記念碑");
+  m.obj("s149_desk", 24, 13, [[24, 13], [25, 13]], () => openRich149("title"), "大富豪のラウンジ");
+  m.labels.push({ x: 15 * TS, y: 2 * TS + 10, text: "こもれび村 宇宙センター" });
+  m.solid = m.base.map(r => r.slice());
+  return m;
+}
+function refreshSpace149() {
+  if (!map || map.townId !== "space149" || !map.rk) return;
+  map.rk.img = "s149_rk" + Math.min(3, spLv149());
+}
+function rocket149() {
+  const L = spLv149();
+  if (L < 3) { toast(null, L === 0 ? "まだ発射台もない。村のみんなで寄付して作ろう" : `ロケットは「${stName149(L)}」の段階。月へ行くのは「月へ出発」ができてから`); openSpace149(); return; }
+  openModal("ロケット", "dark", body => {
+    body.innerHTML = `<p class="mtext">月面行きのロケット。のってみる？（ただで乗れるよ）</p><div class="row2"><button class="btn" type="button" id="rk149go">月へ出発！</button><button class="btn light" type="button" id="rk149c">やめる</button></div>`;
+    body.querySelector("#rk149go").onclick = () => { closeModal(); launch149(); };
+    body.querySelector("#rk149c").onclick = () => closeModal();
+  });
+}
+function launch149() {
+  toast(null, "3……2……1……"); se13("win");
+  setTimeout(() => { port = null; town13 = makeTown13("moon149"); enter(town13, 6, 13, "right"); const W = w149(); W.moon++; world.stats.moon149 = W.moon; saveWorld(); try { checkTitles42(); } catch (e) { } F7.notify(W.moon === 1 ? "月面に着いた！ ふわっと体が軽い（称号）" : "月面に着いた！", null); }, 1400);
+}
+F149.launch = launch149;
+function openMonument149() {
+  const st = F149.sp;
+  openModal("寄付の記念碑", "dark", body => {
+    body.innerHTML = `<p class="mtext">宇宙開発に寄付した人の名前が、ここに刻まれている。</p>${st && st.top && st.top.length ? `<div class="list">${st.top.map((x, i) => `<div class="li"><span class="nm">${i + 1}. ${esc(x.n)}<span class="sub2">${G149(Number(x.t) * CHO149)}</span></span></div>`).join("")}</div>` : `<p class="mtext">${spOk149() ? "まだだれの名前もない。" : "オンラインのときに見られるよ。"}</p>`}<div class="row2"><button class="btn light" type="button" id="mo149">とじる</button></div>`;
+    body.querySelector("#mo149").onclick = () => closeModal();
+  });
+}
+// 月面
+const MOONROCK149 = [[8, 6], [14, 9], [26, 5], [10, 12], [29, 12], [18, 4], [23, 14], [4, 8]];
+const rockDay149 = () => { const d = world.day | 0, out = []; let h = (d * 2654435761) >>> 0; const c = MOONROCK149.slice(); while (out.length < 3 && c.length) { h = (h * 1103515245 + 12345) >>> 0; out.push(c.splice(h % c.length, 1)[0]); } return out; };
+function makeMoon149() {
+  const w = 32, h = 18, m = townBase149("moon149", w, h, (x, y) => y < 3 ? "@space" : "@moon" + ((x * 7 + y * 3) % 3));
+  for (let x = 0; x < w; x++) { m.base[0][x] = m.base[1][x] = m.base[2][x] = true; m.base[h - 1][x] = true; } for (let y = 0; y < h; y++) m.base[y][0] = m.base[y][w - 1] = true;
+  for (const [x, y] of [[12, 7], [20, 12], [5, 4], [27, 8]]) m.ground[y][x] = "@crater";
+  for (let y = 9; y <= 14; y++) for (let x = 19; x <= 26; x++) if (((x - 22.5) / 3.6) ** 2 + ((y - 11.5) / 2.6) ** 2 < 1) { m.ground[y][x] = "water"; m.base[y][x] = true; }
+  m.labels.push({ x: 22.5 * TS, y: 8 * TS + 6, text: "月の泉" });
+  m.objs.push({ img: "s149_earth", x: 24 * TS, y: 2, sortY: -5 });
+  m.obj("s149_rkm", 3, 14, [[3, 14], [4, 14], [3, 13], [4, 13]], () => backFromMoon149(), "ロケット（地球へ）");
+  m.obj("s149_shop", 10, 4, [[10, 4], [11, 4]], () => openMoonShop149(), "月の売店");
+  m.obj("s149_mon", 15, 4, [[15, 4]], () => openMonument149(), "月面の記念碑");
+  if (spLv149() >= 4) m.obj("s149_base", 26, 6, [[26, 6], [27, 6], [28, 6], [29, 6]], () => openMoonBase149(), "月面基地");
+  const done = w149().rk;
+  for (const [x, y] of rockDay149()) { const k = (world.day | 0) + ":" + x + "," + y; if (done[k]) continue; m.obj("s149_rock", x, y, [[x, y]], () => pickRock149(k)); }
+  const c = { ...DEFAULT, skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "オーバーオール", topc: "生成り", bottom: "パンツ", bottomc: "生成り", hat: "なし", shoesc: "白" in SHOEC ? "白" : "黒" };
+  const e = entity(12, 5, c, "宇宙飛行士 ミカ", "staff"); e.home = m; e.dir = "down"; e.talk = () => openMoonShop149(); m.statics.push(e); m.base[5][12] = true; m.interact["12,5"] = () => openMoonShop149();
+  m.solid = m.base.map(r => r.slice());
+  return m;
+}
+function pickRock149(k) {
+  const W = w149(); if (W.rk[k]) return;
+  if (!addItem("moonrock149", 1)) { toast(null, "持ち物がいっぱい"); return; }
+  W.rk[k] = 1; for (const x of Object.keys(W.rk)) if (+x.split(":")[0] < (world.day | 0) - 3) delete W.rk[x];
+  saveWorld(); toast("moonrock149", "月の石をひろった！");
+  const p = [player.x, player.y, player.dir]; town13 = makeTown13("moon149"); map = town13; placeAt(player, p[0], p[1], p[2]);
+}
+function backFromMoon149() {
+  openModal("ロケット", "dark", body => {
+    body.innerHTML = `<p class="mtext">地球（宇宙センター）にもどる？</p><div class="row2"><button class="btn" type="button" id="bm149">もどる</button><button class="btn light" type="button" id="bm149c">まだいる</button></div>`;
+    body.querySelector("#bm149").onclick = () => { closeModal(); town13 = makeTown13("space149"); enter(town13, 21, 11, "down"); toast(null, "宇宙センターにもどってきた"); };
+    body.querySelector("#bm149c").onclick = () => closeModal();
+  });
+}
+const MSHOP149 = [["moonlamp149", 10 * KEI149, 3, 3], ["rocket149", 30 * KEI149, 0, 3], ["globe149", 50 * KEI149, 5, 3], ["moonbed149", 100 * KEI149, 10, 3], ["capsule149", GAI149, 10, 4], ["mars149", 3 * GAI149, 20, 5]];
+function openMoonShop149() {
+  openModal("月の売店", "dark", body => {
+    const lv = spLv149();
+    body.innerHTML = `<p class="mtext">宇宙飛行士ミカ「ようこそ、月へ！ 月の石と交換で、ここでしか買えない家具を売ってるよ」</p><p class="mtext small">所持金 ${G149(world.money)}・月の石 ${count("moonrock149")}個（月面にたまに落ちてる・1日3か所）</p>
+      <div class="list">${MSHOP149.map(([k, g, r, need]) => { const lock = lv < need; return `<div class="li"><img src="${ASSETS[FURN[k].img]}" alt=""><span class="nm">${esc(FURN[k].name)}<span class="sub2">${G149(g)}${r ? `＋月の石${r}` : ""}${lock ? `・「${stName149(need - 1)}」ができたら` : ""}</span></span><span class="acts"><button class="btn" type="button" data-ms149="${k}" ${lock || world.money < g || count("moonrock149") < r ? "disabled" : ""}>買う</button></span></div>`; }).join("")}</div>
+      <div class="row2"><button class="btn light" type="button" id="ms149c">とじる</button></div>`;
+    body.querySelectorAll("[data-ms149]").forEach(b => b.onclick = () => {
+      const S = MSHOP149.find(x => x[0] === b.dataset.ms149); if (!S || spLv149() < S[3] || world.money < S[1] || count("moonrock149") < S[2]) return;
+      if (!addItem("f_" + S[0], 1)) { toast(null, "持ち物がいっぱい"); return; }
+      addMoney(-S[1]); if (S[2]) removeItem("moonrock149", S[2]); world.stats.moonShop149 = (world.stats.moonShop149 || 0) + 1; saveWorld(); se13("win");
+      toast(FURN[S[0]].img, `${FURN[S[0]].name}を買った`); try { cloudPush14(true); } catch (e) { } closeModal(); openMoonShop149();
+    });
+    body.querySelector("#ms149c").onclick = () => closeModal();
+  });
+}
+function openMoonBase149() {
+  const lv = spLv149(), W = w149(); if (!W.base) { W.base = 1; saveWorld(); try { checkTitles42(); } catch (e) { } }
+  openModal("月面基地", "dark", body => {
+    body.innerHTML = `<p class="mtext">村のみんなで作った月面基地。ここから、つぎの星をめざしている。</p>
+      <div class="stat">${SPACE149.slice(4, Math.max(7, lv + 2)).map((n, i) => `<span>${esc(n)}</span><b>${lv > i + 4 ? "到着！" : lv === i + 4 ? "めざしている" : "まだ先"}</b>`).join("")}</div>
+      <div class="row2"><button class="btn" type="button" id="mb149s">宇宙開発のようす</button><button class="btn light" type="button" id="mb149c">とじる</button></div>`;
+    body.querySelector("#mb149s").onclick = () => { closeModal(); openSpace149(); };
+    body.querySelector("#mb149c").onclick = () => closeModal();
+  });
+}
+// 月ではふわっと（体が少し上下する）
+{
+  const _de = drawEnt;
+  drawEnt = function (e) {
+    if (!(map && map.townId === "moon149" && e && (e === player || e.kind === "remote"))) return _de.apply(this, arguments);
+    const t = performance.now() / 1000, dy = Math.round(2 + 2 * Math.sin(t * 2.2 + ((e.rid || 0) % 7)));
+    ctx.save(); ctx.translate(0, -dy); try { return _de.apply(this, arguments); } finally { ctx.restore(); }
+  };
+}
+const _mt149 = makeTown13;
+makeTown13 = function (id) { if (id === "space149") return makeSpace149(); if (id === "moon149") return makeMoon149(); if (id === "dogrun149") return makeDogrun149(); return _mt149.apply(this, arguments); };
+
+// ---------- 南の島の別荘 ----------
+const VILLA149 = [["小屋", 10 * KEI149, 9, 7], ["コテージ", 100 * KEI149, 12, 9], ["ヴィラ", GAI149, 16, 11], ["海の上のヴィラ", 5 * GAI149, 20, 13]];
+const VX149 = { beach: ["プライベートビーチ", "パラソルとチェアがつく・よこに2マス広く", "parasol149"], pier: ["桟橋", "ヨットの模型がつく・よこに2マス広く", "boat149"], tower: ["展望台", "島に展望台が立つ・望遠鏡がつく・よこに2マス広く", "scope149"] };
+const VKEY149 = "villa149";
+function villaRoom149() {
+  const W = w149(), v = VILLA149[Math.max(0, W.villa - 1)], extra = Object.keys(W.vx).filter(k => W.vx[k]).length * 2;
+  if (!world.rooms[VKEY149]) world.rooms[VKEY149] = { w: v[2], h: v[3], wall: "クリーム", floor: "木", storage: [], furn: [{ id: "bed", x: 1, y: 2 }, { id: "window", x: Math.floor(v[2] / 2), y: 1 }] };
+  const R = world.rooms[VKEY149]; R.w = Math.max(R.w, v[2] + extra); R.h = Math.max(R.h, v[3]);
+  return R;
+}
+function buildVilla149() {
+  const W = w149(), nx = VILLA149[W.villa]; if (!nx || world.money < nx[1]) return;
+  addMoney(-nx[1]); W.villa++; villaRoom149(); world.stats.villa149 = W.villa; saveWorld(); se13("win"); try { checkTitles42(); } catch (e) { } try { cloudPush14(true); } catch (e) { }
+  F7.notify(`南の島に「${nx[0]}」が建った！ 島で入れるよ`, null);
+  if (map && map.kind === "isle109") refreshIsle149();
+  if (modalOpen) { if ($("mtitle").textContent === "大富豪") renderRich149(); else { closeModal(); openVilla149(); } }
+}
+function buyVx149(k) {
+  const W = w149(), X = VX149[k]; if (!X || W.vx[k] || !W.villa || world.money < GAI149) return;
+  if (!addItem("f_" + X[2], 1)) { toast(null, "持ち物がいっぱい"); return; }
+  addMoney(-GAI149); W.vx[k] = 1; villaRoom149(); saveWorld(); se13("win"); try { cloudPush14(true); } catch (e) { }
+  toast(FURN[X[2]].img, `別荘に「${X[0]}」をつけた！`); if (map && map.kind === "isle109") refreshIsle149();
+  if (modalOpen) { if ($("mtitle").textContent === "大富豪") renderRich149(); else { closeModal(); openVilla149(); } }
+}
+function openVilla149() {
+  const W = w149(), cur = VILLA149[W.villa - 1], nx = VILLA149[W.villa];
+  openModal(cur ? `${myName()}の別荘` : "別荘の売り地", "", body => {
+    body.innerHTML = `<p class="mtext">${cur ? `「${esc(cur[0])}」。中は家と同じように模様替えができるよ。` : "ここに、自分だけの別荘を建てられる。"}</p>
+      <div class="list">${nx ? `<div class="li"><span class="nm">${W.villa ? "建てかえる" : "建てる"}：${esc(nx[0])}<span class="sub2">${G149(nx[1])}・広さ ${nx[2]}×${nx[3]}</span></span><span class="acts"><button class="btn" type="button" id="ov149b" ${world.money < nx[1] ? "disabled" : ""}>${W.villa ? "建てかえる" : "建てる"}</button></span></div>` : ""}
+      ${W.villa ? Object.entries(VX149).map(([k, [n, d, f]]) => `<div class="li"><img src="${ASSETS[FURN[f].img]}" alt=""><span class="nm">${esc(n)}<span class="sub2">${G149(GAI149)}・${esc(d)}</span></span><span class="acts">${W.vx[k] ? "✓" : `<button class="btn" type="button" data-ovx149="${k}" ${world.money < GAI149 ? "disabled" : ""}>つける</button>`}</span></div>`).join("") : ""}</div>
+      <div class="row2">${W.villa ? `<button class="btn" type="button" id="ov149in">中に入る</button>` : ""}<button class="btn light" type="button" id="ov149c">とじる</button></div>`;
+    const b = body.querySelector("#ov149b"); if (b) b.onclick = () => buildVilla149();
+    body.querySelectorAll("[data-ovx149]").forEach(x => x.onclick = () => buyVx149(x.dataset.ovx149));
+    const i = body.querySelector("#ov149in"); if (i) i.onclick = () => { closeModal(); enterVilla149(); };
+    body.querySelector("#ov149c").onclick = () => closeModal();
+  });
+}
+function enterVilla149() {
+  if (!w149().villa) return;
+  F149.vback = map && map.back109 ? map.back109 : null; villaRoom149();
+  enterRoom(VKEY149, [6, 6]); world.stats.villaIn149 = (world.stats.villaIn149 || 0) + 1; saveWorld();
+  toast(null, `${VILLA149[w149().villa - 1][0]}に入った。模様替えもできるよ`);
+}
+{
+  const _tm = tryMove;
+  tryMove = function (dir) {
+    if (map === room && roomKey === VKEY149 && room.exits[player.x + "," + player.y] && dir === "down") {
+      setDecor(false); const m = makeIsle109(); m.back109 = F149.vback || { map: "port", at: [16, 13] }; interior = m; rebuildSolid(); roomKey = "home"; enter(m, 6, 6, "down"); return;
+    }
+    return _tm.apply(this, arguments);
+  };
+  const _mi = makeIsle109;
+  makeIsle109 = function () {
+    const m = _mi.apply(this, arguments);
+    try {
+      const W = w149(), v = W.villa;
+      const spr = v ? "s149_v" + v : "s149_sign", wd = Math.ceil(IMG[spr].width / TS), x0 = v === 4 ? 5 : v >= 2 ? 5 : 6, y = 5;
+      const tiles = []; for (let a = 0; a < wd; a++) { tiles.push([x0 + a, y]); if (v) tiles.push([x0 + a, y - 1]); }
+      m.objs.push({ img: spr, x: x0 * TS, y: (y + 1) * TS - IMG[spr].height, sortY: (y + 1) * TS - 1 });
+      for (const [a, b] of tiles) { m.base[b][a] = true; m.interact[a + "," + b] = () => openVilla149(); }
+      m.labels.push({ x: (x0 + wd / 2) * TS, y: (y + 1) * TS - IMG[spr].height - 4, text: v ? `${myName()}の別荘` : "別荘の売り地" });
+      if (W.vx.tower) { m.objs.push({ img: "s149_tower", x: 3 * TS, y: 5 * TS - IMG.s149_tower.height, sortY: 5 * TS - 1 }); m.base[4][3] = true; }
+      if (m.solid) m.solid = m.base.map(r => r.slice());
+    } catch (e) { if (window.__komoErr) window.__komoErr(e, "villa149"); }
+    return m;
+  };
+}
+function refreshIsle149() { if (!map || map.kind !== "isle109") return; const p = [player.x, player.y, player.dir], b = map.back109, m = makeIsle109(); m.back109 = b; interior = m; rebuildSolid(); map = m; placeAt(player, p[0], p[1], p[2]); }
+F149.villa = openVilla149; F149.enterVilla = enterVilla149;
+
+// ---------- ドッグラン ----------
+function makeDogrun149() {
+  const w = 30, h = 16, m = townBase149("dogrun149", w, h, (x, y) => y < 2 ? "t_hedge" : (x === 0 || x === w - 1 || y === 2 || y === h - 1) ? "@drf" : "@drg");
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (/^(t_hedge|@drf)$/.test(m.ground[y][x])) m.base[y][x] = true;
+  busStop149(m);
+  m.obj("s149_ballbox", 4, 4, [[4, 4]], () => takeBall149(), "ボール");
+  m.obj("s149_tap", 14, 3, [[14, 3]], () => { toast(null, "水飲み場。ペットたちがごくごく飲んでいる"); for (const p of F149.pets) p.say = { text: "♪", until: performance.now() + 1500 }; });
+  m.obj("s149_stand", 24, 4, [[24, 4], [25, 4]], () => openTreat149(), "おやつ屋さん");
+  for (const [x, y] of [[9, 3], [19, 3]]) m.obj("s13_bench", x, y, [[x, y], [x + 1, y]]);
+  for (const [x, y] of [[9, 10], [15, 12], [21, 9]]) m.objs.push({ img: "s149_hoop", x: x * TS, y: (y + 1) * TS - 20, sortY: (y + 1) * TS - 1 });
+  m.labels.push({ x: 15 * TS, y: 2 * TS + 8, text: "こもれびドッグラン" });
+  m.solid = m.base.map(r => r.slice());
+  F149.pets = []; F149.rp = new Map(); F149.ball = null; F149.hold = false;
+  const W = w149(); W.visit++; saveWorld(); try { checkTitles42(); } catch (e) { }
+  (world.pets || []).forEach((t, i) => {
+    const src = petEnts.find(p => p.ptype === t); const e = entity(6 + i * 2, 7 + (i % 3), null, src ? src.name : (PETS[t] ? PETS[t].name : "ペット"), "pet");
+    e.ptype = t; e.sprite = src ? src.sprite : t; e.speed = 1.2; e.home = m; e.dr149 = 1; e.think = Math.random(); m.statics.push(e); F149.pets.push(e);
+  });
+  return m;
+}
+const inRun149 = () => !!(map && map.townId === "dogrun149");
+function freeRun149(x, y) { return map && x > 0 && y > 2 && x < map.w - 1 && y < map.h - 1 && !map.solid[y][x]; }
+function bfs149(m, sx, sy, tx, ty) {
+  if (sx === tx && sy === ty) return null;
+  const key = (x, y) => y * m.w + x, prev = new Map([[key(sx, sy), -1]]), q = [[sx, sy]];
+  for (let qi = 0; qi < q.length && qi < 3000; qi++) {
+    const [x, y] = q[qi];
+    for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const nx = x + dx, ny = y + dy, k = key(nx, ny);
+      if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h || prev.has(k)) continue;
+      if (!(nx === tx && ny === ty) && m.solid[ny][nx]) continue;
+      prev.set(k, key(x, y));
+      if (nx === tx && ny === ty) { let c = k, p = prev.get(c); while (p !== key(sx, sy) && p !== -1) { c = p; p = prev.get(c); } return [c % m.w, Math.floor(c / m.w)]; }
+      q.push([nx, ny]);
+    }
+  }
+  return null;
+}
+function stepToward149(e, tx, ty) {
+  const s = bfs149(map, e.x, e.y, tx, ty); if (!s) return false;
+  e.dir = s[0] > e.x ? "right" : s[0] < e.x ? "left" : s[1] > e.y ? "down" : "up"; e.fx = s[0]; e.fy = s[1]; e.moving = true; e.prog = 0; return true;
+}
+function takeBall149() {
+  if (!F149.pets.length) { toast(null, "ここはペット専用の広場。こもれび牧場でペットを迎えたら、いっしょに遊べるよ"); return; }
+  F149.hold = true; toast(null, "ボールを持った。広いほうを向いてⒶで投げよう！");
+}
+function throwBall149() {
+  const [dx, dy] = DIRS[player.dir]; let tx = player.x, ty = player.y;
+  for (let i = 0; i < 7; i++) { const nx = tx + dx, ny = ty + dy; if (!freeRun149(nx, ny)) break; tx = nx; ty = ny; }
+  if (tx === player.x && ty === player.y) { toast(null, "そっちには投げられないよ"); return; }
+  F149.hold = false; F149.ball = { sx: player.x, sy: player.y, tx, ty, t: 0, dur: .55, land: false, by: null, carry: false };
+  const pet = F149.pets.slice().sort((a, b) => (Math.abs(a.x - tx) + Math.abs(a.y - ty)) - (Math.abs(b.x - tx) + Math.abs(b.y - ty)))[0];
+  if (pet) { F149.ball.by = pet; pet.say = { text: "！", until: performance.now() + 900 }; }
+}
+function updateRun149(dt) {
+  if (!inRun149()) return;
+  const B = F149.ball, now = performance.now();
+  for (const e of F149.pets) {
+    if (!e.moving) {
+      if (B && B.by === e && B.land && !B.carry) { if (e.x === B.tx && e.y === B.ty) { B.carry = true; e.say = { text: "とった！", until: now + 900 }; } else if (!stepToward149(e, B.tx, B.ty)) { B.carry = true; } }
+      else if (B && B.by === e && B.carry) {
+        if (Math.abs(e.x - player.x) + Math.abs(e.y - player.y) <= 1) fetched149(e);
+        else if (!stepToward149(e, player.x, player.y)) fetched149(e);
+      } else if ((e.think -= dt) <= 0) {
+        e.think = .8 + Math.random() * 2.2;
+        if (Math.random() < .65) { const d = pick(DIRS), [sx, sy] = DIRS[d]; const nx = e.x + sx, ny = e.y + sy; e.dir = d; if (freeRun149(nx, ny) && !(nx === player.x && ny === player.y)) { e.fx = nx; e.fy = ny; e.moving = true; e.prog = 0; } }
+      }
+    }
+    e.speed = B && B.by === e ? 1.6 : 1.1; updateEnt(e, dt);
+  }
+  if (B && !B.land) { B.t += dt; if (B.t >= B.dur) B.land = true; }
+  // ほかの人のペット
+  const seen = new Set();
+  for (const [pid, ents] of rPets44) {
+    const r = remotes.get(pid); if (!r || r.rmap !== "town:dogrun149") continue;
+    let L = F149.rp.get(pid);
+    if (!L || L.length !== ents.length) {
+      L = ents.map((s, i) => { const e = entity(Math.max(2, Math.min(27, r.x + 1 + i)), Math.max(4, Math.min(13, r.y + 1)), null, s.name, "pet"); for (const k of ["sprite", "pcos100", "pbase44", "owner44", "pmk146", "pmkS146", "mpl146"]) if (s[k] !== undefined) e[k] = s[k]; e.speed = 1.1; e.home = map; e.dr149r = 1; e.think = Math.random(); return e; });
+      F149.rp.set(pid, L);
+    }
+    for (const e of L) {
+      seen.add(e);
+      if (!e.moving && (e.think -= dt) <= 0) { e.think = .8 + Math.random() * 2.2; const far = Math.abs(e.x - r.x) + Math.abs(e.y - r.y) > 6; if (far) stepToward149(e, r.x, r.y); else if (Math.random() < .6) { const d = pick(DIRS), [sx, sy] = DIRS[d]; const nx = e.x + sx, ny = e.y + sy; e.dir = d; if (freeRun149(nx, ny)) { e.fx = nx; e.fy = ny; e.moving = true; e.prog = 0; } } }
+      updateEnt(e, dt);
+    }
+  }
+  for (const [pid] of F149.rp) { const r = remotes.get(pid); if (!r || r.rmap !== "town:dogrun149") F149.rp.delete(pid); }
+  map.statics = [...map.statics.filter(e => !e.dr149r), ...[...F149.rp.values()].flat()];
+}
+function fetched149(e) {
+  F149.ball = null; F149.hold = true;
+  const t = e.ptype, W = w149(), d = world.day | 0; if (W.dr.day !== d) { W.dr = { day: d, n: {} }; }
+  W.fetch++; world.stats.fetch149 = W.fetch;
+  const n = W.dr.n[t] || 0;
+  if (n < 3) { W.dr.n[t] = n + 1; world.petHearts[t] = Math.min(10, (world.petHearts[t] || 0) + 1); e.say = { text: "♥ もういっかい！", until: performance.now() + 1800 }; }
+  else e.say = { text: "♪", until: performance.now() + 1500 };
+  saveWorld(); try { checkTitles42(); } catch (x) { }
+}
+function openTreat149() {
+  const pets = F149.pets;
+  openModal("おやつ屋さん", "", body => {
+    body.innerHTML = `<p class="mtext">係のハナ「ペット用のおやつ、1つ ${fmt(500)}。あげると、なつき度が上がるよ（1匹1日1回）」</p>${pets.length ? `<div class="list">${pets.map(e => { const d = w149().dr, done = d.day === (world.day | 0) && d.t && d.t[e.ptype]; return `<div class="li"><img src="${IMG[e.sprite] ? IMG[e.sprite].toDataURL() : ""}" alt=""><span class="nm">${esc(e.name)}<span class="sub2">なつき度 ${"♥".repeat(world.petHearts[e.ptype] || 0)}</span></span><span class="acts"><button class="btn" type="button" data-tr149="${e.ptype}" ${done || world.money < 500 ? "disabled" : ""}>${done ? "今日はあげた" : "あげる"}</button></span></div>`; }).join("")}</div>` : `<p class="mtext">ペットを連れてきたら、おやつをあげられるよ。</p>`}<div class="row2"><button class="btn light" type="button" id="tr149c">とじる</button></div>`;
+    body.querySelectorAll("[data-tr149]").forEach(b => b.onclick = () => {
+      const t = b.dataset.tr149, W = w149(), d = world.day | 0; if (world.money < 500) return; if (W.dr.day !== d) W.dr = { day: d, n: {} }; W.dr.t = W.dr.t || {}; if (W.dr.t[t]) return;
+      addMoney(-500); W.dr.t[t] = 1; world.petHearts[t] = Math.min(10, (world.petHearts[t] || 0) + 1); saveWorld();
+      const e = pets.find(p => p.ptype === t); if (e) e.say = { text: "もぐもぐ ♥", until: performance.now() + 2000 };
+      closeModal(); toast(null, "おやつをあげた。なつき度が上がった！");
+    });
+    body.querySelector("#tr149c").onclick = () => closeModal();
+  });
+}
+{
+  const _uc = updateCollector; updateCollector = function (dt) { _uc.apply(this, arguments); try { updateRun149(dt); } catch (x) { if (window.__komoErr) window.__komoErr(x, "dogrun149"); } };
+  const _a = act;
+  act = function () {
+    if (inRun149() && F149.hold && !modalOpen && !busy && !player.moving) {
+      const [tx, ty] = front(); if (!map.interact[tx + "," + ty] && !map.statics.some(e => e.x === tx && e.y === ty)) { throwBall149(); return; }
+    }
+    return _a.apply(this, arguments);
+  };
+  const _fa = F6.act;
+  F6.act = (tx, ty, key, sel, item, other) => { if (other && other.dr149r) { other.say = { text: `♪（${other.owner44 || ""}のペット）`, until: performance.now() + 1800 }; return true; } return _fa(tx, ty, key, sel, item, other); };
+  const _atl = F7.addToList;
+  F7.addToList = (list, now) => {
+    _atl(list, now);
+    if (!inRun149()) return;
+    const B = F149.ball;
+    const ballAt = (x, y, lift) => { ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(Math.round(x) + 5, Math.round(y) + 13, 6, 2); ctx.fillStyle = "#ffd24a"; ctx.fillRect(Math.round(x) + 6, Math.round(y - lift) + 8, 4, 4); ctx.fillStyle = "#fff6c8"; ctx.fillRect(Math.round(x) + 6, Math.round(y - lift) + 8, 2, 1); };
+    if (B && !B.carry) { const k = Math.min(1, B.t / B.dur), x = (B.sx + (B.tx - B.sx) * k) * TS, y = (B.sy + (B.ty - B.sy) * k) * TS, lift = B.land ? 0 : Math.sin(k * Math.PI) * 18; list.push({ s: y + 16, d: () => ballAt(x, y, lift) }); }
+    if (B && B.carry && B.by) { const e = B.by; list.push({ s: e.py + 16, d: () => ballAt(e.px + (e.dir === "left" ? -5 : 5), e.py - 2, 0) }); }
+    if (F149.hold) list.push({ s: player.py + 16, d: () => ballAt(player.px + 6, player.py - 4, 0) });
+  };
+}
+F149.throwBall = throwBall149; F149.updateRun = updateRun149;
+
+// 左上の所持金：1兆G をこえたら「6.98垓 G」のように短く（ぜんぶの桁は、さわると出る title に）
+{ const _hu = updateHud; updateHud = function () { const r = _hu.apply(this, arguments); try { const el = $("money"); if (el && world.money >= CHO149) { const f = fmt(world.money); if (el.textContent.includes(f)) el.textContent = el.textContent.replace(f, G149(world.money)); el.title = f; } else if (el) el.title = ""; } catch (e) { } return r; }; }
+// ---------- スマホのアプリ・称号・てびき ----------
+F76.add({ id: "space149", name: "宇宙", ch: "宙", c: "#3a4a9a", open: () => openSpace149() });
+F76.add({ id: "rich149", name: "大富豪", ch: "富", c: "#b8901a", open: () => openRich149() });
+const TTL149 = [
+  ...MS149.map(([n, t, l]) => [t, `宇宙開発に、あわせて ${l} 寄付する`, () => w149().best >= n]),
+  ...RTITLE149.map(([n, c]) => [n, `大富豪のラウンジで ${jp149(c)}G で買う`, () => !!w149().t[n]]),
+  ["月に立った人", "ロケットで月面に行く", () => w149().moon >= 1],
+  ["月面基地の住人", "月面基地に入る", () => w149().base >= 1],
+  ["宝くじ王", "村ジャンボ宝くじの1等を当てる", () => w149().lotWin >= 1],
+  ["夢を買う人", "村ジャンボ宝くじを、あわせて1万枚買う", () => w149().lotN >= 10000],
+  ["南の島のオーナー", "南の島に別荘を建てる", () => w149().villa >= 1],
+  ["海の上の住人", "「海の上のヴィラ」を建てる", () => w149().villa >= 4],
+  ["ドッグランの常連", "ドッグランに10回行く", () => w149().visit >= 10],
+  ["とってこい名人", "ドッグランで、ペットがボールを30回とってくる", () => w149().fetch >= 30],
+];
+for (const t of TTL149) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+GUIDE54.push(["宇宙開発と月面", "s149_rk3", `<p>スマホの「宇宙」から、村のみんなで宇宙開発に寄付できるよ（1回に1京〜10垓）。発射台 → ロケット → 月へ出発 → 月面基地 → 火星 → 木星…と、どこまでも続く。</p>
+  <p>段階は、額がたまって、<b>その段階のあいだに3人以上</b>が寄付すると進む。自分の寄付の合計が 1京・10京・100京・1垓・10垓 になると称号。</p>
+  <p>宇宙センターへはバスで（10,000G）。「月へ出発」ができたら、ロケットで月面へ。月の泉では月の魚が釣れて、月の石は1日3か所に落ちている。月の売店では月の石と交換で家具が買えるよ。</p>`]);
+GUIDE54.push(["大富豪・宝くじ・別荘", "s149_v3", `<p>スマホの「大富豪」：称号（十京長者〜十垓の帝王）とオーラ（黄金の雨・札束の竜巻・星雲・銀河）を買える。見た目と名誉だけで、強さは変わらないよ。</p>
+  <p><b>村ジャンボ宝くじ</b>：1枚1,000億G。毎週日曜の21時に抽選。売り上げの3割が1等、1%ずつが2等（10本）。1等は「1億枚に1本」なので、出なければ次の週に持ちこし。</p>
+  <p><b>南の島の別荘</b>：小屋（10京）→ コテージ（100京）→ ヴィラ（1垓）→ 海の上のヴィラ（5垓）。設備（1垓ずつ）もつけられる。中は模様替えできるよ。</p>`]);
+GUIDE54.push(["ドッグラン", "s149_ballbox", `<p>バスで行ける「ドッグラン」（300G）では、ペットが自由に走りまわる。ボール箱でボールを持って、Ⓐで投げると、ペットがとってくるよ（1匹1日3回までなつき度が上がる）。おやつ屋さんのおやつでも、なつき度が上がる。ほかの人のペットも遊びに来るよ。</p>`]);
+CHANGES19.unshift({ v: "0.89.0", date: "2026/11/27", title: "宇宙開発・大富豪・ドッグラン", items: [
+  "スマホの「宇宙」：村のみんなで寄付して、ロケットを月へ（発射台 → ロケット → 月へ出発 → 月面基地 → 火星…）。段階ごとに3人以上の寄付が必要",
+  "宇宙センター（バス）と月面：月の泉で月の魚・月の石・月の売店の家具・月面基地。月ではふわっと歩ける",
+  "スマホの「大富豪」：大富豪の称号（十京長者〜十垓の帝王）とオーラ（黄金の雨・札束の竜巻・星雲・銀河）",
+  "村ジャンボ宝くじ：1枚1,000億G・毎週日曜21時に抽選（1等は持ちこしで育つ）",
+  "南の島の別荘：小屋 → コテージ → ヴィラ → 海の上のヴィラ。設備もつけられて、中は模様替えできる",
+  "ドッグラン（バス）：ペットにボールを投げてとってこい・おやつ屋さん・ほかの人のペットも遊びに来る",
+] });
+F149.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -33713,7 +34370,7 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F148, F147, F146, F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F149, F148, F147, F146, F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
 
 </script>

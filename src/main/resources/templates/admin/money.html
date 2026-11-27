@@ -29,16 +29,18 @@
       <tr><th>なまえ</th><th>所持金</th><th>現金</th><th>預金</th><th>借金</th><th>合計</th><th>状態</th><th>調整</th></tr>
       <tr th:each="r : ${rows}">
         <td><b th:text="${r.name()}">name</b><br><span class="muted" th:text="|ID ${r.id()}|">ID</span></td>
-        <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.money(), 1, 'COMMA')} + ' G' : 'セーブなし'">0 G</span>
+        <td><span th:text="${r.money() != null} ? ${r.moneyS()} + ' G' : 'セーブなし'">0 G</span>
+          <br><span class="muted" th:if="${r.money() != null and r.moneyJ() != ''}" th:text="${r.moneyJ()}"></span>
           <br><span class="muted" th:if="${r.pending() != 0}" th:text="|届いていない分 ${r.pending() > 0 ? '+' : ''}${#numbers.formatInteger(r.pending(), 1, 'COMMA')} G|"></span></td>
         <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.cash(), 1, 'COMMA')} + ' 枚' : '-'">0 枚</span>
           <span class="muted" th:if="${r.fake() > 0}" th:text="|（偽札 ${#numbers.formatInteger(r.fake(), 1, 'COMMA')}）|"></span>
           <br><span class="muted" th:if="${r.money() != null and r.cash() > 0}" th:text="|${#numbers.formatInteger(r.cashG(), 1, 'COMMA')} G ぶん|"></span>
           <br><span class="muted" th:if="${r.pendingCash() != 0}" th:text="|届いていない分 ${r.pendingCash() > 0 ? '+' : ''}${#numbers.formatInteger(r.pendingCash(), 1, 'COMMA')} 枚|"></span></td>
-        <td><span th:text="${r.money() != null} ? ${#numbers.formatInteger(r.bank(), 1, 'COMMA')} + ' G' : '-'">0 G</span>
-          <br><span class="muted" th:if="${r.money() != null and r.bank() > 0}" th:text="|普通 ${#numbers.formatInteger(r.save(), 1, 'COMMA')}・定期 ${#numbers.formatInteger(r.fixed(), 1, 'COMMA')}|"></span></td>
-        <td th:text="${r.money() != null} ? ${#numbers.formatInteger(r.debt(), 1, 'COMMA')} + ' G' : '-'">0 G</td>
-        <td><b th:text="${r.money() != null} ? ${#numbers.formatInteger(r.net(), 1, 'COMMA')} + ' G' : '-'">0 G</b></td>
+        <td><span th:text="${r.money() != null} ? ${r.bankS()} + ' G' : '-'">0 G</span>
+          <br><span class="muted" th:if="${r.money() != null and r.bankPos()}" th:text="|普通 ${r.saveS()}・定期 ${r.fixedS()}|"></span></td>
+        <td th:text="${r.money() != null} ? ${r.debtS()} + ' G' : '-'">0 G</td>
+        <td><b th:text="${r.money() != null} ? ${r.netS()} + ' G' : '-'">0 G</b>
+          <br><span class="muted" th:if="${r.money() != null and r.netJ() != ''}" th:text="${r.netJ()}"></span></td>
         <td th:text="${r.online()} ? 'つないでいる' : 'いない'">いない</td>
         <td>
           <form method="post" th:action="@{/admin/money/{id}(id=${r.id()})}" class="row">

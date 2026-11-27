@@ -4000,7 +4000,7 @@ F7.ready = true;
 
 // =================== v8: online (presence, stamps) & feedback to the admin ===================
 var F8 = { online: false, connected: false, count: 0 };
-const CLIENT_VERSION = "0.87.8";
+const CLIENT_VERSION = "0.88.0";
 const ON_KEY = "komorebi-online";
 let onl = WATCH88 ? { token: WATCH88, id: -1, name: "管理人（見学）", watch: true } : (store.get(ON_KEY) || {});
 const remotes = new Map();
@@ -30491,6 +30491,234 @@ setInterval(() => {
   } catch (e) { }
 }, 300);
 
+// =================== v148: 追いかけっこ（取り立て屋をみんなに・通りすがりの追いかけっこ・脱走のあとの巡査） ===================
+// 1) 取り立て屋の助手をしている人のうしろのゴウが、ほかの人の画面にも見える（cfg.zz に "g"）
+// 2) 村の大通り（y=8）と北の丘の道（x=NGAP[0]）を、ときどきだれかが追いかけっこして通りすぎる。
+//    時刻（Date.now()）だけで決まるので、サーバーなしでみんなに同じに見える（`chaseAt148`）
+// 3) 罪で労働施設に入っていて脱走したら、しばらく（`WANT_MS148`）巡査に見つかると追いかけられる。
+//    追ってくるのは、見つけた巡査そのもの（マモルかケイ）。となりまで来たら捕まる。14マスはなれるか、建物に入るか、45秒逃げきればまける。
+//    追われているあいだは cfg.zz に "m"（マモル）か "k"（ケイ）をのせて、ほかの人の画面でもその巡査がその人を追う
+var F148 = { gou: new Map(), run: new Map(), chase: null, seenN: -1, lastZz: "" };
+PASS123.add("chase148");
+const WANT_MS148 = 15 * 60 * 1000, GRACE_MS148 = 8000, CHASE_MAX148 = 45, LOSE_D148 = 14;
+const THIEF148 = { name: "どろぼう", cfg: { skin: "やや明るめ", hair: "ショート", hairc: "黒", top: "ジャケット", topc: "茶", bottom: "パンツ", bottomc: "黒", hat: "キャップ", shoesc: "黒" } };
+const j148 = () => world.c148 = world.c148 || { seen: 0, lost: 0, caught: 0 };
+const want148 = () => { const w = world.wanted148; if (!w) return null; if (Date.now() > w.until) { world.wanted148 = null; return null; } return w; };
+F148.want = want148;
+// ---- 通りすがりの追いかけっこ（時刻だけで決まる） ----
+const CH_P148 = 300;   // 5分に1回
+const CH_V148 = 2.6;   // 1秒に何マス
+function hash148(n) { let h = (n * 2654435761) >>> 0; h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 13; return h >>> 0; }
+function chaseAt148(t) {
+  const n = Math.floor(t / 1000 / CH_P148), u = (t / 1000) % CH_P148 - 20;
+  const h = hash148(n + 148), kind = h % 4, back = (h >> 3) & 1;
+  const hill = kind === 3, len = hill ? 26 : 59, dur = (len + 4) / CH_V148;
+  if (u < 0 || u > dur) return null;
+  const pos = s => { const k = Math.max(0, Math.min(len, s)); return hill ? [NGAP[0], back ? 81 - k : 55 + k] : [back ? 61 - k : 2 + k, 8]; };
+  const d = u * CH_V148;
+  return { n, kind, back, hill, u, dur, run: pos(d), chs: pos(d - 2.4), dir: hill ? (back ? "up" : "down") : (back ? "left" : "right"), h };
+}
+F148.at = chaseAt148;
+const LINES148 = [
+  [["待たんかい、タツ！", "ゴウ"], ["明日の競どんぐりで返すからー！", "タツ"], ["今日返さんかい！", "ゴウ"]],
+  [["まてー！ どろぼう！", "巡査"], ["見のがしてくれー！", "どろぼう"], ["こもれび村の平和は、ぼくが守る！", "巡査"]],
+  [["つーかまーえた…くない！", "まめた"], ["おにさん、こちら！", "ことり"], ["まってよー！", "まめた"]],
+  [["まてー！ どろぼう！", "巡査"], ["丘の上なら逃げきれると思ったのに！", "どろぼう"], ["北の丘も、わたしの見回りの道だよ！", "巡査"]],
+];
+function runEnt148(key, cfgv, name) {
+  let e = F148.run.get(key);
+  if (!e) { e = entity(0, 0, { ...DEFAULT, ...cfgv }, name, "chase148"); e.home = village; F148.run.set(key, e); }
+  return e;
+}
+function putRun148(e, p, dir, dt) {
+  const x = p[0], y = p[1];
+  e.px = x * TS; e.py = y * TS; e.x = e.fx = Math.round(x); e.y = e.fy = Math.round(y); e.dir = dir; e.moving = true; e.step += dt * SPEED * 2.6;
+}
+// いまの追いかけっこで、走る人と追う人（巡査のときは本物の巡査を動かす）
+function passing148(dt) {
+  const C = map === village ? chaseAt148(Date.now()) : null;
+  F148.cur = C;
+  if (!C) { F148.run.clear(); return []; }
+  const out = [], L = LINES148[C.kind], i = Math.floor(C.u / 3.2) % L.length;
+  let runner, chaser = null;
+  if (C.kind === 0) { const d = DEBT96[0]; runner = runEnt148("r0", d.cfg, d.name); chaser = runEnt148("c0", BOSS96.cfg, BOSS96.name); }
+  else if (C.kind === 2) { runner = runEnt148("r2", KIDS25["ことり"].cfg, "ことり"); chaser = runEnt148("c2", KIDS25["まめた"].cfg, "まめた"); }
+  else runner = runEnt148("r" + C.kind, THIEF148.cfg, THIEF148.name);
+  putRun148(runner, C.run, C.dir, dt); out.push(runner);
+  if (chaser) { putRun148(chaser, C.chs, C.dir, dt); out.push(chaser); }
+  const who = L[i][1], tgt = who === "タツ" || who === "どろぼう" || who === "ことり" ? runner : chaser;
+  if (tgt && (!tgt.say || tgt.say.k148 !== C.n * 10 + i)) tgt.say = { text: L[i][0], until: performance.now() + 2800, k148: C.n * 10 + i };
+  // 見物の数（近くで見たら1回）
+  if (!WATCH88 && F148.seenN !== C.n && Math.abs(player.x - runner.x) + Math.abs(player.y - runner.y) <= 9) { F148.seenN = C.n; j148().seen++; }
+  return out;
+}
+// 道を探して1マス進む（村の中・14マスの範囲）
+function bfsStep148(e, tx, ty, R = 16) {
+  const m = village, sx = e.x, sy = e.y; if (sx === tx && sy === ty) return null;
+  const key = (x, y) => y * m.w + x, prev = new Map([[key(sx, sy), -1]]), q = [[sx, sy]];
+  for (let qi = 0; qi < q.length && qi < 4000; qi++) {
+    const [x, y] = q[qi];
+    for (const d of ["up", "down", "left", "right"]) {
+      const [dx, dy] = DIRS[d], nx = x + dx, ny = y + dy, k = key(nx, ny);
+      if (nx < 0 || ny < 0 || nx >= m.w || ny >= m.h || prev.has(k) || Math.abs(nx - sx) + Math.abs(ny - sy) > R) continue;
+      if (!(nx === tx && ny === ty) && m.solid[ny][nx]) continue;
+      prev.set(k, key(x, y));
+      if (nx === tx && ny === ty) {
+        let c = k, p = prev.get(c); while (p !== key(sx, sy) && p !== -1) { c = p; p = prev.get(c); }
+        return [c % m.w, Math.floor(c / m.w)];
+      }
+      q.push([nx, ny]);
+    }
+  }
+  return null;
+}
+function chaseStep148(e, tx, ty, dt, spd) {
+  e.speed = spd;
+  if (!e.moving && Math.abs(e.x - tx) + Math.abs(e.y - ty) > 1) {
+    const s = bfsStep148(e, tx, ty);
+    if (s && !(s[0] === tx && s[1] === ty)) { e.dir = s[0] > e.x ? "right" : s[0] < e.x ? "left" : s[1] > e.y ? "down" : "up"; e.fx = s[0]; e.fy = s[1]; e.moving = true; e.prog = 0; e.stuck = 0; }
+    else if ((e.stuck = (e.stuck || 0) + dt) > 1.5) { e.stuck = 0; const [fx, fy] = freeNear(village, tx, ty); if (Math.abs(fx - e.x) + Math.abs(fy - e.y) < 10) placeAt(e, fx, fy); }
+  }
+  updateEnt(e, dt);
+}
+// ---- 脱走のあと ----
+function setWanted148() {
+  world.wanted148 = { until: Date.now() + WANT_MS148, from: Date.now() + GRACE_MS148 }; saveWorld();
+  setTimeout(() => F7.notify("脱走したことは、巡査にもう知られている。しばらくは巡査の近くを通ると追いかけられるよ（15分くらい）", null), 1500);
+}
+{
+  const _te = tryEscape;
+  tryEscape = function () { const was = typeof crimeJail78 === "function" && crimeJail78(); const r = _te.apply(this, arguments); try { if (was && !world.labor && !WATCH88) setWanted148(); } catch (x) { } return r; };
+  const _ed = escapeDone93;
+  escapeDone93 = function () { const was = typeof crimeJail78 === "function" && crimeJail78(); const r = _ed.apply(this, arguments); try { if (was && !world.labor && !WATCH88) setWanted148(); } catch (x) { } return r; };
+}
+function endChase148(why) {
+  const C = F148.chase; if (!C) return; F148.chase = null; F148.cool = Date.now() + 20000;
+  const cop = C.cop; cop.speed = .16;
+  if (why === "lost") { cop.say = { text: "くっ……見失った", until: performance.now() + 3000 }; j148().lost++; toast(null, "巡査をまいた！ ……でも、まだ気をつけて"); saveWorld(); }
+  else if (why === "tired") { cop.say = { text: "はぁ、はぁ……きょうはこのへんで……", until: performance.now() + 3200 }; j148().lost++; toast(null, "巡査がばてた。逃げきった！"); saveWorld(); }
+  else if (why === "inside") toast(null, "建物に逃げこんだ。巡査は見失ったみたい");
+}
+function caught148() {
+  const C = F148.chase; F148.chase = null; world.wanted148 = null; j148().caught++; saveWorld();
+  C.cop.speed = .16;
+  arrest78(`${C.cop === police78 ? "マモル" : "ケイ"}「つかまえた！ 脱走したきみを、ちゃんと見ていたからね。つとめに戻ってもらうよ」`, () => { if (!world.labor) jail78(4, "脱走"); });
+}
+function myChase148(dt) {
+  const C = F148.chase;
+  if (!C) {
+    const w = want148(); if (!w || world.labor || WATCH88 || map !== village || Date.now() < w.from || (F148.cool && Date.now() < F148.cool)) return;
+    for (const cop of [police78, police93]) {
+      if (cop.x < 0 || Math.abs(player.x - cop.x) + Math.abs(player.y - cop.y) > 5) continue;
+      F148.chase = { cop, t: 0 }; cop.say = { text: cop === police78 ? "まてー！ 脱走したな！" : "そこのきみ、まちなさーい！", until: performance.now() + 2600 };
+      toast(null, "巡査に見つかった！ 逃げて！（はなれるか、建物に入る）"); return;
+    }
+    return;
+  }
+  if (map !== village) { endChase148("inside"); return; }
+  if (world.labor) { F148.chase = null; return; }
+  C.t += dt; const cop = C.cop, d = Math.abs(player.x - cop.x) + Math.abs(player.y - cop.y);
+  if (!cop.moving && d <= 1 && !modalOpen) { caught148(); return; }
+  if (d >= LOSE_D148) { endChase148("lost"); return; }
+  if (C.t > CHASE_MAX148) { endChase148("tired"); return; }
+  if (Math.floor(C.t / 4) !== Math.floor((C.t - dt) / 4)) cop.say = { text: ["まてー！", "にがさないぞ！", "止まりなさーい！"][Math.floor(C.t / 4) % 3], until: performance.now() + 2200 };
+  chaseStep148(cop, player.x, player.y, dt, Math.max(.85, (player.speed || 1) * .9));
+}
+// ほかの人を追う巡査（その人の画面と同じように、こちらの画面でも追う）
+function remoteCop148(cop, ch, dt) {
+  for (const e of remotes.values()) {
+    if (e.rmap !== "village" || !e.cfg || typeof e.cfg.zz !== "string" || !e.cfg.zz.includes(ch)) continue;
+    chaseStep148(cop, e.x, e.y, dt, 1);
+    if (!cop.say || cop.say.until < performance.now()) cop.say = { text: "まてー！", until: performance.now() + 1800 };
+    return true;
+  }
+  return false;
+}
+// 巡査の動きを差しかえる（自分を追う ＞ ほかの人を追う ＞ 通りすがりの追いかけっこ ＞ いつもの見回り）
+{
+  const _p78 = updatePolice78;
+  updatePolice78 = function (dt) {
+    if (map !== village) return;
+    try {
+      if (F148.chase && F148.chase.cop === police78) return;
+      if (remoteCop148(police78, "m", dt)) return;
+      const C = F148.cur; if (C && C.kind === 1) { putRun148(police78, C.chs, C.dir, dt); return; }
+    } catch (x) { }
+    police78.speed = .16;
+    return _p78.apply(this, arguments);
+  };
+  const _p93 = updatePolice93;
+  updatePolice93 = function (dt) {
+    if (map !== village) return;
+    try {
+      if (F148.chase && F148.chase.cop === police93) return;
+      if (remoteCop148(police93, "k", dt)) return;
+      const C = F148.cur; if (C && C.kind === 3) { putRun148(police93, C.chs, C.dir, dt); return; }
+    } catch (x) { }
+    police93.speed = .16;
+    return _p93.apply(this, arguments);
+  };
+}
+// ほかの人のうしろのゴウ
+function remoteGou148(dt) {
+  const seen = new Set();
+  if (map === village) for (const e of remotes.values()) {
+    if (e.rmap !== "village" || !e.cfg || typeof e.cfg.zz !== "string" || !e.cfg.zz.includes("g")) continue;
+    seen.add(e.rid);
+    let g = F148.gou.get(e.rid);
+    if (!g) { g = { e: entity(e.x, e.y, { ...DEFAULT, ...BOSS96.cfg }, BOSS96.name, "chase148"), tr: null }; g.e.home = village; F148.gou.set(e.rid, g); }
+    g.tr = trailStep(g.tr, village, e.x, e.y, 12);
+    const t = g.tr[Math.min(2, g.tr.length - 1)], b = g.e;
+    if (t && !(t[0] === e.x && t[1] === e.y)) {
+      const dd = Math.abs(t[0] - b.x) + Math.abs(t[1] - b.y);
+      if (dd > 7) placeAt(b, t[0], t[1]); else chaseStep148(b, t[0], t[1], dt, 1.1);
+    } else updateEnt(b, dt);
+  }
+  for (const k of [...F148.gou.keys()]) if (!seen.has(k)) F148.gou.delete(k);
+}
+{
+  const _uc = updateCollector;
+  updateCollector = function (dt) {
+    let extra = [];
+    try { extra = passing148(dt); } catch (x) { extra = []; }
+    F148.extra = extra;
+    _uc.apply(this, arguments);
+    try { myChase148(dt); } catch (x) { }
+    try { remoteGou148(dt); } catch (x) { }
+  };
+  const _ev = F6.entsVillage;
+  F6.entsVillage = () => [..._ev(), ...(F148.extra || []), ...[...F148.gou.values()].map(g => g.e)];
+}
+// cfg.zz：ゴウといっしょ（g）・巡査に追われている（m／k）
+setInterval(() => {
+  try {
+    if (WATCH88) return;
+    let z = "";
+    if (map === village && typeof j96 === "function" && j96().round) z += "g";
+    if (F148.chase) z += F148.chase.cop === police78 ? "m" : "k";
+    if ((cfg.zz || "") === z) return;
+    if (z) cfg.zz = z; else delete cfg.zz;
+    player.cfg = cfg; if (typeof sendCfgSoon === "function") sendCfgSoon();
+  } catch (x) { }
+}, 600);
+{
+  const _cl = cleanCfg;
+  cleanCfg = function (c) { const o = _cl(c); if (c && typeof c.zz === "string" && /^g?[mk]?$/.test(c.zz) && c.zz) o.zz = c.zz; return o; };
+}
+// ---- 称号 ----
+const TTL148 = [
+  ["逃げ足の達人", "脱走のあと、追いかけてきた巡査をまく", () => (world.c148?.lost || 0) >= 1],
+  ["追いかけっこの見物人", "村を通りすぎる追いかけっこを、近くで5回見る", () => (world.c148?.seen || 0) >= 5],
+];
+for (const t of TTL148) { GTITLES42.push(t); TITLES.push([t[0], t[1], () => gotT42().includes(t[0]) || t[2]()]); }
+CHANGES19.unshift({ v: "0.88.0", date: "2026/11/27", title: "追いかけっこ", items: [
+  "取り立て屋の助手をしているとき、うしろのゴウがほかの人にも見えるようになった",
+  "ときどき、村の大通りや北の丘の道を、追いかけっこがかけぬけていく（みんなに同じ時に見える）",
+  "罪で労働施設に入って脱走すると、しばらくは巡査の近くを通ると追いかけられる。となりまで来たら捕まる。はなれるか、建物に入るか、逃げきればまける",
+  "称号「逃げ足の達人」「追いかけっこの見物人」",
+] });
+F148.ready = true;
+
 // =================== v45: カラオケの音ゲー・ラウンジの会話と贈り物 ===================
 var F45 = {};
 // ---------- カラオケ うたかた（音ゲー） ----------
@@ -30951,5 +31179,5 @@ addEventListener("pageshow", () => { setTimeout(boot13, 300); resize(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(boot13, 300); resize(); } });
 Object.assign(K, { $, fmt, esc, ASSETS, IMG, myName, openModal, closeModal, addMoney, gambleResult, takeLoan, saveWorld, toast });
 Object.defineProperty(K, "world", { get: () => world, configurable: true });
-window.__game = { F147, F146, F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
+window.__game = { F148, F147, F146, F145, F144, F143, F142, F141, F140, F139, F138, F137, F136, F135, F134, F133, F132, F131, F130, F129, F128, F127, F126, F125, F124, F123, F122, F121, F120, F119, F118, F117, F116, F115, F114, F113, F112, F111, F110, F109, F108, F107, F106, F105, F104, F103, F102, F101, F100, F99, F98, F97, F96, F95, F94, syncAnimals: () => syncAnimals(), makeInterior: k => makeInterior(k), makePort: () => makePort(), F72tile: e => tileAt72(e), F93, F92, F91, F90, F89, F88, F87, F86, F85, F84, F82, F81, F80, F79, F78, F77, F76, F75, F74, F73, F72, F71, F69, F68, F67, F66, F65, F63, F62, F61, F60, F59, F58, F57, F56, F55, F54, F53, F51, F50, F49, F46, F45, F44, F43, F42, F41, F40, F39, ITEMS, addItem: (i, n) => addItem(i, n, true), fishHint: f => fishHint(f), FISH6, F38, F37, F36, F35, F34, get petEnts() { return petEnts; }, F33, F32, F31, get animalEnts() { return animalEnts; }, F30, F29, F28, EV28, F27, openShop: t => openShop(t), F26, get cfg26() { return cfg; }, F25, openLender: k => openLender(k), F17, get roomKey() { return roomKey; }, loadSave: (o, l) => loadSave(o, l), F14, F13, get town() { return town13; }, F12, F11, get village2() { return village; }, F8, get remotes() { return remotes; }, F7, friends, get interior() { return interior; }, get cfg() { return cfg; }, pickFish, get fish() { return fish; }, todayEvent, get stalls() { return world.stalls; }, enterLabor: () => enterLabor(), get labor() { return labor; }, F6, enterCave: n => enterCave(n), get dg() { return dg; }, openBoard, openBus, get port() { return port; }, get world() { return world; }, player, act, enter, village, room, labor, collector, newDay, openCollector, get map() { return map; }, placeAt, enterRoom, get room() { return room; }, setDecor };
 })();
